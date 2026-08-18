@@ -1,0 +1,500 @@
+@extends('layouts.app')
+
+@section('title', 'Flashcard | Chinese Deck')
+
+@section('content')
+<style>
+    /* 3D Flip Card */
+    .flip-card {
+        perspective: 1000px;
+    }
+
+    .flip-card-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        transform-style: preserve-3d;
+        transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .flip-card-inner.flipped {
+        transform: rotateY(180deg);
+    }
+
+    .flip-card-front,
+    .flip-card-back {
+        position: absolute;
+        inset: 0;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        border-radius: 2rem;
+    }
+
+    .flip-card-back {
+        transform: rotateY(180deg);
+    }
+
+    /* Progress dots */
+    .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 9999px;
+        transition: all .3s;
+    }
+
+    .dot.done {
+        background: #991b1b;
+        transform: scale(1.2);
+    }
+
+    .dot.current {
+        background: #991b1b;
+        opacity: 0.5;
+    }
+
+    .dot.future {
+        background: #e2e8f0;
+    }
+</style>
+
+<section class="grid gap-8 py-4 lg:grid-cols-[1fr_0.9fr] lg:py-8">
+    <div>
+        <p class="text-sm font-semibold uppercase tracking-[0.28em] text-[#991b1b]">Flashcard</p>
+        <h1 class="mt-4 text-5xl font-black tracking-tight text-slate-950 sm:text-6xl">Ôn từ vựng bằng thẻ học trực quan</h1>
+        <p class="mt-5 max-w-2xl text-lg leading-8 text-slate-700">
+            Bấm vào thẻ để lật và xem nghĩa. Lướt qua từng thẻ, nhớ hanzi, pinyin và câu ví dụ thực tế.
+        </p>
+    </div>
+
+    <div class="rounded-[2rem] bg-slate-950 p-6 text-white shadow-2xl shadow-slate-950/20">
+        <p class="text-sm uppercase tracking-[0.28em] text-amber-200/80">Bộ thẻ hiện tại</p>
+        <div class="mt-4 grid gap-4 sm:grid-cols-3">
+            <div class="rounded-3xl border border-white/10 bg-white/5 p-4">
+                <p class="text-sm text-slate-300">Thẻ trong bộ lọc</p>
+                <p class="mt-2 text-3xl font-black">{{ $deckTotal }}</p>
+            </div>
+            <div class="rounded-3xl border border-white/10 bg-white/5 p-4">
+                <p class="text-sm text-slate-300">Số bài học</p>
+                <p class="mt-2 text-3xl font-black">{{ $lessons->count() }}</p>
+            </div>
+            <div class="rounded-3xl border border-white/10 bg-white/5 p-4">
+                <p class="text-sm text-slate-300">Tổng thẻ hệ thống</p>
+                <p class="mt-2 text-3xl font-black">{{ $totalCount }}</p>
+            </div>
+        </div>
+        <div class="mt-5 rounded-3xl border border-amber-300/20 bg-gradient-to-br from-amber-300/15 to-red-500/10 p-4">
+            <p class="text-sm uppercase tracking-[0.22em] text-amber-200/80">Tip học hiệu quả</p>
+            <p class="mt-2 text-sm leading-6 text-slate-200">Xem hanzi trước, đọc pinyin, sau đó tự nói nghĩa ra miệng để tăng nhớ chủ động.</p>
+        </div>
+    </div>
+</section>
+
+{{-- Filters and Search --}}
+<div class="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    {{-- Lesson Filter Tabs --}}
+    <div class="flex flex-wrap gap-2">
+        <a href="{{ route('flashcards', array_filter(['q' => $search])) }}"
+            class="rounded-full px-4 py-2 text-sm font-semibold transition
+                  {{ ! $lessonSlug ? 'bg-[#991b1b] text-white shadow-md' : 'bg-white/80 text-slate-700 border border-slate-200 hover:border-[#991b1b] hover:text-[#991b1b]' }}">
+            Tất cả
+        </a>
+        @foreach($lessons as $lesson)
+        @if($lesson->flashcards_count > 0)
+        <a href="{{ route('flashcards', array_filter(['lesson' => $lesson->slug, 'q' => $search])) }}"
+            class="rounded-full px-4 py-2 text-sm font-semibold transition
+                      {{ $lessonSlug === $lesson->slug ? 'bg-[#991b1b] text-white shadow-md' : 'bg-white/80 text-slate-700 border border-slate-200 hover:border-[#991b1b] hover:text-[#991b1b]' }}">
+            {{ $lesson->title }}
+        </a>
+        @endif
+        @endforeach
+    </div>
+
+    {{-- Search Form --}}
+    <form action="{{ route('flashcards') }}" method="GET" class="relative w-full lg:max-w-xs">
+        @if($lessonSlug) <input type="hidden" name="lesson" value="{{ $lessonSlug }}"> @endif
+        @if($hskLevel) <input type="hidden" name="hsk" value="{{ $hskLevel }}"> @endif
+        <input type="text" name="q" value="{{ $search ?? '' }}" placeholder="Tìm chữ Hán, Pinyin, Nghĩa..." 
+               class="w-full rounded-full border border-slate-200 bg-white/80 py-2 pl-10 pr-4 text-sm text-slate-800 shadow-sm outline-none transition focus:border-[#991b1b] focus:ring-1 focus:ring-[#991b1b]">
+        <i data-lucide="search" class="absolute left-3.5 top-2.5 h-4 w-4 text-slate-400"></i>
+    </form>
+</div>
+
+@if($flashcards->isEmpty())
+<div class="flex flex-col items-center justify-center rounded-[2rem] border border-dashed border-slate-300 py-20 text-center">
+    <p class="text-4xl">🔍</p>
+    <p class="mt-4 text-lg font-bold text-slate-700">Không tìm thấy flashcard nào</p>
+    @if($search)
+        <a href="{{ route('flashcards') }}" class="mt-2 text-sm text-[#991b1b] hover:underline">Xóa bộ lọc tìm kiếm</a>
+    @endif
+</div>
+@else
+
+{{-- Interactive Flashcard Deck with Alpine.js (batch loading) --}}
+<div x-data="{
+    cards: {{ Js::from($deckBatch) }},
+    total: {{ $deckTotal }},
+    offset: {{ $deckBatch->count() }},
+    lessonSlug: '{{ $lessonSlug ?? '' }}',
+    hskLevel: '{{ $hskLevel ?? '' }}',
+    searchQuery: '{{ $search ?? '' }}',
+    current: 0,
+    flipped: false,
+    done: [],
+    loading: false,
+    sessionLogged: false,
+    sessionStartTime: Date.now(),
+
+    get card() { return this.cards[this.current] ?? null; },
+    get progress() {
+        return this.cards.length
+            ? Math.round(((this.current + 1) / this.cards.length) * 100)
+            : 0;
+    },
+    get hasMore() { return this.offset < this.total; },
+
+    flip() { this.flipped = !this.flipped; },
+
+    async next() {
+        if (!this.done.includes(this.current)) this.done.push(this.current);
+        if (this.current < this.cards.length - 1) {
+            this.flipped = false;
+            setTimeout(() => { this.current++; }, 150);
+            // Pre-fetch next batch when 3 cards from end
+            if (this.current >= this.cards.length - 4 && this.hasMore && !this.loading) {
+                await this.loadMore();
+            }
+        } else if (this.hasMore) {
+            // At end but still have more — load and continue
+            this.flipped = false;
+            await this.loadMore();
+            setTimeout(() => { this.current++; }, 150);
+        } else {
+            this.logSession();
+        }
+    },
+
+    prev() {
+        if (this.current > 0) {
+            this.flipped = false;
+            setTimeout(() => { this.current--; }, 150);
+        }
+    },
+
+    async submitReview(quality) {
+        if (!this.card) return;
+        
+        try {
+            fetch('{{ route('flashcards.review') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    flashcard_id: this.card.id,
+                    quality: quality
+                })
+            });
+        } catch(e) { console.error(e); }
+
+        this.next();
+    },
+
+    speak(text) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'zh-CN';
+            window.speechSynthesis.speak(utterance);
+        }
+    },
+
+    async loadMore() {
+        if (this.loading || !this.hasMore) return;
+        this.loading = true;
+        try {
+            const params = new URLSearchParams({ offset: this.offset });
+            if (this.lessonSlug) params.append('lesson', this.lessonSlug);
+            if (this.hskLevel) params.append('hsk', this.hskLevel);
+            if (this.searchQuery) params.append('q', this.searchQuery);
+            const res = await fetch(`{{ route('flashcards.cards') }}?${params}`);
+            const data = await res.json();
+            this.cards.push(...data.cards);
+            this.offset += data.cards.length;
+        } catch(e) { console.error(e); }
+        this.loading = false;
+    },
+
+    restart() {
+        this.current = 0;
+        this.flipped = false;
+        this.done = [];
+        this.sessionLogged = false;
+        this.sessionStartTime = Date.now();
+    },
+
+    async logSession() {
+        if (this.sessionLogged) return;
+        this.sessionLogged = true;
+        const minutes = Math.max(1, Math.round((Date.now() - this.sessionStartTime) / 60000));
+        try {
+            await fetch('{{ route('flashcards.session') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                },
+                body: JSON.stringify({
+                    duration_minutes: minutes,
+                    cards_reviewed: this.done.length,
+                    lesson_id: this.card?.lesson_id ?? null,
+                }),
+            });
+        } catch(e) {}
+    },
+}" class="space-y-8">
+
+    {{-- Progress bar --}}
+    <div class="flex items-center gap-4">
+        <div class="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
+            <div class="h-2 rounded-full bg-gradient-to-r from-[#991b1b] to-amber-400 transition-all duration-500"
+                :style="`width: ${progress}%`"></div>
+        </div>
+        <span class="shrink-0 text-sm font-semibold text-slate-600">
+            <span x-text="current + 1"></span> / <span x-text="total"></span>
+            <template x-if="loading">
+                <span class="ml-1 inline-block h-3 w-3 animate-spin rounded-full border-2 border-[#991b1b] border-t-transparent"></span>
+            </template>
+        </span>
+    </div>
+
+    {{-- Dot navigation --}}
+    <div class="flex flex-wrap justify-center gap-1.5">
+        <template x-for="(card, idx) in cards" :key="idx">
+            <button @click="current = idx; flipped = false"
+                class="dot"
+                :class="done.includes(idx) ? 'done' : (idx === current ? 'current' : 'future')">
+            </button>
+        </template>
+    </div>
+
+    {{-- Card area --}}
+    <template x-if="card && current < cards.length && done.length < cards.length">
+        <div class="flex flex-col items-center gap-6">
+            {{-- Flip card --}}
+            <div class="flip-card w-full max-w-lg cursor-pointer" style="height: 320px;" @click="flip()">
+                <div class="flip-card-inner" :class="{ flipped }">
+                    {{-- Front: Hanzi + Lesson label --}}
+                    <div class="flip-card-front relative flex flex-col items-center justify-center gap-3 bg-slate-950 p-8 text-white shadow-2xl shadow-slate-950/20">
+                        <span class="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-slate-300"
+                            x-text="card.lesson"></span>
+                        <p class="text-8xl font-black leading-none tracking-tight" x-text="card.hanzi"></p>
+                        <p class="mt-2 text-sm text-slate-400">Bấm để xem nghĩa 👆</p>
+                        
+                        {{-- Speak button --}}
+                        <button @click.stop="speak(card.hanzi)" class="absolute bottom-6 right-6 flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 hover:scale-110 active:scale-95" title="Nghe phát âm">
+                            <i data-lucide="volume-2" class="h-5 w-5"></i>
+                        </button>
+                    </div>
+
+                    {{-- Back: Meaning + Pinyin + Example --}}
+                    <div class="flip-card-back flex flex-col justify-between overflow-hidden bg-white shadow-2xl shadow-slate-950/10">
+                        <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#991b1b] via-amber-400 to-[#111827]"></div>
+                        <div class="flex flex-1 flex-col justify-center gap-4 p-8">
+                            <div>
+                                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-[#991b1b]" x-text="card.pinyin"></p>
+                                <p class="mt-2 text-4xl font-black tracking-tight text-slate-950" x-text="card.meaning"></p>
+                            </div>
+                            <template x-if="card.example">
+                                <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4">
+                                    <p class="text-sm text-slate-500">Ví dụ</p>
+                                    <p class="mt-1 text-base font-semibold text-slate-900" x-text="card.example"></p>
+                                    <p class="mt-0.5 text-xs text-slate-500" x-text="card.example_pinyin"></p>
+                                    <p class="mt-0.5 text-xs text-slate-600 italic" x-text="card.example_meaning"></p>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Navigation buttons --}}
+            <div class="flex flex-wrap items-center justify-center gap-3">
+
+                {{-- Previous --}}
+                <button
+                    @click="prev()"
+                    :disabled="current === 0"
+                    class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-40">
+                    <i data-lucide="arrow-left" class="h-4 w-4"></i>
+                    <span class="hidden sm:inline">Trước</span>
+                </button>
+
+                <template x-if="!flipped">
+                    {{-- Flip card --}}
+                    <button
+                        @click="flip()"
+                        class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-8 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800">
+                        <i data-lucide="eye" class="h-4 w-4"></i>
+                        Xem đáp án
+                    </button>
+                </template>
+
+                <template x-if="flipped">
+                    <div class="flex items-center gap-3">
+                        <button
+                            @click="submitReview('review')"
+                            class="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-5 py-2.5 text-sm font-bold text-orange-600 shadow-sm transition hover:bg-orange-100">
+                            <i data-lucide="rotate-ccw" class="h-4 w-4"></i> Cần ôn lại
+                        </button>
+                        <button
+                            @click="submitReview('known')"
+                            class="inline-flex items-center gap-2 rounded-full bg-emerald-500 px-6 py-2.5 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-emerald-600 shadow-emerald-500/20">
+                            Đã thuộc <i data-lucide="check" class="h-4 w-4"></i>
+                        </button>
+                    </div>
+                </template>
+
+                {{-- Next / Complete --}}
+                <button
+                    @click="next()"
+                    class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-40">
+                    <span class="hidden sm:inline" x-text="current === cards.length - 1 ? 'Xong' : 'Tiếp'"></span>
+                    <i :data-lucide="current === cards.length - 1 ? 'circle-check' : 'arrow-right'" class="h-4 w-4"></i>
+                </button>
+
+            </div>
+        </div>
+    </template>
+
+    {{-- Completion screen --}}
+    <template x-if="done.length >= cards.length">
+        <div class="flex flex-col items-center gap-6 rounded-[2rem] bg-slate-950 py-16 text-center text-white shadow-2xl shadow-slate-950/20">
+            <p class="text-6xl">🎉</p>
+            <div>
+                <p class="text-sm uppercase tracking-[0.28em] text-amber-300/80">Xong rồi!</p>
+                <h2 class="mt-2 text-3xl font-black">Bạn đã ôn hết <span x-text="cards.length"></span> thẻ!</h2>
+                <p class="mt-3 text-slate-400">Phiên học của bạn đã được ghi nhận tự động.</p>
+            </div>
+            <div class="flex gap-3">
+                <button @click="restart()"
+                    class="rounded-full border border-white/20 bg-white/10 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/20">
+                    🔄 Học lại từ đầu
+                </button>
+                <a href="{{ route('quiz', $lessonSlug ? ['lesson' => $lessonSlug] : []) }}"
+                    class="rounded-full bg-amber-300 px-6 py-3 text-sm font-bold text-slate-950 transition hover:bg-amber-200">
+                    🎯 Làm Quiz kiểm tra →
+                </a>
+            </div>
+        </div>
+    </template>
+</div>
+
+{{-- Static card grid with pagination --}}
+<section class="mt-12">
+    <div class="mb-5 flex items-center justify-between flex-wrap gap-3">
+        <p class="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">
+            Toàn bộ {{ $deckTotal }} thẻ trong bộ này
+        </p>
+        <p class="text-sm text-slate-400">
+            Trang {{ $flashcards->currentPage() }} / {{ $flashcards->lastPage() }}
+        </p>
+    </div>
+
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        @foreach($flashcards as $card)
+        <article class="group relative overflow-hidden rounded-[2rem] border border-white/80 bg-white/80 p-6 shadow-xl shadow-slate-900/5 backdrop-blur transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-slate-900/10">
+            <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#991b1b] via-amber-400 to-[#111827]"></div>
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <p class="text-sm font-semibold uppercase tracking-[0.22em] text-[#991b1b]">{{ $card->pinyin }}</p>
+                    <h2 class="mt-4 text-5xl font-black tracking-tight text-slate-950">{{ $card->hanzi }}</h2>
+                </div>
+                @if($card->lesson)
+                <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-900">{{ $card->lesson->title }}</span>
+                @endif
+            </div>
+
+            <div class="mt-6 rounded-3xl bg-slate-950 p-4 text-white">
+                <p class="text-sm text-slate-300">Nghĩa</p>
+                <p class="mt-1 text-2xl font-bold">{{ $card->meaning }}</p>
+            </div>
+
+            @if($card->example)
+            <div class="mt-4 rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                <p class="text-sm text-slate-500">Ví dụ</p>
+                <p class="mt-2 text-base leading-7 text-slate-700">{{ $card->example }}</p>
+                @if($card->example_pinyin)
+                <p class="mt-1 text-xs text-slate-500">{{ $card->example_pinyin }}</p>
+                @endif
+                @if($card->example_meaning)
+                <p class="mt-0.5 text-xs italic text-slate-600">{{ $card->example_meaning }}</p>
+                @endif
+            </div>
+            @endif
+        </article>
+        @endforeach
+    </div>
+
+    {{-- Pagination links --}}
+    @if($flashcards->hasPages())
+    <div class="mt-8 flex items-center justify-center gap-2">
+        {{-- Prev --}}
+        @if($flashcards->onFirstPage())
+        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed">
+            <i data-lucide="chevron-left" class="h-4 w-4"></i>
+        </span>
+        @else
+        <a href="{{ $flashcards->previousPageUrl() }}"
+           class="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-[#991b1b] hover:text-[#991b1b]">
+            <i data-lucide="chevron-left" class="h-4 w-4"></i>
+        </a>
+        @endif
+
+        {{-- Page numbers --}}
+        @foreach($flashcards->getUrlRange(max(1, $flashcards->currentPage() - 2), min($flashcards->lastPage(), $flashcards->currentPage() + 2)) as $page => $url)
+        <a href="{{ $url }}"
+           class="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-bold transition
+                  {{ $page == $flashcards->currentPage()
+                      ? 'bg-[#991b1b] text-white shadow-md shadow-red-900/20'
+                      : 'border border-slate-200 bg-white text-slate-700 hover:border-[#991b1b] hover:text-[#991b1b]' }}">
+            {{ $page }}
+        </a>
+        @endforeach
+
+        {{-- Next --}}
+        @if($flashcards->hasMorePages())
+        <a href="{{ $flashcards->nextPageUrl() }}"
+           class="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-[#991b1b] hover:text-[#991b1b]">
+            <i data-lucide="chevron-right" class="h-4 w-4"></i>
+        </a>
+        @else
+        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed">
+            <i data-lucide="chevron-right" class="h-4 w-4"></i>
+        </span>
+        @endif
+    </div>
+
+    <p class="mt-3 text-center text-xs text-slate-400">
+        Hiển thị {{ $flashcards->firstItem() }}–{{ $flashcards->lastItem() }} trong tổng số {{ $deckTotal }} thẻ
+    </p>
+    @endif
+</section>
+@endif
+
+<section class="mt-8 rounded-[2rem] bg-[#991b1b] p-8 text-white shadow-2xl shadow-red-950/15">
+    <div class="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
+        <div>
+            <p class="text-sm font-semibold uppercase tracking-[0.28em] text-red-100/80">Ôn tập nhanh</p>
+            <h2 class="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Nhìn một lần, lướt một vòng, nhớ lâu hơn</h2>
+            <p class="mt-4 max-w-2xl text-white/80 leading-7">
+                Flashcard phù hợp để cậu ôn từ vựng hằng ngày trước khi chuyển sang quiz kiểm tra lại kiến thức.
+            </p>
+        </div>
+        <a href="{{ route('quiz', $lessonSlug ? ['lesson' => $lessonSlug] : []) }}"
+            class="inline-flex items-center justify-center rounded-full bg-amber-300 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 hover:bg-amber-200">
+            Đi sang quiz →
+        </a>
+    </div>
+</section>
+@endsection

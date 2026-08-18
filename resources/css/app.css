@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Fix table styling for prose content */
+.prose table {
+    border-collapse: separate !important;
+    border-spacing: 0;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    width: 100%;
+}
+.prose thead {
+    background-color: #f8fafc;
+}
+.prose th, .prose td {
+    border: 1px solid #e2e8f0 !important;
+    padding: 0.75rem 1rem !important;
+}
+.prose th {
+    font-weight: 700 !important;
+    color: #334155 !important;
+    text-transform: uppercase;
+    font-size: 0.875rem;
+    letter-spacing: 0.05em;
+}
+.prose tbody tr:nth-child(even) {
+    background-color: #f8fafc;
+}
+.prose tbody tr:hover {
+    background-color: #f1f5f9;
+}
+
+/* Tăng khoảng cách dòng và đoạn văn cho dễ đọc */
+.prose p, .prose li {
+    line-height: 1.8 !important;
+    margin-bottom: 1.25em !important;
+}
+.prose h2, .prose h3 {
+    margin-top: 2em !important;
+    margin-bottom: 1em !important;
+}
