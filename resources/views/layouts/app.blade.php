@@ -131,26 +131,23 @@
         {{-- Mobile Top Bar --}}
         <div class="border-b border-white/70 bg-white/70 px-4 py-3 backdrop-blur lg:hidden">
             <div class="flex items-center justify-between gap-3">
-                <a href="{{ route('home') }}" class="flex items-center gap-2.5">
+                <a href="{{ route('home') }}" class="flex shrink-0 items-center gap-2.5">
                     <div class="grid h-8 w-8 place-items-center rounded-xl bg-[#991b1b] text-white">
                         <span class="text-sm font-black">中</span>
                     </div>
-                    <div>
-                        <p class="text-xs font-bold text-[#991b1b]">Chinese Deck</p>
-                    </div>
                 </a>
-                <div class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-600">
-                    <a href="{{ route('dashboard') }}" class="rounded-full px-2.5 py-1.5 {{ request()->routeIs('dashboard') ? 'bg-[#991b1b] text-white' : 'bg-slate-100' }}">Dashboard</a>
-                    <a href="{{ route('flashcards') }}" class="rounded-full px-2.5 py-1.5 {{ request()->routeIs('flashcards') ? 'bg-[#991b1b] text-white' : 'bg-slate-100' }}">Flashcard</a>
-                    <a href="{{ route('quiz') }}" class="rounded-full px-2.5 py-1.5 {{ request()->routeIs('quiz') ? 'bg-[#991b1b] text-white' : 'bg-slate-100' }}">Quiz</a>
-                    <a href="{{ route('hsk.overview') }}" class="rounded-full px-2.5 py-1.5 {{ request()->routeIs('hsk.*') ? 'bg-[#991b1b] text-white' : 'bg-slate-100' }}">HSK</a>
+                <div class="flex flex-1 items-center gap-1.5 overflow-x-auto text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-600 pb-1" style="scrollbar-width: none;">
+                    <a href="{{ route('dashboard') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('dashboard') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">Tổng quan</a>
+                    <a href="{{ route('flashcards') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('flashcards') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">Thẻ nhớ</a>
+                    <a href="{{ route('quiz') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('quiz') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">Kiểm tra</a>
+                    <a href="{{ route('hsk.overview') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('hsk.*') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">HSK</a>
                     @if ($authUser)
-                    <form method="POST" action="{{ route('logout') }}" class="inline">
+                    <form method="POST" action="{{ route('logout') }}" class="inline shrink-0">
                         @csrf
-                        <button type="submit" class="rounded-full bg-red-50 text-red-700 px-2 py-1 text-[11px] font-bold">Thoát</button>
+                        <button type="submit" class="rounded-full bg-red-50 text-red-700 px-3 py-1.5 text-[10px] sm:text-xs font-bold hover:bg-red-100 transition">Thoát</button>
                     </form>
                     @else
-                    <a href="{{ route('register') }}" class="rounded-full bg-[#991b1b] text-white px-2.5 py-1.5 text-[11px] font-bold">Đăng ký</a>
+                    <a href="{{ route('register') }}" class="shrink-0 rounded-full bg-[#991b1b] text-white px-3 py-1.5 text-[10px] sm:text-xs font-bold shadow-md">Đăng ký</a>
                     @endif
                 </div>
             </div>
