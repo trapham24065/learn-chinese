@@ -329,13 +329,21 @@
                             Bấm để lật
                         </p>
 
-                        {{-- Speak --}}
-                        <button
-                            @click.stop="speak(card?.hanzi)"
-                            class="absolute bottom-4 right-4 flex h-10 w-10 items-center justify-center rounded-full bg-black/20 text-white transition hover:scale-110 hover:bg-black/30 active:scale-95"
-                            title="Nghe phát âm">
-                            <i data-lucide="volume-2" class="h-4 w-4"></i>
-                        </button>
+                        {{-- Actions (Write & Speak) --}}
+                        <div class="absolute bottom-4 right-4 flex items-center gap-2">
+                            <button
+                                @click.stop="$dispatch('open-writer', card?.hanzi)"
+                                class="flex h-10 w-10 items-center justify-center rounded-full bg-black/20 text-white transition hover:scale-110 hover:bg-black/30 active:scale-95"
+                                title="Tập viết chữ">
+                                <i data-lucide="pen-tool" class="h-4 w-4"></i>
+                            </button>
+                            <button
+                                @click.stop="speak(card?.hanzi)"
+                                class="flex h-10 w-10 items-center justify-center rounded-full bg-black/20 text-white transition hover:scale-110 hover:bg-black/30 active:scale-95"
+                                title="Nghe phát âm">
+                                <i data-lucide="volume-2" class="h-4 w-4"></i>
+                            </button>
+                        </div>
 
                     </div>
 
@@ -479,5 +487,115 @@
         </a>
     </div>
 </section>
+
+{{-- Hanzi Writer Modal --}}
+<div x-data="{
+        isOpen: false,
+        word: '',
+        chars: [],
+        currentChar: '',
+        writer: null,
+        openModal(word) {
+            this.word = word;
+            this.chars = Array.from(word);
+            this.currentChar = this.chars[0];
+            this.isOpen = true;
+            this.$nextTick(() => {
+                this.initWriter();
+            });
+        },
+        closeModal() {
+            this.isOpen = false;
+            if (this.writer) {
+                document.getElementById('hanzi-character-target').innerHTML = '';
+                this.writer = null;
+            }
+        },
+        setChar(char) {
+            this.currentChar = char;
+            this.initWriter();
+        },
+        initWriter() {
+            const container = document.getElementById('hanzi-character-target');
+            if(!container) return;
+            container.innerHTML = '';
+            
+            if(window.HanziWriter) {
+                this.writer = window.HanziWriter.create('hanzi-character-target', this.currentChar, {
+                    width: 300,
+                    height: 300,
+                    padding: 20,
+                    strokeAnimationSpeed: 1,
+                    delayBetweenStrokes: 1000,
+                    showOutline: true,
+                    strokeColor: '#991b1b',
+                    highlightColor: '#10b981',
+                    drawingColor: '#333333',
+                    drawingWidth: 15,
+                });
+                this.writer.quiz();
+            }
+        },
+        quiz() {
+            if(this.writer) this.writer.quiz();
+        },
+        animate() {
+            if(this.writer) {
+                this.writer.animateCharacter({
+                    onComplete: () => {
+                        setTimeout(() => this.writer.quiz(), 1000);
+                    }
+                });
+            }
+        }
+    }"
+    @open-writer.window="openModal($event.detail)"
+    x-show="isOpen"
+    style="display: none;"
+    x-transition.opacity
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+    
+    <div @click.outside="closeModal()" x-show="isOpen" x-transition.scale.90 class="relative w-full max-w-sm rounded-[2rem] bg-white p-6 shadow-2xl">
+        <button @click="closeModal()" class="absolute right-4 top-4 rounded-full p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600">
+            <i data-lucide="x" class="h-5 w-5"></i>
+        </button>
+
+        <h3 class="mb-4 text-center text-lg font-bold text-slate-800">Tập viết chữ</h3>
+
+        {{-- Multi-character selection --}}
+        <template x-if="chars.length > 1">
+            <div class="mb-6 flex justify-center gap-2">
+                <template x-for="char in chars" :key="char">
+                    <button @click="setChar(char)" 
+                            :class="char === currentChar ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                            class="h-12 w-12 rounded-xl text-2xl font-bold transition">
+                        <span x-text="char"></span>
+                    </button>
+                </template>
+            </div>
+        </template>
+
+        <div class="flex justify-center">
+            {{-- Draw grid background --}}
+            <div class="relative overflow-hidden rounded-xl border-2 border-amber-200/50 bg-amber-50 shadow-inner" style="width: 300px; height: 300px;">
+                {{-- Grid lines --}}
+                <div class="absolute inset-0 top-1/2 border-b border-dashed border-amber-200/60"></div>
+                <div class="absolute inset-0 left-1/2 border-r border-dashed border-amber-200/60"></div>
+                
+                {{-- Writer Target --}}
+                <div id="hanzi-character-target" class="absolute inset-0 cursor-crosshair"></div>
+            </div>
+        </div>
+
+        <div class="mt-6 flex justify-center gap-3">
+            <button @click="quiz()" class="flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-200">
+                <i data-lucide="refresh-ccw" class="h-4 w-4"></i> Xóa bảng
+            </button>
+            <button @click="animate()" class="flex items-center gap-2 rounded-full bg-amber-100 px-4 py-2 text-sm font-semibold text-amber-700 transition hover:bg-amber-200">
+                <i data-lucide="play" class="h-4 w-4"></i> Gợi ý nét
+            </button>
+        </div>
+    </div>
+</div>
 
 @endsection
