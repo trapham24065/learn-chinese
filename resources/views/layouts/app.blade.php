@@ -144,10 +144,10 @@
                     @if ($authUser)
                     <form method="POST" action="{{ route('logout') }}" class="inline shrink-0">
                         @csrf
-                        <button type="submit" class="rounded-full bg-red-50 text-red-700 px-3 py-1.5 text-[10px] sm:text-xs font-bold hover:bg-red-100 transition">Thoát</button>
+                        <button type="submit" class="rounded-full bg-red-50 text-red-700 px-3 py-1.5 text-[10px] sm:text-xs font-bold whitespace-nowrap hover:bg-red-100 transition">Thoát</button>
                     </form>
                     @else
-                    <a href="{{ route('register') }}" class="shrink-0 rounded-full bg-[#991b1b] text-white px-3 py-1.5 text-[10px] sm:text-xs font-bold shadow-md">Đăng ký</a>
+                    <a href="{{ route('register') }}" class="shrink-0 whitespace-nowrap rounded-full bg-[#991b1b] text-white px-3 py-1.5 text-[10px] sm:text-xs font-bold shadow-md">Đăng ký</a>
                     @endif
                 </div>
             </div>
