@@ -136,7 +136,7 @@
                         <span class="text-sm font-black">中</span>
                     </div>
                 </a>
-                <div class="flex flex-1 items-center gap-1.5 overflow-x-auto text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-600 pb-1" style="scrollbar-width: none;">
+                <div class="flex flex-1 min-w-0 items-center gap-1.5 overflow-x-auto text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-600 pb-1" style="scrollbar-width: none;">
                     <a href="{{ route('dashboard') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('dashboard') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">Tổng quan</a>
                     <a href="{{ route('flashcards') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('flashcards') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">Thẻ nhớ</a>
                     <a href="{{ route('quiz') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('quiz') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">Kiểm tra</a>
