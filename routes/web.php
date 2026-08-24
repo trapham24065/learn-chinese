@@ -6,6 +6,7 @@ use App\Http\Controllers\HskController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuizController;
+use App\Http\Controllers\TTSController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -37,6 +38,8 @@ Route::post('/flashcards/review', [FlashcardController::class, 'review'])->name(
 
 Route::get('/quiz', [QuizController::class, 'index'])->name('quiz');
 Route::post('/quiz/submit', [QuizController::class, 'submit'])->name('quiz.submit');
+
+Route::post('/tts', [TTSController::class, 'generate'])->name('tts.generate');
 
 Route::get('/hsk', [HskController::class, 'overview'])->name('hsk.overview');
 Route::get('/hsk/{level}', [HskController::class, 'show'])->where('level', '[1-6]')->name('hsk.show');

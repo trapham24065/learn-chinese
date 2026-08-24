@@ -273,13 +273,8 @@
     },
 
     speak(text) {
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'zh-CN';
-
-            window.speechSynthesis.speak(utterance);
+        if (text) {
+            window.playChineseVoice(text);
         }
     }
 }" class="flex flex-col items-center gap-5">

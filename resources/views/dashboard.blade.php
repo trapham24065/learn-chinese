@@ -129,12 +129,7 @@
                      this.submitting = false;
                  },
                  speak(text) {
-                     if ('speechSynthesis' in window) {
-                         window.speechSynthesis.cancel();
-                         const utterance = new SpeechSynthesisUtterance(text);
-                         utterance.lang = 'zh-CN';
-                         window.speechSynthesis.speak(utterance);
-                     }
+                     window.playChineseVoice(text);
                  }
              }"
              x-show="cards.length > 0">

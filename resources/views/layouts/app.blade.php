@@ -157,6 +157,43 @@
             @yield('content')
         </div>
     </main>
+    
+    <script>
+        window.playChineseVoice = async function(text) {
+            if (!text) return;
+            
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const response = await fetch('/tts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ text: text })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.audio) {
+                        const audio = new Audio(data.audio);
+                        audio.play();
+                        return;
+                    }
+                }
+                throw new Error('Azure TTS API failed');
+            } catch (e) {
+                console.warn('Sử dụng giọng đọc dự phòng của trình duyệt...', e);
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = 'zh-CN';
+                    window.speechSynthesis.speak(utterance);
+                }
+            }
+        };
+    </script>
 </body>
 
 </html>
