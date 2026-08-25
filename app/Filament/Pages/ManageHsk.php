@@ -10,6 +10,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\RichEditor;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
@@ -29,6 +30,7 @@ class ManageHsk extends Page
     protected static ?int $navigationSort = 10;
 
     public int $activeLevel = 1;
+    public string $searchFlashcard = '';
 
     public static array $levelMeta = [
         1 => ['label' => 'HSK 1', 'color' => '#16a34a', 'desc' => 'Sơ cấp – 150 từ'],
@@ -44,10 +46,9 @@ class ManageHsk extends Page
     {
         $summary = [];
         foreach (self::$levelMeta as $lvl => $meta) {
-            $summary[$lvl] = array_merge($meta, [
-                'lesson_count'    => Lesson::where('hsk_level', $lvl)->count(),
-                'flashcard_count' => Flashcard::where('hsk_level', $lvl)->count(),
-            ]);
+            $summary[$lvl] = $meta;
+            $summary[$lvl]['lesson_count'] = Lesson::where('hsk_level', $lvl)->count();
+            $summary[$lvl]['flashcard_count'] = Flashcard::where('hsk_level', $lvl)->count();
         }
         return $summary;
     }
@@ -64,13 +65,20 @@ class ManageHsk extends Page
     /** Unassigned lessons (hsk_level = null) */
     public function getUnassignedLessons(): Collection
     {
-        return Lesson::whereNull('hsk_level')->orderBy('sort_order')->get();
+        return Lesson::whereNull('hsk_level')->orderBy('created_at', 'desc')->get();
     }
 
     /** Flashcards for the active level */
     public function getFlashcards(): Collection
     {
         return Flashcard::where('hsk_level', $this->activeLevel)
+            ->when($this->searchFlashcard, function ($query) {
+                $query->where(function ($q) {
+                    $q->where('hanzi', 'like', '%' . $this->searchFlashcard . '%')
+                      ->orWhere('pinyin', 'like', '%' . $this->searchFlashcard . '%')
+                      ->orWhere('meaning', 'like', '%' . $this->searchFlashcard . '%');
+                });
+            })
             ->orderBy('sort_order')
             ->with('lesson')
             ->get();
@@ -79,13 +87,14 @@ class ManageHsk extends Page
     /** Unassigned flashcards (hsk_level = null) */
     public function getUnassignedFlashcards(): Collection
     {
-        return Flashcard::whereNull('hsk_level')->orderBy('id')->with('lesson')->take(30)->get();
+        return Flashcard::whereNull('hsk_level')->orderBy('created_at', 'desc')->limit(50)->get();
     }
 
     /** Switch active tab */
     public function setLevel(int $level): void
     {
         $this->activeLevel = $level;
+        $this->searchFlashcard = '';
     }
 
     // ── Lesson Actions ──────────────────────────────────────────────────────────
@@ -96,8 +105,10 @@ class ManageHsk extends Page
             ->label('Sửa bài học')
             ->icon('heroicon-o-pencil-square')
             ->form([
+                TextInput::make('slug')->label('Slug')->required(),
                 TextInput::make('title')->label('Tiêu đề')->required(),
-                Textarea::make('summary')->label('Tóm tắt')->rows(2),
+                Textarea::make('summary')->label('Tóm tắt')->rows(2)->columnSpanFull(),
+                RichEditor::make('content')->label('Nội dung bài học')->columnSpanFull(),
                 Select::make('difficulty')->label('Mức độ')->options([
                     'starter'      => 'Mới bắt đầu',
                     'intermediate' => 'Trung bình',
@@ -107,6 +118,8 @@ class ManageHsk extends Page
                     collect(self::$levelMeta)->map(fn($m) => $m['label'] . ' – ' . $m['desc'])
                 )->nullable()->placeholder('Chưa phân loại'),
                 TextInput::make('estimated_minutes')->label('Thời lượng (phút)')->numeric(),
+                TextInput::make('sort_order')->label('Thứ tự hiển thị')->numeric(),
+                TextInput::make('accent_color')->label('Màu nhấn'),
                 Toggle::make('is_published')->label('Đã xuất bản'),
             ])
             ->fillForm(fn(array $arguments) => Lesson::find($arguments['id'])?->toArray() ?? [])
@@ -179,6 +192,7 @@ class ManageHsk extends Page
                 Select::make('lesson_id')->label('Bài học')->options(
                     Lesson::orderBy('sort_order')->pluck('title', 'id')
                 )->nullable()->placeholder('Không gán bài học'),
+                TextInput::make('sort_order')->label('Thứ tự')->numeric(),
                 Toggle::make('is_active')->label('Hiển thị'),
             ])
             ->fillForm(fn(array $arguments) => Flashcard::find($arguments['id'])?->toArray() ?? [])

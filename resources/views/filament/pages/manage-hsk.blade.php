@@ -142,14 +142,17 @@
     <div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.875rem;">
             <div style="display:flex;align-items:center;gap:.5rem;">
-                <div style="width:28px;height:28px;border-radius:.625rem;background:{{ $color }};display:grid;place-items:center;font-size:.8rem;">🃏</div>
+                <div style="width:28px;height:28px;border-radius:.625rem;background:{{ $color }};display:grid;place-items:center;font-size:.8rem;">🗂️</div>
                 <span style="font-size:.7rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#374151;">Flashcard</span>
                 <span style="font-size:.65rem;font-weight:700;padding:1px 8px;border-radius:99px;background:#f3f4f6;color:#6b7280;">{{ $flashcards->count() }}</span>
             </div>
-            <a href="{{ route('filament.admin.resources.flashcards.create') }}"
-               style="display:inline-flex;align-items:center;gap:.375rem;padding:.375rem .875rem;border-radius:.625rem;border:1px solid #e5e7eb;background:white;font-size:.7rem;font-weight:700;color:#374151;text-decoration:none;box-shadow:0 1px 3px rgba(0,0,0,.05);">
-                + Tạo flashcard
-            </a>
+            <div style="display:flex;align-items:center;gap:.5rem;">
+                <input type="text" wire:model.live.debounce.300ms="searchFlashcard" placeholder="Tìm kiếm..." style="padding:.375rem .75rem;border-radius:.625rem;border:1px solid #e5e7eb;font-size:.75rem;outline:none;width:150px;transition:all .2s;" onfocus="this.style.borderColor='{{ $color }}';this.style.boxShadow='0 0 0 2px {{ $color }}33'" onblur="this.style.borderColor='#e5e7eb';this.style.boxShadow='none'">
+                <a href="{{ route('filament.admin.resources.flashcards.create') }}"
+                   style="display:inline-flex;align-items:center;gap:.375rem;padding:.375rem .875rem;border-radius:.625rem;border:1px solid #e5e7eb;background:white;font-size:.7rem;font-weight:700;color:#374151;text-decoration:none;box-shadow:0 1px 3px rgba(0,0,0,.05);">
+                    + Tạo flashcard
+                </a>
+            </div>
         </div>
 
         <div style="display:flex;flex-direction:column;gap:.625rem;max-height:600px;overflow-y:auto;padding-right:0.5rem;">
