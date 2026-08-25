@@ -142,7 +142,7 @@
     <div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.875rem;">
             <div style="display:flex;align-items:center;gap:.5rem;">
-                <div style="width:28px;height:28px;border-radius:.625rem;background:{{ $color }};display:grid;place-items:center;font-size:.8rem;">🗂️</div>
+                <div style="width:28px;height:28px;border-radius:.625rem;background:{{ $color }};display:grid;place-items:center;font-size:.8rem;">🃏</div>
                 <span style="font-size:.7rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#374151;">Flashcard</span>
                 <span style="font-size:.65rem;font-weight:700;padding:1px 8px;border-radius:99px;background:#f3f4f6;color:#6b7280;">{{ $flashcards->count() }}</span>
             </div>
@@ -152,17 +152,76 @@
             </a>
         </div>
 
-        <div style="border-radius:1rem;border:1px solid #f1f5f9;background:white;padding:2.5rem 2rem;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.04);">
-            <div style="font-size:3rem;margin-bottom:1rem;">🗃️</div>
-            <h3 style="font-size:1.1rem;font-weight:800;color:#111827;">{{ $flashcards->count() }} thẻ từ vựng</h3>
-            <p style="font-size:.8rem;color:#6b7280;margin-top:.5rem;margin-bottom:1.5rem;line-height:1.5;">Hệ thống đã chuyển danh sách flashcard sang trang quản lý riêng biệt để đảm bảo hiệu suất và dễ tìm kiếm hơn.</p>
-            <a href="{{ route('filament.admin.resources.flashcards.index') }}?tableFilters[hsk_level][value]={{ $activeLevel }}" 
-               style="display:inline-flex;align-items:center;gap:0.5rem;padding:.75rem 1.5rem;border-radius:99px;background:{{ $color }};color:white;font-size:.85rem;font-weight:700;text-decoration:none;transition:all .2s;box-shadow:0 4px 12px {{ $color }}40;"
-               onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
-                Quản lý thẻ {{ $meta['label'] }} <svg style="width:16px;height:16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-            </a>
+        <div style="display:flex;flex-direction:column;gap:.625rem;max-height:600px;overflow-y:auto;padding-right:0.5rem;">
+            @forelse($flashcards as $fc)
+            <div style="border-radius:1rem;border:1px solid #f1f5f9;background:white;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+                <div style="display:flex;align-items:stretch;">
+                    {{-- Hanzi block --}}
+                    <div style="width:3.5rem;flex-shrink:0;background:{{ $color }};display:flex;align-items:center;justify-content:center;font-weight:900;color:white;font-size:{{ mb_strlen($fc->hanzi) > 2 ? '1rem' : '1.4rem' }};">
+                        {{ $fc->hanzi }}
+                    </div>
+                    <div style="padding:.75rem 1rem;flex:1;min-width:0;">
+                        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem;">
+                            <div style="min-width:0;flex:1;">
+                                <div style="font-size:.65rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:{{ $color }};">{{ $fc->pinyin }}</div>
+                                <div style="font-size:.9rem;font-weight:800;color:#111827;margin-top:1px;">{{ $fc->meaning }}</div>
+                                @if($fc->example)
+                                <div style="font-size:.68rem;color:#9ca3af;margin-top:3px;font-style:italic;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">{{ $fc->example }}</div>
+                                @endif
+                            </div>
+                            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.3rem;flex-shrink:0;">
+                                @if($fc->is_active)
+                                <span style="font-size:.6rem;font-weight:700;padding:2px 7px;border-radius:99px;background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;white-space:nowrap;">Hiển thị</span>
+                                @else
+                                <span style="font-size:.6rem;font-weight:700;padding:2px 7px;border-radius:99px;background:#f9fafb;color:#9ca3af;border:1px solid #e5e7eb;white-space:nowrap;">Ẩn</span>
+                                @endif
+                                @if($fc->lesson)
+                                <span style="font-size:.6rem;font-weight:600;padding:2px 6px;border-radius:6px;background:#f8fafc;border:1px solid #e2e8f0;color:#64748b;white-space:nowrap;max-width:90px;overflow:hidden;text-overflow:ellipsis;">{{ $fc->lesson->title }}</span>
+                                @endif
+                            </div>
+                        </div>
+                        <div style="margin-top:.625rem;padding-top:.5rem;border-top:1px solid #f8fafc;display:flex;flex-wrap:wrap;gap:.5rem;">
+                            {{ ($this->editFlashcardAction)(['id' => $fc->id]) }}
+                            {{ ($this->moveFlashcardAction)(['id' => $fc->id, 'current_level' => $activeLevel]) }}
+                            {{ ($this->deleteFlashcardAction)(['id' => $fc->id]) }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @empty
+            <div style="border-radius:1rem;border:2px dashed #e5e7eb;padding:2.5rem 1rem;text-align:center;color:#9ca3af;">
+                <div style="font-size:2rem;margin-bottom:.5rem;">🃏</div>
+                <p style="font-size:.8rem;font-weight:600;">Chưa có flashcard nào</p>
+                <p style="font-size:.7rem;margin-top:.25rem;">Tạo mới hoặc gán từ mục bên dưới.</p>
+            </div>
+            @endforelse
         </div>
+
+        @if($unassignedFc->isNotEmpty())
+        <div style="margin-top:1.25rem;">
+            <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem;">
+                <div style="flex:1;height:1px;background:#e5e7eb;"></div>
+                <span style="font-size:.6rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#9ca3af;white-space:nowrap;">Chưa gán HSK ({{ $unassignedFc->count() }})</span>
+                <div style="flex:1;height:1px;background:#e5e7eb;"></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:.375rem;max-height:400px;overflow-y:auto;padding-right:0.5rem;">
+                @foreach($unassignedFc as $fc)
+                <div style="display:flex;align-items:center;justify-content:space-between;border-radius:.75rem;border:1.5px dashed #e5e7eb;background:#fafafa;padding:.5rem .875rem;gap:.75rem;">
+                    <div style="display:flex;align-items:center;gap:.625rem;min-width:0;flex:1;">
+                        <div style="width:2.25rem;height:2.25rem;flex-shrink:0;border-radius:.5rem;background:#f3f4f6;display:grid;place-items:center;font-size:.9rem;font-weight:900;color:#374151;">{{ $fc->hanzi }}</div>
+                        <div style="min-width:0;">
+                            <div style="font-size:.72rem;font-weight:700;color:#374151;">{{ $fc->pinyin }}</div>
+                            <div style="font-size:.65rem;color:#9ca3af;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">{{ $fc->meaning }}</div>
+                        </div>
+                    </div>
+                    {{ ($this->assignFlashcardAction)(['id' => $fc->id]) }}
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
     </div>
+
 </div>
 </div>
 </x-filament-panels::page>
