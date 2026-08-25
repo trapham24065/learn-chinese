@@ -1,4 +1,7 @@
 @if (session()->has('success') || session()->has('error'))
+    <script>
+        alert("Thông báo: {{ session('success') ?? session('error') }}");
+    </script>
     <div x-data="{ show: true }" 
          x-show="show" 
          x-init="setTimeout(() => show = false, 3000)"
