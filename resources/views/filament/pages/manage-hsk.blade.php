@@ -151,6 +151,17 @@
             </a>
         </div>
 
-
+        <div style="border-radius:1rem;border:1px solid #f1f5f9;background:white;padding:2.5rem 2rem;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+            <div style="font-size:3rem;margin-bottom:1rem;">🗃️</div>
+            <h3 style="font-size:1.1rem;font-weight:800;color:#111827;">{{ $flashcards->count() }} thẻ từ vựng</h3>
+            <p style="font-size:.8rem;color:#6b7280;margin-top:.5rem;margin-bottom:1.5rem;line-height:1.5;">Hệ thống đã chuyển danh sách flashcard sang trang quản lý riêng biệt để đảm bảo hiệu suất và dễ tìm kiếm hơn.</p>
+            <a href="{{ route('filament.admin.resources.flashcards.index') }}?tableFilters[hsk_level][value]={{ $activeLevel }}" 
+               style="display:inline-flex;align-items:center;gap:0.5rem;padding:.75rem 1.5rem;border-radius:99px;background:{{ $color }};color:white;font-size:.85rem;font-weight:700;text-decoration:none;transition:all .2s;box-shadow:0 4px 12px {{ $color }}40;"
+               onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                Quản lý thẻ {{ $meta['label'] }} <svg style="width:16px;height:16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </a>
+        </div>
+    </div>
+</div>
 </div>
 </x-filament-panels::page>

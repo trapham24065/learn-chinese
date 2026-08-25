@@ -117,7 +117,7 @@ class HskController extends Controller
             ->where('is_active', true)
             ->with('lesson')
             ->orderBy('sort_order')
-            ->get();
+            ->paginate(24);
 
         // Per-lesson progress for this student
         $progressMap = [];
