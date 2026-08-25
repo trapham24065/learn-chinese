@@ -31,6 +31,15 @@
             {{ $slot }}
         </div>
     </div>
+    <x-toast />
+    <!-- Initialize Lucide Icons -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+    </script>
 </body>
 
 </html>

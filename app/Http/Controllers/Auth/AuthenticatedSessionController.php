@@ -28,7 +28,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->intended(route('dashboard', absolute: false))->with('success', 'Đăng nhập thành công! Chào mừng trở lại.');
     }
 
     /**
@@ -42,6 +42,6 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect('/')->with('success', 'Bạn đã đăng xuất an toàn. Hẹn gặp lại!');
     }
 }
