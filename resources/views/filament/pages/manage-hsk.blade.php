@@ -72,9 +72,9 @@
         </div>
 
         {{-- Lesson cards --}}
-        <div style="display:flex;flex-direction:column;gap:.625rem;">
+        <div style="display:flex;flex-direction:column;gap:.625rem;max-height:600px;overflow-y:auto;padding-right:0.5rem;">
             @forelse($lessons as $lesson)
-            <div style="border-radius:1rem;border:1px solid #f1f5f9;background:white;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+            <div style="flex-shrink:0;border-radius:1rem;border:1px solid #f1f5f9;background:white;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);">
                 {{-- Left accent --}}
                 <div style="display:flex;align-items:stretch;">
                     <div style="width:4px;background:{{ $color }};flex-shrink:0;border-radius:1rem 0 0 1rem;"></div>
@@ -123,9 +123,9 @@
                 <span style="font-size:.6rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#9ca3af;white-space:nowrap;">Chưa gán HSK ({{ $unassigned->count() }})</span>
                 <div style="flex:1;height:1px;background:#e5e7eb;"></div>
             </div>
-            <div style="display:flex;flex-direction:column;gap:.375rem;">
+            <div style="display:flex;flex-direction:column;gap:.375rem;max-height:400px;overflow-y:auto;padding-right:0.5rem;">
                 @foreach($unassigned as $lesson)
-                <div style="display:flex;align-items:center;justify-content:space-between;border-radius:.75rem;border:1.5px dashed #e5e7eb;background:#fafafa;padding:.625rem 1rem;gap:.75rem;">
+                <div style="flex-shrink:0;display:flex;align-items:center;justify-content:space-between;border-radius:.75rem;border:1.5px dashed #e5e7eb;background:#fafafa;padding:.625rem 1rem;gap:.75rem;">
                     <div style="min-width:0;flex:1;">
                         <p style="font-size:.78rem;font-weight:700;color:#374151;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">{{ $lesson->title }}</p>
                         <p style="font-size:.65rem;color:#9ca3af;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">{{ $lesson->summary }}</p>
@@ -154,7 +154,7 @@
 
         <div style="display:flex;flex-direction:column;gap:.625rem;max-height:600px;overflow-y:auto;padding-right:0.5rem;">
             @forelse($flashcards as $fc)
-            <div style="border-radius:1rem;border:1px solid #f1f5f9;background:white;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);">
+            <div style="flex-shrink:0;border-radius:1rem;border:1px solid #f1f5f9;background:white;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);">
                 <div style="display:flex;align-items:stretch;">
                     {{-- Hanzi block --}}
                     <div style="width:3.5rem;flex-shrink:0;background:{{ $color }};display:flex;align-items:center;justify-content:center;font-weight:900;color:white;font-size:{{ mb_strlen($fc->hanzi) > 2 ? '1rem' : '1.4rem' }};">
@@ -206,7 +206,7 @@
             </div>
             <div style="display:flex;flex-direction:column;gap:.375rem;max-height:400px;overflow-y:auto;padding-right:0.5rem;">
                 @foreach($unassignedFc as $fc)
-                <div style="display:flex;align-items:center;justify-content:space-between;border-radius:.75rem;border:1.5px dashed #e5e7eb;background:#fafafa;padding:.5rem .875rem;gap:.75rem;">
+                <div style="flex-shrink:0;display:flex;align-items:center;justify-content:space-between;border-radius:.75rem;border:1.5px dashed #e5e7eb;background:#fafafa;padding:.5rem .875rem;gap:.75rem;">
                     <div style="display:flex;align-items:center;gap:.625rem;min-width:0;flex:1;">
                         <div style="width:2.25rem;height:2.25rem;flex-shrink:0;border-radius:.5rem;background:#f3f4f6;display:grid;place-items:center;font-size:.9rem;font-weight:900;color:#374151;">{{ $fc->hanzi }}</div>
                         <div style="min-width:0;">
