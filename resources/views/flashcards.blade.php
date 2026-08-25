@@ -404,33 +404,42 @@
 
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         @foreach($flashcards as $card)
-        <article class="group relative overflow-hidden rounded-[2rem] border border-white/80 bg-white/80 p-6 shadow-xl shadow-slate-900/5 backdrop-blur transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-slate-900/10">
-            <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#991b1b] via-amber-400 to-[#111827]"></div>
-            <div class="flex items-start justify-between gap-4">
-                <div>
-                    <p class="text-sm font-semibold uppercase tracking-[0.22em] text-[#991b1b]">{{ $card->pinyin }}</p>
-                    <h2 class="mt-4 text-5xl font-black tracking-tight text-slate-950">{{ $card->hanzi }}</h2>
+        <article class="group flex flex-col justify-between overflow-hidden rounded-3xl border border-slate-200/60 bg-white/80 p-5 shadow-sm backdrop-blur transition hover:border-slate-300 hover:shadow-md">
+            <div class="flex items-start justify-between gap-3">
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                        <p class="truncate text-xs font-bold uppercase tracking-widest text-slate-400">{{ $card->pinyin }}</p>
+                        <button type="button" 
+                            x-data="{}" 
+                            @click.prevent="window.playChineseVoice('{{ addslashes($card->hanzi) }}')" 
+                            class="text-slate-300 transition hover:text-blue-500 focus:outline-none">
+                            <i data-lucide="volume-2" class="h-3.5 w-3.5"></i>
+                        </button>
+                    </div>
+                    <div class="mt-1 flex items-baseline gap-3">
+                        <h2 class="text-3xl font-black text-slate-800">{{ $card->hanzi }}</h2>
+                    </div>
+                    <p class="mt-2 text-sm font-medium leading-relaxed text-slate-600 line-clamp-2" title="{{ $card->meaning }}">{{ $card->meaning }}</p>
                 </div>
-                @if($card->lesson)
-                <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-900">{{ $card->lesson->title }}</span>
+                
+                @if($card->hsk_level)
+                <span class="shrink-0 rounded-xl bg-red-50/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-red-600 border border-red-100">
+                    HSK {{ $card->hsk_level }}
+                </span>
+                @elseif($card->lesson)
+                <span class="shrink-0 rounded-xl bg-amber-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-700 border border-amber-100">
+                    L{{ $card->lesson_id }}
+                </span>
                 @endif
-            </div>
-
-            <div class="mt-6 rounded-3xl bg-slate-950 p-4 text-white">
-                <p class="text-sm text-slate-300">Nghĩa</p>
-                <p class="mt-1 text-2xl font-bold">{{ $card->meaning }}</p>
             </div>
 
             @if($card->example)
-            <div class="mt-4 rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                <p class="text-sm text-slate-500">Ví dụ</p>
-                <p class="mt-2 text-base leading-7 text-slate-700">{{ $card->example }}</p>
+            <div class="mt-4 border-t border-slate-100 pt-3">
+                <p class="text-sm font-medium text-slate-800">{{ $card->example }}</p>
                 @if($card->example_pinyin)
-                <p class="mt-1 text-xs text-slate-500">{{ $card->example_pinyin }}</p>
+                <p class="mt-0.5 text-[11px] text-slate-400">{{ $card->example_pinyin }}</p>
                 @endif
-                @if($card->example_meaning)
-                <p class="mt-0.5 text-xs italic text-slate-600">{{ $card->example_meaning }}</p>
-                @endif
+                <p class="mt-1 text-xs text-slate-500 line-clamp-2">{{ $card->example_meaning }}</p>
             </div>
             @endif
         </article>
