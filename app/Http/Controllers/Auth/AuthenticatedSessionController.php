@@ -28,7 +28,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false))->with('success', 'Đăng nhập thành công! Chào mừng trở lại.');
+        return redirect()->route('dashboard')->with('success', 'Đăng nhập thành công! Chào mừng trở lại.');
     }
 
     /**

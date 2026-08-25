@@ -1,4 +1,4 @@
-﻿@if (session()->has('success') || session()->has('error'))
+@if (session()->has('success') || session()->has('error'))
     <div x-data="{ show: true }" 
          x-show="show" 
          x-init="setTimeout(() => show = false, 3000)"
