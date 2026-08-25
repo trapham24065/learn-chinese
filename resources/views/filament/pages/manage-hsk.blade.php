@@ -151,7 +151,7 @@
             </a>
         </div>
 
-        <div style="display:flex;flex-direction:column;gap:.625rem;">
+        <div style="display:flex;flex-direction:column;gap:.625rem;max-height:600px;overflow-y:auto;padding-right:0.5rem;">
             @forelse($flashcards as $fc)
             <div style="border-radius:1rem;border:1px solid #f1f5f9;background:white;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);">
                 <div style="display:flex;align-items:stretch;">
@@ -203,7 +203,7 @@
                 <span style="font-size:.6rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#9ca3af;white-space:nowrap;">Chưa gán HSK ({{ $unassignedFc->count() }})</span>
                 <div style="flex:1;height:1px;background:#e5e7eb;"></div>
             </div>
-            <div style="display:flex;flex-direction:column;gap:.375rem;">
+            <div style="display:flex;flex-direction:column;gap:.375rem;max-height:400px;overflow-y:auto;padding-right:0.5rem;">
                 @foreach($unassignedFc as $fc)
                 <div style="display:flex;align-items:center;justify-content:space-between;border-radius:.75rem;border:1.5px dashed #e5e7eb;background:#fafafa;padding:.5rem .875rem;gap:.75rem;">
                     <div style="display:flex;align-items:center;gap:.625rem;min-width:0;flex:1;">
