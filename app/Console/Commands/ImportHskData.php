@@ -73,7 +73,7 @@ class ImportHskData extends Command
                             Flashcard::create([
                                 'hanzi' => $hanzi,
                                 'pinyin' => $pinyin,
-                                'meaning' => $vietnamese,
+                                'meaning' => \Illuminate\Support\Str::limit($vietnamese, 250, '...'),
                                 'hsk_level' => $level,
                                 'is_active' => true,
                             ]);
@@ -82,7 +82,7 @@ class ImportHskData extends Command
                             Flashcard::create([
                                 'hanzi' => $hanzi,
                                 'pinyin' => $pinyin,
-                                'meaning' => $englishMeanings,
+                                'meaning' => \Illuminate\Support\Str::limit($englishMeanings, 250, '...'),
                                 'hsk_level' => $level,
                                 'is_active' => true,
                             ]);
