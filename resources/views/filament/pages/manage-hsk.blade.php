@@ -11,7 +11,8 @@
     $color        = $cm['color'];
 @endphp
 
-{{-- ══ LEVEL TABS ══ --}}
+<div>
+{{-- 🗂️ LEVEL TABS 🗂️ --}}
 <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:.75rem;margin-bottom:1.5rem;">
     @foreach($summary as $lvl => $meta)
     @php $active = ($activeLevel === $lvl); @endphp
