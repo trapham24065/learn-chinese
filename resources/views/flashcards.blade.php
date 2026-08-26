@@ -120,17 +120,36 @@
 </div>
 
 @if($flashcards->isEmpty())
-<div class="flex flex-col items-center justify-center rounded-[2rem] border border-dashed border-slate-300 py-20 text-center">
-    <p class="text-4xl">🔍</p>
-    <p class="mt-4 text-lg font-bold text-slate-700">Không tìm thấy flashcard nào</p>
-    @if($search)
-        <a href="{{ route('flashcards') }}" class="mt-2 text-sm text-[#991b1b] hover:underline">Xóa bộ lọc tìm kiếm</a>
-    @endif
+<div class="flex flex-col items-center justify-center rounded-[2.5rem] border border-dashed border-slate-300 bg-white/60 py-16 px-6 text-center shadow-sm backdrop-blur">
+    <div class="grid h-16 w-16 place-items-center rounded-3xl bg-red-50 text-[#991b1b]">
+        <i data-lucide="search-x" class="h-8 w-8"></i>
+    </div>
+    <h3 class="mt-4 text-xl font-bold text-slate-800">Không tìm thấy flashcard phù hợp</h3>
+    <p class="mt-2 max-w-md text-sm text-slate-500">
+        @if($search)
+            Không có thẻ nào khớp với từ khóa "<span class="font-semibold text-slate-800">{{ $search }}</span>". Hãy thử tìm từ khác hoặc bỏ bộ lọc.
+        @else
+            Chưa có thẻ từ vựng nào trong mục này. Vui lòng chọn bài học hoặc cấp độ HSK khác.
+        @endif
+    </p>
+    <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
+        @if($search || $lessonSlug || $hskLevel)
+            <a href="{{ route('flashcards') }}" class="inline-flex items-center gap-2 rounded-full bg-[#991b1b] px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-red-800">
+                <i data-lucide="rotate-ccw" class="h-4 w-4"></i>
+                Xem tất cả thẻ
+            </a>
+        @endif
+        <a href="{{ route('hsk.overview') }}" class="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
+            <i data-lucide="graduation-cap" class="h-4 w-4"></i>
+            Xem lộ trình HSK
+        </a>
+    </div>
 </div>
 @else
 
 {{-- Interactive Flashcard Deck with Alpine.js (batch loading) --}}
 <div x-data="{
+    ready: false,
     cards: {{ Js::from($deckBatch) }},
     total: {{ $deckTotal }},
     offset: {{ $deckBatch->count() }},
@@ -249,35 +268,57 @@
             });
         } catch(e) {}
     },
-}" class="space-y-8">
+}" x-init="ready = true" class="space-y-8">
 
-    {{-- Progress bar --}}
-    <div class="flex items-center gap-4">
-        <div class="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
-            <div class="h-2 rounded-full bg-gradient-to-r from-[#991b1b] to-amber-400 transition-all duration-500"
-                :style="`width: ${progress}%`"></div>
+    {{-- Skeleton loader while initializing --}}
+    <div x-show="!ready" class="flex flex-col items-center gap-6">
+        <div class="h-2 w-full rounded-full bg-slate-100 skeleton-shimmer"></div>
+        <div class="flex justify-center gap-1.5">
+            <div class="h-2 w-2 rounded-full bg-slate-200 animate-pulse"></div>
+            <div class="h-2 w-2 rounded-full bg-slate-200 animate-pulse"></div>
+            <div class="h-2 w-2 rounded-full bg-slate-200 animate-pulse"></div>
         </div>
-        <span class="shrink-0 text-sm font-semibold text-slate-600">
-            <span x-text="current + 1"></span> / <span x-text="total"></span>
-            <template x-if="loading">
-                <span class="ml-1 inline-block h-3 w-3 animate-spin rounded-full border-2 border-[#991b1b] border-t-transparent"></span>
+        <div class="w-full max-w-lg rounded-[2rem] bg-slate-900/90 p-8 shadow-2xl h-[320px] flex flex-col items-center justify-center gap-4 skeleton-shimmer">
+            <div class="h-5 w-20 rounded-full bg-white/20"></div>
+            <div class="h-20 w-28 rounded-2xl bg-white/20"></div>
+            <div class="h-4 w-36 rounded-full bg-white/20"></div>
+        </div>
+        <div class="flex items-center gap-3">
+            <div class="h-10 w-24 rounded-full bg-slate-200 skeleton-shimmer"></div>
+            <div class="h-10 w-32 rounded-full bg-slate-300 skeleton-shimmer"></div>
+            <div class="h-10 w-24 rounded-full bg-slate-200 skeleton-shimmer"></div>
+        </div>
+    </div>
+
+    {{-- Real Interactive Deck (shown when ready) --}}
+    <div x-show="ready" x-cloak class="space-y-8">
+        {{-- Progress bar --}}
+        <div class="flex items-center gap-4">
+            <div class="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
+                <div class="h-2 rounded-full bg-gradient-to-r from-[#991b1b] to-amber-400 transition-all duration-500"
+                    :style="`width: ${progress}%`"></div>
+            </div>
+            <span class="shrink-0 text-sm font-semibold text-slate-600">
+                <span x-text="current + 1"></span> / <span x-text="total"></span>
+                <template x-if="loading">
+                    <span class="ml-1 inline-block h-3 w-3 animate-spin rounded-full border-2 border-[#991b1b] border-t-transparent"></span>
+                </template>
+            </span>
+        </div>
+
+        {{-- Dot navigation --}}
+        <div class="flex flex-wrap justify-center gap-1.5">
+            <template x-for="(card, idx) in cards" :key="idx">
+                <button @click="current = idx; flipped = false"
+                    class="dot"
+                    :class="done.includes(idx) ? 'done' : (idx === current ? 'current' : 'future')">
+                </button>
             </template>
-        </span>
-    </div>
+        </div>
 
-    {{-- Dot navigation --}}
-    <div class="flex flex-wrap justify-center gap-1.5">
-        <template x-for="(card, idx) in cards" :key="idx">
-            <button @click="current = idx; flipped = false"
-                class="dot"
-                :class="done.includes(idx) ? 'done' : (idx === current ? 'current' : 'future')">
-            </button>
-        </template>
-    </div>
-
-    {{-- Card area --}}
-    <template x-if="card && current < cards.length && done.length < cards.length">
-        <div class="flex flex-col items-center gap-6">
+        {{-- Card area --}}
+        <template x-if="card && current < cards.length && done.length < cards.length">
+            <div class="flex flex-col items-center gap-6">
             {{-- Flip card --}}
             <div class="flip-card w-full max-w-lg cursor-pointer" style="height: 320px;" @click="flip()">
                 <div class="flip-card-inner" :class="{ flipped }">
@@ -389,6 +430,7 @@
             </div>
         </div>
     </template>
+    </div>
 </div>
 
 {{-- Static card grid with pagination --}}

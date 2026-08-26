@@ -194,6 +194,7 @@
     </div>
 
     <div x-data="{
+    ready: false,
     cards: {{ Js::from($flashcards->values()->map(fn($f) => [
         'id'              => $f->id,
         'hanzi'           => $f->hanzi,
@@ -248,10 +249,8 @@
     },
 
     async submitReview(quality) {
-        if (!this.card || this.submitting) return;
-
+        if (!this.card) return;
         this.submitting = true;
-
         try {
             await fetch('{{ route('flashcards.review') }}', {
                 method: 'POST',
@@ -264,10 +263,7 @@
                     quality: quality
                 })
             });
-        } catch (e) {
-            console.error(e);
-        }
-
+        } catch(e) { console.error(e); }
         this.submitting = false;
         this.next();
     },
@@ -277,9 +273,23 @@
             window.playChineseVoice(text);
         }
     }
-}" class="flex flex-col items-center gap-5">
+}" x-init="ready = true" class="flex flex-col items-center gap-5">
 
-        <div class="w-full max-w-md">
+        {{-- Skeleton Loader for HSK card --}}
+        <div x-show="!ready" class="w-full max-w-md space-y-4">
+            <div class="h-1.5 w-full rounded-full bg-slate-100 skeleton-shimmer"></div>
+            <div class="w-full rounded-[2rem] p-8 shadow-2xl h-[260px] flex flex-col items-center justify-center gap-3 skeleton-shimmer" style="background: {{ $meta['color'] }}20">
+                <div class="h-16 w-24 rounded-2xl bg-slate-300/40"></div>
+                <div class="h-3 w-20 rounded-full bg-slate-300/40"></div>
+            </div>
+            <div class="flex justify-center gap-3">
+                <div class="h-9 w-20 rounded-full bg-slate-200 skeleton-shimmer"></div>
+                <div class="h-9 w-28 rounded-full bg-slate-300 skeleton-shimmer"></div>
+                <div class="h-9 w-20 rounded-full bg-slate-200 skeleton-shimmer"></div>
+            </div>
+        </div>
+
+        <div x-show="ready" x-cloak class="w-full max-w-md">
 
             {{-- Progress --}}
             <div class="mb-3 flex items-center gap-3">
@@ -462,9 +472,12 @@
     </div>
 </section>
 @else
-<div class="mb-10 rounded-[2rem] border border-dashed border-slate-200 py-12 text-center">
-    <i data-lucide="layers" class="mx-auto h-8 w-8 text-slate-300"></i>
-    <p class="mt-3 font-semibold text-slate-700">Chưa có flashcard cho {{ $meta['label'] }}</p>
+<div class="mb-10 flex flex-col items-center justify-center rounded-[2.5rem] border border-dashed border-slate-300 bg-white/60 py-12 px-6 text-center shadow-sm backdrop-blur">
+    <div class="grid h-14 w-14 place-items-center rounded-2xl bg-slate-100 text-slate-400">
+        <i data-lucide="layers" class="h-7 w-7"></i>
+    </div>
+    <p class="mt-3 text-base font-bold text-slate-800">Chưa có flashcard cho {{ $meta['label'] }}</p>
+    <p class="mt-1 text-xs text-slate-500">Các thẻ từ vựng cho cấp độ này đang được cập nhật thêm.</p>
 </div>
 @endif
 

@@ -474,6 +474,14 @@
                     </div>
                 </article>
             </template>
+
+            <div x-show="filteredLessons.length === 0" class="col-span-full flex flex-col items-center justify-center rounded-3xl border border-dashed border-slate-300 bg-slate-50/50 py-12 px-4 text-center">
+                <div class="grid h-12 w-12 place-items-center rounded-2xl bg-slate-100 text-slate-400">
+                    <i data-lucide="book-open" class="h-6 w-6"></i>
+                </div>
+                <p class="mt-3 text-sm font-bold text-slate-700">Không có bài học nào trong mục này</p>
+                <p class="mt-1 text-xs text-slate-400">Hãy chọn tab khác hoặc bắt đầu học bài mới để theo dõi tiến độ.</p>
+            </div>
         </div>
     </section>
 

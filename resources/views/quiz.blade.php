@@ -299,15 +299,22 @@
         </p>
     @else
         {{-- Empty State --}}
-        <section class="rounded-[2rem] border border-white/80 bg-white/80 p-12 text-center shadow-xl backdrop-blur">
-            <div class="mx-auto grid h-16 w-16 place-items-center rounded-3xl bg-amber-100 text-3xl">
-                📝
+        <section class="flex flex-col items-center justify-center rounded-[2.5rem] border border-dashed border-slate-300 bg-white/60 p-12 text-center shadow-sm backdrop-blur sm:p-16">
+            <div class="grid h-16 w-16 place-items-center rounded-3xl bg-amber-50 text-amber-600">
+                <i data-lucide="help-circle" class="h-8 w-8"></i>
             </div>
             <h2 class="mt-4 text-2xl font-bold text-slate-900">Chưa có câu hỏi nào cho chủ đề này</h2>
-            <p class="mt-2 text-slate-600">Admin có thể thêm câu hỏi mới từ trang quản trị hoặc bạn có thể chọn chủ đề khác.</p>
-            <div class="mt-6">
-                <a href="{{ route('quiz') }}" class="inline-flex items-center justify-center rounded-full bg-[#991b1b] px-6 py-3 text-sm font-semibold text-white transition hover:bg-red-800">
+            <p class="mt-2 max-w-md text-sm text-slate-500">
+                Hiện tại chưa có câu hỏi quiz nào được tạo cho bài học này. Bạn có thể chọn chủ đề khác hoặc luyện tập từ vựng bằng flashcard trước.
+            </p>
+            <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
+                <a href="{{ route('quiz') }}" class="inline-flex items-center gap-2 rounded-full bg-[#991b1b] px-6 py-3 text-sm font-bold text-white shadow-md transition hover:bg-red-800">
+                    <i data-lucide="layers" class="h-4 w-4"></i>
                     Xem tất cả câu hỏi
+                </a>
+                <a href="{{ route('flashcards') }}" class="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
+                    <i data-lucide="book-open" class="h-4 w-4"></i>
+                    Ôn Flashcard trước
                 </a>
             </div>
         </section>
