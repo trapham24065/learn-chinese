@@ -15,7 +15,7 @@
         <div class="absolute right-10 top-10 h-36 w-36 rounded-full bg-amber-400/15 blur-2xl pointer-events-none"></div>
         <div class="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#991b1b] via-amber-400 to-[#991b1b]"></div>
 
-        <div class="relative z-10 grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
+        <div class="relative z-10 grid gap-8 md:grid-cols-[1.15fr_0.85fr] items-center">
             
             {{-- Left column: Error Info & Actions --}}
             <div class="space-y-6 text-left">
@@ -25,9 +25,9 @@
                 </div>
 
                 <div>
-                    <h1 class="text-4xl font-black tracking-tight sm:text-5xl lg:text-6xl text-white">
+                    <h1 class="text-4xl font-black tracking-tight sm:text-5xl lg:text-6xl text-white leading-tight">
                         Bạn có vẻ đã <br>
-                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-300 to-red-400">bị lạc đường?</span>
+                        <span class="text-amber-300">bị lạc đường?</span>
                     </h1>
                     <p class="mt-4 text-base leading-7 text-slate-300 sm:text-lg max-w-xl">
                         Đường dẫn này không tồn tại hoặc đã được di chuyển. Đừng để việc này làm gián đoạn buổi học, hãy quay lại các phần chính nhé!
@@ -55,8 +55,8 @@
             </div>
 
             {{-- Right column: Big Character & Audio Badge --}}
-            <div class="flex flex-col items-center justify-center">
-                <div class="w-full max-w-xs rounded-3xl border border-white/15 bg-white/5 p-6 text-center backdrop-blur-md shadow-inner">
+            <div class="flex flex-col items-center justify-center w-full">
+                <div class="w-full max-w-sm rounded-3xl border border-white/15 bg-white/5 p-6 text-center backdrop-blur-md shadow-inner">
                     <p class="text-xs font-bold uppercase tracking-[0.25em] text-slate-400">Từ vựng tình huống</p>
                     
                     {{-- Big Hanzi --}}
