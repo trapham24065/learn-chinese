@@ -5,28 +5,39 @@
 @section('content')
 @php
 $stats = [
-['label' => 'Bài học', 'value' => '12', 'note' => 'theo chủ đề'],
-['label' => 'Flashcard', 'value' => '96', 'note' => 'từ vựng cốt lõi'],
-['label' => 'Quiz', 'value' => '18', 'note' => 'câu luyện nhanh'],
+    ['label' => 'Bài học', 'value' => number_format($lessonCount ?? \App\Models\Lesson::count()), 'note' => 'theo chủ đề'],
+    ['label' => 'Flashcard', 'value' => number_format($flashcardCount ?? \App\Models\Flashcard::count()), 'note' => 'từ vựng cốt lõi'],
+    ['label' => 'Quiz', 'value' => number_format($questionCount ?? \App\Models\Question::count()), 'note' => 'câu luyện nhanh'],
 ];
 
 $features = [
-['title' => 'Bài học ngắn gọn', 'description' => 'Mỗi bài chia thành phần đọc, nghe, từ mới và luyện nhanh.'],
-['title' => 'Flashcard trực quan', 'description' => 'Ôn tập bằng thẻ từ với nghĩa, pinyin và ví dụ ngắn.'],
-['title' => 'Theo dõi tiến độ', 'description' => 'Hiển thị streak, điểm quiz và số từ đã học theo ngày.'],
+    ['title' => 'Bài học ngắn gọn', 'description' => 'Mỗi bài chia thành phần đọc, nghe, từ mới và luyện nhanh.'],
+    ['title' => 'Flashcard trực quan', 'description' => 'Ôn tập bằng thẻ từ với nghĩa, pinyin và ví dụ ngắn.'],
+    ['title' => 'Theo dõi tiến độ', 'description' => 'Hiển thị streak, điểm quiz và số từ đã học theo ngày.'],
 ];
 
-$lessons = [
-['title' => 'Pinyin cơ bản', 'description' => 'Làm quen với cách đọc, thanh điệu và nhịp phát âm chuẩn ngay từ đầu.', 'tag' => 'Starter'],
-['title' => 'Chào hỏi & giới thiệu', 'description' => 'Nắm những mẫu câu đầu tiên để tự giới thiệu và giao tiếp đơn giản.', 'tag' => 'Conversation'],
-['title' => 'Từ vựng theo chủ đề', 'description' => 'Học từ theo từng nhóm để dễ nhớ hơn: gia đình, đồ ăn, trường học, số đếm.', 'tag' => 'Vocabulary'],
-];
+if (isset($featuredLessons) && $featuredLessons->isNotEmpty()) {
+    $lessonItems = $featuredLessons->map(function ($item) {
+        return [
+            'title' => $item->title,
+            'description' => $item->summary ?? 'Khám phá bài học với từ vựng, ngữ pháp và phát âm chuẩn.',
+            'tag' => $item->hsk_level ? 'HSK ' . $item->hsk_level : ucfirst($item->difficulty ?? 'Starter'),
+            'url' => route('lesson.show', $item->slug),
+        ];
+    })->toArray();
+} else {
+    $lessonItems = [
+        ['title' => 'Pinyin cơ bản', 'description' => 'Làm quen với cách đọc, thanh điệu và nhịp phát âm chuẩn ngay từ đầu.', 'tag' => 'Starter', 'url' => route('hsk.overview')],
+        ['title' => 'Chào hỏi & giới thiệu', 'description' => 'Nắm những mẫu câu đầu tiên để tự giới thiệu và giao tiếp đơn giản.', 'tag' => 'Conversation', 'url' => route('hsk.overview')],
+        ['title' => 'Từ vựng theo chủ đề', 'description' => 'Học từ theo từng nhóm để dễ nhớ hơn: gia đình, đồ ăn, trường học, số đếm.', 'tag' => 'Vocabulary', 'url' => route('hsk.overview')],
+    ];
+}
 
 $roadmap = [
-['step' => '01', 'title' => 'Pinyin và phát âm', 'description' => 'Xây nền tảng để đọc đúng và nói tự tin hơn.'],
-['step' => '02', 'title' => 'Từ vựng nền tảng', 'description' => 'Học từ theo chủ đề để áp dụng ngay vào câu.'],
-['step' => '03', 'title' => 'Mẫu câu giao tiếp', 'description' => 'Ghép từ vựng thành câu hoàn chỉnh để luyện nói.'],
-['step' => '04', 'title' => 'Quiz và ôn tập', 'description' => 'Củng cố kiến thức bằng bài kiểm tra ngắn và flashcard.'],
+    ['step' => '01', 'title' => 'Pinyin và phát âm', 'description' => 'Xây nền tảng để đọc đúng và nói tự tin hơn.'],
+    ['step' => '02', 'title' => 'Từ vựng nền tảng', 'description' => 'Học từ theo chủ đề để áp dụng ngay vào câu.'],
+    ['step' => '03', 'title' => 'Mẫu câu giao tiếp', 'description' => 'Ghép từ vựng thành câu hoàn chỉnh để luyện nói.'],
+    ['step' => '04', 'title' => 'Quiz và ôn tập', 'description' => 'Củng cố kiến thức bằng bài kiểm tra ngắn và flashcard.'],
 ];
 @endphp
 
@@ -152,21 +163,21 @@ $roadmap = [
         </div>
 
         <div class="space-y-4">
-            @foreach ($lessons as $lesson)
-            <div class="flex gap-4 rounded-[1.5rem] border border-white/80 bg-white/75 p-5 shadow-xl shadow-slate-900/5 backdrop-blur">
-                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-950 text-white">
+            @foreach ($lessonItems as $lesson)
+            <a href="{{ $lesson['url'] ?? route('hsk.overview') }}" class="group flex gap-4 rounded-[1.5rem] border border-white/80 bg-white/75 p-5 shadow-xl shadow-slate-900/5 backdrop-blur transition hover:-translate-y-0.5 hover:border-[#991b1b]/40 hover:shadow-2xl">
+                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-950 text-white transition group-hover:bg-[#991b1b]">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6" />
                     </svg>
                 </div>
                 <div class="flex-1">
                     <div class="flex flex-wrap items-center gap-3">
-                        <h3 class="text-xl font-bold text-slate-950">{{ $lesson['title'] }}</h3>
+                        <h3 class="text-xl font-bold text-slate-950 transition group-hover:text-[#991b1b]">{{ $lesson['title'] }}</h3>
                         <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-amber-900">{{ $lesson['tag'] }}</span>
                     </div>
                     <p class="mt-2 leading-7 text-slate-600">{{ $lesson['description'] }}</p>
                 </div>
-            </div>
+            </a>
             @endforeach
         </div>
     </div>

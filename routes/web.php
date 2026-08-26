@@ -7,10 +7,21 @@ use App\Http\Controllers\LessonController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuizController;
 use App\Http\Controllers\TTSController;
+use App\Models\Flashcard;
+use App\Models\Lesson;
+use App\Models\Question;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    $lessonCount = Lesson::count();
+    $flashcardCount = Flashcard::count();
+    $questionCount = Question::count();
+    $featuredLessons = Lesson::where('is_published', true)
+        ->orderBy('sort_order')
+        ->take(3)
+        ->get();
+
+    return view('welcome', compact('lessonCount', 'flashcardCount', 'questionCount', 'featuredLessons'));
 })->name('home');
 
 Route::redirect('/dashboard', '/student/dashboard');
