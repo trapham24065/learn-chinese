@@ -182,294 +182,314 @@
 </section>
 @endif
 
-{{-- Flashcard mini deck --}}
+{{-- Flashcard 3D Deck & Vocabulary Section --}}
 @if($flashcards->isNotEmpty())
-<section class="mb-10">
-    <div class="mb-5 flex items-center justify-between">
-        <h2 class="flex items-center gap-2 text-lg font-black text-slate-900">
-            <i data-lucide="layers" class="h-5 w-5 text-slate-600"></i>
-            Thẻ ghi nhớ {{ $meta['label'] }} ({{ $flashcards->count() }} thẻ)
-        </h2>
-        <a href="{{ route('flashcards', ['hsk' => $level]) }}" class="inline-flex items-center gap-1 text-sm font-semibold hover:underline" style="color: {{ $meta['color'] }}">Xem tất cả <i data-lucide="arrow-right" class="h-4 w-4"></i></a>
+<section class="mb-12">
+    <div class="mb-6 flex items-center justify-between">
+        <div>
+            <h2 class="flex items-center gap-2 text-xl font-black text-slate-900">
+                <i data-lucide="layers" class="h-5 w-5 text-slate-600"></i>
+                Ôn luyện Flashcard 3D • {{ $meta['label'] }}
+            </h2>
+            <p class="text-xs text-slate-500 mt-1">Lật thẻ để kiểm tra trí nhớ, tập viết chữ và luyện nghe phát âm.</p>
+        </div>
+        <a href="{{ route('flashcards', ['hsk' => $level]) }}" class="inline-flex items-center gap-1 text-xs font-bold hover:underline" style="color: {{ $meta['color'] }}">
+            Chế độ chuyên sâu <i data-lucide="arrow-right" class="h-3.5 w-3.5"></i>
+        </a>
     </div>
 
     <div x-data="{
-    ready: false,
-    cards: {{ Js::from($flashcards->values()->map(fn($f) => [
-        'id'              => $f->id,
-        'hanzi'           => $f->hanzi,
-        'pinyin'          => $f->pinyin,
-        'meaning'         => $f->meaning,
-        'example'         => $f->example,
-        'example_pinyin'  => $f->example_pinyin,
-        'example_meaning' => $f->example_meaning,
-    ])) }},
+        ready: false,
+        cards: {{ Js::from($flashcards->values()->map(fn($f) => [
+            'id'              => $f->id,
+            'hanzi'           => $f->hanzi,
+            'pinyin'          => $f->pinyin,
+            'meaning'         => $f->meaning,
+            'example'         => $f->example,
+            'example_pinyin'  => $f->example_pinyin,
+            'example_meaning' => $f->example_meaning,
+        ])) }},
 
-    current: 0,
-    flipped: false,
-    done: [],
-    submitting: false,
+        current: 0,
+        flipped: false,
+        done: [],
+        submitting: false,
 
-    get card() {
-        return this.cards[this.current] ?? null;
-    },
+        get card() {
+            return this.cards[this.current] ?? null;
+        },
 
-    get progress() {
-        return this.cards.length
-            ? Math.round(((this.current + 1) / this.cards.length) * 100)
-            : 0;
-    },
+        get progress() {
+            return this.cards.length
+                ? Math.round(((this.current + 1) / this.cards.length) * 100)
+                : 0;
+        },
 
-    flip() {
-        this.flipped = !this.flipped;
-    },
+        flip() {
+            this.flipped = !this.flipped;
+        },
 
-    next() {
-        if (!this.done.includes(this.current)) {
-            this.done.push(this.current);
-        }
+        next() {
+            if (!this.done.includes(this.current)) {
+                this.done.push(this.current);
+            }
 
-        if (this.current < this.cards.length - 1) {
+            if (this.current < this.cards.length - 1) {
+                this.flipped = false;
+                setTimeout(() => {
+                    this.current++;
+                }, 150);
+            }
+        },
+
+        prev() {
+            if (this.current > 0) {
+                this.flipped = false;
+                setTimeout(() => {
+                    this.current--;
+                }, 150);
+            }
+        },
+
+        restart() {
+            this.current = 0;
             this.flipped = false;
+            this.done = [];
+        },
 
-            setTimeout(() => {
-                this.current++;
-            }, 150);
+        async submitReview(quality) {
+            if (!this.card) return;
+            this.submitting = true;
+            try {
+                await fetch('{{ route('flashcards.review') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        flashcard_id: this.card.id,
+                        quality: quality
+                    })
+                });
+            } catch(e) { console.error(e); }
+            this.submitting = false;
+            this.next();
+        },
+
+        speak(text) {
+            if (text) {
+                window.playChineseVoice(text);
+            }
         }
-    },
-
-    prev() {
-        if (this.current > 0) {
-            this.flipped = false;
-
-            setTimeout(() => {
-                this.current--;
-            }, 150);
-        }
-    },
-
-    async submitReview(quality) {
-        if (!this.card) return;
-        this.submitting = true;
-        try {
-            await fetch('{{ route('flashcards.review') }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({
-                    flashcard_id: this.card.id,
-                    quality: quality
-                })
-            });
-        } catch(e) { console.error(e); }
-        this.submitting = false;
-        this.next();
-    },
-
-    speak(text) {
-        if (text) {
-            window.playChineseVoice(text);
-        }
-    }
-}" x-init="ready = true" class="flex flex-col items-center gap-5">
+    }" x-init="ready = true" class="space-y-6">
 
         {{-- Skeleton Loader for HSK card --}}
-        <div x-show="!ready" class="w-full max-w-md space-y-4">
-            <div class="h-1.5 w-full rounded-full bg-slate-100 skeleton-shimmer"></div>
-            <div class="w-full rounded-[2rem] p-8 shadow-2xl h-[260px] flex flex-col items-center justify-center gap-3 skeleton-shimmer" style="background: {{ $meta['color'] }}20">
-                <div class="h-16 w-24 rounded-2xl bg-slate-300/40"></div>
-                <div class="h-3 w-20 rounded-full bg-slate-300/40"></div>
+        <div x-show="!ready" class="flex flex-col items-center gap-6">
+            <div class="h-2 w-full max-w-lg rounded-full bg-slate-100 skeleton-shimmer"></div>
+            <div class="w-full max-w-lg rounded-[2rem] p-8 shadow-2xl h-[300px] flex flex-col items-center justify-center gap-4 skeleton-shimmer" style="background: {{ $meta['color'] }}20">
+                <div class="h-20 w-32 rounded-2xl bg-slate-300/40"></div>
+                <div class="h-4 w-28 rounded-full bg-slate-300/40"></div>
             </div>
             <div class="flex justify-center gap-3">
-                <div class="h-9 w-20 rounded-full bg-slate-200 skeleton-shimmer"></div>
-                <div class="h-9 w-28 rounded-full bg-slate-300 skeleton-shimmer"></div>
-                <div class="h-9 w-20 rounded-full bg-slate-200 skeleton-shimmer"></div>
+                <div class="h-10 w-24 rounded-full bg-slate-200 skeleton-shimmer"></div>
+                <div class="h-10 w-32 rounded-full bg-slate-300 skeleton-shimmer"></div>
+                <div class="h-10 w-24 rounded-full bg-slate-200 skeleton-shimmer"></div>
             </div>
         </div>
 
-        <div x-show="ready" x-cloak class="w-full max-w-md">
-
-            {{-- Progress --}}
-            <div class="mb-3 flex items-center gap-3">
-
-                <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100">
-
-                    <div
-                        class="h-1.5 rounded-full transition-all duration-500"
-                        :style="`width: ${progress}%; background: {{ $meta['color'] }}`">
-                    </div>
-
+        {{-- Real Interactive 3D Deck --}}
+        <div x-show="ready" x-cloak class="space-y-6">
+            {{-- Progress Bar & Counter --}}
+            <div class="flex items-center gap-4 max-w-xl mx-auto">
+                <div class="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
+                    <div class="h-2 rounded-full transition-all duration-500"
+                        :style="`width: ${progress}%; background: {{ $meta['color'] }}`"></div>
                 </div>
-
-                <span class="shrink-0 text-xs font-semibold text-slate-500">
-                    <span x-text="current + 1"></span>
-                    /
-                    <span x-text="cards.length"></span>
+                <span class="shrink-0 text-xs font-bold text-slate-500">
+                    <span x-text="current + 1"></span> / <span x-text="cards.length"></span> thẻ
                 </span>
-
             </div>
 
+            {{-- Dot Navigation --}}
+            <div class="flex flex-wrap justify-center gap-1.5 max-w-lg mx-auto">
+                <template x-for="(c, idx) in cards" :key="idx">
+                    <button @click="current = idx; flipped = false"
+                        class="h-2 rounded-full transition-all duration-300"
+                        :class="done.includes(idx) ? 'w-5 bg-emerald-500' : (idx === current ? 'w-5' : 'w-2 bg-slate-200')"
+                        :style="idx === current ? 'background: {{ $meta['color'] }}' : ''">
+                    </button>
+                </template>
+            </div>
 
-            {{-- Flashcard --}}
-            <div
-                class="flip-card w-full cursor-pointer"
-                style="height: 260px;"
-                @click="flip()">
+            {{-- 3D Flip Card Container --}}
+            <template x-if="card && current < cards.length && done.length < cards.length">
+                <div class="flex flex-col items-center gap-6">
+                    <div class="flip-card w-full max-w-lg cursor-pointer" style="height: 300px;" @click="flip()">
+                        <div class="flip-card-inner" :class="{ flipped }">
+                            
+                            {{-- Front Face --}}
+                            <div class="flip-card-front relative flex flex-col items-center justify-center gap-3 text-white shadow-2xl shadow-slate-950/20"
+                                style="background: {{ $meta['color'] }}">
+                                
+                                <span class="rounded-full bg-white/20 px-3 py-1 text-xs font-black uppercase tracking-widest text-white/90">
+                                    {{ $meta['label'] }}
+                                </span>
 
-                <div class="flip-card-inner" :class="{ flipped }">
+                                <p class="text-7xl sm:text-8xl font-black leading-none tracking-tight" x-text="card?.hanzi"></p>
+                                <p class="mt-1 text-xs text-white/70">Bấm để lật thẻ 👆</p>
 
-                    {{-- Front --}}
-                    <div
-                        class="flip-card-front relative flex flex-col items-center justify-center gap-2 text-white shadow-2xl shadow-slate-950/20"
-                        style="background: {{ $meta['color'] }}">
-
-                        <p
-                            class="text-7xl font-black leading-none"
-                            x-text="card?.hanzi">
-                        </p>
-
-                        <p class="text-xs text-white/60">
-                            Bấm để lật
-                        </p>
-
-                        {{-- Actions (Write & Speak) --}}
-                        <div class="absolute bottom-4 right-4 flex items-center gap-2">
-                            <button
-                                @click.stop="$dispatch('open-writer', card?.hanzi)"
-                                class="flex h-10 w-10 items-center justify-center rounded-full bg-black/20 text-white transition hover:scale-110 hover:bg-black/30 active:scale-95"
-                                title="Tập viết chữ">
-                                <i data-lucide="pen-tool" class="h-4 w-4"></i>
-                            </button>
-                            <button
-                                @click.stop="speak(card?.hanzi)"
-                                class="flex h-10 w-10 items-center justify-center rounded-full bg-black/20 text-white transition hover:scale-110 hover:bg-black/30 active:scale-95"
-                                title="Nghe phát âm">
-                                <i data-lucide="volume-2" class="h-4 w-4"></i>
-                            </button>
-                        </div>
-
-                    </div>
-
-
-                    {{-- Back --}}
-                    <div
-                        class="flip-card-back flex flex-col justify-center gap-3 bg-white p-6 shadow-2xl shadow-slate-900/10">
-
-                        <div
-                            class="absolute inset-x-0 top-0 h-1.5 rounded-t-[2rem]"
-                            style="background: {{ $meta['color'] }}">
-                        </div>
-
-                        <p
-                            class="text-xs font-bold uppercase tracking-widest"
-                            style="color: {{ $meta['color'] }}"
-                            x-text="card?.pinyin">
-                        </p>
-
-                        <p
-                            class="text-3xl font-black text-slate-950"
-                            x-text="card?.meaning">
-                        </p>
-
-                        <template x-if="card?.example">
-
-                            <div class="rounded-2xl bg-slate-50 p-3 text-sm">
-
-                                <p
-                                    class="font-semibold text-slate-800"
-                                    x-text="card.example">
-                                </p>
-
-                                <p
-                                    class="mt-0.5 text-xs text-slate-500"
-                                    x-text="card.example_meaning">
-                                </p>
-
+                                {{-- Action Buttons (Writing & Speech) --}}
+                                <div class="absolute bottom-5 right-5 flex items-center gap-2">
+                                    <button @click.stop="$dispatch('open-writer', card?.hanzi)" 
+                                            class="flex h-11 w-11 items-center justify-center rounded-full bg-black/25 text-white transition hover:scale-110 hover:bg-black/40 active:scale-95 shadow-md" 
+                                            title="Tập viết nét chữ Hán">
+                                        <i data-lucide="pen-tool" class="h-4 w-4"></i>
+                                    </button>
+                                    <button @click.stop="speak(card?.hanzi)" 
+                                            class="flex h-11 w-11 items-center justify-center rounded-full bg-black/25 text-white transition hover:scale-110 hover:bg-black/40 active:scale-95 shadow-md" 
+                                            title="Nghe phát âm chuẩn">
+                                        <i data-lucide="volume-2" class="h-4 w-4"></i>
+                                    </button>
+                                </div>
                             </div>
 
+                            {{-- Back Face --}}
+                            <div class="flip-card-back flex flex-col justify-between overflow-hidden bg-white p-7 shadow-2xl shadow-slate-900/10">
+                                <div class="absolute inset-x-0 top-0 h-1.5" style="background: {{ $meta['color'] }}"></div>
+                                
+                                <div class="flex flex-1 flex-col justify-center gap-3">
+                                    <div>
+                                        <p class="text-xs font-bold uppercase tracking-widest" style="color: {{ $meta['color'] }}" x-text="card?.pinyin"></p>
+                                        <p class="mt-1 text-3xl font-black text-slate-950" x-text="card?.meaning"></p>
+                                    </div>
+
+                                    <template x-if="card?.example">
+                                        <div class="rounded-2xl bg-slate-50 border border-slate-100 p-3.5 text-left">
+                                            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Ví dụ câu:</p>
+                                            <p class="mt-1 text-sm font-bold text-slate-900" x-text="card?.example"></p>
+                                            <p class="text-xs text-slate-500" x-text="card?.example_pinyin"></p>
+                                            <p class="mt-0.5 text-xs text-slate-600 italic" x-text="card?.example_meaning"></p>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    {{-- Controls Bar --}}
+                    <div class="flex flex-wrap items-center justify-center gap-3">
+                        <button @click="prev()" :disabled="current === 0"
+                                class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-40">
+                            <i data-lucide="arrow-left" class="h-4 w-4"></i>
+                            <span class="hidden sm:inline">Trước</span>
+                        </button>
+
+                        <template x-if="!flipped">
+                            <button @click="flip()"
+                                    class="inline-flex items-center gap-2 rounded-full bg-slate-950 px-8 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-slate-800 active:scale-95">
+                                <i data-lucide="eye" class="h-4 w-4"></i>
+                                Xem đáp án
+                            </button>
                         </template>
 
-                    </div>
+                        <template x-if="flipped">
+                            <div class="flex items-center gap-2.5">
+                                <button @click="submitReview('review')" :disabled="submitting"
+                                        class="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-5 py-2.5 text-sm font-bold text-orange-600 transition hover:bg-orange-100 disabled:opacity-50">
+                                    <i data-lucide="rotate-ccw" class="h-4 w-4"></i> Ôn lại
+                                </button>
+                                <button @click="submitReview('known')" :disabled="submitting"
+                                        class="inline-flex items-center gap-2 rounded-full bg-emerald-500 px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-emerald-500/20 transition hover:bg-emerald-600 disabled:opacity-50">
+                                    Đã thuộc <i data-lucide="check" class="h-4 w-4"></i>
+                                </button>
+                            </div>
+                        </template>
 
+                        <button @click="next()"
+                                class="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold text-white shadow-md transition hover:opacity-90 active:scale-95"
+                                style="background: {{ $meta['color'] }}">
+                            <span class="hidden sm:inline" x-text="current === cards.length - 1 ? 'Xong' : 'Tiếp'"></span>
+                            <i :data-lucide="current === cards.length - 1 ? 'circle-check' : 'arrow-right'" class="h-4 w-4"></i>
+                        </button>
+                    </div>
                 </div>
+            </template>
 
-            </div>
-
-
-            {{-- Controls --}}
-            <div class="mt-4 flex flex-wrap justify-center gap-2">
-
-                {{-- Previous --}}
-                <button
-                    @click="prev()"
-                    :disabled="current === 0"
-                    class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40">
-                    <i data-lucide="arrow-left" class="h-4 w-4"></i>
-                    <span class="hidden sm:inline">Trước</span>
-                </button>
-
-
-                {{-- Show answer --}}
-                <template x-if="!flipped">
-
-                    <button
-                        @click="flip()"
-                        class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-6 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800">
-                        <i data-lucide="eye" class="h-4 w-4"></i>
-                        Xem đáp án
-                    </button>
-
-                </template>
-
-
-                {{-- Review --}}
-                <template x-if="flipped">
-
-                    <div class="flex items-center gap-2">
-
-                        <button
-                            @click="submitReview('review')"
-                            :disabled="submitting"
-                            class="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-sm font-bold text-orange-600 transition hover:bg-orange-100 disabled:opacity-50">
-                            <i data-lucide="rotate-ccw" class="h-4 w-4"></i>
-                            Ôn lại
-                        </button>
-
-                        <button
-                            @click="submitReview('known')"
-                            :disabled="submitting"
-                            class="inline-flex items-center gap-2 rounded-full bg-emerald-500 px-4 py-2 text-sm font-bold text-white transition hover:bg-emerald-600 disabled:opacity-50">
-                            Đã thuộc
-                            <i data-lucide="check" class="h-4 w-4"></i>
-                        </button>
-
+            {{-- Completion Screen --}}
+            <template x-if="done.length >= cards.length">
+                <div class="flex flex-col items-center gap-5 rounded-[2.5rem] bg-slate-950 py-12 px-6 text-center text-white shadow-2xl max-w-lg mx-auto">
+                    <span class="text-6xl">🎉</span>
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-[0.25em] text-amber-300">Hoàn thành xuất sắc!</p>
+                        <h3 class="mt-2 text-2xl font-black">Bạn đã ôn xong toàn bộ thẻ {{ $meta['label'] }}!</h3>
+                        <p class="mt-2 text-xs text-slate-400">Hãy tiếp tục thử thách bản thân với bài kiểm tra trắc nghiệm nhé.</p>
                     </div>
-
-                </template>
-
-
-                {{-- Next --}}
-                <button
-                    @click="next()"
-                    :disabled="current === cards.length - 1"
-                    class="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-                    style="background: {{ $meta['color'] }}">
-
-                    <span class="hidden sm:inline">
-                        Tiếp
-                    </span>
-
-                    <i data-lucide="arrow-right" class="h-4 w-4"></i>
-
-                </button>
-
-            </div>
-
+                    <div class="flex flex-wrap justify-center gap-3 pt-2">
+                        <button @click="restart()"
+                                class="rounded-full border border-white/20 bg-white/10 px-5 py-2.5 text-xs font-bold text-white transition hover:bg-white/20">
+                            🔄 Học lại từ đầu
+                        </button>
+                        <a href="{{ route('quiz') }}"
+                           class="rounded-full bg-amber-300 px-6 py-2.5 text-xs font-bold text-slate-950 transition hover:bg-amber-200 shadow-md">
+                            🎯 Làm Quiz trắc nghiệm →
+                        </a>
+                    </div>
+                </div>
+            </template>
         </div>
 
     </div>
+
+    {{-- Vocabulary List Grid in this HSK level --}}
+    <div class="mt-12">
+        <div class="mb-4 flex items-center justify-between">
+            <h3 class="text-base font-bold text-slate-900">Danh sách từ vựng chi tiết (Trang {{ $flashcards->currentPage() }} / {{ $flashcards->lastPage() }})</h3>
+            <span class="text-xs font-semibold text-slate-500">{{ $flashcards->total() }} từ vựng</span>
+        </div>
+
+        <div class="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+            @foreach($flashcards as $card)
+            <div class="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition hover:border-slate-300 hover:shadow-md">
+                <div>
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">{{ $card->pinyin }}</span>
+                            <button type="button" 
+                                    onclick="window.playChineseVoice('{{ addslashes($card->hanzi) }}')" 
+                                    class="text-slate-300 transition hover:text-blue-500 focus:outline-none" 
+                                    title="Nghe phát âm">
+                                <i data-lucide="volume-2" class="h-3.5 w-3.5"></i>
+                            </button>
+                        </div>
+                        <span class="rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider" 
+                              style="background: {{ $meta['color'] }}15; color: {{ $meta['color'] }}">
+                            {{ $meta['label'] }}
+                        </span>
+                    </div>
+                    <p class="mt-1 text-2xl font-black text-slate-900">{{ $card->hanzi }}</p>
+                    <p class="mt-1.5 text-xs font-semibold text-slate-600 line-clamp-2">{{ $card->meaning }}</p>
+                </div>
+
+                @if($card->example)
+                <div class="mt-3 border-t border-slate-100 pt-2 text-[11px] text-slate-500">
+                    <p class="font-medium text-slate-700 truncate">{{ $card->example }}</p>
+                    <p class="italic text-slate-400 truncate">{{ $card->example_meaning }}</p>
+                </div>
+                @endif
+            </div>
+            @endforeach
+        </div>
+
+        {{-- Pagination --}}
+        @if($flashcards->hasPages())
+        <div class="mt-6 flex justify-center">
+            {{ $flashcards->links() }}
+        </div>
+        @endif
+    </div>
+
 </section>
 @else
 <div class="mb-10 flex flex-col items-center justify-center rounded-[2.5rem] border border-dashed border-slate-300 bg-white/60 py-12 px-6 text-center shadow-sm backdrop-blur">
