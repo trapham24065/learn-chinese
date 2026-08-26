@@ -127,35 +127,39 @@
         </div>
     </aside>
 
-    <main class="min-h-screen">
-        {{-- Mobile Top Bar --}}
-        <div class="border-b border-white/70 bg-white/70 py-3 backdrop-blur lg:hidden flex items-center">
-            <a href="{{ route('home') }}" class="flex shrink-0 items-center gap-2.5 pl-4 pr-3 border-r border-slate-200/50">
-                <div class="grid h-8 w-8 place-items-center rounded-xl bg-[#991b1b] text-white">
-                    <span class="text-sm font-black">中</span>
+    <main class="min-h-screen flex flex-col justify-between">
+        <div>
+            {{-- Mobile Top Bar --}}
+            <div class="border-b border-white/70 bg-white/70 py-3 backdrop-blur lg:hidden flex items-center">
+                <a href="{{ route('home') }}" class="flex shrink-0 items-center gap-2.5 pl-4 pr-3 border-r border-slate-200/50">
+                    <div class="grid h-8 w-8 place-items-center rounded-xl bg-[#991b1b] text-white">
+                        <span class="text-sm font-black">中</span>
+                    </div>
+                </a>
+                <div class="flex flex-1 items-center gap-1.5 overflow-x-auto text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-600 pb-1 px-3" style="scrollbar-width: none;">
+                    <a href="{{ route('dashboard') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('dashboard') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">Tổng quan</a>
+                    <a href="{{ route('flashcards') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('flashcards') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">Thẻ nhớ</a>
+                    <a href="{{ route('quiz') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('quiz') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">Kiểm tra</a>
+                    <a href="{{ route('hsk.overview') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('hsk.*') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">HSK</a>
+                    @if ($authUser)
+                    <form method="POST" action="{{ route('logout') }}" class="inline shrink-0">
+                        @csrf
+                        <button type="submit" class="rounded-full bg-red-50 text-red-700 px-3 py-1.5 text-[10px] sm:text-xs font-bold whitespace-nowrap hover:bg-red-100 transition">Thoát</button>
+                    </form>
+                    @else
+                    <a href="{{ route('register') }}" class="shrink-0 whitespace-nowrap rounded-full bg-[#991b1b] text-white px-3 py-1.5 text-[10px] sm:text-xs font-bold shadow-md">Đăng ký</a>
+                    @endif
+                    {{-- Spacer to add padding at the end of scroll --}}
+                    <div class="w-1 shrink-0"></div>
                 </div>
-            </a>
-            <div class="flex flex-1 items-center gap-1.5 overflow-x-auto text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-600 pb-1 px-3" style="scrollbar-width: none;">
-                <a href="{{ route('dashboard') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('dashboard') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">Tổng quan</a>
-                <a href="{{ route('flashcards') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('flashcards') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">Thẻ nhớ</a>
-                <a href="{{ route('quiz') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('quiz') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">Kiểm tra</a>
-                <a href="{{ route('hsk.overview') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('hsk.*') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">HSK</a>
-                @if ($authUser)
-                <form method="POST" action="{{ route('logout') }}" class="inline shrink-0">
-                    @csrf
-                    <button type="submit" class="rounded-full bg-red-50 text-red-700 px-3 py-1.5 text-[10px] sm:text-xs font-bold whitespace-nowrap hover:bg-red-100 transition">Thoát</button>
-                </form>
-                @else
-                <a href="{{ route('register') }}" class="shrink-0 whitespace-nowrap rounded-full bg-[#991b1b] text-white px-3 py-1.5 text-[10px] sm:text-xs font-bold shadow-md">Đăng ký</a>
-                @endif
-                {{-- Spacer to add padding at the end of scroll --}}
-                <div class="w-1 shrink-0"></div>
+            </div>
+
+            <div class="px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
+                @yield('content')
             </div>
         </div>
 
-        <div class="px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
-            @yield('content')
-        </div>
+        <x-footer />
     </main>
     
     <script>
