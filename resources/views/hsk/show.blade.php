@@ -442,51 +442,103 @@
 
     </div>
 
-    {{-- Vocabulary List Grid in this HSK level --}}
+    {{-- Static card grid with pagination (Identical to main flashcards page) --}}
     <div class="mt-12">
-        <div class="mb-4 flex items-center justify-between">
-            <h3 class="text-base font-bold text-slate-900">Danh sách từ vựng chi tiết (Trang {{ $flashcards->currentPage() }} / {{ $flashcards->lastPage() }})</h3>
-            <span class="text-xs font-semibold text-slate-500">{{ $flashcards->total() }} từ vựng</span>
+        <div class="mb-5 flex items-center justify-between flex-wrap gap-3">
+            <p class="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">
+                Toàn bộ {{ $flashcards->total() }} thẻ thuộc {{ $meta['label'] }}
+            </p>
+            <p class="text-sm text-slate-400">
+                Trang {{ $flashcards->currentPage() }} / {{ $flashcards->lastPage() }}
+            </p>
         </div>
 
-        <div class="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             @foreach($flashcards as $card)
-            <div class="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition hover:border-slate-300 hover:shadow-md">
-                <div>
-                    <div class="flex items-start justify-between gap-2">
+            <article class="group flex flex-col justify-between overflow-hidden rounded-3xl border border-slate-200/60 bg-white/80 p-5 shadow-sm backdrop-blur transition hover:border-slate-300 hover:shadow-md">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2">
-                            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">{{ $card->pinyin }}</span>
+                            <p class="truncate text-xs font-bold uppercase tracking-widest text-slate-400">{{ $card->pinyin }}</p>
                             <button type="button" 
-                                    onclick="window.playChineseVoice('{{ addslashes($card->hanzi) }}')" 
-                                    class="text-slate-300 transition hover:text-blue-500 focus:outline-none" 
-                                    title="Nghe phát âm">
+                                onclick="window.playChineseVoice('{{ addslashes($card->hanzi) }}')" 
+                                class="text-slate-300 transition hover:text-blue-500 focus:outline-none"
+                                title="Nghe phát âm">
                                 <i data-lucide="volume-2" class="h-3.5 w-3.5"></i>
                             </button>
                         </div>
-                        <span class="rounded-lg px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider" 
-                              style="background: {{ $meta['color'] }}15; color: {{ $meta['color'] }}">
-                            {{ $meta['label'] }}
-                        </span>
+                        <div class="mt-1 flex items-baseline gap-3">
+                            <h2 class="text-3xl font-black text-slate-800">{{ $card->hanzi }}</h2>
+                        </div>
+                        <p class="mt-2 text-sm font-medium leading-relaxed text-slate-600 line-clamp-2" title="{{ $card->meaning }}">{{ $card->meaning }}</p>
                     </div>
-                    <p class="mt-1 text-2xl font-black text-slate-900">{{ $card->hanzi }}</p>
-                    <p class="mt-1.5 text-xs font-semibold text-slate-600 line-clamp-2">{{ $card->meaning }}</p>
+                    
+                    @if($card->hsk_level)
+                    <span class="shrink-0 rounded-xl bg-red-50/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-red-600 border border-red-100">
+                        HSK {{ $card->hsk_level }}
+                    </span>
+                    @elseif($card->lesson)
+                    <span class="shrink-0 rounded-xl bg-amber-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-700 border border-amber-100">
+                        L{{ $card->lesson_id }}
+                    </span>
+                    @endif
                 </div>
 
                 @if($card->example)
-                <div class="mt-3 border-t border-slate-100 pt-2 text-[11px] text-slate-500">
-                    <p class="font-medium text-slate-700 truncate">{{ $card->example }}</p>
-                    <p class="italic text-slate-400 truncate">{{ $card->example_meaning }}</p>
+                <div class="mt-4 border-t border-slate-100 pt-3">
+                    <p class="text-sm font-medium text-slate-800">{{ $card->example }}</p>
+                    @if($card->example_pinyin)
+                    <p class="mt-0.5 text-[11px] text-slate-400">{{ $card->example_pinyin }}</p>
+                    @endif
+                    <p class="mt-1 text-xs text-slate-500 line-clamp-2">{{ $card->example_meaning }}</p>
                 </div>
                 @endif
-            </div>
+            </article>
             @endforeach
         </div>
 
-        {{-- Pagination --}}
+        {{-- Custom Pagination links --}}
         @if($flashcards->hasPages())
-        <div class="mt-6 flex justify-center">
-            {{ $flashcards->links() }}
+        <div class="mt-8 flex items-center justify-center gap-2">
+            {{-- Prev --}}
+            @if($flashcards->onFirstPage())
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed">
+                <i data-lucide="chevron-left" class="h-4 w-4"></i>
+            </span>
+            @else
+            <a href="{{ $flashcards->previousPageUrl() }}"
+               class="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-[#991b1b] hover:text-[#991b1b]">
+                <i data-lucide="chevron-left" class="h-4 w-4"></i>
+            </a>
+            @endif
+
+            {{-- Page numbers --}}
+            @foreach($flashcards->getUrlRange(max(1, $flashcards->currentPage() - 2), min($flashcards->lastPage(), $flashcards->currentPage() + 2)) as $page => $url)
+            <a href="{{ $url }}"
+               class="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-bold transition
+                      {{ $page == $flashcards->currentPage()
+                          ? 'bg-[#991b1b] text-white shadow-md shadow-red-900/20'
+                          : 'border border-slate-200 bg-white text-slate-700 hover:border-[#991b1b] hover:text-[#991b1b]' }}">
+                {{ $page }}
+            </a>
+            @endforeach
+
+            {{-- Next --}}
+            @if($flashcards->hasMorePages())
+            <a href="{{ $flashcards->nextPageUrl() }}"
+               class="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-[#991b1b] hover:text-[#991b1b]">
+                <i data-lucide="chevron-right" class="h-4 w-4"></i>
+            </a>
+            @else
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed">
+                <i data-lucide="chevron-right" class="h-4 w-4"></i>
+            </span>
+            @endif
         </div>
+
+        <p class="mt-3 text-center text-xs text-slate-400">
+            Hiển thị {{ $flashcards->firstItem() }}–{{ $flashcards->lastItem() }} trong tổng số {{ $flashcards->total() }} thẻ
+        </p>
         @endif
     </div>
 
