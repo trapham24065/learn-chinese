@@ -1,9 +1,9 @@
 <footer class="mt-16 border-t border-slate-200/80 bg-white/70 backdrop-blur-md">
     <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-10 lg:py-16">
-        <div class="grid gap-10 lg:grid-cols-5">
+        <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 lg:gap-10">
             
-            {{-- Brand Column (2 cols) --}}
-            <div class="space-y-4 lg:col-span-2">
+            {{-- Brand Column (2 cols on lg, full on mobile) --}}
+            <div class="space-y-4 sm:col-span-2 md:col-span-3 lg:col-span-2">
                 <a href="{{ route('home') }}" class="inline-flex items-center gap-3">
                     <div class="grid h-10 w-10 place-items-center rounded-2xl bg-[#991b1b] text-white shadow-md shadow-red-950/20">
                         <span class="text-lg font-black">中</span>
