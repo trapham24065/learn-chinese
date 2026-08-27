@@ -123,12 +123,12 @@
 
             <div class="flex flex-wrap items-center gap-3">
                 <button type="button" @click="resetQuiz()" class="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-bold text-slate-950 shadow-lg transition hover:bg-amber-100 hover:scale-105 active:scale-95">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                    <i data-lucide="rotate-ccw" class="h-4 w-4"></i>
                     <span>Làm lại bài này</span>
                 </button>
                 <a href="{{ route('flashcards') }}" class="inline-flex items-center gap-2 rounded-full bg-amber-300 px-5 py-3 text-sm font-bold text-slate-950 shadow-lg transition hover:bg-amber-200 hover:scale-105 active:scale-95">
+                    <i data-lucide="layers" class="h-4 w-4"></i>
                     <span>Ôn Flashcard</span>
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
                 </a>
             </div>
         </div>
@@ -206,10 +206,10 @@
                                 <template x-if="isSubmitted">
                                     <span>
                                         <template x-if="isCorrectOption({{ $question->id }}, @js($option))">
-                                            <svg class="h-5 w-5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                            <i data-lucide="circle-check-big" class="h-5 w-5 text-emerald-600"></i>
                                         </template>
                                         <template x-if="isUserWrongOption({{ $question->id }}, @js($option))">
-                                            <svg class="h-5 w-5 text-rose-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
+                                            <i data-lucide="circle-x" class="h-5 w-5 text-rose-600"></i>
                                         </template>
                                     </span>
                                 </template>
@@ -225,7 +225,9 @@
                          class="mt-6 rounded-2xl border p-4 sm:p-5"
                          :class="results?.details?.[{{ $question->id }}]?.is_correct ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950' : 'bg-amber-50/70 border-amber-200 text-amber-950'">
                         <div class="flex items-start gap-3">
-                            <span class="text-xl">💡</span>
+                            <div class="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-amber-100 text-amber-800">
+                                <i data-lucide="lightbulb" class="h-4 w-4"></i>
+                            </div>
                             <div class="space-y-1">
                                 <p class="text-xs font-bold uppercase tracking-wider text-slate-600">
                                     Giải thích chi tiết:
@@ -271,7 +273,7 @@
                                 class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#991b1b] px-8 py-3.5 text-base font-bold text-white shadow-xl shadow-red-950/20 transition hover:bg-red-800 hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">
                             <svg x-show="isSubmitting" class="h-5 w-5 animate-spin text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
                             <span x-text="isSubmitting ? 'Đang chấm điểm...' : 'Nộp bài & Chấm điểm'"></span>
-                            <span x-show="!isSubmitting">🎯</span>
+                            <i x-show="!isSubmitting" data-lucide="target" class="h-5 w-5"></i>
                         </button>
                     </template>
 
@@ -280,11 +282,13 @@
                             <button type="button"
                                     @click="resetQuiz()"
                                     class="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-bold text-slate-800 shadow transition hover:bg-slate-50">
-                                🔄 Làm lại
+                                <i data-lucide="rotate-ccw" class="h-4 w-4"></i>
+                                <span>Làm lại</span>
                             </button>
                             <a href="{{ route('dashboard') }}"
                                class="inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white shadow transition hover:bg-slate-800">
-                                📊 Về Dashboard
+                                <i data-lucide="layout-dashboard" class="h-4 w-4"></i>
+                                <span>Về Dashboard</span>
                             </a>
                         </div>
                     </template>
@@ -295,13 +299,16 @@
         {{-- New set hint --}}
         <p class="text-center text-xs text-slate-400">
             Bộ {{ count($questions) }} câu được chọn ngẫu nhiên từ {{ $totalPoolCount }} câu.
-            <a href="{{ request()->fullUrl() }}" class="font-semibold text-[#991b1b] hover:underline">Tải bộ câu mới →</a>
+            <a href="{{ request()->fullUrl() }}" class="font-semibold text-[#991b1b] hover:underline inline-flex items-center gap-1">
+                <span>Tải bộ câu mới</span>
+                <i data-lucide="arrow-right" class="h-3 w-3 inline"></i>
+            </a>
         </p>
     @else
         {{-- Empty State --}}
         <section class="flex flex-col items-center justify-center rounded-[2.5rem] border border-dashed border-slate-300 bg-white/60 p-12 text-center shadow-sm backdrop-blur sm:p-16">
             <div class="grid h-16 w-16 place-items-center rounded-3xl bg-amber-50 text-amber-600">
-                <i data-lucide="help-circle" class="h-8 w-8"></i>
+                <i data-lucide="circle-help" class="h-8 w-8"></i>
             </div>
             <h2 class="mt-4 text-2xl font-bold text-slate-900">Chưa có câu hỏi nào cho chủ đề này</h2>
             <p class="mt-2 max-w-md text-sm text-slate-500">
@@ -310,11 +317,11 @@
             <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
                 <a href="{{ route('quiz') }}" class="inline-flex items-center gap-2 rounded-full bg-[#991b1b] px-6 py-3 text-sm font-bold text-white shadow-md transition hover:bg-red-800">
                     <i data-lucide="layers" class="h-4 w-4"></i>
-                    Xem tất cả câu hỏi
+                    <span>Xem tất cả câu hỏi</span>
                 </a>
                 <a href="{{ route('flashcards') }}" class="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
                     <i data-lucide="book-open" class="h-4 w-4"></i>
-                    Ôn Flashcard trước
+                    <span>Ôn Flashcard trước</span>
                 </a>
             </div>
         </section>
@@ -455,6 +462,7 @@ function quizApp() {
                 const data = await response.json();
                 this.results = data;
                 this.isSubmitted = true;
+                setTimeout(() => window.refreshIcons?.(), 50);
 
                 // Smooth scroll to top to see score
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -471,6 +479,7 @@ function quizApp() {
             this.isSubmitted = false;
             this.results = null;
             this.startTime = Date.now();
+            setTimeout(() => window.refreshIcons?.(), 50);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     };

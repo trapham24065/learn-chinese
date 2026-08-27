@@ -13,7 +13,7 @@
          x-transition:leave-start="opacity-100 translate-y-0"
          x-transition:leave-end="opacity-0 -translate-y-4"
          class="fixed top-6 right-6 z-50 flex items-center gap-3 rounded-2xl bg-slate-950 px-5 py-3.5 text-sm font-semibold text-white shadow-2xl shadow-slate-950/30 border border-white/15">
-        <span class="text-amber-400 text-base">✨</span>
+        <i data-lucide="sparkles" class="h-4 w-4 text-amber-400 shrink-0"></i>
         <span x-text="toastMessage"></span>
     </div>
 
@@ -21,6 +21,7 @@
     <section class="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
         <div>
             <div class="inline-flex items-center gap-2 rounded-full bg-red-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.24em] text-[#991b1b]">
+                <i data-lucide="layout-dashboard" class="h-3.5 w-3.5"></i>
                 Trung tâm học tập
             </div>
             <h1 class="mt-3 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">
@@ -32,7 +33,10 @@
 
             {{-- Quick Study Session Logger --}}
             <div class="mt-6 rounded-3xl border border-white/80 bg-white/80 p-4 shadow-lg shadow-slate-900/5 backdrop-blur">
-                <p class="text-xs font-bold uppercase tracking-wider text-slate-500">⚡ Ghi nhận buổi tự học hôm nay:</p>
+                <p class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                    <i data-lucide="zap" class="h-3.5 w-3.5 text-amber-500"></i>
+                    <span>Ghi nhận buổi tự học hôm nay:</span>
+                </p>
                 <div class="mt-3 flex flex-wrap gap-2">
                     <button type="button"
                             @click="quickLogSession(10, 'lesson', 'Ôn từ vựng')"
@@ -96,13 +100,17 @@
             </div>
 
             <div class="mt-4 flex items-center justify-between text-xs text-slate-300">
-                <span x-show="todayMinutes >= dailyGoal" class="text-emerald-300 font-semibold">
-                    🎉 Hoàn thành xuất sắc mục tiêu ngày!
+                <span x-show="todayMinutes >= dailyGoal" class="text-emerald-300 font-semibold inline-flex items-center gap-1.5">
+                    <i data-lucide="party-popper" class="h-4 w-4 text-amber-400"></i>
+                    <span>Hoàn thành xuất sắc mục tiêu ngày!</span>
                 </span>
                 <span x-show="todayMinutes < dailyGoal" class="text-slate-400">
                     Còn <strong class="text-white" x-text="dailyGoal - todayMinutes"></strong> phút để đạt chỉ tiêu hôm nay.
                 </span>
-                <span class="text-amber-200">🔥 Streak <span x-text="streakDays">{{ $streakDays }}</span> ngày</span>
+                <span class="inline-flex items-center gap-1 text-amber-200">
+                    <i data-lucide="flame" class="h-3.5 w-3.5 text-amber-400"></i>
+                    <span>Streak <span x-text="streakDays">{{ $streakDays }}</span> ngày</span>
+                </span>
             </div>
         </div>
     </section>
@@ -317,8 +325,8 @@
                     <p class="text-xs font-semibold uppercase tracking-[0.24em] text-red-200/80">Kỷ luật học tập</p>
                     <span class="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-bold text-amber-300">Streak</span>
                 </div>
-                <h3 class="mt-3 text-4xl font-black tracking-tight">
-                    <span x-text="streakDays">{{ $streakDays }}</span> ngày liên tục 🔥
+                <h3 class="mt-3 text-4xl font-black tracking-tight flex items-center gap-2">
+                    <span x-text="streakDays">{{ $streakDays }}</span> ngày liên tục <i data-lucide="flame" class="h-8 w-8 text-amber-400"></i>
                 </h3>
                 <p class="mt-3 text-sm text-white/80 leading-6">
                     Mỗi ngày làm ít nhất 1 bài quiz hoặc ôn thẻ từ vựng để giữ vững chuỗi học tập của bạn.
@@ -439,7 +447,7 @@
                     {{-- Actions Row --}}
                     <div class="mt-6 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-4">
                         <div class="flex items-center gap-2">
-                            <a :href="'/quiz?lesson=' + lesson.slug"
+                            <a :href="'{{ route('quiz') }}?lesson=' + lesson.slug"
                                class="inline-flex items-center gap-1.5 rounded-full bg-[#991b1b] px-4 py-2 text-xs font-bold text-white transition hover:bg-red-800 active:scale-95 shadow-sm">
                                 <i data-lucide="target" class="h-3.5 w-3.5"></i>
                                 <span>Làm Quiz</span>
@@ -468,7 +476,8 @@
                                     :disabled="isUpdatingProgress === lesson.id"
                                     title="Học lại bài này từ đầu"
                                     class="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-amber-50 hover:text-amber-700 transition active:scale-95 disabled:opacity-50">
-                                <span>🔄 Học lại</span>
+                                <i data-lucide="rotate-ccw" class="h-3.5 w-3.5"></i>
+                                <span>Học lại</span>
                             </button>
                         </div>
                     </div>
@@ -503,9 +512,11 @@
                 <template x-for="act in activities" :key="act.id || act.title">
                     <article class="flex items-center justify-between rounded-2xl bg-slate-50 p-4 transition hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-200">
                         <div class="flex items-center gap-3">
-                            <span class="grid h-10 w-10 shrink-0 place-items-center rounded-2xl text-base"
-                                  :class="act.type === 'quiz' ? 'bg-amber-100 text-amber-900' : 'bg-red-100 text-[#991b1b]'">
-                                <span x-text="act.type === 'quiz' ? '🎯' : (act.type === 'flashcard' ? '🃏' : '📖')"></span>
+                            <span class="grid h-10 w-10 shrink-0 place-items-center rounded-2xl"
+                                  :class="act.type === 'quiz' ? 'bg-amber-100 text-amber-900' : (act.type === 'flashcard' ? 'bg-red-100 text-[#991b1b]' : 'bg-blue-100 text-blue-900')">
+                                <i x-show="act.type === 'quiz'" data-lucide="target" class="h-5 w-5 text-amber-600"></i>
+                                <i x-show="act.type === 'flashcard'" data-lucide="layers" class="h-5 w-5 text-[#991b1b]"></i>
+                                <i x-show="act.type !== 'quiz' && act.type !== 'flashcard'" data-lucide="book-open" class="h-5 w-5 text-blue-600"></i>
                             </span>
                             <div>
                                 <h4 class="text-sm font-bold text-slate-950" x-text="act.title"></h4>
@@ -598,7 +609,7 @@ function studentDashboard() {
 
         getStatusLabel(status) {
             const map = {
-                'completed': '✓ Đã xong',
+                'completed': 'Đã xong',
                 'in_progress': 'Đang học',
                 'not_started': 'Chưa học'
             };
@@ -638,6 +649,7 @@ function studentDashboard() {
 
                 if (data.new_activity) {
                     this.activities.unshift(data.new_activity);
+                    setTimeout(() => window.refreshIcons?.(), 50);
                 }
 
                 this.showToast(data.message);

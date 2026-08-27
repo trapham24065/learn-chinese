@@ -139,10 +139,10 @@ class QuizController extends Controller
         }
 
         $message = match (true) {
-            $scorePercent === 100 => 'Xuất sắc tuyệt đối! Bạn trả lời đúng toàn bộ câu hỏi! 🎉',
-            $scorePercent >= 80 => 'Rất tốt! Bạn đã nắm rất vững kiến thức phần này! 👏',
-            $scorePercent >= 50 => 'Khá tốt! Hãy xem lại các câu sai để ghi nhớ lâu hơn nhé. 💪',
-            default => 'Cần cố gắng thêm! Hãy xem lại giải thích chi tiết và flashcard nhé. 📚',
+            $scorePercent === 100 => 'Xuất sắc tuyệt đối! Bạn đã trả lời đúng toàn bộ câu hỏi!',
+            $scorePercent >= 80 => 'Rất tốt! Bạn đã nắm rất vững kiến thức phần này.',
+            $scorePercent >= 50 => 'Khá tốt! Hãy xem lại các câu sai để ghi nhớ lâu hơn nhé.',
+            default => 'Cần cố gắng thêm! Hãy xem lại giải thích chi tiết và flashcard nhé.',
         };
 
         return response()->json([
