@@ -411,7 +411,8 @@
                                 class="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold text-white shadow-md transition hover:opacity-90 active:scale-95"
                                 style="background: {{ $meta['color'] }}">
                             <span class="hidden sm:inline" x-text="current === cards.length - 1 ? 'Xong' : 'Tiếp'"></span>
-                            <i :data-lucide="current === cards.length - 1 ? 'circle-check' : 'arrow-right'" class="h-4 w-4"></i>
+                            <i x-show="current < cards.length - 1" data-lucide="arrow-right" class="h-4 w-4"></i>
+                            <i x-show="current === cards.length - 1" data-lucide="circle-check" class="h-4 w-4"></i>
                         </button>
                     </div>
                 </div>

@@ -19,7 +19,8 @@
     $hasContent = $data['flashcard_count'] > 0 || $data['lesson_count'] > 0;
     @endphp
     <a href="{{ route('hsk.show', $level) }}"
-        class="group relative overflow-hidden rounded-[2rem] border bg-white p-7 shadow-xl shadow-slate-900/5 transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-slate-900/10 {{ $data['border'] }}" style="padding:5%">
+        class="group relative overflow-hidden rounded-[2rem] border bg-white p-6 sm:p-7 shadow-xl shadow-slate-900/5 transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-slate-900/10 {{ $data['border'] }}"
+    >
 
         {{-- Top accent line --}}
         <div class="absolute inset-x-0 top-0 h-1.5" style="background: {{ $data['color'] }}"></div>

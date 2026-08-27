@@ -402,7 +402,8 @@
                     @click="next()"
                     class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-40">
                     <span class="hidden sm:inline" x-text="current === cards.length - 1 ? 'Xong' : 'Tiếp'"></span>
-                    <i :data-lucide="current === cards.length - 1 ? 'circle-check' : 'arrow-right'" class="h-4 w-4"></i>
+                    <i x-show="current < cards.length - 1" data-lucide="arrow-right" class="h-4 w-4"></i>
+                    <i x-show="current === cards.length - 1" data-lucide="circle-check" class="h-4 w-4"></i>
                 </button>
 
             </div>
@@ -547,7 +548,6 @@
             class="inline-flex items-center justify-center rounded-full bg-amber-300 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5 hover:bg-amber-200">
             Đi sang quiz →
         </a>
-    </div>
     </div>
 </section>
 

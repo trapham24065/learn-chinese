@@ -7,7 +7,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="description" content="Chinese Deck - web học tiếng Trung với bài học ngắn, flashcard, quiz và tiến độ học tập.">
 
-    <title>Learn Chinese</title>
+    <title>@yield('title', 'Learn Chinese | Học Tiếng Trung')</title>
     <link rel="icon" type="image/png" href="{{ asset('images/favicon.png') }}">
     @fonts
     @vite(['resources/css/app.css', 'resources/js/app.js'])

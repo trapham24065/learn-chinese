@@ -16,8 +16,18 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
+        $user = $request->user();
+
+        $stats = [
+            'flashcards' => \App\Models\Flashcard::count(),
+            'lessons'    => \App\Models\Lesson::where('is_published', true)->count(),
+            'completed'  => $user->lessonProgresses()->where('status', 'completed')->count(),
+            'streak'     => $user->calculateStreak(),
+        ];
+
         return view('profile.edit', [
-            'user' => $request->user(),
+            'user'  => $user,
+            'stats' => $stats,
         ]);
     }
 

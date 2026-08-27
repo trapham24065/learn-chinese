@@ -1,20 +1,21 @@
 @extends('layouts.app')
 
-@section('title', 'Hồ sơ cá nhân |Learn Chinese')
+@section('title', 'Hồ sơ cá nhân | Learn Chinese')
 
 @section('content')
 
 @php
-$streak = $user->calculateStreak();
-$studiedToday = $user->hasStudiedToday();
-$totalMinutes = $user->studySessions()->sum('duration_minutes');
+$streak        = $stats['streak'];
+$studiedToday  = $user->hasStudiedToday();
+$totalMinutes  = $user->studySessions()->sum('duration_minutes');
 $totalSessions = $user->studySessions()->count();
-$completedCount = $user->lessonProgresses()->where('status', 'completed')->count();
-$avgScore = $user->studySessions()->whereNotNull('score')->avg('score');
-$joinDate = $user->created_at->format('d/m/Y');
-$memberSince = $user->created_at->diffForHumans();
-$pct = min(100, $completedCount * 12);
-$initial = mb_strtoupper(mb_substr($user->name, 0, 1));
+$completedCount= $stats['completed'];
+$totalLessons  = $stats['lessons'];
+$avgScore      = $user->studySessions()->whereNotNull('score')->avg('score');
+$joinDate      = $user->created_at->format('d/m/Y');
+$memberSince   = $user->created_at->diffForHumans();
+$pct           = $totalLessons > 0 ? min(100, round(($completedCount / $totalLessons) * 100)) : 0;
+$initial       = mb_strtoupper(mb_substr($user->name, 0, 1));
 @endphp
 
 {{-- ══════════════════════════════════════════════
@@ -86,8 +87,8 @@ $initial = mb_strtoupper(mb_substr($user->name, 0, 1));
                     Streak
                 </p>
 
-                <p class="mt-1 text-xl font-black {{ $studiedToday ? 'text-amber-400' : 'text-slate-400' }}">
-                    🔥 {{ $streak }}
+                <p class="mt-1 text-xl font-black flex items-center gap-1 {{ $studiedToday ? 'text-amber-400' : 'text-slate-400' }}">
+                    <i data-lucide="flame" class="h-4 w-4"></i> {{ $streak }}
                 </p>
 
                 <p class="mt-0.5 text-[10px] text-slate-600">
