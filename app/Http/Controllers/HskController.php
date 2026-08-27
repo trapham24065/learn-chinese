@@ -113,11 +113,19 @@ class HskController extends Controller
             ->withCount(['questions', 'flashcards'])
             ->get();
 
-        $flashcards = Flashcard::where('hsk_level', $level)
-            ->where('is_active', true)
-            ->with('lesson')
-            ->orderBy('sort_order')
-            ->paginate(24);
+        $flashcardsQuery = Flashcard::where('hsk_level', $level)
+            ->where('flashcards.is_active', true)
+            ->with('lesson');
+
+        if ($student) {
+            $flashcardsQuery->leftJoin('flashcard_progresses', function ($join) use ($student) {
+                $join->on('flashcards.id', '=', 'flashcard_progresses.flashcard_id')
+                     ->where('flashcard_progresses.user_id', '=', $student->id);
+            })
+            ->select('flashcards.*', 'flashcard_progresses.is_starred as is_starred');
+        }
+
+        $flashcards = $flashcardsQuery->orderBy('flashcards.sort_order')->paginate(24);
 
         // Per-lesson progress for this student
         $progressMap = [];

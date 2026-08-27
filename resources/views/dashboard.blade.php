@@ -59,6 +59,11 @@
                         <span>+20 phút</span>
                         <span class="text-slate-400 group-hover:text-white">Bài học</span>
                     </button>
+                    <a href="{{ route('flashcards', ['starred' => 1]) }}"
+                       class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200/80 px-3.5 py-1.5 text-xs font-bold text-amber-900 transition hover:bg-amber-100 active:scale-95">
+                        <i data-lucide="star" class="h-4 w-4 fill-current text-amber-500"></i>
+                        <span>Sổ từ đã lưu ({{ $starredCount }})</span>
+                    </a>
                     <a href="{{ route('quiz') }}"
                        class="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3.5 py-1.5 text-xs font-bold text-amber-900 transition hover:bg-amber-200 active:scale-95">
                         <i data-lucide="target" class="h-4 w-4"></i>
@@ -359,6 +364,15 @@
                             <span x-text="completedLessonsCount">{{ $completedLessonsCount }}</span> / <span x-text="totalLessonsCount">{{ $totalLessonsCount }}</span> bài
                         </span>
                     </div>
+                    <a href="{{ route('flashcards', ['starred' => 1]) }}" class="flex items-center justify-between rounded-2xl bg-amber-50/70 border border-amber-200/60 p-3.5 transition hover:bg-amber-100/80 group">
+                        <span class="text-sm font-semibold text-slate-800 flex items-center gap-2">
+                            <i data-lucide="star" class="h-4 w-4 fill-current text-amber-500"></i>
+                            <span>Sổ từ vựng đã lưu</span>
+                        </span>
+                        <span class="rounded-full bg-amber-200/80 px-3 py-1 text-xs font-bold text-amber-950 group-hover:bg-amber-300 transition">
+                            {{ $starredCount }} từ
+                        </span>
+                    </a>
                 </div>
             </div>
         </div>

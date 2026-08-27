@@ -97,6 +97,8 @@ class DashboardController extends Controller
             ];
         });
 
+        $starredCount = $student->starredFlashcards()->count();
+
         return view('dashboard', [
             'student' => $student,
             'lessons' => $lessons,
@@ -113,6 +115,7 @@ class DashboardController extends Controller
             'activities' => $activities,
             'dueFlashcardsCount' => $dueFlashcardsCount,
             'dueFlashcards' => $dueFlashcards,
+            'starredCount' => $starredCount,
         ]);
     }
 

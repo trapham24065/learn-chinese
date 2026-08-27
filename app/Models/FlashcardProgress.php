@@ -16,11 +16,13 @@ class FlashcardProgress extends Model
         'ease_factor',
         'interval',
         'next_review_at',
+        'is_starred',
     ];
 
     protected $casts = [
         'next_review_at' => 'datetime',
         'ease_factor' => 'float',
+        'is_starred' => 'boolean',
     ];
 
     public function user(): BelongsTo

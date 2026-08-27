@@ -46,6 +46,7 @@ Route::get('/flashcards', [FlashcardController::class, 'index'])->name('flashcar
 Route::get('/flashcards/cards', [FlashcardController::class, 'cards'])->name('flashcards.cards');
 Route::post('/flashcards/session', [FlashcardController::class, 'logSession'])->name('flashcards.session');
 Route::post('/flashcards/review', [FlashcardController::class, 'review'])->name('flashcards.review');
+Route::post('/flashcards/toggle-star', [FlashcardController::class, 'toggleStar'])->name('flashcards.toggleStar');
 
 Route::get('/quiz', [QuizController::class, 'index'])->name('quiz');
 Route::post('/quiz/submit', [QuizController::class, 'submit'])->name('quiz.submit');

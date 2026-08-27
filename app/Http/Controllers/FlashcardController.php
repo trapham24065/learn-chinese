@@ -26,22 +26,35 @@ class FlashcardController extends Controller
         $lessonSlug  = $request->query('lesson');
         $hskLevel    = $request->query('hsk');
         $search      = $request->query('q');
+        $isStarred   = $request->boolean('starred') || $request->query('starred') === '1';
         $activeLesson = null;
+
+        $user = Auth::guard('web')->user();
+        $starredCount = $user ? $user->starredFlashcards()->count() : 0;
 
         $query = Flashcard::query()
             ->where('flashcards.is_active', true)
             ->with('lesson');
 
-        if ($user = Auth::guard('web')->user()) {
+        $now = now()->toDateTimeString();
+
+        if ($user) {
             $query->leftJoin('flashcard_progresses', function ($join) use ($user) {
                 $join->on('flashcards.id', '=', 'flashcard_progresses.flashcard_id')
                      ->where('flashcard_progresses.user_id', '=', $user->id);
             })
-            ->select('flashcards.*')
-            ->orderByRaw('CASE WHEN flashcard_progresses.next_review_at <= NOW() THEN 0 WHEN flashcard_progresses.next_review_at IS NULL THEN 1 ELSE 2 END')
+            ->select('flashcards.*', 'flashcard_progresses.is_starred as is_starred')
+            ->orderByRaw('CASE WHEN flashcard_progresses.next_review_at <= ? THEN 0 WHEN flashcard_progresses.next_review_at IS NULL THEN 1 ELSE 2 END', [$now])
             ->orderBy('flashcard_progresses.next_review_at')
             ->orderBy('flashcards.sort_order');
+
+            if ($isStarred) {
+                $query->where('flashcard_progresses.is_starred', true);
+            }
         } else {
+            if ($isStarred) {
+                $query->whereRaw('1 = 0');
+            }
             $query->orderBy('flashcards.sort_order');
         }
 
@@ -77,6 +90,7 @@ class FlashcardController extends Controller
                 'example_meaning' => $f->example_meaning,
                 'lesson'          => $f->lesson?->title ?? 'Chung',
                 'lesson_id'       => $f->lesson_id,
+                'is_starred'      => (bool) ($f->is_starred ?? false),
             ]);
 
         // Total for deck so JS knows if there are more batches
@@ -88,14 +102,14 @@ class FlashcardController extends Controller
         $totalCount = Flashcard::where('is_active', true)->count();
 
         return view('flashcards', compact(
-            'flashcards', 'lessons', 'lessonSlug', 'hskLevel', 'search',
+            'flashcards', 'lessons', 'lessonSlug', 'hskLevel', 'search', 'isStarred', 'starredCount',
             'activeLesson', 'totalCount', 'deckBatch', 'deckTotal'
         ));
     }
 
     /**
      * JSON endpoint: load next batch of deck cards.
-     * GET /flashcards/cards?offset=20&lesson=slug&hsk=1
+     * GET /flashcards/cards?offset=20&lesson=slug&hsk=1&starred=1
      */
     public function cards(Request $request): JsonResponse
     {
@@ -103,20 +117,31 @@ class FlashcardController extends Controller
         $lessonSlug = $request->query('lesson');
         $hskLevel   = $request->query('hsk');
         $search     = $request->query('q');
+        $isStarred  = $request->boolean('starred') || $request->query('starred') === '1';
 
         $query = Flashcard::query()
             ->where('flashcards.is_active', true);
 
-        if ($user = Auth::guard('web')->user()) {
+        $user = Auth::guard('web')->user();
+        $now = now()->toDateTimeString();
+
+        if ($user) {
             $query->leftJoin('flashcard_progresses', function ($join) use ($user) {
                 $join->on('flashcards.id', '=', 'flashcard_progresses.flashcard_id')
                      ->where('flashcard_progresses.user_id', '=', $user->id);
             })
-            ->select('flashcards.*')
-            ->orderByRaw('CASE WHEN flashcard_progresses.next_review_at <= NOW() THEN 0 WHEN flashcard_progresses.next_review_at IS NULL THEN 1 ELSE 2 END')
+            ->select('flashcards.*', 'flashcard_progresses.is_starred as is_starred')
+            ->orderByRaw('CASE WHEN flashcard_progresses.next_review_at <= ? THEN 0 WHEN flashcard_progresses.next_review_at IS NULL THEN 1 ELSE 2 END', [$now])
             ->orderBy('flashcard_progresses.next_review_at')
             ->orderBy('flashcards.sort_order');
+
+            if ($isStarred) {
+                $query->where('flashcard_progresses.is_starred', true);
+            }
         } else {
+            if ($isStarred) {
+                $query->whereRaw('1 = 0');
+            }
             $query->orderBy('flashcards.sort_order');
         }
 
@@ -146,12 +171,47 @@ class FlashcardController extends Controller
                 'example_meaning' => $f->example_meaning,
                 'lesson'          => $f->lesson?->title ?? 'Chung',
                 'lesson_id'       => $f->lesson_id,
+                'is_starred'      => (bool) ($f->is_starred ?? false),
             ]);
 
         return response()->json([
             'cards'   => $cards,
             'total'   => $query->count(),
             'offset'  => $offset,
+        ]);
+    }
+
+    public function toggleStar(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'flashcard_id' => ['required', 'exists:flashcards,id'],
+        ]);
+
+        $user = Auth::guard('web')->user();
+        if (! $user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Vui lòng đăng nhập để lưu từ vựng vào Sổ tay yêu thích.',
+            ], 401);
+        }
+
+        $progress = $user->flashcardProgresses()->firstOrCreate(
+            ['flashcard_id' => $validated['flashcard_id']],
+            ['repetition' => 0, 'ease_factor' => 2.5, 'interval' => 0, 'is_starred' => false]
+        );
+
+        $progress->is_starred = ! $progress->is_starred;
+        $progress->save();
+
+        $starredCount = $user->starredFlashcards()->count();
+
+        return response()->json([
+            'success' => true,
+            'is_starred' => (bool) $progress->is_starred,
+            'starred_count' => $starredCount,
+            'message' => $progress->is_starred 
+                ? 'Đã thêm vào Sổ tay từ vựng ⭐' 
+                : 'Đã xóa khỏi Sổ tay từ vựng',
         ]);
     }
 

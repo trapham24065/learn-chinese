@@ -208,6 +208,7 @@
             'example'         => $f->example,
             'example_pinyin'  => $f->example_pinyin,
             'example_meaning' => $f->example_meaning,
+            'is_starred'      => (bool) ($f->is_starred ?? false),
         ])) }},
 
         current: 0,
@@ -229,6 +230,35 @@
             this.flipped = !this.flipped;
         },
 
+        async toggleStar(cardId) {
+            const target = this.cards.find(c => c.id === cardId);
+            if (!target) return;
+            const prevState = target.is_starred;
+            target.is_starred = !prevState;
+
+            try {
+                const res = await fetch('{{ route('flashcards.toggleStar') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ flashcard_id: cardId })
+                });
+                if (!res.ok) {
+                    target.is_starred = prevState;
+                    if (res.status === 401) alert('Vui lòng đăng nhập để lưu từ vựng vào Sổ tay yêu thích!');
+                } else {
+                    const data = await res.json();
+                    target.is_starred = data.is_starred;
+                }
+            } catch(e) {
+                target.is_starred = prevState;
+            }
+            setTimeout(() => window.refreshIcons?.(), 50);
+        },
+
         next() {
             if (!this.done.includes(this.current)) {
                 this.done.push(this.current);
@@ -238,6 +268,7 @@
                 this.flipped = false;
                 setTimeout(() => {
                     this.current++;
+                    setTimeout(() => window.refreshIcons?.(), 50);
                 }, 150);
             }
         },
@@ -247,6 +278,7 @@
                 this.flipped = false;
                 setTimeout(() => {
                     this.current--;
+                    setTimeout(() => window.refreshIcons?.(), 50);
                 }, 150);
             }
         },
@@ -255,6 +287,7 @@
             this.current = 0;
             this.flipped = false;
             this.done = [];
+            setTimeout(() => window.refreshIcons?.(), 50);
         },
 
         async submitReview(quality) {
@@ -282,7 +315,7 @@
                 window.playChineseVoice(text);
             }
         }
-    }" x-init="ready = true" class="space-y-6">
+    }" x-init="ready = true; setTimeout(() => window.refreshIcons?.(), 50);" class="space-y-6">
 
         {{-- Skeleton Loader for HSK card --}}
         <div x-show="!ready" class="flex flex-col items-center gap-6">
@@ -314,7 +347,7 @@
             {{-- Dot Navigation --}}
             <div class="flex flex-wrap justify-center gap-1.5 max-w-lg mx-auto">
                 <template x-for="(c, idx) in cards" :key="idx">
-                    <button @click="current = idx; flipped = false"
+                    <button @click="current = idx; flipped = false; setTimeout(() => window.refreshIcons?.(), 50);"
                         class="h-2 rounded-full transition-all duration-300"
                         :class="done.includes(idx) ? 'w-5 bg-emerald-500' : (idx === current ? 'w-5' : 'w-2 bg-slate-200')"
                         :style="idx === current ? 'background: {{ $meta['color'] }}' : ''">
@@ -339,6 +372,14 @@
                                 <p class="text-7xl sm:text-8xl font-black leading-none tracking-tight" x-text="card?.hanzi"></p>
                                 <p class="mt-1 text-xs text-white/70">Bấm để lật thẻ 👆</p>
 
+                                {{-- Star / Bookmark Button (Top Right) --}}
+                                <button @click.stop="toggleStar(card?.id)" 
+                                        class="absolute top-5 right-5 flex h-11 w-11 items-center justify-center rounded-full transition-all duration-300 hover:scale-110 active:scale-95 shadow-md"
+                                        :class="card?.is_starred ? 'bg-amber-400 text-slate-950 shadow-amber-400/30 ring-2 ring-amber-300' : 'bg-black/25 text-white hover:bg-black/40'"
+                                        :title="card?.is_starred ? 'Bỏ lưu từ này' : 'Lưu vào Sổ từ vựng'">
+                                    <i data-lucide="star" class="h-5 w-5" :class="{ 'fill-current': card?.is_starred }"></i>
+                                </button>
+
                                 {{-- Action Buttons (Writing & Speech) --}}
                                 <div class="absolute bottom-5 right-5 flex items-center gap-2">
                                     <button @click.stop="$dispatch('open-writer', card?.hanzi)" 
@@ -355,10 +396,18 @@
                             </div>
 
                             {{-- Back Face --}}
-                            <div class="flip-card-back flex flex-col justify-between overflow-hidden bg-white p-7 shadow-2xl shadow-slate-900/10">
+                            <div class="flip-card-back relative flex flex-col justify-between overflow-hidden bg-white p-7 shadow-2xl shadow-slate-900/10">
                                 <div class="absolute inset-x-0 top-0 h-1.5" style="background: {{ $meta['color'] }}"></div>
                                 
-                                <div class="flex flex-1 flex-col justify-center gap-3">
+                                {{-- Star Button on Back Face --}}
+                                <button @click.stop="toggleStar(card?.id)" 
+                                        class="absolute top-5 right-5 flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 hover:scale-110 active:scale-95 shadow-sm"
+                                        :class="card?.is_starred ? 'bg-amber-100 text-amber-600 ring-1 ring-amber-300' : 'bg-slate-100 text-slate-400 hover:text-amber-500 hover:bg-amber-50'"
+                                        :title="card?.is_starred ? 'Bỏ lưu từ này' : 'Lưu vào Sổ từ vựng'">
+                                    <i data-lucide="star" class="h-5 w-5" :class="{ 'fill-current': card?.is_starred }"></i>
+                                </button>
+
+                                <div class="flex flex-1 flex-col justify-center gap-3 pr-12">
                                     <div>
                                         <p class="text-xs font-bold uppercase tracking-widest" style="color: {{ $meta['color'] }}" x-text="card?.pinyin"></p>
                                         <p class="mt-1 text-3xl font-black text-slate-950" x-text="card?.meaning"></p>
@@ -456,7 +505,7 @@
 
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             @foreach($flashcards as $card)
-            <article class="group flex flex-col justify-between overflow-hidden rounded-3xl border border-slate-200/60 bg-white/80 p-5 shadow-sm backdrop-blur transition hover:border-slate-300 hover:shadow-md">
+            <article class="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-slate-200/60 bg-white/80 p-5 shadow-sm backdrop-blur transition hover:border-slate-300 hover:shadow-md">
                 <div class="flex items-start justify-between gap-3">
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2">
@@ -474,15 +523,51 @@
                         <p class="mt-2 text-sm font-medium leading-relaxed text-slate-600 line-clamp-2" title="{{ $card->meaning }}">{{ $card->meaning }}</p>
                     </div>
                     
-                    @if($card->hsk_level)
-                    <span class="shrink-0 rounded-xl bg-red-50/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-red-600 border border-red-100">
-                        HSK {{ $card->hsk_level }}
-                    </span>
-                    @elseif($card->lesson)
-                    <span class="shrink-0 rounded-xl bg-amber-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-700 border border-amber-100">
-                        L{{ $card->lesson_id }}
-                    </span>
-                    @endif
+                    <div class="flex flex-col items-end gap-2 shrink-0">
+                        {{-- Star Button on Grid Card --}}
+                        <button type="button"
+                                x-data="{ isStarred: {{ ($card->is_starred ?? false) ? 'true' : 'false' }}, loading: false }"
+                                @click.prevent="
+                                    if (loading) return;
+                                    loading = true;
+                                    const prev = isStarred;
+                                    isStarred = !prev;
+                                    fetch('{{ route('flashcards.toggleStar') }}', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'Accept': 'application/json',
+                                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                        },
+                                        body: JSON.stringify({ flashcard_id: {{ $card->id }} })
+                                    })
+                                    .then(r => {
+                                        if (!r.ok) {
+                                            isStarred = prev;
+                                            if (r.status === 401) alert('Vui lòng đăng nhập để lưu từ vựng!');
+                                        }
+                                        return r.json();
+                                    })
+                                    .then(d => { if (d.success) isStarred = d.is_starred; })
+                                    .catch(() => { isStarred = prev; })
+                                    .finally(() => { loading = false; setTimeout(() => window.refreshIcons?.(), 50); });
+                                "
+                                class="flex h-8 w-8 items-center justify-center rounded-full transition hover:scale-110 active:scale-95"
+                                :class="isStarred ? 'text-amber-500 bg-amber-50 shadow-sm' : 'text-slate-300 hover:text-amber-400 hover:bg-slate-50'"
+                                :title="isStarred ? 'Bỏ lưu khỏi Sổ từ' : 'Lưu vào Sổ từ vựng'">
+                            <i data-lucide="star" class="h-4 w-4" :class="{ 'fill-current': isStarred }"></i>
+                        </button>
+
+                        @if($card->hsk_level)
+                        <span class="shrink-0 rounded-xl bg-red-50/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-red-600 border border-red-100">
+                            HSK {{ $card->hsk_level }}
+                        </span>
+                        @elseif($card->lesson)
+                        <span class="shrink-0 rounded-xl bg-amber-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-700 border border-amber-100">
+                            L{{ $card->lesson_id }}
+                        </span>
+                        @endif
+                    </div>
                 </div>
 
                 @if($card->example)
