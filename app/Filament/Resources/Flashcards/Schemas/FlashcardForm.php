@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Flashcards\Schemas;
 
 use App\Models\Lesson;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -48,6 +49,12 @@ class FlashcardForm
             TextInput::make('example_meaning')
                 ->label('Dịch nghĩa câu ví dụ')
                 ->maxLength(255)
+                ->nullable(),
+
+            TagsInput::make('tags')
+                ->label('Thẻ / Chủ đề (Tags)')
+                ->placeholder('Ví dụ: Chào hỏi, Mua sắm, Gia đình...')
+                ->helperText('Nhập từ khóa rồi nhấn Enter để thêm tag.')
                 ->nullable(),
 
             TextInput::make('sort_order')

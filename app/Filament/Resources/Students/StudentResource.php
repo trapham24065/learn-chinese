@@ -31,10 +31,20 @@ class StudentResource extends Resource
 
     protected static ?string $slug = 'students';
 
-    /** Only show student-role users */
+    /** Only show student-role users, load stats via subqueries (no N+1) */
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->where('role', User::ROLE_STUDENT);
+        return parent::getEloquentQuery()
+            ->where('role', User::ROLE_STUDENT)
+            ->withCount([
+                'lessonProgresses as completed_lessons' => fn (Builder $q) =>
+                    $q->where('status', 'completed'),
+            ])
+            ->withSum('studySessions as total_minutes', 'duration_minutes')
+            ->withAvg(
+                ['studySessions as avg_score' => fn (Builder $q) => $q->whereNotNull('score')],
+                'score'
+            );
     }
 
     public static function form(Schema $schema): Schema

@@ -2,8 +2,6 @@
 
 namespace App\Filament\Resources\Students\Tables;
 
-use App\Models\LessonProgress;
-use App\Models\StudySession;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -28,36 +26,43 @@ class StudentsTable
                     ->sortable()
                     ->copyable(),
 
-                TextColumn::make('streak')
-                    ->label('🔥 Streak')
-                    ->getStateUsing(fn ($record): string => $record->calculateStreak() . ' ngày')
-                    ->badge()
-                    ->color('warning'),
-
+                // Eager-loaded via withCount() in getEloquentQuery() — zero extra queries, sortable
                 TextColumn::make('completed_lessons')
-                    ->label('✅ Bài hoàn thành')
-                    ->getStateUsing(fn ($record): int => LessonProgress::where('user_id', $record->id)
-                        ->where('status', 'completed')->count())
+                    ->label('Bài hoàn thành')
                     ->numeric()
-                    ->alignCenter(),
+                    ->sortable()
+                    ->alignCenter()
+                    ->badge()
+                    ->color('success'),
 
+                // Eager-loaded via withSum() in getEloquentQuery() — zero extra queries, sortable
                 TextColumn::make('total_minutes')
-                    ->label('⏱ Tổng phút học')
-                    ->getStateUsing(fn ($record): int => StudySession::where('user_id', $record->id)
-                        ->sum('duration_minutes'))
+                    ->label('Phút học')
                     ->numeric()
+                    ->sortable()
                     ->suffix(' phút')
                     ->alignCenter(),
 
+                // Eager-loaded via withAvg() in getEloquentQuery() — zero extra queries, sortable
                 TextColumn::make('avg_score')
-                    ->label('📊 Điểm TB Quiz')
-                    ->getStateUsing(function ($record): string {
-                        $avg = StudySession::where('user_id', $record->id)
-                            ->whereNotNull('score')
-                            ->avg('score');
-                        return $avg ? number_format($avg, 1) . ' đ' : '—';
-                    })
-                    ->alignCenter(),
+                    ->label('Điểm TB Quiz')
+                    ->formatStateUsing(fn ($state): string => $state !== null ? number_format((float) $state, 1) . ' đ' : '—')
+                    ->sortable()
+                    ->alignCenter()
+                    ->badge()
+                    ->color(fn ($state): string => match (true) {
+                        $state === null  => 'gray',
+                        $state >= 80     => 'success',
+                        $state >= 60     => 'warning',
+                        default          => 'danger',
+                    }),
+
+                // Streak requires PHP calculation — acceptable since it's the only non-subquery column
+                TextColumn::make('streak')
+                    ->label('Streak')
+                    ->getStateUsing(fn ($record): string => $record->calculateStreak() . ' ngày')
+                    ->badge()
+                    ->color('warning'),
 
                 TextColumn::make('created_at')
                     ->label('Ngày đăng ký')
