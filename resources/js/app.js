@@ -1,27 +1,27 @@
 import Alpine from 'alpinejs';
+import { createIcons, icons } from 'lucide';
+import HanziWriter from 'hanzi-writer';
 
 window.Alpine = Alpine;
-
-import { createIcons, icons } from 'lucide';
-
-// Expose globally so we can re-init after Alpine DOM mutations
 window.lucide = { createIcons, icons };
+window.HanziWriter = HanziWriter;
 
-// Run Lucide icon replacement once initially
-document.addEventListener('DOMContentLoaded', () => {
+// Safe icon rendering helper
+function renderIcons() {
     createIcons({ icons });
-});
+}
 
-// Re-run after every Alpine DOM update (covers x-for, x-if, etc.)
-document.addEventListener('alpine:initialized', () => {
-    // MutationObserver to catch dynamic DOM changes from Alpine
-    const observer = new MutationObserver(() => {
-        createIcons({ icons });
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
-});
+// Global helper so Alpine or any script can manually refresh icons if needed
+window.refreshIcons = renderIcons;
+
+// Render icons on initial DOM load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', renderIcons);
+} else {
+    renderIcons();
+}
+
+// Re-render once when Alpine initializes
+document.addEventListener('alpine:initialized', renderIcons);
 
 Alpine.start();
-
-import HanziWriter from 'hanzi-writer';
-window.HanziWriter = HanziWriter;
