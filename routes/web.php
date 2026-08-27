@@ -7,6 +7,7 @@ use App\Http\Controllers\LessonController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuizController;
 use App\Http\Controllers\TTSController;
+use App\Http\Controllers\HskMockTestController;
 use App\Models\Flashcard;
 use App\Models\Lesson;
 use App\Models\Question;
@@ -51,6 +52,14 @@ Route::post('/flashcards/toggle-star', [FlashcardController::class, 'toggleStar'
 Route::get('/quiz', [QuizController::class, 'index'])->name('quiz');
 Route::post('/quiz/submit', [QuizController::class, 'submit'])->name('quiz.submit');
 
+Route::prefix('hsk/mock-test')->group(function () {
+    Route::get('/', [HskMockTestController::class, 'index'])->name('hsk.mock.index');
+    Route::get('/{level}', [HskMockTestController::class, 'start'])->where('level', '[1-6]')->name('hsk.mock.start');
+    Route::post('/{level}/submit', [HskMockTestController::class, 'submit'])->where('level', '[1-6]')->name('hsk.mock.submit');
+    Route::get('/result/{id}', [HskMockTestController::class, 'result'])->name('hsk.mock.result');
+    Route::get('/certificate/{code}', [HskMockTestController::class, 'certificate'])->name('hsk.mock.certificate');
+});
+
 Route::post('/tts', [TTSController::class, 'generate'])->name('tts.generate');
 
 Route::get('/hsk', [HskController::class, 'overview'])->name('hsk.overview');
@@ -59,3 +68,4 @@ Route::get('/hsk/{level}', [HskController::class, 'show'])->where('level', '[1-6
 Route::get('/lessons/{slug}', [LessonController::class, 'show'])->name('lesson.show');
 
 require __DIR__.'/auth.php';
+

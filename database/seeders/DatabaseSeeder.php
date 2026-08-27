@@ -316,5 +316,7 @@ class DatabaseSeeder extends Seeder
                 ]
             );
         }
+
+        $this->call(HskMockExamQuestionSeeder::class);
     }
 }

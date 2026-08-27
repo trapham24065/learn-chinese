@@ -64,6 +64,11 @@
                         <i data-lucide="star" class="h-4 w-4 fill-current text-amber-500"></i>
                         <span>Sổ từ đã lưu ({{ $starredCount }})</span>
                     </a>
+                    <a href="{{ route('hsk.mock.index') }}"
+                       class="inline-flex items-center gap-1.5 rounded-full bg-red-100 border border-red-200 px-3.5 py-1.5 text-xs font-bold text-red-900 transition hover:bg-red-200 active:scale-95">
+                        <i data-lucide="award" class="h-4 w-4 text-[#991b1b]"></i>
+                        <span>Thi thử HSK</span>
+                    </a>
                     <a href="{{ route('quiz') }}"
                        class="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3.5 py-1.5 text-xs font-bold text-amber-900 transition hover:bg-amber-200 active:scale-95">
                         <i data-lucide="target" class="h-4 w-4"></i>

@@ -12,12 +12,15 @@ class Question extends Model
 
     protected $fillable = [
         'lesson_id',
+        'hsk_level',
         'question',
         'pinyin',
+        'audio_text',
         'options',
         'correct_answer',
         'explanation',
         'difficulty',
+        'skill_type',
         'sort_order',
         'is_active',
     ];
@@ -28,6 +31,7 @@ class Question extends Model
             'options' => 'array',
             'is_active' => 'boolean',
             'sort_order' => 'integer',
+            'hsk_level' => 'integer',
         ];
     }
 

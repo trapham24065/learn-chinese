@@ -18,9 +18,30 @@ class QuestionForm
                 Select::make('lesson_id')
                     ->relationship('lesson', 'title')
                     ->label('Bài học liên kết')
-                    ->placeholder('Chọn bài học (hoặc để trống nếu là Quiz chung)')
+                    ->placeholder('Chọn bài học (hoặc để trống nếu là Quiz/HSK chung)')
                     ->searchable()
                     ->preload(),
+                Select::make('hsk_level')
+                    ->label('Cấp độ HSK')
+                    ->options([
+                        1 => 'HSK 1',
+                        2 => 'HSK 2',
+                        3 => 'HSK 3',
+                        4 => 'HSK 4',
+                        5 => 'HSK 5',
+                        6 => 'HSK 6',
+                    ])
+                    ->default(1)
+                    ->required(),
+                Select::make('skill_type')
+                    ->label('Kỹ năng thi')
+                    ->options([
+                        'listening' => '🎧 Nghe hiểu (Listening)',
+                        'reading'   => '📖 Đọc hiểu (Reading)',
+                        'grammar'   => '✍️ Ngữ pháp (Grammar)',
+                    ])
+                    ->default('reading')
+                    ->required(),
                 Select::make('difficulty')
                     ->label('Mức độ')
                     ->options([
@@ -38,6 +59,9 @@ class QuestionForm
                 TextInput::make('pinyin')
                     ->label('Phiên âm / Pinyin')
                     ->placeholder('VD: nǐ hǎo'),
+                TextInput::make('audio_text')
+                    ->label('Nội dung giọng đọc Audio (Cho phần Nghe)')
+                    ->placeholder('VD: 你好，我是中国人。 (Để trống nếu không phải câu hỏi Nghe)'),
                 TextInput::make('correct_answer')
                     ->label('Đáp án đúng')
                     ->placeholder('VD: Xin chào')

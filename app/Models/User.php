@@ -60,6 +60,11 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasMany(StudySession::class);
     }
 
+    public function mockTests(): HasMany
+    {
+        return $this->hasMany(MockTest::class);
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === self::ROLE_ADMIN;

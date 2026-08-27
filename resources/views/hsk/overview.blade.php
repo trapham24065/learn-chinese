@@ -135,8 +135,29 @@
     @endforeach
 </section>
 
+{{-- HSK Mock Exam Callout Banner --}}
+<section class="mt-10 rounded-[2.5rem] bg-gradient-to-r from-[#991b1b] via-[#7f1d1d] to-slate-950 p-8 sm:p-10 text-white shadow-2xl shadow-red-950/20">
+    <div class="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
+        <div>
+            <div class="inline-flex items-center gap-2 rounded-full bg-amber-400/20 px-3.5 py-1 text-xs font-black uppercase tracking-widest text-amber-300 border border-amber-300/30">
+                <i data-lucide="award" class="h-4 w-4"></i>
+                <span>Tính năng mới</span>
+            </div>
+            <h2 class="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Thi thử HSK mô phỏng có cấp chứng chỉ</h2>
+            <p class="mt-3 max-w-2xl text-white/80 leading-7 text-sm sm:text-base">
+                Trải nghiệm phòng thi thật với <strong>30 - 50 câu hỏi</strong>, đồng hồ đếm ngược, phân tích chi tiết 3 kỹ năng <strong>Nghe · Đọc hiểu · Ngữ pháp</strong> và nhận <strong>Chứng chỉ Online</strong> ngay khi đạt điểm đỗ!
+            </p>
+        </div>
+        <a href="{{ route('hsk.mock.index') }}"
+            class="shrink-0 inline-flex items-center gap-2.5 justify-center rounded-2xl bg-amber-300 hover:bg-amber-200 px-7 py-4 text-sm font-black text-slate-950 shadow-xl shadow-amber-300/20 transition hover:-translate-y-0.5 active:scale-95">
+            <i data-lucide="play" class="h-4 w-4 fill-current"></i>
+            <span>Vào phòng thi HSK ngay</span>
+        </a>
+    </div>
+</section>
+
 {{-- Info banner --}}
-<section class="mt-10 rounded-[2rem] bg-slate-950 p-8 text-white shadow-2xl shadow-slate-950/20">
+<section class="mt-8 rounded-[2rem] bg-slate-950 p-8 text-white shadow-2xl shadow-slate-950/20">
     <div class="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
         <div>
             <p class="text-sm font-semibold uppercase tracking-[0.28em] text-amber-300/80">Tại sao học theo HSK?</p>
@@ -147,7 +168,7 @@
             </p>
         </div>
         <a href="{{ route('flashcards') }}"
-            class="shrink-0 inline-flex items-center gap-2 justify-center rounded-full bg-amber-300 px-6 py-3 text-sm font-bold text-slate-950 transition hover:-translate-y-0.5 hover:bg-amber-200">
+            class="shrink-0 inline-flex items-center gap-2 justify-center rounded-full bg-slate-800 hover:bg-slate-700 px-6 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 border border-slate-700">
             Bắt đầu với Flashcard
             <i data-lucide="arrow-right" class="h-4 w-4"></i>
         </a>

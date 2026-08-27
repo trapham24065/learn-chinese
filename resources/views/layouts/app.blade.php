@@ -73,13 +73,25 @@
 
             {{-- HSK --}}
             <a href="{{ route('hsk.overview') }}"
-                class="group flex items-center justify-between rounded-2xl px-4 py-3 transition {{ request()->routeIs('hsk.*') ? 'bg-[#991b1b] text-white shadow-lg shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                class="group flex items-center justify-between rounded-2xl px-4 py-3 transition {{ (request()->routeIs('hsk.overview') || request()->routeIs('hsk.show')) ? 'bg-[#991b1b] text-white shadow-lg shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
                 <span class="flex items-center gap-3">
-                    <span class="grid h-8 w-8 place-items-center rounded-xl {{ request()->routeIs('hsk.*') ? 'bg-white/10' : 'bg-slate-100' }}">
+                    <span class="grid h-8 w-8 place-items-center rounded-xl {{ (request()->routeIs('hsk.overview') || request()->routeIs('hsk.show')) ? 'bg-white/10' : 'bg-slate-100' }}">
                         <i data-lucide="graduation-cap" class="h-4 w-4"></i>
                     </span>
-                    HSK
+                    Lộ trình HSK
                 </span>
+            </a>
+
+            {{-- Thi thử HSK Mô phỏng --}}
+            <a href="{{ route('hsk.mock.index') }}"
+                class="group flex items-center justify-between rounded-2xl px-4 py-3 transition {{ request()->routeIs('hsk.mock.*') ? 'bg-[#991b1b] text-white shadow-lg shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                <span class="flex items-center gap-3">
+                    <span class="grid h-8 w-8 place-items-center rounded-xl {{ request()->routeIs('hsk.mock.*') ? 'bg-white/10' : 'bg-slate-100' }}">
+                        <i data-lucide="award" class="h-4 w-4"></i>
+                    </span>
+                    Thi thử HSK
+                </span>
+                <span class="rounded-full bg-amber-100 border border-amber-300 px-2 py-0.5 text-[10px] font-black uppercase text-amber-800 {{ request()->routeIs('hsk.mock.*') ? 'bg-white/20 text-white border-transparent' : '' }}">Thi</span>
             </a>
 
         </nav>
@@ -119,9 +131,15 @@
                 </form>
             </div>
             @else
-            <div class="flex items-center gap-2">
-                <a href="{{ route('login') }}" class="flex-1 text-center rounded-xl bg-slate-100 py-2 text-xs font-bold text-slate-800 hover:bg-slate-200 transition">Đăng nhập</a>
-                <a href="{{ route('register') }}" class="flex-1 text-center rounded-xl bg-[#991b1b] py-2 text-xs font-bold text-white hover:bg-red-800 transition shadow-sm">Đăng ký</a>
+            <div class="space-y-2">
+                <a href="{{ route('login') }}" class="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 shadow-sm transition">
+                    <i data-lucide="log-in" class="h-4 w-4"></i>
+                    <span>Đăng nhập</span>
+                </a>
+                <a href="{{ route('register') }}" class="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#991b1b] py-2.5 text-xs font-bold text-white hover:bg-red-800 shadow-md shadow-red-950/15 transition">
+                    <i data-lucide="user-plus" class="h-4 w-4"></i>
+                    <span>Đăng ký học viên</span>
+                </a>
             </div>
             @endif
         </div>
@@ -130,17 +148,13 @@
     <main class="min-h-screen flex flex-col justify-between">
         <div>
             {{-- Mobile Top Bar --}}
-            <div class="border-b border-white/70 bg-white/70 py-3 backdrop-blur lg:hidden flex items-center">
-                <a href="{{ route('home') }}" class="flex shrink-0 items-center gap-2.5 pl-4 pr-3 border-r border-slate-200/50">
-                    <div class="grid h-8 w-8 place-items-center rounded-xl bg-[#991b1b] text-white">
-                        <span class="text-sm font-black">中</span>
-                    </div>
-                </a>
-                <div class="flex flex-1 items-center gap-1.5 overflow-x-auto text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-slate-600 pb-1 px-3" style="scrollbar-width: none;">
+            <div class="no-print border-b border-slate-200/80 bg-white/80 p-3 backdrop-blur lg:hidden sticky top-0 z-20">
+                <div class="flex items-center gap-2 overflow-x-auto text-xs font-semibold text-slate-700 no-scrollbar pr-4">
                     <a href="{{ route('dashboard') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('dashboard') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">Tổng quan</a>
                     <a href="{{ route('flashcards') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('flashcards') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">Thẻ nhớ</a>
                     <a href="{{ route('quiz') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('quiz') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">Kiểm tra</a>
-                    <a href="{{ route('hsk.overview') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('hsk.*') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">HSK</a>
+                    <a href="{{ route('hsk.overview') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ (request()->routeIs('hsk.overview') || request()->routeIs('hsk.show')) ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">HSK</a>
+                    <a href="{{ route('hsk.mock.index') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('hsk.mock.*') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-amber-100 text-amber-900 border border-amber-300' }}">Thi thử HSK ⭐</a>
                     @if ($authUser)
                     <form method="POST" action="{{ route('logout') }}" class="inline shrink-0">
                         @csrf
