@@ -246,13 +246,20 @@ class HskMockTestController extends Controller
     public function submit(Request $request, int $level): JsonResponse
     {
         $validated = $request->validate([
-            'answers'          => ['required', 'array'],
+            'answers'          => ['nullable', 'array'],
+            'question_ids'     => ['nullable', 'array'],
             'duration_seconds' => ['required', 'integer', 'min:1'],
         ]);
 
         $spec = self::LEVEL_SPECS[$level] ?? self::LEVEL_SPECS[1];
-        $submittedAnswers = $validated['answers'];
-        $questionIds = array_keys($submittedAnswers);
+        $submittedAnswers = $validated['answers'] ?? [];
+
+        // Determine list of question IDs from payload or answered keys
+        if (! empty($validated['question_ids'])) {
+            $questionIds = array_values(array_unique(array_filter($validated['question_ids'])));
+        } else {
+            $questionIds = array_keys($submittedAnswers);
+        }
 
         $questions = Question::whereIn('id', $questionIds)->get()->keyBy('id');
 
@@ -278,13 +285,19 @@ class HskMockTestController extends Controller
 
             if ($skill === 'listening') {
                 $listeningTotal++;
-                if ($isCorrect) $listeningCorrect++;
+                if ($isCorrect) {
+                    $listeningCorrect++;
+                }
             } elseif ($skill === 'grammar') {
                 $grammarTotal++;
-                if ($isCorrect) $grammarCorrect++;
+                if ($isCorrect) {
+                    $grammarCorrect++;
+                }
             } else {
                 $readingTotal++;
-                if ($isCorrect) $readingCorrect++;
+                if ($isCorrect) {
+                    $readingCorrect++;
+                }
             }
 
             if ($isCorrect) {
@@ -305,12 +318,13 @@ class HskMockTestController extends Controller
             ];
         }
 
-        $totalQuestions = count($questionIds);
+        $totalQuestions = count($details);
 
         // Calculate scores scaled to 100 per skill (Total 300 scale)
-        $listeningScore = $listeningTotal > 0 ? (int) round(($listeningCorrect / $listeningTotal) * 100) : 100;
-        $readingScore = $readingTotal > 0 ? (int) round(($readingCorrect / $readingTotal) * 100) : 100;
-        $grammarScore = $grammarTotal > 0 ? (int) round(($grammarCorrect / $grammarTotal) * 100) : 100;
+        // If 0 questions answered correctly in a skill or 0 questions present, score is 0
+        $listeningScore = $listeningTotal > 0 ? (int) round(($listeningCorrect / $listeningTotal) * 100) : 0;
+        $readingScore = $readingTotal > 0 ? (int) round(($readingCorrect / $readingTotal) * 100) : 0;
+        $grammarScore = $grammarTotal > 0 ? (int) round(($grammarCorrect / $grammarTotal) * 100) : 0;
 
         // Total score out of 300
         $totalScore = $listeningScore + $readingScore + $grammarScore;

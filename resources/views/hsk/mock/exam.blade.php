@@ -156,6 +156,7 @@
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
                 body: JSON.stringify({
+                    question_ids: this.questions.map(q => q.id),
                     answers: this.answers,
                     duration_seconds: Math.max(1, durationSeconds),
                 })

@@ -110,6 +110,40 @@ class HskMockTestTest extends TestCase
         $this->assertFalse($mockTest->passed);
     }
 
+    public function test_submitting_mock_test_with_only_one_answer_out_of_all_questions_does_not_pass(): void
+    {
+        $student = User::factory()->create([
+            'role' => User::ROLE_STUDENT,
+        ]);
+
+        $questions = Question::where('is_active', true)->where('hsk_level', 1)->get();
+        $this->assertGreaterThanOrEqual(10, $questions->count());
+
+        $firstQ = $questions->first();
+
+        // User only answers 1 question correctly out of all questions
+        $response = $this->actingAs($student)->postJson(route('hsk.mock.submit', 1), [
+            'question_ids'     => $questions->pluck('id')->toArray(),
+            'answers'          => [
+                $firstQ->id => $firstQ->correct_answer,
+            ],
+            'duration_seconds' => 120,
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+            'passed'  => false,
+        ]);
+
+        $mockTest = MockTest::where('user_id', $student->id)->latest()->first();
+        $this->assertEquals($questions->count(), $mockTest->total_questions);
+        $this->assertEquals(1, $mockTest->correct_answers);
+        $this->assertLessThan(180, $mockTest->total_score);
+        $this->assertFalse($mockTest->passed);
+        $this->assertNull($mockTest->certificate_code);
+    }
+
     public function test_detailed_result_page_is_viewable(): void
     {
         $student = User::factory()->create([
