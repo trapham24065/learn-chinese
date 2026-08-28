@@ -112,13 +112,18 @@ class AdminDashboard extends BaseDashboard
             ->take(6)
             ->get();
 
-        // 5. Top 5 Active / High Streak Students
+        // 5. Top 5 Active / High Study Students
         $topStudents = User::where('role', User::ROLE_STUDENT)
             ->withCount(['lessonProgresses as completed_lessons' => fn ($q) => $q->where('status', 'completed')])
             ->withSum('studySessions as total_minutes', 'duration_minutes')
-            ->orderByDesc('streak')
+            ->orderByDesc('total_minutes')
+            ->orderByDesc('id')
             ->take(5)
-            ->get();
+            ->get()
+            ->map(function ($student) {
+                $student->calculated_streak = $student->calculateStreak();
+                return $student;
+            });
 
         return [
             'kpis' => [

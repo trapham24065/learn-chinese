@@ -404,7 +404,7 @@
 
                             <div style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; font-weight: 800; color: #ea580c; background: #fff7ed; padding: 0.25rem 0.6rem; border-radius: 9999px;">
                                 <span>🔥</span>
-                                <span>{{ $st->streak ?? 0 }} ngày</span>
+                                <span>{{ $st->calculated_streak ?? $st->calculateStreak() }} ngày</span>
                             </div>
                         </div>
                         @endforeach
