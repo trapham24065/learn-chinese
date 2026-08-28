@@ -331,11 +331,18 @@
 
                             {{-- Selected Checkmark --}}
                             <div class="shrink-0">
-                                <span class="flex h-6 w-6 items-center justify-center rounded-full border transition"
-                                      :class="answers[currentQ?.id] === option ? 'border-[#991b1b] bg-[#991b1b] text-white' : 'border-slate-300 bg-white'">
-                                    <template x-if="answers[currentQ?.id] === option">
-                                        <i data-lucide="check" class="h-3.5 w-3.5"></i>
-                                    </template>
+                                <span class="flex h-6 w-6 items-center justify-center rounded-full border transition-all duration-200"
+                                      :class="answers[currentQ?.id] === option ? 'border-[#991b1b] bg-[#991b1b] text-white shadow-sm' : 'border-slate-300 bg-white'">
+                                    <svg x-show="answers[currentQ?.id] === option"
+                                         style="display: none;"
+                                         class="h-3.5 w-3.5 stroke-[3]"
+                                         viewBox="0 0 24 24"
+                                         fill="none"
+                                         stroke="currentColor"
+                                         stroke-linecap="round"
+                                         stroke-linejoin="round">
+                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
                                 </span>
                             </div>
                         </div>
