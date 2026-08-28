@@ -23,7 +23,7 @@
     isSubmitting: false,
     autoSubmitted: false,
     isRestored: false,
-    storageKey: 'hsk_mock_session_lvl_{{ $level }}_{{ Auth::id() ?? 'guest' }}',
+    storageKey: 'hsk_mock_active_session_{{ Auth::id() ?? 'guest' }}',
     beforeUnloadHandler: null,
 
     init() {
@@ -46,16 +46,20 @@
             try {
                 const saved = JSON.parse(raw);
                 if (saved && saved.endTime && saved.endTime > now && Array.isArray(saved.questions) && saved.questions.length > 0) {
-                    this.questions = saved.questions;
-                    this.total = saved.questions.length;
-                    this.answers = saved.answers || {};
-                    this.flagged = saved.flagged || [];
-                    this.audioPlayCounts = saved.audioPlayCounts || {};
-                    this.totalTime = saved.totalTime || {{ $timeLimitSecs }};
-                    this.endTime = saved.endTime;
-                    this.timeRemaining = Math.max(1, Math.floor((saved.endTime - now) / 1000));
-                    this.isRestored = true;
-                    restored = true;
+                    if (saved.level === this.level) {
+                        this.questions = saved.questions;
+                        this.total = saved.questions.length;
+                        this.answers = saved.answers || {};
+                        this.flagged = saved.flagged || [];
+                        this.audioPlayCounts = saved.audioPlayCounts || {};
+                        this.totalTime = saved.totalTime || {{ $timeLimitSecs }};
+                        this.endTime = saved.endTime;
+                        this.timeRemaining = Math.max(1, Math.floor((saved.endTime - now) / 1000));
+                        this.isRestored = true;
+                        restored = true;
+                    } else {
+                        localStorage.removeItem(this.storageKey);
+                    }
                 } else {
                     localStorage.removeItem(this.storageKey);
                 }

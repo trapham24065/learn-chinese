@@ -82,40 +82,71 @@
 
 {{-- Level Selection Grid --}}
 <section class="mb-14" x-data="{
-    activeSessions: {},
+    activeSession: null,
+    targetLevel: null,
+    showConflictModal: false,
+    storageKey: 'hsk_mock_active_session_{{ Auth::id() ?? 'guest' }}',
+
     init() {
-        this.checkSessions();
+        this.checkActiveSession();
     },
-    checkSessions() {
+
+    checkActiveSession() {
         const now = Date.now();
-        for (let lvl = 1; lvl <= 6; lvl++) {
-            const key = 'hsk_mock_session_lvl_' + lvl + '_{{ Auth::id() ?? 'guest' }}';
-            const raw = localStorage.getItem(key);
-            if (raw) {
-                try {
-                    const saved = JSON.parse(raw);
-                    if (saved && saved.endTime > now && Array.isArray(saved.questions) && saved.questions.length > 0) {
-                        const mins = Math.max(1, Math.ceil((saved.endTime - now) / 60000));
-                        const ansCount = Object.keys(saved.answers || {}).filter(k => saved.answers[k]).length;
-                        this.activeSessions[lvl] = {
-                            remainingMinutes: mins,
-                            answered: ansCount,
-                            total: saved.questions.length
-                        };
-                    } else {
-                        localStorage.removeItem(key);
-                    }
-                } catch (e) {}
+        const raw = localStorage.getItem(this.storageKey);
+        if (raw) {
+            try {
+                const saved = JSON.parse(raw);
+                if (saved && saved.endTime > now && Array.isArray(saved.questions) && saved.questions.length > 0) {
+                    const mins = Math.max(1, Math.ceil((saved.endTime - now) / 60000));
+                    const ansCount = Object.keys(saved.answers || {}).filter(k => saved.answers[k]).length;
+                    this.activeSession = {
+                        level: saved.level,
+                        remainingMinutes: mins,
+                        answered: ansCount,
+                        total: saved.questions.length
+                    };
+                } else {
+                    localStorage.removeItem(this.storageKey);
+                    this.activeSession = null;
+                }
+            } catch (e) {
+                localStorage.removeItem(this.storageKey);
+                this.activeSession = null;
             }
+        } else {
+            this.activeSession = null;
         }
         setTimeout(() => window.refreshIcons?.(), 50);
     },
-    cancelSession(lvl) {
+
+    handleStartClick(level, url) {
+        if (this.activeSession && this.activeSession.level !== level) {
+            this.targetLevel = level;
+            this.showConflictModal = true;
+            setTimeout(() => window.refreshIcons?.(), 50);
+            return;
+        }
+        window.location.href = url;
+    },
+
+    cancelActiveAndStartTarget() {
+        localStorage.removeItem(this.storageKey);
+        if (this.targetLevel) {
+            window.location.href = '{{ url('/hsk/mock-test') }}/' + this.targetLevel + '/start';
+        }
+    },
+
+    goToActiveExam() {
+        if (this.activeSession) {
+            window.location.href = '{{ url('/hsk/mock-test') }}/' + this.activeSession.level + '/start';
+        }
+    },
+
+    cancelActiveSession() {
         if (confirm('Bạn có chắc muốn hủy bài thi đang dở để làm lại từ đầu?')) {
-            const key = 'hsk_mock_session_lvl_' + lvl + '_{{ Auth::id() ?? 'guest' }}';
-            localStorage.removeItem(key);
-            delete this.activeSessions[lvl];
-            this.activeSessions = { ...this.activeSessions };
+            localStorage.removeItem(this.storageKey);
+            this.activeSession = null;
             setTimeout(() => window.refreshIcons?.(), 50);
         }
     }
@@ -140,13 +171,13 @@
                         {{ $spec['label'] }}
                     </span>
                     
-                    <template x-if="activeSessions[{{ $level }}]">
+                    <template x-if="activeSession && activeSession.level === {{ $level }}">
                         <span class="inline-flex items-center gap-1 rounded-full bg-amber-100 border border-amber-300 px-2.5 py-0.5 text-[11px] font-black text-amber-800 animate-pulse">
                             ⚡ Đang thi
                         </span>
                     </template>
 
-                    <template x-if="!activeSessions[{{ $level }}]">
+                    <template x-if="!activeSession || activeSession.level !== {{ $level }}">
                         <span class="inline-flex items-center gap-1 text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
                             <i data-lucide="timer" class="h-3.5 w-3.5 text-slate-400"></i>
                             {{ $spec['time_limit'] }} phút
@@ -195,15 +226,15 @@
 
             {{-- Action Button --}}
             <div class="mt-6 pt-4 border-t border-slate-100">
-                <template x-if="activeSessions[{{ $level }}]">
+                <template x-if="activeSession && activeSession.level === {{ $level }}">
                     <div class="space-y-2">
                         <div class="flex items-center justify-between text-xs px-1 font-bold text-amber-800">
                             <span class="flex items-center gap-1">
                                 <i data-lucide="timer" class="h-3.5 w-3.5 text-amber-600"></i>
-                                Còn <strong x-text="activeSessions[{{ $level }}].remainingMinutes"></strong> phút
+                                Còn <strong x-text="activeSession.remainingMinutes"></strong> phút
                             </span>
                             <span class="text-slate-500">
-                                Đã làm: <strong class="text-slate-900" x-text="activeSessions[{{ $level }}].answered"></strong>/<span x-text="activeSessions[{{ $level }}].total"></span>
+                                Đã làm: <strong class="text-slate-900" x-text="activeSession.answered"></strong>/<span x-text="activeSession.total"></span>
                             </span>
                         </div>
                         <a href="{{ route('hsk.mock.start', $level) }}"
@@ -212,24 +243,76 @@
                             <span>Tiếp tục làm bài thi</span>
                         </a>
                         <button type="button"
-                                @click="cancelSession({{ $level }})"
+                                @click="cancelActiveSession()"
                                 class="w-full text-center text-[11px] text-slate-400 hover:text-red-600 font-semibold transition py-1">
                             Hủy bài này & tạo đề mới
                         </button>
                     </div>
                 </template>
 
-                <template x-if="!activeSessions[{{ $level }}]">
-                    <a href="{{ route('hsk.mock.start', $level) }}"
-                       class="w-full inline-flex items-center justify-center gap-2 rounded-2xl py-3.5 px-4 text-sm font-bold text-white shadow-lg transition active:scale-95 hover:opacity-95"
-                       style="background: {{ $spec['color'] }}">
+                <template x-if="!activeSession || activeSession.level !== {{ $level }}">
+                    <button type="button"
+                            @click="handleStartClick({{ $level }}, '{{ route('hsk.mock.start', $level) }}')"
+                            class="w-full inline-flex items-center justify-center gap-2 rounded-2xl py-3.5 px-4 text-sm font-bold text-white shadow-lg transition active:scale-95 hover:opacity-95"
+                            style="background: {{ $spec['color'] }}">
                         <i data-lucide="play" class="h-4 w-4 fill-current"></i>
                         <span>Vào phòng thi ngay</span>
-                    </a>
+                    </button>
                 </template>
             </div>
         </div>
         @endforeach
+    </div>
+
+    {{-- Conflict Modal --}}
+    <div x-show="showConflictModal"
+         x-cloak
+         style="display: none;"
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+         x-transition.opacity>
+        
+        <div @click.outside="showConflictModal = false"
+             class="relative w-full max-w-md rounded-[2.5rem] bg-white p-6 sm:p-8 shadow-2xl"
+             x-transition.scale.95>
+            
+            <div class="grid h-16 w-16 place-items-center rounded-3xl bg-amber-50 text-amber-600 mx-auto">
+                <i data-lucide="alert-triangle" class="h-8 w-8"></i>
+            </div>
+
+            <h3 class="mt-4 text-center text-xl font-black text-slate-900">
+                Đang có bài thi HSK <span x-text="activeSession?.level"></span> chưa xong!
+            </h3>
+            
+            <div class="mt-4 rounded-2xl bg-amber-50/80 border border-amber-200/80 p-4 text-xs font-semibold text-amber-900 space-y-1.5 leading-relaxed">
+                <p>
+                    Bạn đang có bài thi <strong>HSK <span x-text="activeSession?.level"></span></strong> làm dở (còn lại <strong x-text="activeSession?.remainingMinutes"></strong> phút, đã làm <strong x-text="activeSession?.answered"></strong>/<span x-text="activeSession?.total"></span> câu).
+                </p>
+                <p class="text-amber-700">
+                    Theo quy chế thi, mỗi học viên chỉ được làm <strong>1 bài thi tại một thời điểm</strong>.
+                </p>
+            </div>
+
+            <div class="mt-6 flex flex-col gap-2.5">
+                <button type="button"
+                        @click="goToActiveExam()"
+                        class="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-[#991b1b] py-3.5 text-xs sm:text-sm font-black text-white shadow-md shadow-red-950/20 transition hover:bg-red-800 active:scale-95">
+                    <i data-lucide="arrow-right" class="h-4 w-4"></i>
+                    <span>Tiếp tục làm HSK <span x-text="activeSession?.level"></span></span>
+                </button>
+                
+                <button type="button"
+                        @click="cancelActiveAndStartTarget()"
+                        class="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 py-3 text-xs font-bold text-red-700 hover:bg-red-100 transition active:scale-95">
+                    <span>Hủy bài HSK <span x-text="activeSession?.level"></span> để bắt đầu HSK <span x-text="targetLevel"></span></span>
+                </button>
+
+                <button type="button"
+                        @click="showConflictModal = false"
+                        class="w-full rounded-2xl py-2 text-xs font-semibold text-slate-500 hover:text-slate-700 transition">
+                    Đóng lại
+                </button>
+            </div>
+        </div>
     </div>
 </section>
 
