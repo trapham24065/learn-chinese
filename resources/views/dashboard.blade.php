@@ -72,7 +72,7 @@
                     <a href="{{ route('quiz') }}"
                        class="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3.5 py-1.5 text-xs font-bold text-amber-900 transition hover:bg-amber-200 active:scale-95">
                         <i data-lucide="target" class="h-4 w-4"></i>
-                        <span>Làm Quiz ngay</span>
+                        <span>Luyện tập nhanh</span>
                     </a>
                 </div>
             </div>

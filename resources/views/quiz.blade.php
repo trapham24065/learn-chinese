@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Quiz Trắc Nghiệm | Chinese Deck')
+@section('title', 'Luyện tập nhanh theo bài học | Chinese Deck')
 
 @section('content')
 <div x-data="quizApp()" x-init="initQuiz()" class="space-y-8">
@@ -9,7 +9,7 @@
         <div>
             <div class="flex flex-wrap items-center gap-2">
                 <span class="inline-flex items-center rounded-full bg-red-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.24em] text-[#991b1b]">
-                    Kiểm tra kiến thức
+                    Luyện tập nhanh
                 </span>
                 @if ($selectedLesson)
                     <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900">
@@ -23,10 +23,10 @@
             </div>
 
             <h1 class="mt-3 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">
-                Quiz tương tác tiếng Trung
+                Luyện tập trắc nghiệm bài học
             </h1>
             <p class="mt-3 max-w-2xl text-base leading-7 text-slate-700 sm:text-lg">
-                Chọn đáp án cho từng câu hỏi để kiểm tra pinyin, chữ Hán, ngữ nghĩa và nhận phản hồi, giải thích chi tiết ngay lập tức.
+                Làm nhanh 5–10 câu hỏi ngắn để củng cố ngay từ vựng, pinyin, chữ Hán và ngữ nghĩa vừa học theo từng chủ đề bài học.
             </p>
             <a href="{{ request()->fullUrl() }}"
                class="mt-4 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-[#991b1b] hover:text-[#991b1b]">
