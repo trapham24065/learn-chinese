@@ -23,7 +23,7 @@
             {{-- Status Pill --}}
             <div class="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-black uppercase tracking-widest backdrop-blur border {{ $test->passed ? 'bg-emerald-400/20 border-emerald-300/30 text-emerald-300' : 'bg-red-400/20 border-red-300/30 text-red-300' }}">
                 <i data-lucide="{{ $test->passed ? 'check-circle' : 'alert-circle' }}" class="h-4 w-4"></i>
-                <span>{{ $test->passed ? 'ĐẠT CHỨNG CHỈ (合格)' : 'CHƯA ĐẠT CHUẨN (不合格)' }}</span>
+                <span>{{ $test->passed ? 'ĐẠT CHỨNG NHẬN (合格)' : 'CHƯA ĐẠT CHUẨN (不合格)' }}</span>
             </div>
 
             <h1 class="mt-4 text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight">
@@ -32,7 +32,7 @@
             
             <p class="mt-3 text-base text-white/80 leading-relaxed max-w-xl">
                 @if($test->passed)
-                    Chúc mừng bạn đã xuất sắc vượt qua bài thi thử HSK với xếp loại <strong>{{ $test->grade_text }}</strong>! Bạn đã đủ điều kiện nhận Chứng chỉ Online chính thức.
+                    Chúc mừng bạn đã xuất sắc vượt qua bài thi thử HSK với xếp loại <strong>{{ $test->grade_text }}</strong>! Bạn đã đủ điều kiện nhận <strong>Giấy chứng nhận Online hoàn thành bài thi thử</strong>.
                 @else
                     Bạn đạt <strong>{{ $test->total_score }}/300 điểm</strong> (cần tối thiểu 180 điểm để đỗ). Hãy xem lại các câu trả lời sai bên dưới để ôn tập củng cố thêm nhé!
                 @endif
@@ -60,7 +60,7 @@
                 <a href="{{ route('hsk.mock.certificate', $test->certificate_code) }}"
                    class="inline-flex items-center gap-2 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 px-6 py-3.5 text-sm font-black shadow-lg shadow-amber-400/20 transition active:scale-95">
                     <i data-lucide="award" class="h-5 w-5 fill-current"></i>
-                    <span>Xem & In Chứng chỉ Online</span>
+                    <span>Xem & In Giấy chứng nhận Online</span>
                 </a>
                 @endif
 

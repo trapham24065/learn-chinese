@@ -166,6 +166,11 @@
                 </div>
             </div>
 
+        {{-- Disclaimer Footnote --}}
+        <div class="relative mt-8 pt-4 border-t border-dashed border-amber-900/15 text-center">
+            <p class="text-[10px] text-slate-400 leading-relaxed italic">
+                * Lưu ý: Đây là <strong>Giấy chứng nhận hoàn thành bài thi thử mô phỏng (Mock Exam Certificate)</strong> trên nền tảng học trực tuyến Chinese Deck nhằm mục đích đánh giá năng lực học tập và tạo động lực rèn luyện, không thay thế chứng chỉ HSK chính thức do Tổng bộ Viện Khổng Tử / Chinese Testing International (CTI) cấp.
+            </p>
         </div>
 
     </div>
