@@ -6,27 +6,115 @@
 
 <div x-data="{
     level: {{ $level }},
-    questions: {{ Js::from($questions) }},
-    total: {{ $totalQuestions }},
+    initialQuestions: {{ Js::from($questions) }},
+    questions: [],
+    total: 0,
     currentIndex: 0,
     answers: {},
     flagged: [],
     audioPlayCounts: {},
     timeRemaining: {{ $timeLimitSecs }},
     totalTime: {{ $timeLimitSecs }},
+    endTime: null,
     timerInterval: null,
     isPlayingAudio: false,
     showConfirmModal: false,
+    showResetModal: false,
     isSubmitting: false,
     autoSubmitted: false,
-    activeSection: 'all', // 'all', 'listening', 'reading', 'grammar'
+    isRestored: false,
+    storageKey: 'hsk_mock_session_lvl_{{ $level }}_{{ Auth::id() ?? 'guest' }}',
+    beforeUnloadHandler: null,
 
     init() {
+        this.restoreOrCreateSession();
         this.startTimer();
+        this.setupBeforeUnload();
+
         this.$watch('currentIndex', () => {
             setTimeout(() => window.refreshIcons?.(), 50);
         });
         setTimeout(() => window.refreshIcons?.(), 100);
+    },
+
+    restoreOrCreateSession() {
+        const raw = localStorage.getItem(this.storageKey);
+        const now = Date.now();
+        let restored = false;
+
+        if (raw) {
+            try {
+                const saved = JSON.parse(raw);
+                if (saved && saved.endTime && saved.endTime > now && Array.isArray(saved.questions) && saved.questions.length > 0) {
+                    this.questions = saved.questions;
+                    this.total = saved.questions.length;
+                    this.answers = saved.answers || {};
+                    this.flagged = saved.flagged || [];
+                    this.audioPlayCounts = saved.audioPlayCounts || {};
+                    this.totalTime = saved.totalTime || {{ $timeLimitSecs }};
+                    this.endTime = saved.endTime;
+                    this.timeRemaining = Math.max(1, Math.floor((saved.endTime - now) / 1000));
+                    this.isRestored = true;
+                    restored = true;
+                } else {
+                    localStorage.removeItem(this.storageKey);
+                }
+            } catch (e) {
+                console.error('Lỗi khôi phục phiên thi:', e);
+                localStorage.removeItem(this.storageKey);
+            }
+        }
+
+        if (!restored) {
+            this.questions = this.initialQuestions;
+            this.total = this.questions.length;
+            this.totalTime = {{ $timeLimitSecs }};
+            this.timeRemaining = {{ $timeLimitSecs }};
+            this.endTime = now + (this.totalTime * 1000);
+            this.saveSession();
+        }
+    },
+
+    saveSession() {
+        if (this.isSubmitting) return;
+        try {
+            const data = {
+                level: this.level,
+                questions: this.questions,
+                totalTime: this.totalTime,
+                endTime: this.endTime,
+                answers: this.answers,
+                flagged: this.flagged,
+                audioPlayCounts: this.audioPlayCounts
+            };
+            localStorage.setItem(this.storageKey, JSON.stringify(data));
+        } catch (e) {
+            console.error('Không thể lưu phiên thi vào localStorage:', e);
+        }
+    },
+
+    clearSession() {
+        try {
+            localStorage.removeItem(this.storageKey);
+        } catch (e) {}
+    },
+
+    setupBeforeUnload() {
+        this.beforeUnloadHandler = (e) => {
+            if (!this.isSubmitting && this.timeRemaining > 0) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        };
+        window.addEventListener('beforeunload', this.beforeUnloadHandler);
+    },
+
+    resetExam() {
+        this.clearSession();
+        if (this.beforeUnloadHandler) {
+            window.removeEventListener('beforeunload', this.beforeUnloadHandler);
+        }
+        window.location.reload();
     },
 
     get currentQ() {
@@ -38,7 +126,7 @@
     },
 
     get unansweredCount() {
-        return this.total - this.answeredCount;
+        return Math.max(0, this.total - this.answeredCount);
     },
 
     get formattedTime() {
@@ -48,6 +136,7 @@
     },
 
     get timeProgressPercent() {
+        if (this.totalTime <= 0) return 0;
         return Math.round((this.timeRemaining / this.totalTime) * 100);
     },
 
@@ -56,8 +145,18 @@
     },
 
     startTimer() {
+        if (this.timerInterval) clearInterval(this.timerInterval);
         this.timerInterval = setInterval(() => {
-            if (this.timeRemaining > 0) {
+            if (this.endTime) {
+                const remaining = Math.floor((this.endTime - Date.now()) / 1000);
+                if (remaining > 0) {
+                    this.timeRemaining = remaining;
+                } else {
+                    this.timeRemaining = 0;
+                    clearInterval(this.timerInterval);
+                    this.handleTimeUp();
+                }
+            } else if (this.timeRemaining > 0) {
                 this.timeRemaining--;
             } else {
                 clearInterval(this.timerInterval);
@@ -69,6 +168,7 @@
     selectAnswer(option) {
         if (this.isSubmitting) return;
         this.answers[this.currentQ.id] = option;
+        this.saveSession();
     },
 
     toggleFlag(qId) {
@@ -78,6 +178,7 @@
         } else {
             this.flagged.push(qId);
         }
+        this.saveSession();
     },
 
     isFlagged(qId) {
@@ -113,6 +214,7 @@
 
         this.isPlayingAudio = true;
         this.audioPlayCounts[qId] = count + 1;
+        this.saveSession();
 
         try {
             await window.playChineseVoice(text);
@@ -136,6 +238,11 @@
         setTimeout(() => window.refreshIcons?.(), 50);
     },
 
+    confirmReset() {
+        this.showResetModal = true;
+        setTimeout(() => window.refreshIcons?.(), 50);
+    },
+
     async submitExam() {
         if (this.isSubmitting) return;
         this.isSubmitting = true;
@@ -143,6 +250,10 @@
 
         if (this.timerInterval) {
             clearInterval(this.timerInterval);
+        }
+
+        if (this.beforeUnloadHandler) {
+            window.removeEventListener('beforeunload', this.beforeUnloadHandler);
         }
 
         const durationSeconds = this.totalTime - this.timeRemaining;
@@ -164,6 +275,7 @@
 
             const data = await response.json();
             if (data.success && data.redirect_url) {
+                this.clearSession();
                 window.location.href = data.redirect_url;
             } else {
                 alert('Có lỗi xảy ra khi nộp bài: ' + (data.message || 'Vui lòng thử lại.'));
@@ -176,6 +288,21 @@
         }
     }
 }" x-init="init()" class="space-y-6">
+
+    {{-- Restored Session Alert Banner --}}
+    <template x-if="isRestored">
+        <div class="flex items-center justify-between gap-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 px-5 py-3 text-xs text-amber-900 shadow-sm backdrop-blur">
+            <div class="flex items-center gap-2.5">
+                <i data-lucide="sparkles" class="h-4 w-4 text-amber-600 shrink-0"></i>
+                <span>
+                    <strong>Đã khôi phục phiên thi đang làm dở:</strong> Bạn đang tiếp tục bài thi với <span class="font-bold" x-text="answeredCount"></span> câu đã trả lời. Thời gian vẫn đang tiếp tục đếm ngược.
+                </span>
+            </div>
+            <button type="button" @click="isRestored = false" class="text-amber-800 hover:text-amber-950 font-bold px-2 py-1 rounded-lg hover:bg-amber-500/20 transition">
+                Đã hiểu ✕
+            </button>
+        </div>
+    </template>
 
     {{-- Top Sticky Exam Header --}}
     <div class="sticky top-4 z-30 flex flex-col gap-3 rounded-[2rem] border border-white/80 bg-white/90 p-4 sm:p-5 shadow-2xl shadow-slate-900/10 backdrop-blur">
@@ -198,8 +325,17 @@
                 </div>
             </div>
 
-            {{-- Countdown Timer & Submit Button --}}
-            <div class="flex items-center gap-3">
+            {{-- Countdown Timer & Action Buttons --}}
+            <div class="flex items-center gap-2.5">
+                {{-- Reset / New Exam Button --}}
+                <button type="button"
+                        @click="confirmReset()"
+                        title="Hủy bài thi và tạo đề mới"
+                        class="inline-flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-red-700 transition">
+                    <i data-lucide="rotate-ccw" class="h-3.5 w-3.5"></i>
+                    <span class="hidden sm:inline">Làm lại từ đầu</span>
+                </button>
+
                 {{-- Countdown Badge --}}
                 <div class="flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-black transition-all shadow-inner"
                      :class="isTimeWarning ? 'bg-red-500 text-white animate-pulse shadow-red-500/20' : 'bg-slate-900 text-amber-300'">
@@ -496,6 +632,42 @@
                         :disabled="isSubmitting"
                         class="flex-1 rounded-2xl bg-[#991b1b] py-3 text-xs font-bold text-white shadow-md shadow-red-950/20 transition hover:bg-red-800 disabled:opacity-50">
                     <span x-text="isSubmitting ? 'Đang nộp...' : 'Nộp bài ngay'"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {{-- Reset / Restart Confirmation Modal --}}
+    <div x-show="showResetModal"
+         x-cloak
+         style="display: none;"
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+         x-transition.opacity>
+        
+        <div @click.outside="showResetModal = false"
+             class="relative w-full max-w-md rounded-[2.5rem] bg-white p-6 sm:p-8 shadow-2xl"
+             x-transition.scale.95>
+            
+            <div class="grid h-16 w-16 place-items-center rounded-3xl bg-red-50 text-red-600 mx-auto">
+                <i data-lucide="rotate-ccw" class="h-8 w-8"></i>
+            </div>
+
+            <h3 class="mt-4 text-center text-xl font-black text-slate-900">Làm lại từ đầu?</h3>
+            
+            <p class="mt-3 text-center text-xs text-slate-600 leading-relaxed">
+                Toàn bộ tiến độ và câu trả lời đã làm của bài thi hiện tại sẽ bị xóa. Hệ thống sẽ tạo một bộ câu hỏi ngẫu nhiên mới và bắt đầu lại thời gian từ đầu.
+            </p>
+
+            <div class="mt-6 flex gap-3">
+                <button type="button"
+                        @click="showResetModal = false"
+                        class="flex-1 rounded-2xl border border-slate-200 py-3 text-xs font-bold text-slate-700 transition hover:bg-slate-50">
+                    Hủy bỏ
+                </button>
+                <button type="button"
+                        @click="resetExam()"
+                        class="flex-1 rounded-2xl bg-red-600 py-3 text-xs font-bold text-white shadow-md shadow-red-600/20 transition hover:bg-red-700 active:scale-95">
+                    Đồng ý tạo đề mới
                 </button>
             </div>
         </div>

@@ -81,7 +81,45 @@
 </section>
 
 {{-- Level Selection Grid --}}
-<section class="mb-14">
+<section class="mb-14" x-data="{
+    activeSessions: {},
+    init() {
+        this.checkSessions();
+    },
+    checkSessions() {
+        const now = Date.now();
+        for (let lvl = 1; lvl <= 6; lvl++) {
+            const key = 'hsk_mock_session_lvl_' + lvl + '_{{ Auth::id() ?? 'guest' }}';
+            const raw = localStorage.getItem(key);
+            if (raw) {
+                try {
+                    const saved = JSON.parse(raw);
+                    if (saved && saved.endTime > now && Array.isArray(saved.questions) && saved.questions.length > 0) {
+                        const mins = Math.max(1, Math.ceil((saved.endTime - now) / 60000));
+                        const ansCount = Object.keys(saved.answers || {}).filter(k => saved.answers[k]).length;
+                        this.activeSessions[lvl] = {
+                            remainingMinutes: mins,
+                            answered: ansCount,
+                            total: saved.questions.length
+                        };
+                    } else {
+                        localStorage.removeItem(key);
+                    }
+                } catch (e) {}
+            }
+        }
+        setTimeout(() => window.refreshIcons?.(), 50);
+    },
+    cancelSession(lvl) {
+        if (confirm('Bạn có chắc muốn hủy bài thi đang dở để làm lại từ đầu?')) {
+            const key = 'hsk_mock_session_lvl_' + lvl + '_{{ Auth::id() ?? 'guest' }}';
+            localStorage.removeItem(key);
+            delete this.activeSessions[lvl];
+            this.activeSessions = { ...this.activeSessions };
+            setTimeout(() => window.refreshIcons?.(), 50);
+        }
+    }
+}">
     <div class="mb-6 flex items-center justify-between">
         <div>
             <p class="text-xs font-bold uppercase tracking-[0.24em] text-[#991b1b]">Chọn cấp độ</p>
@@ -101,10 +139,19 @@
                     <span class="rounded-full px-3.5 py-1 text-xs font-black uppercase tracking-wider border {{ $spec['badge_bg'] }}">
                         {{ $spec['label'] }}
                     </span>
-                    <span class="inline-flex items-center gap-1 text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
-                        <i data-lucide="timer" class="h-3.5 w-3.5 text-slate-400"></i>
-                        {{ $spec['time_limit'] }} phút
-                    </span>
+                    
+                    <template x-if="activeSessions[{{ $level }}]">
+                        <span class="inline-flex items-center gap-1 rounded-full bg-amber-100 border border-amber-300 px-2.5 py-0.5 text-[11px] font-black text-amber-800 animate-pulse">
+                            ⚡ Đang thi
+                        </span>
+                    </template>
+
+                    <template x-if="!activeSessions[{{ $level }}]">
+                        <span class="inline-flex items-center gap-1 text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+                            <i data-lucide="timer" class="h-3.5 w-3.5 text-slate-400"></i>
+                            {{ $spec['time_limit'] }} phút
+                        </span>
+                    </template>
                 </div>
 
                 {{-- Level Chinese Number Watermark --}}
@@ -148,12 +195,38 @@
 
             {{-- Action Button --}}
             <div class="mt-6 pt-4 border-t border-slate-100">
-                <a href="{{ route('hsk.mock.start', $level) }}"
-                   class="w-full inline-flex items-center justify-center gap-2 rounded-2xl py-3.5 px-4 text-sm font-bold text-white shadow-lg transition active:scale-95 hover:opacity-95"
-                   style="background: {{ $spec['color'] }}">
-                    <i data-lucide="play" class="h-4 w-4 fill-current"></i>
-                    <span>Vào phòng thi ngay</span>
-                </a>
+                <template x-if="activeSessions[{{ $level }}]">
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between text-xs px-1 font-bold text-amber-800">
+                            <span class="flex items-center gap-1">
+                                <i data-lucide="timer" class="h-3.5 w-3.5 text-amber-600"></i>
+                                Còn <strong x-text="activeSessions[{{ $level }}].remainingMinutes"></strong> phút
+                            </span>
+                            <span class="text-slate-500">
+                                Đã làm: <strong class="text-slate-900" x-text="activeSessions[{{ $level }}].answered"></strong>/<span x-text="activeSessions[{{ $level }}].total"></span>
+                            </span>
+                        </div>
+                        <a href="{{ route('hsk.mock.start', $level) }}"
+                           class="w-full inline-flex items-center justify-center gap-2 rounded-2xl py-3 px-4 text-xs sm:text-sm font-black text-slate-950 bg-amber-400 hover:bg-amber-300 shadow-md shadow-amber-400/20 transition active:scale-95">
+                            <i data-lucide="play" class="h-4 w-4 fill-current"></i>
+                            <span>Tiếp tục làm bài thi</span>
+                        </a>
+                        <button type="button"
+                                @click="cancelSession({{ $level }})"
+                                class="w-full text-center text-[11px] text-slate-400 hover:text-red-600 font-semibold transition py-1">
+                            Hủy bài này & tạo đề mới
+                        </button>
+                    </div>
+                </template>
+
+                <template x-if="!activeSessions[{{ $level }}]">
+                    <a href="{{ route('hsk.mock.start', $level) }}"
+                       class="w-full inline-flex items-center justify-center gap-2 rounded-2xl py-3.5 px-4 text-sm font-bold text-white shadow-lg transition active:scale-95 hover:opacity-95"
+                       style="background: {{ $spec['color'] }}">
+                        <i data-lucide="play" class="h-4 w-4 fill-current"></i>
+                        <span>Vào phòng thi ngay</span>
+                    </a>
+                </template>
             </div>
         </div>
         @endforeach
