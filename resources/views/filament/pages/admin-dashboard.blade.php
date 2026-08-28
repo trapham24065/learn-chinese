@@ -5,7 +5,7 @@
     $maxMinutes = max(1, max($chart['minutes'] ?? [1]));
 @endphp
 
-<div class="space-y-6">
+<div style="display: flex; flex-direction: column; gap: 1.75rem; padding-bottom: 2.5rem;">
 
     {{-- ══ 1. HERO BANNER & QUICK ACTIONS ══ --}}
     <div style="
@@ -163,10 +163,10 @@
     </div>
 
     {{-- ══ 3. MAIN SECTION: 2 COLUMNS ══ --}}
-    <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;" class="xl:grid-cols-[1.6fr_1fr]">
+    <div style="display: grid; grid-template-columns: 1fr; gap: 1.75rem;" class="xl:grid-cols-[1.6fr_1fr]">
 
         {{-- LEFT COLUMN: Charts & Recent Mock Tests --}}
-        <div class="space-y-6">
+        <div style="display: flex; flex-direction: column; gap: 1.75rem;">
 
             {{-- 14-Day Study Activity Visual Bar Chart --}}
             <div style="background: white; border-radius: 1.25rem; padding: 1.75rem; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);">
@@ -314,7 +314,7 @@
         </div>
 
         {{-- RIGHT COLUMN: HSK 1 - 6 Matrix & Top Students --}}
-        <div class="space-y-6">
+        <div style="display: flex; flex-direction: column; gap: 1.75rem;">
 
             {{-- HSK 1 - 6 Content & Performance Matrix --}}
             <div style="background: white; border-radius: 1.25rem; padding: 1.75rem; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);">
@@ -332,7 +332,7 @@
                     </a>
                 </div>
 
-                <div class="space-y-3">
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                     @foreach($hskMatrix as $row)
                     <div style="padding: 0.85rem; border-radius: 0.875rem; background: #f8fafc; border: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;">
                         <div style="display: flex; align-items: center; gap: 0.75rem;">
@@ -384,7 +384,7 @@
                         Chưa có dữ liệu học viên.
                     </div>
                 @else
-                    <div class="space-y-3">
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                         @foreach($topStudents as $rank => $st)
                         <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 0.5rem; border-bottom: 1px solid #f8fafc;">
                             <div style="display: flex; align-items: center; gap: 0.65rem;">
@@ -419,3 +419,4 @@
 </div>
 
 </x-filament-panels::page>
+
