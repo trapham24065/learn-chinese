@@ -82,6 +82,18 @@
                 </span>
             </a>
 
+            {{-- Luyện đọc hiểu Graded Reader --}}
+            <a href="{{ route('stories.index') }}"
+                class="group flex items-center justify-between rounded-2xl px-4 py-3 transition {{ request()->routeIs('stories.*') ? 'bg-[#991b1b] text-white shadow-lg shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                <span class="flex items-center gap-3">
+                    <span class="grid h-8 w-8 place-items-center rounded-xl {{ request()->routeIs('stories.*') ? 'bg-white/10' : 'bg-slate-100' }}">
+                        <i data-lucide="book-open-check" class="h-4 w-4"></i>
+                    </span>
+                    Luyện đọc hiểu
+                </span>
+                <span class="rounded-full bg-emerald-100 border border-emerald-300 px-2 py-0.5 text-[10px] font-black uppercase text-emerald-800 {{ request()->routeIs('stories.*') ? 'bg-white/20 text-white border-transparent' : '' }}">Mới</span>
+            </a>
+
             {{-- Thi thử HSK Mô phỏng --}}
             <a href="{{ route('hsk.mock.index') }}"
                 class="group flex items-center justify-between rounded-2xl px-4 py-3 transition {{ request()->routeIs('hsk.mock.*') ? 'bg-[#991b1b] text-white shadow-lg shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
@@ -152,6 +164,7 @@
                 <div class="flex items-center gap-2 overflow-x-auto text-xs font-semibold text-slate-700 no-scrollbar pr-4">
                     <a href="{{ route('dashboard') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('dashboard') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">Tổng quan</a>
                     <a href="{{ route('flashcards') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('flashcards') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">Thẻ nhớ</a>
+                    <a href="{{ route('stories.index') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('stories.*') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold' }}">Đọc hiểu ✨</a>
                     <a href="{{ route('quiz') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('quiz') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">Luyện tập</a>
                     <a href="{{ route('hsk.overview') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ (request()->routeIs('hsk.overview') || request()->routeIs('hsk.show')) ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">HSK</a>
                     <a href="{{ route('hsk.mock.index') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('hsk.mock.*') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-amber-100 text-amber-900 border border-amber-300' }}">Thi thử HSK ⭐</a>

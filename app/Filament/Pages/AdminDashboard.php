@@ -6,11 +6,13 @@ use App\Filament\Pages\ManageHsk;
 use App\Filament\Resources\Flashcards\FlashcardResource;
 use App\Filament\Resources\Lessons\LessonResource;
 use App\Filament\Resources\Questions\QuestionResource;
+use App\Filament\Resources\Stories\StoryResource;
 use App\Filament\Resources\Students\StudentResource;
 use App\Models\Flashcard;
 use App\Models\Lesson;
 use App\Models\MockTest;
 use App\Models\Question;
+use App\Models\Story;
 use App\Models\StudySession;
 use App\Models\User;
 use Carbon\Carbon;
@@ -44,6 +46,7 @@ class AdminDashboard extends BaseDashboard
         $totalLessons = Lesson::where('is_published', true)->count();
         $totalFlashcards = Flashcard::count();
         $totalQuestions = Question::where('is_active', true)->count();
+        $totalStories = Story::where('is_published', true)->count();
 
         $totalStudyMinutes = (int) StudySession::sum('duration_minutes');
         $totalStudyHours = round($totalStudyMinutes / 60, 1);
@@ -133,6 +136,7 @@ class AdminDashboard extends BaseDashboard
                 'total_lessons'      => $totalLessons,
                 'total_flashcards'   => $totalFlashcards,
                 'total_questions'    => $totalQuestions,
+                'total_stories'      => $totalStories,
                 'total_study_hours'  => $totalStudyHours,
                 'total_sessions_7d'  => $totalSessions7d,
                 'avg_score'          => $avgScore,
@@ -152,6 +156,8 @@ class AdminDashboard extends BaseDashboard
                 'create_flashcard' => FlashcardResource::getUrl('create'),
                 'create_question'  => QuestionResource::getUrl('create'),
                 'create_lesson'    => LessonResource::getUrl('create'),
+                'create_story'     => StoryResource::getUrl('create'),
+                'stories'          => StoryResource::getUrl('index'),
                 'students'         => StudentResource::getUrl('index'),
                 'manage_hsk'       => ManageHsk::getUrl(),
             ],

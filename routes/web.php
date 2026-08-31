@@ -6,6 +6,7 @@ use App\Http\Controllers\HskController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuizController;
+use App\Http\Controllers\StoryReadingController;
 use App\Http\Controllers\TTSController;
 use App\Http\Controllers\HskMockTestController;
 use App\Models\Flashcard;
@@ -67,5 +68,12 @@ Route::get('/hsk/{level}', [HskController::class, 'show'])->where('level', '[1-6
 
 Route::get('/lessons/{slug}', [LessonController::class, 'show'])->name('lesson.show');
 
+// Graded Reader (Phòng Luyện Đọc Hiểu)
+Route::get('/reading', [StoryReadingController::class, 'index'])->name('stories.index');
+Route::get('/reading/{slug}', [StoryReadingController::class, 'show'])->name('stories.show');
+Route::post('/reading/lookup', [StoryReadingController::class, 'lookup'])->name('stories.lookup');
+Route::post('/reading/{id}/complete', [StoryReadingController::class, 'complete'])->name('stories.complete');
+
 require __DIR__.'/auth.php';
+
 
