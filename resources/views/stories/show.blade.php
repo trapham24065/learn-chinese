@@ -3,8 +3,8 @@
 @section('content')
 <div x-data="gradedReaderApp()" x-init="init()" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative" @click="closeLookup()">
 
-    {{-- ══ 1. TOP STICKY TOOLBAR & BREADCRUMB ══ --}}
-    <div class="sticky top-16 z-30 bg-white/95 backdrop-blur-md rounded-2xl p-3.5 sm:p-4 shadow-md border border-slate-200 mb-6 transition-all">
+    {{-- ══ 1. TOP TOOLBAR & BREADCRUMB ══ --}}
+    <div class="relative bg-white rounded-2xl p-3.5 sm:p-4 shadow-sm border border-slate-200 mb-6">
         <div class="flex flex-wrap items-center justify-between gap-3">
             
             {{-- Back button & Story Title --}}
