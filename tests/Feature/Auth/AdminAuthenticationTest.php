@@ -33,3 +33,36 @@ test('admin login screen can be rendered', function () {
 
     $response->assertSuccessful();
 });
+
+test('admin logging in via web login is redirected to admin panel and authenticated on both guards', function () {
+    $admin = User::factory()->create([
+        'role'     => User::ROLE_ADMIN,
+        'password' => bcrypt('AdminPassword123!'),
+    ]);
+
+    $response = $this->post('/login', [
+        'email'    => $admin->email,
+        'password' => 'AdminPassword123!',
+    ]);
+
+    $response->assertRedirect('/admin');
+    $this->assertAuthenticated('web');
+    $this->assertAuthenticated('admin');
+});
+
+test('invalid credentials on web login always returns generic auth failed error without leaking role', function () {
+    $admin = User::factory()->create([
+        'role'     => User::ROLE_ADMIN,
+        'password' => bcrypt('CorrectPassword123!'),
+    ]);
+
+    $response = $this->post('/login', [
+        'email'    => $admin->email,
+        'password' => 'WrongPassword!',
+    ]);
+
+    $response->assertSessionHasErrors('email');
+    $this->assertGuest('web');
+    $this->assertGuest('admin');
+});
+

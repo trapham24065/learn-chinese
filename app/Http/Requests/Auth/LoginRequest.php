@@ -50,12 +50,9 @@ class LoginRequest extends FormRequest
             ]);
         }
 
-        if (! Auth::user()->isStudent()) {
-            Auth::logout();
-
-            throw ValidationException::withMessages([
-                'email' => 'Tài khoản này chỉ dùng để đăng nhập quản trị.',
-            ]);
+        $user = Auth::user();
+        if ($user && $user->isAdmin()) {
+            Auth::guard('admin')->login($user);
         }
 
         RateLimiter::clear($this->throttleKey());
