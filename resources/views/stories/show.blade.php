@@ -1,7 +1,316 @@
 @extends('layouts.app')
 
 @section('content')
+<script>
+window.gradedReaderApp = function() {
+    return {
+        showPinyin: true,
+        showTranslation: true,
+        fontSizes: ['text-base', 'text-lg', 'text-xl', 'text-2xl'],
+        fontSizeIndex: 1,
+        playbackSpeed: 1.0,
+        isPlayingAll: false,
+        currentPlayingSentenceIndex: -1,
+        
+        // Word Lookup State
+        lookupVisible: false,
+        activeWordHanzi: null,
+        popoverPos: { x: 0, y: 0 },
+        currentWord: {
+            id: null,
+            hanzi: '',
+            pinyin: '',
+            meaning: '',
+            hsk_level: {{ $story->hsk_level }},
+            is_starred: false
+        },
+        starredList: @json($starredCharacters),
+
+        // Quiz State
+        quizAnswers: {},
+        quizSubmitted: false,
+        quizScore: 0,
+        isCompleted: {{ $story->isCompletedBy() ? 'true' : 'false' }},
+
+        // Hanzi Writer State
+        showWriterModal: false,
+        writerInstance: null,
+
+        get fontSizeClass() {
+            return this.fontSizes[this.fontSizeIndex];
+        },
+
+        get fontSizeLabel() {
+            return ['Nhỏ', 'Vừa', 'Lớn', 'Cực đại'][this.fontSizeIndex];
+        },
+
+        init() {
+            if (window.refreshIcons) window.refreshIcons();
+        },
+
+        increaseFontSize() {
+            if (this.fontSizeIndex < this.fontSizes.length - 1) {
+                this.fontSizeIndex++;
+            }
+        },
+
+        decreaseFontSize() {
+            if (this.fontSizeIndex > 0) {
+                this.fontSizeIndex--;
+            }
+        },
+
+        cycleSpeed() {
+            const speeds = [0.75, 1.0, 1.25];
+            const currentIdx = speeds.indexOf(this.playbackSpeed);
+            this.playbackSpeed = speeds[(currentIdx + 1) % speeds.length];
+        },
+
+        openLookup(event, word) {
+            const rect = event.currentTarget.getBoundingClientRect();
+            const popoverWidth = window.innerWidth < 640 ? 280 : 320;
+            
+            // Smart calculate horizontal X position to prevent offscreen overflow
+            let posX = rect.left + (rect.width / 2) - (popoverWidth / 2);
+            if (posX < 12) posX = 12;
+            if (posX + popoverWidth > window.innerWidth - 12) {
+                posX = window.innerWidth - popoverWidth - 12;
+            }
+
+            // Smart calculate vertical Y position (prefer above, fallback below)
+            let posY = rect.top - 170;
+            if (posY < 70) {
+                posY = rect.bottom + 12;
+            }
+
+            this.popoverPos = { x: posX, y: posY };
+            this.activeWordHanzi = word.hanzi;
+            this.currentWord = {
+                id: null,
+                hanzi: word.hanzi,
+                pinyin: word.pinyin || '',
+                meaning: word.meaning || '',
+                hsk_level: {{ $story->hsk_level }},
+                is_starred: this.starredList.includes(word.hanzi)
+            };
+            this.lookupVisible = true;
+
+            // Fetch dynamic backend dictionary metadata & flashcard ID if meaning missing
+            fetch('{{ route("stories.lookup") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ character: word.hanzi })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.found) {
+                    this.currentWord.id = data.id;
+                    if (!this.currentWord.meaning) this.currentWord.meaning = data.meaning;
+                    if (!this.currentWord.pinyin) this.currentWord.pinyin = data.pinyin;
+                    this.currentWord.hsk_level = data.hsk_level;
+                    this.currentWord.is_starred = data.is_starred;
+                }
+            })
+            .catch(() => {});
+
+            this.$nextTick(() => window.refreshIcons && window.refreshIcons());
+        },
+
+        closeLookup() {
+            this.lookupVisible = false;
+            this.activeWordHanzi = null;
+        },
+
+        speakWord(text) {
+            if (!text) return;
+            fetch('{{ route("tts.generate") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ text: text })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.audio_url) {
+                    const audio = new Audio(data.audio_url);
+                    audio.playbackRate = this.playbackSpeed;
+                    audio.play();
+                } else {
+                    this.fallbackWebSpeech(text);
+                }
+            })
+            .catch(() => {
+                this.fallbackWebSpeech(text);
+            });
+        },
+
+        fallbackWebSpeech(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utter = new SpeechSynthesisUtterance(text);
+                utter.lang = 'zh-CN';
+                utter.rate = this.playbackSpeed;
+                window.speechSynthesis.speak(utter);
+            }
+        },
+
+        playSentence(idx, text) {
+            this.currentPlayingSentenceIndex = idx;
+            this.speakWord(text);
+            setTimeout(() => {
+                if (!this.isPlayingAll) {
+                    this.currentPlayingSentenceIndex = -1;
+                }
+            }, 3500);
+        },
+
+        togglePlayAll() {
+            if (this.isPlayingAll) {
+                this.isPlayingAll = false;
+                this.currentPlayingSentenceIndex = -1;
+                if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+                this.$nextTick(() => window.refreshIcons && window.refreshIcons());
+                return;
+            }
+
+            this.isPlayingAll = true;
+            this.$nextTick(() => window.refreshIcons && window.refreshIcons());
+
+            const sentences = @json(array_column($story->content_json, 'chinese'));
+            let current = 0;
+
+            const playNext = () => {
+                if (!this.isPlayingAll || current >= sentences.length) {
+                    this.isPlayingAll = false;
+                    this.currentPlayingSentenceIndex = -1;
+                    this.$nextTick(() => window.refreshIcons && window.refreshIcons());
+                    return;
+                }
+
+                this.currentPlayingSentenceIndex = current;
+                const block = document.getElementById('sentence-block-' + current);
+                if (block) block.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+                this.speakWord(sentences[current]);
+                current++;
+                setTimeout(playNext, 4000 / this.playbackSpeed);
+            };
+
+            playNext();
+        },
+
+        toggleStarWord() {
+            if (!this.currentWord.id) {
+                // If not in DB yet, toggle locally
+                this.currentWord.is_starred = !this.currentWord.is_starred;
+                return;
+            }
+
+            fetch('{{ route("flashcards.toggleStar") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ flashcard_id: this.currentWord.id })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    this.currentWord.is_starred = data.is_starred;
+                    if (data.is_starred) {
+                        this.starredList.push(this.currentWord.hanzi);
+                    } else {
+                        this.starredList = this.starredList.filter(c => c !== this.currentWord.hanzi);
+                    }
+                }
+            })
+            .catch(() => {});
+        },
+
+        openHanziWriter(hanzi) {
+            const firstChar = hanzi ? hanzi.charAt(0) : '字';
+            this.showWriterModal = true;
+            this.closeLookup();
+
+            this.$nextTick(() => {
+                const target = document.getElementById('story-hanzi-writer-box');
+                if (!target || !window.HanziWriter) return;
+                target.innerHTML = '';
+                this.writerInstance = window.HanziWriter.create(target, firstChar, {
+                    width: 180,
+                    height: 180,
+                    padding: 10,
+                    showOutline: true,
+                    strokeColor: '#991b1b',
+                    outlineColor: '#cbd5e1'
+                });
+                this.writerInstance.animateCharacter();
+            });
+        },
+
+        animateWriter() {
+            if (this.writerInstance) this.writerInstance.animateCharacter();
+        },
+
+        quizWriter() {
+            if (this.writerInstance) this.writerInstance.quiz();
+        },
+
+        submitQuiz() {
+            const quizList = @json($story->quiz_json ?? []);
+            if (!quizList || quizList.length === 0) return;
+
+            let correctCount = 0;
+            quizList.forEach((q, idx) => {
+                if (this.quizAnswers[idx] && this.quizAnswers[idx].trim() === q.correct_answer.trim()) {
+                    correctCount++;
+                }
+            });
+
+            this.quizScore = Math.round((correctCount / quizList.length) * 100);
+            this.quizSubmitted = true;
+            this.isCompleted = true;
+
+            // Save completion to Backend
+            fetch('{{ route("stories.complete", $story->id) }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ quiz_score: this.quizScore })
+            }).catch(() => {});
+        },
+
+        resetQuiz() {
+            this.quizAnswers = {};
+            this.quizSubmitted = false;
+            this.quizScore = 0;
+        },
+
+        markCompletedOnly() {
+            this.isCompleted = true;
+            fetch('{{ route("stories.complete", $story->id) }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ quiz_score: 100 })
+            }).catch(() => {});
+        }
+    };
+};
+</script>
+
 <div x-data="gradedReaderApp()" x-init="init()" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative" @click="closeLookup()">
+
 
     {{-- ══ 1. TOP TOOLBAR & BREADCRUMB ══ --}}
     <div class="relative bg-white rounded-2xl p-3.5 sm:p-4 shadow-sm border border-slate-200 mb-6">
@@ -344,13 +653,13 @@
         {{-- Character & Pinyin Header --}}
         <div class="flex items-start justify-between pr-6">
             <div>
-                <div class="text-2xl font-black tracking-wide text-white" x-text="currentWord.hanzi"></div>
-                <div class="text-xs font-bold text-amber-400 mt-0.5" x-text="currentWord.pinyin"></div>
+                <div class="text-2xl font-black tracking-wide text-white" x-text="currentWord?.hanzi || ''"></div>
+                <div class="text-xs font-bold text-amber-400 mt-0.5" x-text="currentWord?.pinyin || ''"></div>
             </div>
 
             <div class="flex items-center gap-1.5">
                 {{-- Play TTS Word audio --}}
-                <button type="button" @click="speakWord(currentWord.hanzi)"
+                <button type="button" @click="speakWord(currentWord?.hanzi)"
                         class="h-8 w-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 flex items-center justify-center transition"
                         title="Phát âm từ này">
                     <i data-lucide="volume-2" class="h-4 w-4"></i>
@@ -358,10 +667,10 @@
 
                 {{-- Toggle Star / Save to favorites --}}
                 <button type="button" @click="toggleStarWord()"
-                        :class="currentWord.is_starred ? 'bg-amber-400/20 text-amber-400 border border-amber-400/40' : 'bg-slate-800 text-slate-400 hover:text-white'"
+                        :class="currentWord?.is_starred ? 'bg-amber-400/20 text-amber-400 border border-amber-400/40' : 'bg-slate-800 text-slate-400 hover:text-white'"
                         class="h-8 w-8 rounded-xl flex items-center justify-center transition"
                         title="Lưu vào Sổ từ vựng yêu thích">
-                    <i data-lucide="star" :class="currentWord.is_starred ? 'fill-amber-400' : ''" class="h-4 w-4"></i>
+                    <i data-lucide="star" :class="currentWord?.is_starred ? 'fill-amber-400' : ''" class="h-4 w-4"></i>
                 </button>
             </div>
         </div>
@@ -369,14 +678,14 @@
         {{-- Meaning --}}
         <div class="mt-3 pt-3 border-t border-slate-800">
             <div class="text-xs text-slate-400 font-medium">Nghĩa tiếng Việt:</div>
-            <div class="text-sm font-bold text-slate-100 mt-0.5" x-text="currentWord.meaning || 'Đang tra nghĩa...'"></div>
+            <div class="text-sm font-bold text-slate-100 mt-0.5" x-text="currentWord?.meaning || 'Đang tra nghĩa...'"></div>
         </div>
 
         {{-- Practice writing character CTA --}}
         <div class="mt-3 pt-2 flex items-center justify-between text-xs">
-            <span class="text-slate-400" x-text="'HSK ' + (currentWord.hsk_level || '{{ $story->hsk_level }}')"></span>
+            <span class="text-slate-400" x-text="'HSK ' + (currentWord?.hsk_level || '{{ $story->hsk_level }}')"></span>
             
-            <button type="button" @click="openHanziWriter(currentWord.hanzi)"
+            <button type="button" @click="openHanziWriter(currentWord?.hanzi)"
                     class="inline-flex items-center gap-1 text-amber-400 hover:underline font-bold">
                 <i data-lucide="pen-tool" class="h-3 w-3"></i>
                 <span>Tập viết chữ ↗</span>
@@ -414,313 +723,5 @@
     </div>
 
 </div>
-
-{{-- Alpine.js Graded Reader Component Script --}}
-<script>
-function gradedReaderApp() {
-    return {
-        showPinyin: true,
-        showTranslation: true,
-        fontSizes: ['text-base', 'text-lg', 'text-xl', 'text-2xl'],
-        fontSizeIndex: 1,
-        playbackSpeed: 1.0,
-        isPlayingAll: false,
-        currentPlayingSentenceIndex: -1,
-        
-        // Word Lookup State
-        lookupVisible: false,
-        activeWordHanzi: null,
-        popoverPos: { x: 0, y: 0 },
-        currentWord: {
-            id: null,
-            hanzi: '',
-            pinyin: '',
-            meaning: '',
-            hsk_level: {{ $story->hsk_level }},
-            is_starred: false
-        },
-        starredList: @json($starredCharacters),
-
-        // Quiz State
-        quizAnswers: {},
-        quizSubmitted: false,
-        quizScore: 0,
-        isCompleted: {{ $story->isCompletedBy() ? 'true' : 'false' }},
-
-        // Hanzi Writer State
-        showWriterModal: false,
-        writerInstance: null,
-
-        get fontSizeClass() {
-            return this.fontSizes[this.fontSizeIndex];
-        },
-
-        get fontSizeLabel() {
-            return ['Nhỏ', 'Vừa', 'Lớn', 'Cực đại'][this.fontSizeIndex];
-        },
-
-        init() {
-            if (window.refreshIcons) window.refreshIcons();
-        },
-
-        increaseFontSize() {
-            if (this.fontSizeIndex < this.fontSizes.length - 1) {
-                this.fontSizeIndex++;
-            }
-        },
-
-        decreaseFontSize() {
-            if (this.fontSizeIndex > 0) {
-                this.fontSizeIndex--;
-            }
-        },
-
-        cycleSpeed() {
-            const speeds = [0.75, 1.0, 1.25];
-            const currentIdx = speeds.indexOf(this.playbackSpeed);
-            this.playbackSpeed = speeds[(currentIdx + 1) % speeds.length];
-        },
-
-        openLookup(event, word) {
-            const rect = event.currentTarget.getBoundingClientRect();
-            const popoverWidth = window.innerWidth < 640 ? 280 : 320;
-            
-            // Smart calculate horizontal X position to prevent offscreen overflow
-            let posX = rect.left + (rect.width / 2) - (popoverWidth / 2);
-            if (posX < 12) posX = 12;
-            if (posX + popoverWidth > window.innerWidth - 12) {
-                posX = window.innerWidth - popoverWidth - 12;
-            }
-
-            // Smart calculate vertical Y position (prefer above, fallback below)
-            let posY = rect.top - 170;
-            if (posY < 70) {
-                posY = rect.bottom + 12;
-            }
-
-            this.popoverPos = { x: posX, y: posY };
-            this.activeWordHanzi = word.hanzi;
-            this.currentWord = {
-                id: null,
-                hanzi: word.hanzi,
-                pinyin: word.pinyin || '',
-                meaning: word.meaning || '',
-                hsk_level: {{ $story->hsk_level }},
-                is_starred: this.starredList.includes(word.hanzi)
-            };
-            this.lookupVisible = true;
-
-            // Fetch dynamic backend dictionary metadata & flashcard ID if meaning missing
-            fetch('{{ route("stories.lookup") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({ character: word.hanzi })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.found) {
-                    this.currentWord.id = data.id;
-                    if (!this.currentWord.meaning) this.currentWord.meaning = data.meaning;
-                    if (!this.currentWord.pinyin) this.currentWord.pinyin = data.pinyin;
-                    this.currentWord.hsk_level = data.hsk_level;
-                    this.currentWord.is_starred = data.is_starred;
-                }
-            })
-            .catch(() => {});
-
-            this.$nextTick(() => window.refreshIcons && window.refreshIcons());
-        },
-
-        closeLookup() {
-            this.lookupVisible = false;
-            this.activeWordHanzi = null;
-        },
-
-        speakWord(text) {
-            if (!text) return;
-            fetch('{{ route("tts.generate") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({ text: text })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.audio_url) {
-                    const audio = new Audio(data.audio_url);
-                    audio.playbackRate = this.playbackSpeed;
-                    audio.play();
-                } else {
-                    this.fallbackWebSpeech(text);
-                }
-            })
-            .catch(() => {
-                this.fallbackWebSpeech(text);
-            });
-        },
-
-        fallbackWebSpeech(text) {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const utter = new SpeechSynthesisUtterance(text);
-                utter.lang = 'zh-CN';
-                utter.rate = this.playbackSpeed;
-                window.speechSynthesis.speak(utter);
-            }
-        },
-
-        playSentence(idx, text) {
-            this.currentPlayingSentenceIndex = idx;
-            this.speakWord(text);
-            setTimeout(() => {
-                if (!this.isPlayingAll) {
-                    this.currentPlayingSentenceIndex = -1;
-                }
-            }, 3500);
-        },
-
-        togglePlayAll() {
-            if (this.isPlayingAll) {
-                this.isPlayingAll = false;
-                this.currentPlayingSentenceIndex = -1;
-                if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-                this.$nextTick(() => window.refreshIcons && window.refreshIcons());
-                return;
-            }
-
-            this.isPlayingAll = true;
-            this.$nextTick(() => window.refreshIcons && window.refreshIcons());
-
-            const sentences = @json(array_column($story->content_json, 'chinese'));
-            let current = 0;
-
-            const playNext = () => {
-                if (!this.isPlayingAll || current >= sentences.length) {
-                    this.isPlayingAll = false;
-                    this.currentPlayingSentenceIndex = -1;
-                    this.$nextTick(() => window.refreshIcons && window.refreshIcons());
-                    return;
-                }
-
-                this.currentPlayingSentenceIndex = current;
-                const block = document.getElementById('sentence-block-' + current);
-                if (block) block.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
-                this.speakWord(sentences[current]);
-                current++;
-                setTimeout(playNext, 4000 / this.playbackSpeed);
-            };
-
-            playNext();
-        },
-
-        toggleStarWord() {
-            if (!this.currentWord.id) {
-                // If not in DB yet, toggle locally
-                this.currentWord.is_starred = !this.currentWord.is_starred;
-                return;
-            }
-
-            fetch('{{ route("flashcards.toggleStar") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({ flashcard_id: this.currentWord.id })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    this.currentWord.is_starred = data.is_starred;
-                    if (data.is_starred) {
-                        this.starredList.push(this.currentWord.hanzi);
-                    } else {
-                        this.starredList = this.starredList.filter(c => c !== this.currentWord.hanzi);
-                    }
-                }
-            })
-            .catch(() => {});
-        },
-
-        openHanziWriter(hanzi) {
-            const firstChar = hanzi ? hanzi.charAt(0) : '字';
-            this.showWriterModal = true;
-            this.closeLookup();
-
-            this.$nextTick(() => {
-                const target = document.getElementById('story-hanzi-writer-box');
-                if (!target || !window.HanziWriter) return;
-                target.innerHTML = '';
-                this.writerInstance = window.HanziWriter.create(target, firstChar, {
-                    width: 180,
-                    height: 180,
-                    padding: 10,
-                    showOutline: true,
-                    strokeColor: '#991b1b',
-                    outlineColor: '#cbd5e1'
-                });
-                this.writerInstance.animateCharacter();
-            });
-        },
-
-        animateWriter() {
-            if (this.writerInstance) this.writerInstance.animateCharacter();
-        },
-
-        quizWriter() {
-            if (this.writerInstance) this.writerInstance.quiz();
-        },
-
-        submitQuiz() {
-            const quizList = @json($story->quiz_json ?? []);
-            if (!quizList || quizList.length === 0) return;
-
-            let correctCount = 0;
-            quizList.forEach((q, idx) => {
-                if (this.quizAnswers[idx] && this.quizAnswers[idx].trim() === q.correct_answer.trim()) {
-                    correctCount++;
-                }
-            });
-
-            this.quizScore = Math.round((correctCount / quizList.length) * 100);
-            this.quizSubmitted = true;
-            this.isCompleted = true;
-
-            // Save completion to Backend
-            fetch('{{ route("stories.complete", $story->id) }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({ quiz_score: this.quizScore })
-            }).catch(() => {});
-        },
-
-        resetQuiz() {
-            this.quizAnswers = {};
-            this.quizSubmitted = false;
-            this.quizScore = 0;
-        },
-
-        markCompletedOnly() {
-            this.isCompleted = true;
-            fetch('{{ route("stories.complete", $story->id) }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({ quiz_score: 100 })
-            }).catch(() => {});
-        }
-    };
-}
-</script>
 @endsection
+
