@@ -34,7 +34,7 @@ test('admin login screen can be rendered', function () {
     $response->assertSuccessful();
 });
 
-test('admin logging in via web login is redirected to admin panel and authenticated on both guards', function () {
+test('admin logging in via web login is redirected to dashboard and authenticated on both guards', function () {
     $admin = User::factory()->create([
         'role'     => User::ROLE_ADMIN,
         'password' => bcrypt('AdminPassword123!'),
@@ -45,7 +45,7 @@ test('admin logging in via web login is redirected to admin panel and authentica
         'password' => 'AdminPassword123!',
     ]);
 
-    $response->assertRedirect('/admin');
+    $response->assertRedirect(route('dashboard', absolute: false));
     $this->assertAuthenticated('web');
     $this->assertAuthenticated('admin');
 });

@@ -28,11 +28,6 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        $user = Auth::user();
-        if ($user && $user->isAdmin()) {
-            return redirect()->intended('/admin')->with('success', 'Đăng nhập Quản trị viên thành công!');
-        }
-
         return redirect()->intended(route('dashboard', absolute: false))->with('success', 'Đăng nhập thành công! Chào mừng trở lại.');
     }
 
