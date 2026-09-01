@@ -3,7 +3,9 @@
 namespace App\Filament\Resources\Stories\Schemas;
 
 use Filament\Forms\Components\ColorPicker;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -51,14 +53,14 @@ class StoryForm
                 Select::make('category')
                     ->label('Chủ đề')
                     ->options([
-                        'Đời sống'  => 'Đời sống',
-                        'Ẩm thực'   => 'Ẩm thực',
-                        'Giao tiếp' => 'Giao tiếp',
-                        'Mua sắm'   => 'Mua sắm',
-                        'Du lịch'   => 'Du lịch',
-                        'Giao thông'=> 'Giao thông',
-                        'Công sở'   => 'Công sở',
-                        'Văn hóa'   => 'Văn hóa',
+                        'Đời sống'   => 'Đời sống',
+                        'Ẩm thực'    => 'Ẩm thực',
+                        'Giao tiếp'  => 'Giao tiếp',
+                        'Mua sắm'    => 'Mua sắm',
+                        'Du lịch'    => 'Du lịch',
+                        'Giao thông' => 'Giao thông',
+                        'Công sở'    => 'Công sở',
+                        'Văn hóa'    => 'Văn hóa',
                     ])
                     ->default('Đời sống')
                     ->required(),
@@ -84,25 +86,67 @@ class StoryForm
 
                 Textarea::make('summary')
                     ->label('Tóm tắt nội dung')
+                    ->placeholder('Tóm tắt ngắn gọn nội dung bài đọc để hiển thị ở danh sách bài...')
                     ->rows(2)
                     ->columnSpanFull(),
 
-                Textarea::make('content_json')
-                    ->label('Nội dung bài đọc (JSON)')
-                    ->helperText('Định dạng mảng JSON gồm các câu, pinyin, dịch nghĩa và danh sách từ vựng.')
-                    ->rows(8)
-                    ->formatStateUsing(fn ($state) => is_array($state) ? json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : $state)
-                    ->dehydrateStateUsing(fn ($state) => is_string($state) ? json_decode($state, true) : $state)
+                Repeater::make('content_json')
+                    ->label('Nội dung các câu trong bài đọc')
+                    ->helperText('Bấm "+ Thêm câu mới" để thêm từng câu tiếng Trung, Pinyin và nghĩa tiếng Việt một cách trực quan.')
+                    ->schema([
+                        TextInput::make('chinese')
+                            ->label('Câu tiếng Trung (Chữ Hán)')
+                            ->placeholder('VD: 今天是星期六，天气很好。 (hoặc có khoảng trắng: 今天 是 星期六)')
+                            ->required(),
+
+                        TextInput::make('pinyin')
+                            ->label('Phiên âm Pinyin (Tùy chọn)')
+                            ->placeholder('VD: Jīntiān shì xīngqīliù, tiānqì hěn hǎo.'),
+
+                        TextInput::make('vietnamese')
+                            ->label('Dịch nghĩa tiếng Việt')
+                            ->placeholder('VD: Hôm nay là thứ Bảy, thời tiết rất đẹp.')
+                            ->required(),
+                    ])
+                    ->itemLabel(fn (array $state): ?string => !empty($state['chinese']) ? $state['chinese'] : 'Câu mới')
+                    ->addActionLabel('+ Thêm câu mới')
+                    ->collapsible()
+                    ->defaultItems(1)
                     ->columnSpanFull()
                     ->required(),
 
-                Textarea::make('quiz_json')
-                    ->label('Câu hỏi kiểm tra đọc hiểu (JSON)')
-                    ->helperText('Mảng JSON câu hỏi trắc nghiệm, các lựa chọn và đáp án đúng.')
-                    ->rows(6)
-                    ->formatStateUsing(fn ($state) => is_array($state) ? json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : $state)
-                    ->dehydrateStateUsing(fn ($state) => is_string($state) ? json_decode($state, true) : $state)
+                Repeater::make('quiz_json')
+                    ->label('Câu hỏi kiểm tra đọc hiểu (Comprehension Quiz)')
+                    ->helperText('Thêm các câu hỏi trắc nghiệm kiểm tra độ hiểu bài của học viên.')
+                    ->schema([
+                        TextInput::make('question')
+                            ->label('Nội dung câu hỏi tiếng Trung')
+                            ->placeholder('VD: 今天是星期几？')
+                            ->required(),
+
+                        TextInput::make('pinyin')
+                            ->label('Pinyin câu hỏi (Tùy chọn)')
+                            ->placeholder('VD: Jīntiān shì xīngqī jǐ?'),
+
+                        TagsInput::make('options')
+                            ->label('Các lựa chọn đáp án (Gõ từng đáp án rồi nhấn Enter)')
+                            ->placeholder('VD: 星期五 (Enter), 星期六 (Enter)...')
+                            ->required(),
+
+                        TextInput::make('correct_answer')
+                            ->label('Đáp án đúng')
+                            ->placeholder('VD: 星期六 (Phải trùng khớp với 1 trong các đáp án ở trên)')
+                            ->required(),
+
+                        TextInput::make('explanation')
+                            ->label('Giải thích đáp án (Tùy chọn)')
+                            ->placeholder('VD: Trong bài viết: "今天是星期六"'),
+                    ])
+                    ->itemLabel(fn (array $state): ?string => !empty($state['question']) ? $state['question'] : 'Câu hỏi mới')
+                    ->addActionLabel('+ Thêm câu hỏi kiểm tra')
+                    ->collapsible()
                     ->columnSpanFull(),
             ]);
     }
 }
+

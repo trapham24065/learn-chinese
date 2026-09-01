@@ -123,7 +123,7 @@
                     {{-- Chinese Text with Word-by-Word Clickable Chips --}}
                     <div class="chinese-reading-line flex flex-wrap items-end gap-x-2 gap-y-3 leading-loose select-text"
                          :class="fontSizeClass">
-                        @if(isset($sentence['words']) && is_array($sentence['words']))
+                        @if(isset($sentence['words']) && is_array($sentence['words']) && count($sentence['words']) > 0)
                             @foreach($sentence['words'] as $wIdx => $word)
                                 <span class="interactive-word inline-flex flex-col items-center cursor-pointer rounded-lg px-1.5 py-0.5 transition-all duration-150 group/word relative select-text"
                                       :class="activeWordHanzi === '{{ $word['hanzi'] }}' ? 'bg-red-100 text-red-900 ring-2 ring-red-400' : 'hover:bg-amber-100/80 hover:text-slate-900 text-slate-800'"
@@ -140,23 +140,43 @@
                                 </span>
                             @endforeach
                         @else
-                            {{-- Fallback plain chinese if no words array --}}
-                            <span class="font-medium text-slate-800 tracking-wide">
-                                {{ $sentence['chinese'] }}
-                            </span>
+                            @php
+                                $chineseText = $sentence['chinese'] ?? '';
+                                if (str_contains($chineseText, ' ')) {
+                                    $tokens = array_filter(explode(' ', $chineseText));
+                                } else {
+                                    $tokens = preg_split('/(?<!^)(?!$)/u', $chineseText) ?: [];
+                                }
+                            @endphp
+                            @foreach($tokens as $token)
+                                @php $trimmed = trim($token); @endphp
+                                @if(preg_match('/[\x{4e00}-\x{9fa5}]/u', $trimmed))
+                                    <span class="interactive-word inline-flex flex-col items-center cursor-pointer rounded-lg px-1 py-0.5 transition-all duration-150 group/word relative select-text"
+                                          :class="activeWordHanzi === '{{ $trimmed }}' ? 'bg-red-100 text-red-900 ring-2 ring-red-400' : 'hover:bg-amber-100/80 hover:text-slate-900 text-slate-800'"
+                                          @click.stop="openLookup($event, { hanzi: '{{ $trimmed }}' })">
+                                        <span class="font-medium tracking-wide">
+                                            {{ $trimmed }}
+                                        </span>
+                                    </span>
+                                @else
+                                    <span class="font-normal text-slate-600 tracking-wide px-0.5">
+                                        {{ $trimmed }}
+                                    </span>
+                                @endif
+                            @endforeach
                         @endif
                     </div>
 
-                    {{-- Full Sentence Pinyin (if words not tokenized) --}}
-                    @if(empty($sentence['words']) && !empty($sentence['pinyin']))
-                        <div x-show="showPinyin" x-cloak class="mt-2 text-xs sm:text-sm font-semibold text-amber-800">
+                    {{-- Full Sentence Pinyin (if words not pre-tokenized) --}}
+                    @if((empty($sentence['words']) || count($sentence['words']) === 0) && !empty($sentence['pinyin']))
+                        <div x-show="showPinyin" x-cloak class="mt-2 text-xs sm:text-sm font-semibold text-amber-800 tracking-wide">
                             {{ $sentence['pinyin'] }}
                         </div>
                     @endif
 
                     {{-- Vietnamese Translation --}}
                     <div x-show="showTranslation" x-cloak class="mt-2.5 pt-2 border-t border-slate-100 text-xs sm:text-sm text-slate-500 font-medium leading-relaxed">
-                        {{ $sentence['vietnamese'] }}
+                        {{ $sentence['vietnamese'] ?? '' }}
                     </div>
 
                 </div>
