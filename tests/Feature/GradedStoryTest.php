@@ -184,3 +184,13 @@ test('admin can view stories resource in filament', function () {
     $response = $this->get('/admin/stories');
     $response->assertSuccessful();
 });
+
+test('stories library renders pagination when stories exceed per page limit', function () {
+    Story::factory()->count(15)->create(['is_published' => true]);
+
+    $response = $this->get('/reading');
+    $response->assertSuccessful();
+    $response->assertSee('Hiển thị 1–12 trong tổng số 15 bài đọc hiểu');
+    $response->assertSee('?page=2');
+});
+

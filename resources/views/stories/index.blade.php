@@ -194,7 +194,52 @@
                 </div>
             @endforeach
         </div>
+
+        {{-- Pagination links --}}
+        @if($stories->hasPages())
+        <div class="mt-8 flex items-center justify-center gap-2">
+            {{-- Prev --}}
+            @if($stories->onFirstPage())
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed">
+                <i data-lucide="chevron-left" class="h-4 w-4"></i>
+            </span>
+            @else
+            <a href="{{ $stories->previousPageUrl() }}"
+               class="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-[#991b1b] hover:text-[#991b1b]">
+                <i data-lucide="chevron-left" class="h-4 w-4"></i>
+            </a>
+            @endif
+
+            {{-- Page numbers --}}
+            @foreach($stories->getUrlRange(max(1, $stories->currentPage() - 2), min($stories->lastPage(), $stories->currentPage() + 2)) as $page => $url)
+            <a href="{{ $url }}"
+               class="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-bold transition
+                      {{ $page == $stories->currentPage()
+                          ? 'bg-[#991b1b] text-white shadow-md shadow-red-900/20'
+                          : 'border border-slate-200 bg-white text-slate-700 hover:border-[#991b1b] hover:text-[#991b1b]' }}">
+                {{ $page }}
+            </a>
+            @endforeach
+
+            {{-- Next --}}
+            @if($stories->hasMorePages())
+            <a href="{{ $stories->nextPageUrl() }}"
+               class="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-[#991b1b] hover:text-[#991b1b]">
+                <i data-lucide="chevron-right" class="h-4 w-4"></i>
+            </a>
+            @else
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed">
+                <i data-lucide="chevron-right" class="h-4 w-4"></i>
+            </span>
+            @endif
+        </div>
+
+        <p class="mt-3 text-center text-xs text-slate-400 font-medium">
+            Hiển thị {{ $stories->firstItem() }}–{{ $stories->lastItem() }} trong tổng số {{ $stories->total() }} bài đọc hiểu
+        </p>
+        @endif
     @endif
 
 </div>
 @endsection
+

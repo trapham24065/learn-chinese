@@ -43,7 +43,8 @@ class StoryReadingController extends Controller
 
         $stories = $query->orderBy('hsk_level')
             ->orderBy('id')
-            ->get();
+            ->paginate(12)
+            ->withQueryString();
 
         $user = Auth::guard('web')->user();
         $completedStoryIds = collect();
