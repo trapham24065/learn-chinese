@@ -460,7 +460,7 @@ function gradedReaderApp() {
         },
 
         init() {
-            lucide.createIcons();
+            if (window.refreshIcons) window.refreshIcons();
         },
 
         increaseFontSize() {
@@ -531,7 +531,7 @@ function gradedReaderApp() {
             })
             .catch(() => {});
 
-            this.$nextTick(() => lucide.createIcons());
+            this.$nextTick(() => window.refreshIcons && window.refreshIcons());
         },
 
         closeLookup() {
@@ -589,12 +589,12 @@ function gradedReaderApp() {
                 this.isPlayingAll = false;
                 this.currentPlayingSentenceIndex = -1;
                 if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-                this.$nextTick(() => lucide.createIcons());
+                this.$nextTick(() => window.refreshIcons && window.refreshIcons());
                 return;
             }
 
             this.isPlayingAll = true;
-            this.$nextTick(() => lucide.createIcons());
+            this.$nextTick(() => window.refreshIcons && window.refreshIcons());
 
             const sentences = @json(array_column($story->content_json, 'chinese'));
             let current = 0;
@@ -603,7 +603,7 @@ function gradedReaderApp() {
                 if (!this.isPlayingAll || current >= sentences.length) {
                     this.isPlayingAll = false;
                     this.currentPlayingSentenceIndex = -1;
-                    this.$nextTick(() => lucide.createIcons());
+                    this.$nextTick(() => window.refreshIcons && window.refreshIcons());
                     return;
                 }
 
