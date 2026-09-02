@@ -15,24 +15,15 @@ use App\Models\Question;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
 
-// C9+C10: Cache static homepage stats for 24 hours to avoid per-visit DB queries
+// C10: Cache only scalar stats (24h) — never cache Eloquent objects (serialization issues)
 Route::get('/', function () {
-    $stats = Cache::remember('home_stats', 86400, fn () => [
-        'lessonCount'    => Lesson::count(),
-        'flashcardCount' => Flashcard::count(),
-        'questionCount'  => Question::count(),
-        'featuredLessons' => Lesson::where('is_published', true)
-            ->orderBy('sort_order')
-            ->take(3)
-            ->get(),
-    ]);
+    $lessonCount    = Cache::remember('home_lesson_count',    86400, fn () => Lesson::count());
+    $flashcardCount = Cache::remember('home_flashcard_count', 86400, fn () => Flashcard::count());
+    $questionCount  = Cache::remember('home_question_count',  86400, fn () => Question::count());
+    // featuredLessons NOT cached — Eloquent Collections don't deserialize safely across deployments
+    $featuredLessons = Lesson::where('is_published', true)->orderBy('sort_order')->take(3)->get();
 
-    return view('welcome', [
-        'lessonCount'    => $stats['lessonCount'],
-        'flashcardCount' => $stats['flashcardCount'],
-        'questionCount'  => $stats['questionCount'],
-        'featuredLessons' => $stats['featuredLessons'],
-    ]);
+    return view('welcome', compact('lessonCount', 'flashcardCount', 'questionCount', 'featuredLessons'));
 })->name('home');
 
 Route::redirect('/dashboard', '/student/dashboard');
