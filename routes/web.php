@@ -12,18 +12,27 @@ use App\Http\Controllers\HskMockTestController;
 use App\Models\Flashcard;
 use App\Models\Lesson;
 use App\Models\Question;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
 
+// C9+C10: Cache static homepage stats for 24 hours to avoid per-visit DB queries
 Route::get('/', function () {
-    $lessonCount = Lesson::count();
-    $flashcardCount = Flashcard::count();
-    $questionCount = Question::count();
-    $featuredLessons = Lesson::where('is_published', true)
-        ->orderBy('sort_order')
-        ->take(3)
-        ->get();
+    $stats = Cache::remember('home_stats', 86400, fn () => [
+        'lessonCount'    => Lesson::count(),
+        'flashcardCount' => Flashcard::count(),
+        'questionCount'  => Question::count(),
+        'featuredLessons' => Lesson::where('is_published', true)
+            ->orderBy('sort_order')
+            ->take(3)
+            ->get(),
+    ]);
 
-    return view('welcome', compact('lessonCount', 'flashcardCount', 'questionCount', 'featuredLessons'));
+    return view('welcome', [
+        'lessonCount'    => $stats['lessonCount'],
+        'flashcardCount' => $stats['flashcardCount'],
+        'questionCount'  => $stats['questionCount'],
+        'featuredLessons' => $stats['featuredLessons'],
+    ]);
 })->name('home');
 
 Route::redirect('/dashboard', '/student/dashboard');

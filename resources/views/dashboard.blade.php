@@ -583,7 +583,7 @@
     </section>
 </div>
 
-{{-- Alpine.js Student Dashboard Logic --}}
+{{-- Alpine.js Student Dashboard Logic (B7: defined before x-data DOM element) --}}
 <script>
 function studentDashboard() {
     return {
@@ -602,7 +602,8 @@ function studentDashboard() {
         toastTimeout: null,
 
         initDashboard() {
-            // initialization if needed
+            // B6: Refresh icons whenever lessonFilter changes
+            this.$watch('lessonFilter', () => this.$nextTick(() => window.refreshIcons?.()));
         },
 
         get todayGoalPercent() {
@@ -623,20 +624,12 @@ function studentDashboard() {
         },
 
         getDifficultyLabel(diff) {
-            const map = {
-                'starter': 'Mới bắt đầu',
-                'intermediate': 'Trung bình',
-                'advanced': 'Nâng cao'
-            };
+            const map = { 'starter': 'Mới bắt đầu', 'intermediate': 'Trung bình', 'advanced': 'Nâng cao' };
             return map[diff] || diff;
         },
 
         getStatusLabel(status) {
-            const map = {
-                'completed': 'Đã xong',
-                'in_progress': 'Đang học',
-                'not_started': 'Chưa học'
-            };
+            const map = { 'completed': 'Đã xong', 'in_progress': 'Đang học', 'not_started': 'Chưa học' };
             return map[status] || status;
         },
 
@@ -659,10 +652,7 @@ function studentDashboard() {
                         "Accept": "application/json",
                         "X-CSRF-TOKEN": "{{ csrf_token() }}"
                     },
-                    body: JSON.stringify({
-                        duration_minutes: minutes,
-                        session_type: sessionType
-                    })
+                    body: JSON.stringify({ duration_minutes: minutes, session_type: sessionType })
                 });
 
                 if (!response.ok) throw new Error("Ghi nhận thất bại");
@@ -678,8 +668,9 @@ function studentDashboard() {
 
                 this.showToast(data.message);
             } catch (e) {
+                // D1: Use toast instead of alert()
+                this.showToast('Đã xảy ra lỗi khi ghi nhận buổi học. Vui lòng thử lại!');
                 console.error(e);
-                alert("Đã xảy ra lỗi khi ghi nhận buổi học. Vui lòng thử lại!");
             } finally {
                 this.isLogging = false;
             }
@@ -695,17 +686,13 @@ function studentDashboard() {
                         "Accept": "application/json",
                         "X-CSRF-TOKEN": "{{ csrf_token() }}"
                     },
-                    body: JSON.stringify({
-                        lesson_id: lessonId,
-                        progress_percent: newPercent
-                    })
+                    body: JSON.stringify({ lesson_id: lessonId, progress_percent: newPercent })
                 });
 
                 if (!response.ok) throw new Error("Cập nhật thất bại");
 
                 const data = await response.json();
-                
-                // Update local lesson item
+
                 const target = this.lessons.find(l => l.id === lessonId);
                 if (target) {
                     target.progress_percent = data.progress_percent;
@@ -717,8 +704,9 @@ function studentDashboard() {
 
                 this.showToast(data.message);
             } catch (e) {
+                // D1: Use toast instead of alert()
+                this.showToast('Đã xảy ra lỗi khi cập nhật tiến độ. Vui lòng thử lại!');
                 console.error(e);
-                alert("Đã xảy ra lỗi khi cập nhật tiến độ. Vui lòng thử lại!");
             } finally {
                 this.isUpdatingProgress = null;
             }

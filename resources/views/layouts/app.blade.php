@@ -226,7 +226,8 @@
                     const data = await response.json();
                     if (data.audio) {
                         const audio = new Audio(data.audio);
-                        audio.play();
+                        // B3: await so autoplay rejection falls through to catch → WebSpeech fallback
+                        await audio.play();
                         return;
                     }
                 }

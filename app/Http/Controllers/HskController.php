@@ -73,20 +73,34 @@ class HskController extends Controller
     {
         $student = Auth::guard('web')->user();
 
+        // C3: Collapse 24 separate queries into 3 aggregate GROUP BY queries
+        $flashcardCounts = Flashcard::where('is_active', true)
+            ->selectRaw('hsk_level, count(*) as total')
+            ->groupBy('hsk_level')
+            ->pluck('total', 'hsk_level');
+
+        $lessonCounts = Lesson::where('is_published', true)
+            ->selectRaw('hsk_level, count(*) as total')
+            ->groupBy('hsk_level')
+            ->pluck('total', 'hsk_level');
+
+        $completedCounts = collect();
+        if ($student) {
+            $completedCounts = LessonProgress::query()
+                ->join('lessons', 'lessons.id', '=', 'lesson_progresses.lesson_id')
+                ->where('lesson_progresses.user_id', $student->id)
+                ->where('lesson_progresses.status', 'completed')
+                ->where('lessons.is_published', true)
+                ->selectRaw('lessons.hsk_level, count(*) as total')
+                ->groupBy('lessons.hsk_level')
+                ->pluck('total', 'lessons.hsk_level');
+        }
+
         $levelData = [];
         foreach (self::$levels as $level => $meta) {
-            $flashcardCount = Flashcard::where('hsk_level', $level)->where('is_active', true)->count();
-            $lessonCount    = Lesson::where('hsk_level', $level)->where('is_published', true)->count();
-
-            // Progress: completed lessons in this HSK level
-            $completedCount = 0;
-            if ($student && $lessonCount > 0) {
-                $lessonIds = Lesson::where('hsk_level', $level)->where('is_published', true)->pluck('id');
-                $completedCount = LessonProgress::where('user_id', $student->id)
-                    ->whereIn('lesson_id', $lessonIds)
-                    ->where('status', 'completed')
-                    ->count();
-            }
+            $flashcardCount = $flashcardCounts->get($level, 0);
+            $lessonCount    = $lessonCounts->get($level, 0);
+            $completedCount = $completedCounts->get($level, 0);
 
             $levelData[$level] = array_merge($meta, [
                 'level'           => $level,

@@ -4,14 +4,12 @@ namespace App\Providers;
 
 use App\Models\StudySession;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
         $this->app->bind(
@@ -25,9 +23,6 @@ class AppServiceProvider extends ServiceProvider
         );
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
         if (config('app.env') === 'production') {
@@ -36,10 +31,14 @@ class AppServiceProvider extends ServiceProvider
 
         View::composer('layouts.app', function ($view) {
             $user = Auth::guard('web')->user();
-            $streak = $user ? $user->calculateStreak() : 0;
+
+            // C2: Cache per-user streak for 1 hour to avoid loading all study_sessions on every page
+            $streak = $user
+                ? Cache::remember("streak_{$user->id}", 3600, fn () => $user->calculateStreak())
+                : 0;
 
             $view->with([
-                'authUser' => $user,
+                'authUser'      => $user,
                 'sidebarStreak' => $streak,
             ]);
         });

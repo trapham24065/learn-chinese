@@ -39,11 +39,12 @@ class QuizController extends Controller
         // Total pool size (before limiting)
         $totalPoolCount = (clone $query)->count();
 
-        // Pick N random questions for this session
-        $questions = $query
-            ->inRandomOrder()
-            ->take(self::QUIZ_PER_SESSION)
-            ->get();
+        // C5: Replace ORDER BY RAND() with PHP shuffle on IDs to avoid MySQL temp table sort
+        $allIds = (clone $query)->pluck('id')->toArray();
+        shuffle($allIds);
+        $selectedIds = array_slice($allIds, 0, self::QUIZ_PER_SESSION);
+        $questions = \App\Models\Question::whereIn('id', $selectedIds)->get()
+            ->sortBy(fn ($q) => array_search($q->id, $selectedIds))->values();
 
         $user = Auth::guard('web')->user();
         $recentQuizSessions = $user

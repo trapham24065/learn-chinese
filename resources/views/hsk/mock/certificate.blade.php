@@ -166,6 +166,8 @@
                 </div>
             </div>
 
+        </div>{{-- End: Footer Signature & Red Seal Stamp flex row --}}
+
         {{-- Disclaimer Footnote --}}
         <div class="relative mt-8 pt-4 border-t border-dashed border-amber-900/15 text-center">
             <p class="text-[10px] text-slate-400 leading-relaxed italic">

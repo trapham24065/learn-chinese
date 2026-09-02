@@ -11,7 +11,12 @@ window.gradedReaderApp = function() {
         playbackSpeed: 1.0,
         isPlayingAll: false,
         currentPlayingSentenceIndex: -1,
-        
+
+        // Audio state (B2: prevent race conditions & overlap)
+        currentAudio: null,
+        sentenceTimeoutId: null,
+        playTimeoutId: null,
+
         // Word Lookup State
         lookupVisible: false,
         activeWordHanzi: null,
@@ -126,6 +131,13 @@ window.gradedReaderApp = function() {
 
         speakWord(text) {
             if (!text) return;
+            // Cancel any existing audio before starting new one
+            if (this.currentAudio) {
+                this.currentAudio.pause();
+                this.currentAudio = null;
+            }
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+
             fetch('{{ route("tts.generate") }}', {
                 method: 'POST',
                 headers: {
@@ -136,10 +148,12 @@ window.gradedReaderApp = function() {
             })
             .then(res => res.json())
             .then(data => {
-                if (data.audio_url) {
-                    const audio = new Audio(data.audio_url);
+                // Fix A1: TTSController returns 'audio' key (base64), not 'audio_url'
+                if (data.audio) {
+                    const audio = new Audio(data.audio);
                     audio.playbackRate = this.playbackSpeed;
-                    audio.play();
+                    this.currentAudio = audio;
+                    audio.play().catch(() => this.fallbackWebSpeech(text));
                 } else {
                     this.fallbackWebSpeech(text);
                 }
@@ -160,9 +174,11 @@ window.gradedReaderApp = function() {
         },
 
         playSentence(idx, text) {
+            // Fix B2: cancel previous sentenceTimeout to avoid clearing wrong highlight
+            if (this.sentenceTimeoutId) clearTimeout(this.sentenceTimeoutId);
             this.currentPlayingSentenceIndex = idx;
             this.speakWord(text);
-            setTimeout(() => {
+            this.sentenceTimeoutId = setTimeout(() => {
                 if (!this.isPlayingAll) {
                     this.currentPlayingSentenceIndex = -1;
                 }
@@ -173,13 +189,16 @@ window.gradedReaderApp = function() {
             if (this.isPlayingAll) {
                 this.isPlayingAll = false;
                 this.currentPlayingSentenceIndex = -1;
+                // Cancel any pending playNext timeout
+                if (this.playTimeoutId) { clearTimeout(this.playTimeoutId); this.playTimeoutId = null; }
+                if (this.currentAudio) { this.currentAudio.pause(); this.currentAudio = null; }
                 if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-                this.$nextTick(() => window.refreshIcons && window.refreshIcons());
                 return;
             }
 
+            // Cancel any previous loop before starting
+            if (this.playTimeoutId) { clearTimeout(this.playTimeoutId); this.playTimeoutId = null; }
             this.isPlayingAll = true;
-            this.$nextTick(() => window.refreshIcons && window.refreshIcons());
 
             const sentences = @json(array_column($story->content_json, 'chinese'));
             let current = 0;
@@ -188,7 +207,7 @@ window.gradedReaderApp = function() {
                 if (!this.isPlayingAll || current >= sentences.length) {
                     this.isPlayingAll = false;
                     this.currentPlayingSentenceIndex = -1;
-                    this.$nextTick(() => window.refreshIcons && window.refreshIcons());
+                    this.playTimeoutId = null;
                     return;
                 }
 
@@ -198,7 +217,7 @@ window.gradedReaderApp = function() {
 
                 this.speakWord(sentences[current]);
                 current++;
-                setTimeout(playNext, 4000 / this.playbackSpeed);
+                this.playTimeoutId = setTimeout(playNext, 4000 / this.playbackSpeed);
             };
 
             playNext();
@@ -371,7 +390,9 @@ window.gradedReaderApp = function() {
                 <button type="button" @click="togglePlayAll()"
                         :class="isPlayingAll ? 'bg-red-600 text-white shadow-red-200' : 'bg-slate-900 text-white hover:bg-slate-800'"
                         class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition shadow-sm">
-                    <i :data-lucide="isPlayingAll ? 'pause' : 'play'" class="h-3.5 w-3.5"></i>
+                    {{-- B1: Use two static icons with x-show instead of dynamic :data-lucide --}}
+                    <i x-show="!isPlayingAll" data-lucide="play" class="h-3.5 w-3.5"></i>
+                    <i x-show="isPlayingAll" data-lucide="pause" class="h-3.5 w-3.5" x-cloak></i>
                     <span x-text="isPlayingAll ? 'Tạm dừng' : 'Nghe toàn bài'"></span>
                 </button>
 

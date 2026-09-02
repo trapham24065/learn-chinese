@@ -222,7 +222,9 @@
             await this.loadMore();
             setTimeout(() => { this.current++; setTimeout(() => window.refreshIcons?.(), 50); }, 150);
         } else {
+            // A3: Trigger icon refresh so completion screen icons render correctly
             this.logSession();
+            this.$nextTick(() => window.refreshIcons?.());
         }
     },
 
@@ -269,9 +271,10 @@
 
     async submitReview(quality) {
         if (!this.card) return;
-        
+
         try {
-            fetch('{{ route('flashcards.review') }}', {
+            // B4: await so network/HTTP errors are properly caught
+            await fetch('{{ route('flashcards.review') }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -282,7 +285,7 @@
                     quality: quality
                 })
             });
-        } catch(e) { console.error(e); }
+        } catch(e) { console.error('submitReview error:', e); }
 
         this.next();
     },
@@ -545,9 +548,8 @@
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2">
                         <p class="truncate text-xs font-bold uppercase tracking-widest text-slate-400">{{ $card->pinyin }}</p>
-                        <button type="button" 
-                            x-data="{}" 
-                            @click.prevent="window.playChineseVoice('{{ addslashes($card->hanzi) }}')" 
+                        <button type="button"
+                            onclick="window.playChineseVoice('{{ addslashes($card->hanzi) }}')"
                             class="text-slate-300 transition hover:text-blue-500 focus:outline-none"
                             title="Nghe phát âm">
                             <i data-lucide="volume-2" class="h-3.5 w-3.5"></i>
@@ -689,9 +691,10 @@
         currentChar: '',
         writer: null,
         openModal(word) {
-            this.word = word;
-            this.chars = Array.from(word);
-            this.currentChar = this.chars[0];
+            this.word = word || '';
+            // B5: Guard against null/undefined word
+            this.chars = Array.from(this.word);
+            this.currentChar = this.chars[0] || '';
             this.isOpen = true;
             this.$nextTick(() => {
                 this.initWriter();
@@ -710,13 +713,14 @@
         },
         initWriter() {
             const container = document.getElementById('hanzi-character-target');
-            if(!container) return;
+            if(!container || !this.currentChar) return;
             container.innerHTML = '';
-            
+
             if(window.HanziWriter) {
+                const size = window.innerWidth < 400 ? 240 : 300;
                 this.writer = window.HanziWriter.create('hanzi-character-target', this.currentChar, {
-                    width: 300,
-                    height: 300,
+                    width: size,
+                    height: size,
                     padding: 20,
                     strokeAnimationSpeed: 1,
                     delayBetweenStrokes: 1000,
@@ -736,7 +740,8 @@
             if(this.writer) {
                 this.writer.animateCharacter({
                     onComplete: () => {
-                        setTimeout(() => this.writer.quiz(), 1000);
+                        // B5: Guard against null writer if modal was closed during animation
+                        setTimeout(() => { if (this.writer) this.writer.quiz(); }, 1000);
                     }
                 });
             }

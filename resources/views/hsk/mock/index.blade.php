@@ -133,13 +133,15 @@
     cancelActiveAndStartTarget() {
         localStorage.removeItem(this.storageKey);
         if (this.targetLevel) {
-            window.location.href = '{{ url('/hsk/mock-test') }}/' + this.targetLevel + '/start';
+            // A2: Route is /hsk/mock-test/{level} — no /start suffix
+            window.location.href = '{{ url('/hsk/mock-test') }}/' + this.targetLevel;
         }
     },
 
     goToActiveExam() {
         if (this.activeSession) {
-            window.location.href = '{{ url('/hsk/mock-test') }}/' + this.activeSession.level + '/start';
+            // A2: Route is /hsk/mock-test/{level} — no /start suffix
+            window.location.href = '{{ url('/hsk/mock-test') }}/' + this.activeSession.level;
         }
     },
 
