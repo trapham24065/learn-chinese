@@ -449,11 +449,13 @@ window.dictionaryApp = function () {
                                 <h3 class="text-sm sm:text-base font-bold text-amber-950 flex items-center gap-2">
                                     <span>Từ vựng mở rộng</span>
                                     <span class="text-[11px] font-semibold text-amber-800 bg-amber-100/90 border border-amber-300/60 px-2.5 py-0.5 rounded-full"
-                                          x-text="activeWord.detected_type === 'hanzi' ? 'Chữ Hán ngoài HSK' : 'Ngoài danh mục HSK'"></span>
+                                          x-text="activeWord.detected_type === 'vietnamese' ? 'Dịch Tiếng Việt ➔ Chữ Hán' : (activeWord.detected_type === 'hanzi' ? 'Chữ Hán ngoài HSK' : 'Ngoài danh mục HSK')"></span>
                                 </h3>
                                 <p class="text-xs sm:text-sm text-amber-900/80 mt-0.5"
-                                   x-text="activeWord.detected_type === 'hanzi' 
-                                       ? 'Từ này chưa có trong bộ 5,000 từ HSK cốt lõi, nhưng bạn vẫn có thể nghe phát âm AI, luyện viết nét chữ và xem người bản xứ phát âm qua YouGlish bên dưới!'
+                                   x-text="activeWord.hanzi 
+                                       ? (activeWord.detected_type === 'vietnamese' 
+                                           ? 'Hệ thống đã tự động dịch từ khóa tiếng Việt sang Chữ Hán tương ứng (' + activeWord.hanzi + '). Bạn có thể nghe phát âm AI, luyện viết nét chữ và xem video người bản xứ phát âm câu thoại bên phải!'
+                                           : 'Từ này chưa có trong bộ 5,000 từ HSK cốt lõi, nhưng bạn vẫn có thể nghe phát âm AI, luyện viết nét chữ và xem người bản xứ phát âm qua YouGlish bên dưới!')
                                        : 'Không tìm thấy từ vựng HSK tương ứng với từ khóa này. Bạn có thể tra nhanh trên Google Dịch hoặc khám phá các từ gợi ý bên dưới.'">
                                 </p>
                             </div>
@@ -467,7 +469,7 @@ window.dictionaryApp = function () {
                                 <span>Google Dịch</span>
                                 <i data-lucide="external-link" class="h-3.5 w-3.5"></i>
                             </a>
-                            <template x-if="activeWord.detected_type === 'hanzi'">
+                            <template x-if="activeWord.hanzi">
                                 <a :href="'https://baike.baidu.com/item/' + encodeURIComponent(activeWord.hanzi || '')"
                                    target="_blank"
                                    rel="noopener noreferrer"
@@ -578,12 +580,12 @@ window.dictionaryApp = function () {
                     {{-- Smart Fallback Card (When word is NOT in database) --}}
                     <div x-show="activeWord.is_fallback" class="rounded-3xl border border-amber-200/80 bg-white p-6 sm:p-8 shadow-sm relative overflow-hidden space-y-6">
                         
-                        {{-- Fallback Case A: Hanzi word not in HSK DB --}}
-                        <div x-show="activeWord.detected_type === 'hanzi'" class="space-y-6">
+                        {{-- Fallback Case A: Hanzi word available (either directly entered or translated from Vietnamese) --}}
+                        <div x-show="activeWord.hanzi" class="space-y-6">
                             <div class="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
                                 <div class="flex items-center gap-2">
-                                    <span class="rounded-xl bg-amber-100 border border-amber-300/80 px-3 py-1 text-xs font-black text-amber-900 uppercase tracking-wider">
-                                        Chữ Hán mở rộng
+                                    <span class="rounded-xl bg-amber-100 border border-amber-300/80 px-3 py-1 text-xs font-black text-amber-900 uppercase tracking-wider"
+                                          x-text="activeWord.detected_type === 'vietnamese' ? 'Dịch Tiếng Việt ➔ Chữ Hán' : 'Chữ Hán mở rộng'">
                                     </span>
                                     <span class="rounded-xl bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-500">Ngoài HSK</span>
                                 </div>
@@ -607,7 +609,12 @@ window.dictionaryApp = function () {
                             <div class="py-4 text-center">
                                 <h2 class="text-6xl sm:text-7xl font-black text-slate-900 tracking-wide font-chinese select-all"
                                     x-text="activeWord.hanzi"></h2>
-                                <p class="mt-2 text-xs font-semibold text-slate-400">Từ vựng thực tế ngoài danh mục HSK cốt lõi</p>
+                                <div class="mt-2 text-xs font-semibold text-slate-500 flex items-center justify-center gap-1.5">
+                                    <span x-show="activeWord.query && activeWord.query !== activeWord.hanzi">
+                                        Từ gốc: <strong class="text-amber-800" x-text="activeWord.query"></strong> •
+                                    </span>
+                                    <span>Từ vựng ngoài danh mục HSK cốt lõi</span>
+                                </div>
                             </div>
 
                             {{-- Tra cứu ngoài --}}
@@ -624,7 +631,7 @@ window.dictionaryApp = function () {
                                             </div>
                                             <div>
                                                 <p class="text-xs font-bold text-slate-900 group-hover:text-blue-700">Google Dịch (Nghĩa & Ví dụ)</p>
-                                                <p class="text-[11px] text-slate-400">Dịch nghĩa tiếng Việt tự động</p>
+                                                <p class="text-[11px] text-slate-400">Xem thêm các tầng nghĩa & câu ví dụ</p>
                                             </div>
                                         </div>
                                         <i data-lucide="external-link" class="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-600"></i>
@@ -664,8 +671,8 @@ window.dictionaryApp = function () {
                             </div>
                         </div>
 
-                        {{-- Fallback Case B: Non-Hanzi word (Vietnamese or Pinyin not in DB) --}}
-                        <div x-show="activeWord.detected_type !== 'hanzi'" class="space-y-6">
+                        {{-- Fallback Case B: When NO Hanzi could be determined at all --}}
+                        <div x-show="!activeWord.hanzi" class="space-y-6">
                             <div class="flex items-center justify-between border-b border-slate-100 pb-4">
                                 <span class="rounded-xl bg-slate-100 border border-slate-200 px-3 py-1 text-xs font-bold text-slate-600">
                                     Chưa có trong từ điển HSK
@@ -716,6 +723,9 @@ window.dictionaryApp = function () {
                                 </div>
                                 <h3 class="text-xl font-black text-slate-900 mt-0.5">
                                     Nghe người bản xứ phát âm từ <span class="text-[#991b1b]" x-text="activeWord.hanzi"></span>
+                                    <span class="text-xs text-slate-500 font-normal ml-1"
+                                          x-show="activeWord.query && activeWord.query !== activeWord.hanzi"
+                                          x-text="'(' + activeWord.query + ')'"></span>
                                 </h3>
                             </div>
 
@@ -754,6 +764,9 @@ window.dictionaryApp = function () {
                                 <div class="space-y-1">
                                     <h4 class="text-base sm:text-lg font-black text-white">
                                         Xem video người bản xứ phát âm: <span class="text-amber-300 font-chinese text-2xl" x-text="activeWord ? activeWord.hanzi : ''"></span>
+                                        <span class="text-xs text-amber-200/80 font-normal ml-1"
+                                              x-show="activeWord && activeWord.query && activeWord.query !== activeWord.hanzi"
+                                              x-text="'(' + activeWord.query + ')'"></span>
                                     </h4>
                                     <p class="text-xs sm:text-sm text-slate-300 max-w-md mx-auto leading-relaxed">
                                         Trích đoạn từ phim ảnh, show thực tế và tin tức có câu thoại chứa từ này kèm phụ đề tiếng Trung.

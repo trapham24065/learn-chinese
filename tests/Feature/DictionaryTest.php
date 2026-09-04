@@ -154,12 +154,21 @@ test('search for unknown word returns smart fallback with related words', functi
     $response->assertJsonPath('exact.query', '计算机');
     $this->assertNotEmpty($response->json('exact.related_words'));
 
-    // Query for unknown Vietnamese word
+    // Query for unknown Vietnamese word (auto-translates to Chinese Hanzi so video and voice work!)
     $responseVi = $this->getJson('/dictionary/search?q=tên-lửa-vũ-trụ-xyz');
     $responseVi->assertSuccessful();
     $responseVi->assertJsonPath('exact.is_fallback', true);
     $responseVi->assertJsonPath('exact.detected_type', 'vietnamese');
-    $this->assertNull($responseVi->json('exact.hanzi'));
+    $this->assertNotNull($responseVi->json('exact.hanzi'));
     $this->assertNotEmpty($responseVi->json('exact.related_words'));
+});
+
+test('searching vietnamese query auto translates to chinese hanzi for video and pronunciation', function () {
+    $response = $this->getJson('/dictionary/search?q=bác sĩ');
+
+    $response->assertSuccessful();
+    $response->assertJsonPath('exact.is_fallback', true);
+    $response->assertJsonPath('exact.detected_type', 'vietnamese');
+    $this->assertEquals('医生', $response->json('exact.hanzi'));
 });
 

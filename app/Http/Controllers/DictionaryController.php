@@ -292,13 +292,42 @@ class DictionaryController extends Controller
      */
     protected function buildFallbackData(string $query, string $detectedType): array
     {
-        $isHanzi = $detectedType === 'hanzi';
-        $occurrences = $isHanzi ? $this->findOccurrencesInStories($query) : [];
+        $targetHanzi = null;
+
+        if ($detectedType === 'hanzi') {
+            $targetHanzi = $query;
+        } else {
+            // Auto translate Vietnamese / Latin text to Chinese Hanzi so video and audio work seamlessly!
+            try {
+                $tr = new \Stichoza\GoogleTranslate\GoogleTranslate('zh-CN');
+                $tr->setSource($detectedType === 'vietnamese' ? 'vi' : null);
+                $tr->setOptions(['verify' => false, 'timeout' => 4]);
+                $translated = trim($tr->translate($query));
+                if ($translated !== '' && preg_match('/\p{Han}/u', $translated)) {
+                    $targetHanzi = $translated;
+                }
+            } catch (\Throwable $e) {
+                // If translation fails (e.g. offline/network), fallback gracefully
+            }
+        }
+
+        // If translation resolved to a known Hanzi in our Flashcards, prefer returning that flashcard!
+        if ($targetHanzi !== null && $detectedType !== 'hanzi') {
+            $existingCard = Flashcard::where('is_active', true)
+                ->where('hanzi', $targetHanzi)
+                ->first();
+            if ($existingCard) {
+                return $this->formatWordData($existingCard);
+            }
+        }
+
+        $isHanzi = $targetHanzi !== null;
+        $occurrences = $isHanzi ? $this->findOccurrencesInStories($targetHanzi) : [];
 
         // Find similar / related words from flashcards
         $relatedWords = collect();
         if ($isHanzi) {
-            $chars = preg_split('//u', $query, -1, PREG_SPLIT_NO_EMPTY);
+            $chars = preg_split('//u', $targetHanzi, -1, PREG_SPLIT_NO_EMPTY);
             if (!empty($chars)) {
                 $relatedWords = Flashcard::where('is_active', true)
                     ->where(function ($q) use ($chars) {
@@ -325,9 +354,9 @@ class DictionaryController extends Controller
             'is_fallback'     => true,
             'query'           => $query,
             'detected_type'   => $detectedType,
-            'hanzi'           => $isHanzi ? $query : null,
+            'hanzi'           => $targetHanzi,
             'pinyin'          => null,
-            'meaning'         => 'Từ này chưa có trong bộ từ vựng HSK cốt lõi của website.',
+            'meaning'         => $detectedType === 'vietnamese' ? "Nghĩa tiếng Trung của '{$query}'" : 'Từ này chưa có trong bộ từ vựng HSK cốt lõi của website.',
             'hsk_level'       => null,
             'example'         => null,
             'example_pinyin'  => null,
