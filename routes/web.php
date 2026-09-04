@@ -8,6 +8,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuizController;
 use App\Http\Controllers\StoryReadingController;
 use App\Http\Controllers\TTSController;
+use App\Http\Controllers\DictionaryController;
 use App\Http\Controllers\HskMockTestController;
 use App\Models\Flashcard;
 use App\Models\Lesson;
@@ -52,6 +53,9 @@ Route::post('/flashcards/toggle-star', [FlashcardController::class, 'toggleStar'
 
 Route::get('/quiz', [QuizController::class, 'index'])->name('quiz');
 Route::post('/quiz/submit', [QuizController::class, 'submit'])->name('quiz.submit');
+
+Route::get('/dictionary', [DictionaryController::class, 'index'])->name('dictionary.index');
+Route::get('/dictionary/search', [DictionaryController::class, 'search'])->name('dictionary.search');
 
 Route::prefix('hsk/mock-test')->group(function () {
     Route::get('/', [HskMockTestController::class, 'index'])->name('hsk.mock.index');

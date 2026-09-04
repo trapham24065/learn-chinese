@@ -71,6 +71,18 @@
                     <span class="rounded-full bg-emerald-100 border border-emerald-300 px-1.5 py-0.2 text-[9px] font-black uppercase text-emerald-800 {{ request()->routeIs('stories.*') ? 'bg-white/20 text-white border-transparent' : '' }}">Mới</span>
                 </a>
 
+                {{-- Tra từ điển & Video YouGlish --}}
+                <a href="{{ route('dictionary.index') }}"
+                    class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('dictionary.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                    <span class="flex items-center gap-3">
+                        <span class="grid h-7 w-7 place-items-center rounded-lg {{ request()->routeIs('dictionary.*') ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
+                            <i data-lucide="video" class="h-4 w-4"></i>
+                        </span>
+                        Từ điển & Video
+                    </span>
+                    <span class="rounded-full bg-red-100 border border-red-300 px-1.5 py-0.2 text-[9px] font-black uppercase text-red-800 {{ request()->routeIs('dictionary.*') ? 'bg-white/20 text-white border-transparent' : '' }}">Hot</span>
+                </a>
+
                 {{-- Quiz / Luyện tập nhanh --}}
                 <a href="{{ route('quiz') }}"
                     class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('quiz') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
@@ -182,6 +194,7 @@
                     <a href="{{ route('dashboard') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('dashboard') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">Tổng quan</a>
                     <a href="{{ route('flashcards') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('flashcards') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">Thẻ nhớ</a>
                     <a href="{{ route('stories.index') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('stories.*') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold' }}">Đọc hiểu ✨</a>
+                    <a href="{{ route('dictionary.index') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('dictionary.*') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-rose-50 text-rose-800 border border-rose-300 font-bold' }}">Từ điển 🎬</a>
                     <a href="{{ route('quiz') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('quiz') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">Luyện tập</a>
                     <a href="{{ route('hsk.overview') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ (request()->routeIs('hsk.overview') || request()->routeIs('hsk.show')) ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">HSK</a>
                     <a href="{{ route('hsk.mock.index') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('hsk.mock.*') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-amber-100 text-amber-900 border border-amber-300' }}">Thi thử HSK ⭐</a>

@@ -702,15 +702,25 @@ window.gradedReaderApp = function() {
             <div class="text-sm font-bold text-slate-100 mt-0.5" x-text="currentWord?.meaning || 'Đang tra nghĩa...'"></div>
         </div>
 
-        {{-- Practice writing character CTA --}}
-        <div class="mt-3 pt-2 flex items-center justify-between text-xs">
-            <span class="text-slate-400" x-text="'HSK ' + (currentWord?.hsk_level || '{{ $story->hsk_level }}')"></span>
+        {{-- Practice writing character & View Video Context CTA --}}
+        <div class="mt-3 pt-2.5 flex items-center justify-between text-xs gap-2 border-t border-slate-800">
+            <span class="text-slate-400 font-bold" x-text="'HSK ' + (currentWord?.hsk_level || '{{ $story->hsk_level }}')"></span>
             
-            <button type="button" @click="openHanziWriter(currentWord?.hanzi)"
-                    class="inline-flex items-center gap-1 text-amber-400 hover:underline font-bold">
-                <i data-lucide="pen-tool" class="h-3 w-3"></i>
-                <span>Tập viết chữ ↗</span>
-            </button>
+            <div class="flex items-center gap-3">
+                <a :href="'{{ route('dictionary.index') }}?q=' + encodeURIComponent(currentWord?.hanzi || '')"
+                   target="_blank"
+                   class="inline-flex items-center gap-1 text-red-400 hover:text-red-300 font-bold transition"
+                   title="Xem video phim ảnh thực tế có chứa từ này">
+                    <i data-lucide="video" class="h-3.5 w-3.5"></i>
+                    <span>Video 🎬</span>
+                </a>
+
+                <button type="button" @click="openHanziWriter(currentWord?.hanzi)"
+                        class="inline-flex items-center gap-1 text-amber-400 hover:text-amber-300 font-bold transition">
+                    <i data-lucide="pen-tool" class="h-3.5 w-3.5"></i>
+                    <span>Tập viết ↗</span>
+                </button>
+            </div>
         </div>
     </div>
 
