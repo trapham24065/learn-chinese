@@ -167,7 +167,6 @@ window.dictionaryApp = function () {
 
                 if (!this.ygWidget) {
                     this.ygWidget = new window.YG.Widget("youglish-container", {
-                        width: '100%',
                         autoStart: 0,
                         components: 92, // Title (4) + Caption (8) + Speed (16) + Controls (64) = 92
                         events: {
