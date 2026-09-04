@@ -142,7 +142,7 @@ window.dictionaryApp = function () {
             }
         },
 
-        // YouGlish Integration (components: 92 = Title 4 + Caption 8 + Speed 16 + Controls 64)
+        // YouGlish Integration (components: 88 = Caption 8 + Speed 16 + Controls 64, Title 4 removed)
         async initYouGlish(word) {
             if (!word) return;
             if (this.ygLoadedWord === word && this.ygWidget) {
@@ -168,7 +168,7 @@ window.dictionaryApp = function () {
                 if (!this.ygWidget) {
                     this.ygWidget = new window.YG.Widget("youglish-container", {
                         autoStart: 0,
-                        components: 92, // Title (4) + Caption (8) + Speed (16) + Controls (64) = 92
+                        components: 88, // Caption (8) + Speed (16) + Controls (64) = 88 (Title 4 removed to hide English header)
                         events: {
                             'onFetchDone': (event) => {
                                 this.ygTotal = event.totalResult || 0;
