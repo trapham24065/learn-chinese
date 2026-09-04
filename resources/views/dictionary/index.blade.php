@@ -121,17 +121,25 @@ window.dictionaryApp = function () {
             this.fetchWordDetails(word.hanzi);
         },
 
-        async fetchWordDetails(hanzi) {
+        async fetchWordDetails(wordQuery) {
             this.isSearching = true;
             try {
-                const res = await fetch(`{{ route('dictionary.search') }}?q=${encodeURIComponent(hanzi)}`, {
+                const res = await fetch(`{{ route('dictionary.search') }}?q=${encodeURIComponent(wordQuery)}`, {
                     headers: { 'Accept': 'application/json' }
                 });
                 const data = await res.json();
                 if (data.success && data.exact) {
                     this.activeWord = data.exact;
-                    if (this.ygActivated) {
+                    if (data.detected_type) {
+                        this.detectedType = data.detected_type;
+                    }
+                    if (this.ygActivated && this.activeWord.hanzi) {
                         this.initYouGlish(this.activeWord.hanzi);
+                    }
+                    if (window.history && window.history.replaceState) {
+                        const newUrl = new URL(window.location.href);
+                        newUrl.searchParams.set('q', wordQuery);
+                        window.history.replaceState({}, '', newUrl);
                     }
                 }
             } catch (err) {
@@ -336,6 +344,7 @@ window.dictionaryApp = function () {
                     <input type="text"
                            x-model="query"
                            @input="onInput()"
+                           @keydown.enter.prevent="if (query.trim()) { showSuggestions = false; fetchWordDetails(query.trim()); }"
                            @focus="if (searchResults.length > 0) showSuggestions = true"
                            placeholder="Nhập tiếng Việt (vd: xin chào) hoặc Chữ Hán (vd: 你好, 高兴) hoặc Pinyin..."
                            class="w-full bg-transparent py-4 pr-12 text-sm sm:text-base font-semibold placeholder:text-slate-400 placeholder:font-normal focus:outline-none"
@@ -352,14 +361,14 @@ window.dictionaryApp = function () {
 
                     {{-- Search Submit --}}
                     <button type="button"
-                            @click="if (query.trim()) fetchWordDetails(query.trim())"
+                            @click="if (query.trim()) { showSuggestions = false; fetchWordDetails(query.trim()); }"
                             class="mr-2 hidden sm:inline-flex items-center gap-1.5 rounded-xl bg-[#991b1b] px-5 py-2.5 text-xs font-bold text-white transition hover:bg-[#7f1717] shadow-sm">
                         Tra từ
                     </button>
                 </div>
 
                 {{-- Live Autocomplete Dropdown --}}
-                <div x-show="showSuggestions && (searchResults.length > 0 || isSearching)"
+                <div x-show="showSuggestions && (searchResults.length > 0 || isSearching || query.trim().length > 0)"
                      x-cloak
                      x-transition
                      class="absolute left-0 right-0 top-full z-50 mt-2 max-h-80 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 text-left text-slate-900 shadow-2xl custom-scrollbar">
@@ -383,6 +392,17 @@ window.dictionaryApp = function () {
                             <span class="rounded-lg bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 uppercase" x-text="'HSK ' + item.hsk_level"></span>
                         </button>
                     </template>
+
+                    {{-- When query has no HSK matches: prompt to press enter or click for full fallback --}}
+                    <div x-show="searchResults.length === 0 && !isSearching && query.trim().length > 0" class="p-3 text-center space-y-2">
+                        <p class="text-xs text-slate-500">Chưa có trong bộ từ vựng HSK 1-6.</p>
+                        <button type="button"
+                                @click="showSuggestions = false; fetchWordDetails(query.trim())"
+                                class="inline-flex items-center gap-1.5 rounded-xl bg-amber-50 border border-amber-200 px-3 py-1.5 text-xs font-bold text-amber-800 hover:bg-amber-100 transition shadow-2xs">
+                            <i data-lucide="sparkles" class="h-3.5 w-3.5 text-amber-600"></i>
+                            <span>Tra mở rộng & Video YouGlish</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -416,12 +436,58 @@ window.dictionaryApp = function () {
     {{-- ══ 2. RESULT BENTO-BOX SECTION ══ --}}
     <template x-if="activeWord">
         <div class="space-y-8">
+
+            {{-- SMART FALLBACK ALERT BANNER (Shown when activeWord.is_fallback is true) --}}
+            <template x-if="activeWord.is_fallback">
+                <div class="rounded-3xl border border-amber-200/90 bg-gradient-to-r from-amber-50 via-orange-50/50 to-amber-50/30 p-5 sm:p-6 shadow-sm">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="flex items-start sm:items-center gap-3.5">
+                            <div class="h-10 w-10 sm:h-12 sm:w-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-700 flex items-center justify-center shrink-0">
+                                <i data-lucide="info" class="h-5 w-5 sm:h-6 sm:w-6"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-sm sm:text-base font-bold text-amber-950 flex items-center gap-2">
+                                    <span>Từ vựng mở rộng</span>
+                                    <span class="text-[11px] font-semibold text-amber-800 bg-amber-100/90 border border-amber-300/60 px-2.5 py-0.5 rounded-full"
+                                          x-text="activeWord.detected_type === 'hanzi' ? 'Chữ Hán ngoài HSK' : 'Ngoài danh mục HSK'"></span>
+                                </h3>
+                                <p class="text-xs sm:text-sm text-amber-900/80 mt-0.5"
+                                   x-text="activeWord.detected_type === 'hanzi' 
+                                       ? 'Từ này chưa có trong bộ 5,000 từ HSK cốt lõi, nhưng bạn vẫn có thể nghe phát âm AI, luyện viết nét chữ và xem người bản xứ phát âm qua YouGlish bên dưới!'
+                                       : 'Không tìm thấy từ vựng HSK tương ứng với từ khóa này. Bạn có thể tra nhanh trên Google Dịch hoặc khám phá các từ gợi ý bên dưới.'">
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2 self-start sm:self-center shrink-0">
+                            <a :href="'https://translate.google.com/?sl=' + (activeWord.detected_type === 'hanzi' ? 'zh-CN&tl=vi' : 'auto&tl=zh-CN') + '&text=' + encodeURIComponent(activeWord.query || '') + '&op=translate'"
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               class="inline-flex items-center gap-1.5 rounded-xl bg-white border border-amber-300/80 px-3.5 py-2 text-xs font-bold text-amber-900 hover:bg-amber-100/60 shadow-sm transition">
+                                <span>Google Dịch</span>
+                                <i data-lucide="external-link" class="h-3.5 w-3.5"></i>
+                            </a>
+                            <template x-if="activeWord.detected_type === 'hanzi'">
+                                <a :href="'https://baike.baidu.com/item/' + encodeURIComponent(activeWord.hanzi || '')"
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   class="inline-flex items-center gap-1.5 rounded-xl bg-amber-900 text-amber-100 px-3.5 py-2 text-xs font-bold hover:bg-amber-950 shadow-sm transition">
+                                    <span>Baidu Baike</span>
+                                    <i data-lucide="external-link" class="h-3.5 w-3.5"></i>
+                                </a>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
             <div class="grid gap-6 lg:grid-cols-12 items-start">
                 
                 {{-- ── LEFT COLUMN: WORD DETAILS CARD (5 COLS) ── --}}
                 <div class="lg:col-span-5 space-y-6">
-                    <div class="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-sm relative overflow-hidden">
-                        
+
+                    {{-- Standard Flashcard Card (When word is in database) --}}
+                    <div x-show="!activeWord.is_fallback" class="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-sm relative overflow-hidden">
                         {{-- Top Badges & Actions --}}
                         <div class="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
                             <div class="flex items-center gap-2">
@@ -508,11 +574,138 @@ window.dictionaryApp = function () {
                             </button>
                         </div>
                     </div>
+
+                    {{-- Smart Fallback Card (When word is NOT in database) --}}
+                    <div x-show="activeWord.is_fallback" class="rounded-3xl border border-amber-200/80 bg-white p-6 sm:p-8 shadow-sm relative overflow-hidden space-y-6">
+                        
+                        {{-- Fallback Case A: Hanzi word not in HSK DB --}}
+                        <div x-show="activeWord.detected_type === 'hanzi'" class="space-y-6">
+                            <div class="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="rounded-xl bg-amber-100 border border-amber-300/80 px-3 py-1 text-xs font-black text-amber-900 uppercase tracking-wider">
+                                        Chữ Hán mở rộng
+                                    </span>
+                                    <span class="rounded-xl bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-500">Ngoài HSK</span>
+                                </div>
+
+                                <div class="flex items-center gap-1">
+                                    <button type="button"
+                                            @click="speakCurrent()"
+                                            class="h-9 w-9 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:text-[#991b1b] hover:bg-red-50 flex items-center justify-center transition"
+                                            title="Nghe phát âm chuẩn AI">
+                                        <i data-lucide="volume-2" class="h-4 w-4"></i>
+                                    </button>
+                                    <button type="button"
+                                            @click="openHanziWriter(activeWord.hanzi)"
+                                            class="h-9 w-9 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 hover:text-[#991b1b] hover:bg-red-50 flex items-center justify-center transition"
+                                            title="Tập viết nét chữ Hán">
+                                        <i data-lucide="pen-tool" class="h-4 w-4"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="py-4 text-center">
+                                <h2 class="text-6xl sm:text-7xl font-black text-slate-900 tracking-wide font-chinese select-all"
+                                    x-text="activeWord.hanzi"></h2>
+                                <p class="mt-2 text-xs font-semibold text-slate-400">Từ vựng thực tế ngoài danh mục HSK cốt lõi</p>
+                            </div>
+
+                            {{-- Tra cứu ngoài --}}
+                            <div class="rounded-2xl bg-amber-50/60 border border-amber-200/70 p-4 space-y-3">
+                                <p class="text-xs font-bold uppercase tracking-wider text-amber-900/80">Tra cứu nhanh từ điển ngoài:</p>
+                                <div class="space-y-2">
+                                    <a :href="'https://translate.google.com/?sl=zh-CN&tl=vi&text=' + encodeURIComponent(activeWord.hanzi || '') + '&op=translate'"
+                                       target="_blank"
+                                       rel="noopener noreferrer"
+                                       class="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-200 hover:border-amber-300 hover:bg-amber-50/50 transition group">
+                                        <div class="flex items-center gap-2.5">
+                                            <div class="h-7 w-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                                                <i data-lucide="globe" class="h-4 w-4"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-xs font-bold text-slate-900 group-hover:text-blue-700">Google Dịch (Nghĩa & Ví dụ)</p>
+                                                <p class="text-[11px] text-slate-400">Dịch nghĩa tiếng Việt tự động</p>
+                                            </div>
+                                        </div>
+                                        <i data-lucide="external-link" class="h-3.5 w-3.5 text-slate-400 group-hover:text-blue-600"></i>
+                                    </a>
+
+                                    <a :href="'https://baike.baidu.com/item/' + encodeURIComponent(activeWord.hanzi || '')"
+                                       target="_blank"
+                                       rel="noopener noreferrer"
+                                       class="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-200 hover:border-red-300 hover:bg-red-50/30 transition group">
+                                        <div class="flex items-center gap-2.5">
+                                            <div class="h-7 w-7 rounded-lg bg-red-50 text-red-600 flex items-center justify-center">
+                                                <i data-lucide="book-open" class="h-4 w-4"></i>
+                                            </div>
+                                            <div>
+                                                <p class="text-xs font-bold text-slate-900 group-hover:text-red-700">Baidu Baike (百度百科)</p>
+                                                <p class="text-[11px] text-slate-400">Bách khoa toàn thư tiếng Trung</p>
+                                            </div>
+                                        </div>
+                                        <i data-lucide="external-link" class="h-3.5 w-3.5 text-slate-400 group-hover:text-red-600"></i>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-3">
+                                <button type="button"
+                                        @click="openHanziWriter(activeWord.hanzi)"
+                                        class="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-slate-800">
+                                    <i data-lucide="pen-tool" class="h-3.5 w-3.5 text-amber-300"></i>
+                                    Tập viết nét chữ
+                                </button>
+                                <button type="button"
+                                        @click="speakCurrent()"
+                                        class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 transition hover:bg-slate-50">
+                                    <i data-lucide="volume-2" class="h-3.5 w-3.5 text-red-600"></i>
+                                    Phát âm AI
+                                </button>
+                            </div>
+                        </div>
+
+                        {{-- Fallback Case B: Non-Hanzi word (Vietnamese or Pinyin not in DB) --}}
+                        <div x-show="activeWord.detected_type !== 'hanzi'" class="space-y-6">
+                            <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                                <span class="rounded-xl bg-slate-100 border border-slate-200 px-3 py-1 text-xs font-bold text-slate-600">
+                                    Chưa có trong từ điển HSK
+                                </span>
+                                <span class="text-xs text-slate-400" x-text="activeWord.detected_type === 'vietnamese' ? 'Tiếng Việt' : 'Pinyin'"></span>
+                            </div>
+
+                            <div class="py-6 text-center space-y-2">
+                                <h2 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight"
+                                    x-text="activeWord.query"></h2>
+                                <p class="text-xs text-slate-500 max-w-xs mx-auto">
+                                    Từ khóa này chưa nằm trong bộ dữ liệu từ vựng HSK 1-6 đã biên soạn.
+                                </p>
+                            </div>
+
+                            <div class="rounded-2xl bg-amber-50/70 border border-amber-200/70 p-4 space-y-3">
+                                <p class="text-xs font-bold uppercase tracking-wider text-amber-900">Giải pháp tra cứu nhanh:</p>
+                                <p class="text-xs text-slate-600 leading-relaxed">
+                                    Bạn có thể dịch từ khóa này sang Chữ Hán qua Google Dịch rồi quay lại đây để luyện phát âm, viết nét và xem video YouGlish nhé!
+                                </p>
+                                <a :href="'https://translate.google.com/?sl=auto&tl=zh-CN&text=' + encodeURIComponent(activeWord.query || '') + '&op=translate'"
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#991b1b] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#7f1717] transition shadow-sm">
+                                    <i data-lucide="languages" class="h-4 w-4"></i>
+                                    <span>Dịch sang Chữ Hán trên Google Dịch</span>
+                                    <i data-lucide="external-link" class="h-3.5 w-3.5"></i>
+                                </a>
+                            </div>
+                        </div>
+
+                    </div>
+
                 </div>
 
                 {{-- ── RIGHT COLUMN: YOUGLISH VIDEO CONTEXT (7 COLS) ── --}}
                 <div class="lg:col-span-7 space-y-6">
-                    <div class="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-sm space-y-4">
+                    
+                    {{-- 1. Full YouGlish Video Container (When Hanzi is present) --}}
+                    <div x-show="activeWord.hanzi" class="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-sm space-y-4">
                         
                         {{-- Video Header --}}
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
@@ -549,7 +742,7 @@ window.dictionaryApp = function () {
                         {{-- Video Player Container --}}
                         <div class="relative w-full rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 shadow-inner">
                             
-                            {{-- 1. Click-to-Play Poster State (Prevents Cloudflare Bot Challenges & Speeds Up Page) --}}
+                            {{-- Click-to-Play Poster State (Prevents Cloudflare Bot Challenges & Speeds Up Page) --}}
                             <div x-show="!ygActivated" class="min-h-[260px] sm:min-h-[340px] flex flex-col items-center justify-center p-6 sm:p-10 text-center space-y-4 bg-gradient-to-br from-slate-950 via-slate-900 to-red-950/30 text-white">
                                 <div class="relative group cursor-pointer" @click="startVideo()">
                                     <div class="h-16 w-16 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg shadow-red-900/50 transition transform group-hover:scale-110 group-hover:bg-red-500">
@@ -584,14 +777,14 @@ window.dictionaryApp = function () {
                                 </div>
                             </div>
 
-                            {{-- 2. Loading Overlay --}}
+                            {{-- Loading Overlay --}}
                             <div x-show="ygActivated && ygLoading" class="min-h-[260px] sm:min-h-[340px] flex flex-col items-center justify-center p-8 text-center text-slate-400 space-y-3">
                                 <i data-lucide="loader-2" class="h-8 w-8 animate-spin text-amber-400"></i>
                                 <p class="text-sm font-semibold">Đang tìm các đoạn phim người bản xứ phát âm "<span x-text="activeWord.hanzi"></span>"...</p>
                                 <p class="text-xs text-slate-500">Hệ thống đang đồng bộ video và phụ đề</p>
                             </div>
 
-                            {{-- 3. Error / No Video Fallback --}}
+                            {{-- Error / No Video Fallback --}}
                             <div x-show="ygActivated && !ygLoading && ygError" x-cloak class="min-h-[260px] sm:min-h-[320px] flex flex-col items-center justify-center p-8 text-center space-y-3 bg-slate-900/90 text-white">
                                 <div class="h-12 w-12 rounded-2xl bg-amber-400/10 border border-amber-400/20 text-amber-400 flex items-center justify-center">
                                     <i data-lucide="video-off" class="h-6 w-6"></i>
@@ -617,7 +810,7 @@ window.dictionaryApp = function () {
                                 </div>
                             </div>
 
-                            {{-- 4. The actual YouGlish iframe target div --}}
+                            {{-- The actual YouGlish iframe target div --}}
                             <div id="youglish-container" class="w-full" x-show="ygActivated && !ygError"></div>
                         </div>
 
@@ -685,13 +878,36 @@ window.dictionaryApp = function () {
 
                             </div>
 
-                            {{-- Attribution note required by YouGlish & YouTube Developer Policy --}}
                             <p class="text-[11px] text-slate-400 text-center sm:text-left flex items-center justify-between pt-1">
                                 <span>Powered by <a href="https://youglish.com" target="_blank" rel="noopener" class="font-semibold text-slate-600 hover:text-red-700 underline">YouGlish.com</a> • Phụ đề tiếng Trung tự động</span>
                                 <span class="hidden sm:inline">Phím tắt: Space (Dừng/Phát)</span>
                             </p>
                         </div>
                     </div>
+
+                    {{-- 2. Non-Hanzi Guidance Card (When user searches Vietnamese / Latin not found in HSK) --}}
+                    <div x-show="!activeWord.hanzi" class="rounded-3xl border border-slate-200/80 bg-white p-8 sm:p-12 shadow-sm text-center space-y-5">
+                        <div class="h-16 w-16 mx-auto rounded-3xl bg-amber-500/10 border border-amber-500/20 text-amber-700 flex items-center justify-center">
+                            <i data-lucide="video" class="h-8 w-8"></i>
+                        </div>
+                        <div class="max-w-md mx-auto space-y-2">
+                            <h3 class="text-lg font-black text-slate-900">Tính năng Video cần từ khóa Chữ Hán</h3>
+                            <p class="text-xs sm:text-sm text-slate-500 leading-relaxed">
+                                YouGlish Chinese đối soát câu thoại thực tế dựa trên Chữ Hán giản thể hoặc phồn thể. Bạn hãy tra một từ vựng tiếng Trung hoặc bấm vào các từ gợi ý bên dưới để xem video người bản xứ nhé!
+                            </p>
+                        </div>
+                        <div class="pt-2">
+                            <a :href="'https://translate.google.com/?sl=auto&tl=zh-CN&text=' + encodeURIComponent(activeWord.query || '') + '&op=translate'"
+                               target="_blank"
+                               rel="noopener noreferrer"
+                               class="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-xs font-bold text-white hover:bg-slate-800 transition shadow-sm">
+                                <i data-lucide="languages" class="h-4 w-4 text-amber-300"></i>
+                                <span>Tra chữ Hán tương đương trên Google Dịch</span>
+                                <i data-lucide="external-link" class="h-3.5 w-3.5"></i>
+                            </a>
+                        </div>
+                    </div>
+
                 </div>
 
             </div>
@@ -759,7 +975,7 @@ window.dictionaryApp = function () {
                         <i data-lucide="book-open" class="h-8 w-8 mx-auto text-slate-300"></i>
                         <p class="text-sm font-semibold text-slate-700">Từ này chưa xuất hiện trong các bài đọc hiện có</p>
                         <p class="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-                            Cậu có thể học từ này qua Flashcard 3D và luyện nghe qua Video YouGlish ở trên. Các bài đọc mới sẽ liên tục được cập nhật thêm!
+                            Cậu có thể luyện nghe từ này qua Video YouGlish và luyện viết nét chữ ở trên. Các bài đọc mới sẽ liên tục được cập nhật thêm!
                         </p>
                         <a href="{{ route('stories.index') }}" class="inline-flex items-center gap-1 text-xs font-bold text-red-700 hover:underline pt-2">
                             Khám phá thư viện bài đọc HSK →
@@ -767,6 +983,42 @@ window.dictionaryApp = function () {
                     </div>
                 </template>
             </div>
+
+            {{-- ══ 4. GỢI Ý TỪ VỰNG HSK LIÊN QUAN (KHI TRA TỪ MỞ RỘNG / FALLBACK) ══ --}}
+            <template x-if="activeWord.is_fallback && activeWord.related_words && activeWord.related_words.length > 0">
+                <div class="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-sm space-y-5">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
+                        <div>
+                            <div class="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-700">
+                                <i data-lucide="sparkles" class="h-4 w-4"></i>
+                                Gợi ý mở rộng
+                            </div>
+                            <h3 class="text-xl font-black text-slate-900 mt-0.5">
+                                Các từ vựng HSK có thể bạn quan tâm
+                            </h3>
+                        </div>
+                        <span class="text-xs text-slate-400 font-medium">Bấm vào thẻ bất kỳ để tra nghĩa & xem video</span>
+                    </div>
+
+                    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        <template x-for="rel in activeWord.related_words" :key="rel.id">
+                            <div @click="selectWord(rel)"
+                                 class="cursor-pointer rounded-2xl border border-slate-200 bg-slate-50/60 p-4 transition-all hover:bg-white hover:border-amber-300 hover:shadow-md group flex items-start justify-between gap-3">
+                                <div class="space-y-1">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-2xl font-black text-slate-900 font-chinese group-hover:text-[#991b1b] transition" x-text="rel.hanzi"></span>
+                                        <span class="rounded-md bg-amber-100/80 px-2 py-0.5 text-[10px] font-bold text-amber-900 font-mono" x-text="rel.pinyin"></span>
+                                    </div>
+                                    <p class="text-xs text-slate-600 line-clamp-1 font-medium" x-text="rel.meaning"></p>
+                                </div>
+                                <span class="shrink-0 rounded-lg bg-white border border-slate-200 px-2 py-1 text-[10px] font-bold text-slate-600 uppercase shadow-2xs"
+                                      x-text="'HSK ' + rel.hsk_level"></span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+
         </div>
     </template>
 

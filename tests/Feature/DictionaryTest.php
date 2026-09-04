@@ -128,3 +128,38 @@ test('dictionary extracts personal learning context from stories', function () {
     $response->assertJsonPath('exact.story_matches.0.story_title_vi', 'Đi quán cà phê uống cà phê');
     $response->assertJsonPath('exact.story_matches.0.chinese', '今天 下午 我 去 咖啡馆 喝 咖啡 。');
 });
+
+test('search for unknown word returns smart fallback with related words', function () {
+    Flashcard::create([
+        'hanzi'           => '学习',
+        'pinyin'          => 'xuéxí',
+        'meaning'         => 'học tập',
+        'example'         => '我 学习 汉语 。',
+        'example_pinyin'  => 'Wǒ xuéxí hànyǔ.',
+        'example_meaning' => 'Tôi học tiếng Hán.',
+        'hsk_level'       => 1,
+        'is_active'       => true,
+    ]);
+
+    // Query for unknown Chinese word (e.g. 计算机)
+    $response = $this->getJson('/dictionary/search?q=计算机');
+
+    $response->assertSuccessful();
+    $response->assertJson([
+        'success'       => true,
+        'detected_type' => 'hanzi',
+    ]);
+    $response->assertJsonPath('exact.is_fallback', true);
+    $response->assertJsonPath('exact.hanzi', '计算机');
+    $response->assertJsonPath('exact.query', '计算机');
+    $this->assertNotEmpty($response->json('exact.related_words'));
+
+    // Query for unknown Vietnamese word
+    $responseVi = $this->getJson('/dictionary/search?q=tên-lửa-vũ-trụ-xyz');
+    $responseVi->assertSuccessful();
+    $responseVi->assertJsonPath('exact.is_fallback', true);
+    $responseVi->assertJsonPath('exact.detected_type', 'vietnamese');
+    $this->assertNull($responseVi->json('exact.hanzi'));
+    $this->assertNotEmpty($responseVi->json('exact.related_words'));
+});
+

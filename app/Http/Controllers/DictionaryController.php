@@ -72,6 +72,9 @@ class DictionaryController extends Controller
         if ($candidates->isNotEmpty()) {
             $firstCard = $candidates->first();
             $exact = $this->formatWordData($firstCard);
+        } else {
+            // Smart Fallback for words not in the local database
+            $exact = $this->buildFallbackData($query, $detectedType);
         }
 
         return response()->json([
@@ -99,7 +102,7 @@ class DictionaryController extends Controller
         $candidates = $this->findCandidates($query, $detectedType, $hsk);
 
         if ($candidates->isEmpty()) {
-            return null;
+            return $this->buildFallbackData($query, $detectedType);
         }
 
         return $this->formatWordData($candidates->first());
@@ -282,5 +285,63 @@ class DictionaryController extends Controller
             ' ' => '',
         ];
         return strtr(mb_strtolower($str), $map);
+    }
+
+    /**
+     * Build smart fallback data when word is not in local database.
+     */
+    protected function buildFallbackData(string $query, string $detectedType): array
+    {
+        $isHanzi = $detectedType === 'hanzi';
+        $occurrences = $isHanzi ? $this->findOccurrencesInStories($query) : [];
+
+        // Find similar / related words from flashcards
+        $relatedWords = collect();
+        if ($isHanzi) {
+            $chars = preg_split('//u', $query, -1, PREG_SPLIT_NO_EMPTY);
+            if (!empty($chars)) {
+                $relatedWords = Flashcard::where('is_active', true)
+                    ->where(function ($q) use ($chars) {
+                        foreach ($chars as $ch) {
+                            $q->orWhere('hanzi', 'like', "%{$ch}%");
+                        }
+                    })
+                    ->take(6)
+                    ->get(['id', 'hanzi', 'pinyin', 'meaning', 'hsk_level']);
+            }
+        }
+
+        // If no related words found, recommend popular HSK 1-3 words
+        if ($relatedWords->isEmpty()) {
+            $relatedWords = Flashcard::where('is_active', true)
+                ->whereIn('hsk_level', [1, 2, 3])
+                ->inRandomOrder()
+                ->take(6)
+                ->get(['id', 'hanzi', 'pinyin', 'meaning', 'hsk_level']);
+        }
+
+        return [
+            'id'              => null,
+            'is_fallback'     => true,
+            'query'           => $query,
+            'detected_type'   => $detectedType,
+            'hanzi'           => $isHanzi ? $query : null,
+            'pinyin'          => null,
+            'meaning'         => 'Từ này chưa có trong bộ từ vựng HSK cốt lõi của website.',
+            'hsk_level'       => null,
+            'example'         => null,
+            'example_pinyin'  => null,
+            'example_meaning' => null,
+            'is_starred'      => false,
+            'story_matches'   => $occurrences,
+            'story_count'     => count($occurrences),
+            'related_words'   => $relatedWords->map(fn ($c) => [
+                'id'        => $c->id,
+                'hanzi'     => $c->hanzi,
+                'pinyin'    => $c->pinyin,
+                'meaning'   => $c->meaning,
+                'hsk_level' => $c->hsk_level,
+            ])->toArray(),
+        ];
     }
 }
