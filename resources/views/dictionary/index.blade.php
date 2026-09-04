@@ -54,20 +54,25 @@ window.dictionaryApp = function () {
         ygCurrent: 1,
         ygSpeed: 1.0,
         ygLoadedWord: null,
-        autoPlayVideo: false,
+        ygActivated: false,
 
         // Hanzi Writer State
         showWriterModal: false,
         writerInstance: null,
 
         init() {
+            if (window.refreshIcons) {
+                this.$nextTick(() => window.refreshIcons());
+            }
+        },
+
+        startVideo() {
+            this.ygActivated = true;
             if (this.activeWord && this.activeWord.hanzi) {
                 this.$nextTick(() => {
                     this.initYouGlish(this.activeWord.hanzi);
+                    if (window.refreshIcons) window.refreshIcons();
                 });
-            }
-            if (window.refreshIcons) {
-                this.$nextTick(() => window.refreshIcons());
             }
         },
 
@@ -125,7 +130,9 @@ window.dictionaryApp = function () {
                 const data = await res.json();
                 if (data.success && data.exact) {
                     this.activeWord = data.exact;
-                    this.initYouGlish(this.activeWord.hanzi);
+                    if (this.ygActivated) {
+                        this.initYouGlish(this.activeWord.hanzi);
+                    }
                 }
             } catch (err) {
                 console.error('Word fetch error:', err);
@@ -519,47 +526,103 @@ window.dictionaryApp = function () {
                                 </h3>
                             </div>
 
-                            {{-- Track Counter --}}
-                            <div x-show="!ygLoading && !ygError && ygTotal > 0" class="shrink-0">
-                                <span class="rounded-full bg-slate-100 border border-slate-200 px-3 py-1 text-xs font-bold text-slate-700">
-                                    Clip <span class="text-red-700" x-text="ygCurrent"></span> / <span x-text="ygTotal"></span>
-                                </span>
+                            <div class="flex items-center gap-2">
+                                {{-- Direct Open on YouGlish External Tab --}}
+                                <a :href="'https://youglish.com/pronounce/' + encodeURIComponent(activeWord ? activeWord.hanzi : '') + '/chinese'"
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   class="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-[#991b1b] hover:bg-red-50 transition"
+                                   title="Mở video trực tiếp trên tab mới của YouGlish">
+                                    <span>Mở tab mới</span>
+                                    <i data-lucide="external-link" class="h-3.5 w-3.5"></i>
+                                </a>
+
+                                {{-- Track Counter --}}
+                                <div x-show="ygActivated && !ygLoading && !ygError && ygTotal > 0" class="shrink-0">
+                                    <span class="rounded-full bg-slate-100 border border-slate-200 px-3 py-1 text-xs font-bold text-slate-700">
+                                        Clip <span class="text-red-700" x-text="ygCurrent"></span> / <span x-text="ygTotal"></span>
+                                    </span>
+                                </div>
                             </div>
                         </div>
 
                         {{-- Video Player Container --}}
                         <div class="relative w-full rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 shadow-inner">
                             
-                            {{-- Loading Overlay --}}
-                            <div x-show="ygLoading" class="min-h-[260px] sm:min-h-[340px] flex flex-col items-center justify-center p-8 text-center text-slate-400 space-y-3">
-                                <i data-lucide="loader-2" class="h-8 w-8 animate-spin text-amber-400"></i>
-                                <p class="text-sm font-semibold">Đang tìm các đoạn phim người bản xứ phát âm "<span x-text="activeWord.hanzi"></span>"...</p>
-                                <p class="text-xs text-slate-500">Hệ thống đang quét kho video YouTube phụ đề tiếng Trung</p>
+                            {{-- 1. Click-to-Play Poster State (Prevents Cloudflare Bot Challenges & Speeds Up Page) --}}
+                            <div x-show="!ygActivated" class="min-h-[260px] sm:min-h-[340px] flex flex-col items-center justify-center p-6 sm:p-10 text-center space-y-4 bg-gradient-to-br from-slate-950 via-slate-900 to-red-950/30 text-white">
+                                <div class="relative group cursor-pointer" @click="startVideo()">
+                                    <div class="h-16 w-16 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg shadow-red-900/50 transition transform group-hover:scale-110 group-hover:bg-red-500">
+                                        <i data-lucide="play" class="h-7 w-7 fill-white ml-1"></i>
+                                    </div>
+                                    <div class="absolute -inset-2 rounded-full bg-red-600/20 blur-md -z-10 animate-pulse"></div>
+                                </div>
+
+                                <div class="space-y-1">
+                                    <h4 class="text-base sm:text-lg font-black text-white">
+                                        Xem video người bản xứ phát âm: <span class="text-amber-300 font-chinese text-2xl" x-text="activeWord ? activeWord.hanzi : ''"></span>
+                                    </h4>
+                                    <p class="text-xs sm:text-sm text-slate-300 max-w-md mx-auto leading-relaxed">
+                                        Trích đoạn từ phim ảnh, show thực tế và tin tức có câu thoại chứa từ này kèm phụ đề tiếng Trung.
+                                    </p>
+                                </div>
+
+                                <div class="flex flex-wrap items-center justify-center gap-3 pt-1">
+                                    <button type="button"
+                                            @click="startVideo()"
+                                            class="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-xs font-bold text-white transition hover:bg-red-700 shadow-md shadow-red-950/20">
+                                        <i data-lucide="play" class="h-3.5 w-3.5 fill-white"></i>
+                                        Bật video YouGlish
+                                    </button>
+                                    <a :href="'https://youglish.com/pronounce/' + encodeURIComponent(activeWord ? activeWord.hanzi : '') + '/chinese'"
+                                       target="_blank"
+                                       rel="noopener noreferrer"
+                                       class="inline-flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-xs font-semibold text-slate-200 hover:bg-white/20 hover:text-white transition">
+                                        <span>Xem trên YouGlish</span>
+                                        <i data-lucide="external-link" class="h-3.5 w-3.5"></i>
+                                    </a>
+                                </div>
                             </div>
 
-                            {{-- Error / No Video Fallback --}}
-                            <div x-show="!ygLoading && ygError" x-cloak class="min-h-[260px] sm:min-h-[320px] flex flex-col items-center justify-center p-8 text-center space-y-3 bg-slate-900/90 text-white">
+                            {{-- 2. Loading Overlay --}}
+                            <div x-show="ygActivated && ygLoading" class="min-h-[260px] sm:min-h-[340px] flex flex-col items-center justify-center p-8 text-center text-slate-400 space-y-3">
+                                <i data-lucide="loader-2" class="h-8 w-8 animate-spin text-amber-400"></i>
+                                <p class="text-sm font-semibold">Đang tìm các đoạn phim người bản xứ phát âm "<span x-text="activeWord.hanzi"></span>"...</p>
+                                <p class="text-xs text-slate-500">Hệ thống đang đồng bộ video và phụ đề</p>
+                            </div>
+
+                            {{-- 3. Error / No Video Fallback --}}
+                            <div x-show="ygActivated && !ygLoading && ygError" x-cloak class="min-h-[260px] sm:min-h-[320px] flex flex-col items-center justify-center p-8 text-center space-y-3 bg-slate-900/90 text-white">
                                 <div class="h-12 w-12 rounded-2xl bg-amber-400/10 border border-amber-400/20 text-amber-400 flex items-center justify-center">
                                     <i data-lucide="video-off" class="h-6 w-6"></i>
                                 </div>
-                                <h4 class="text-base font-bold">Chưa tìm thấy video YouTube cho từ này</h4>
+                                <h4 class="text-base font-bold">Chưa tìm thấy video hoặc mạng bị chặn</h4>
                                 <p class="text-xs text-slate-400 max-w-md leading-relaxed">
-                                    Từ vựng này có thể quá đặc thù hoặc YouGlish chưa lập chỉ mục. Cậu có thể nghe phát âm chuẩn giọng Bắc Kinh qua nút phát âm AI bên cạnh nhé!
+                                    Nếu có bảng xác minh Cloudflare, cậu hãy tích xác nhận hoặc bấm mở trực tiếp trên tab mới của YouGlish nhé!
                                 </p>
-                                <button type="button"
-                                        @click="speakCurrent()"
-                                        class="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-xs font-bold text-white hover:bg-red-700 transition">
-                                    <i data-lucide="volume-2" class="h-4 w-4"></i>
-                                    Nghe phát âm chuẩn AI
-                                </button>
+                                <div class="flex items-center gap-2 pt-1">
+                                    <a :href="'https://youglish.com/pronounce/' + encodeURIComponent(activeWord ? activeWord.hanzi : '') + '/chinese'"
+                                       target="_blank"
+                                       rel="noopener noreferrer"
+                                       class="inline-flex items-center gap-1.5 rounded-xl bg-white/10 border border-white/20 px-4 py-2 text-xs font-bold text-white hover:bg-white/20 transition">
+                                        <span>Xem trên YouGlish</span>
+                                        <i data-lucide="external-link" class="h-3.5 w-3.5"></i>
+                                    </a>
+                                    <button type="button"
+                                            @click="speakCurrent()"
+                                            class="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-xs font-bold text-white hover:bg-red-700 transition">
+                                        <i data-lucide="volume-2" class="h-4 w-4"></i>
+                                        Nghe giọng AI
+                                    </button>
+                                </div>
                             </div>
 
-                            {{-- The actual YouGlish iframe target div --}}
-                            <div id="youglish-container" class="w-full" x-show="!ygError"></div>
+                            {{-- 4. The actual YouGlish iframe target div --}}
+                            <div id="youglish-container" class="w-full" x-show="ygActivated && !ygError"></div>
                         </div>
 
                         {{-- Custom YouGlish Learning Control Bar --}}
-                        <div x-show="!ygLoading && !ygError && ygTotal > 0" class="space-y-3 pt-1">
+                        <div x-show="ygActivated && !ygLoading && !ygError && ygTotal > 0" class="space-y-3 pt-1">
                             <div class="flex flex-wrap items-center justify-between gap-2">
                                 
                                 {{-- Skip -3s / Replay / Skip +3s --}}
