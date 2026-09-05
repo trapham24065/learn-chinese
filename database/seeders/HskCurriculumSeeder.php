@@ -17,7 +17,7 @@ class HskCurriculumSeeder extends Seeder
         // Clean up obsolete rough/demo phonetic flashcards
         Flashcard::whereIn('hanzi', ['ā', 'á', 'ǎ', 'à'])->delete();
 
-        $levels = $specificLevel ? [$specificLevel] : [1, 2, 3];
+        $levels = $specificLevel ? [$specificLevel] : [1, 2, 3, 4];
 
         foreach ($levels as $level) {
             $dataFile = __DIR__ . "/data/hsk{$level}_lessons.php";

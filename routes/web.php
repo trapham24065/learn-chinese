@@ -24,7 +24,10 @@ Route::get('/', function () {
     // featuredLessons NOT cached — Eloquent Collections don't deserialize safely across deployments
     $featuredLessons = Lesson::where('is_published', true)->orderBy('sort_order')->take(3)->get();
 
-    return view('welcome', compact('lessonCount', 'flashcardCount', 'questionCount', 'featuredLessons'));
+    $student = auth()->guard('web')->user();
+    $levelData = HskController::getLevelData($student);
+
+    return view('welcome', compact('lessonCount', 'flashcardCount', 'questionCount', 'featuredLessons', 'levelData', 'student'));
 })->name('home');
 
 Route::redirect('/dashboard', '/student/dashboard');

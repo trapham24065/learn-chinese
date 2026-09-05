@@ -120,7 +120,7 @@ $roadmap = [
 
             <div class="mt-6 space-y-4">
                 {{-- Lesson Progress --}}
-                <a href="{{ route('hsk.overview') }}" class="block rounded-3xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10 hover:border-amber-300/30 group">
+                <a href="#hsk-roadmap" class="block rounded-3xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10 hover:border-amber-300/30 group">
                     <div class="flex items-center justify-between text-sm">
                         <span class="text-slate-300 font-medium group-hover:text-white transition">Tiến độ bài học HSK</span>
                         <span class="font-bold text-amber-300">{{ $completedLessons }}/{{ $totalLessons }} bài ({{ $progressPercent }}%)</span>
@@ -193,7 +193,7 @@ $roadmap = [
             </div>
 
             <div class="mt-6 space-y-4">
-                <a href="{{ route('hsk.overview') }}" class="block rounded-3xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10 hover:border-amber-300/30 group">
+                <a href="#hsk-roadmap" class="block rounded-3xl border border-white/10 bg-white/5 p-4 transition hover:bg-white/10 hover:border-amber-300/30 group">
                     <div class="flex items-center justify-between text-sm">
                         <span class="text-slate-300 group-hover:text-white transition">Lộ trình HSK 1 - 6</span>
                         <span class="font-semibold text-amber-300">Khám phá ngay</span>
@@ -299,26 +299,124 @@ $roadmap = [
     </div>
 </section>
 
-<section class="py-8 lg:py-10" id="roadmap">
-    <div class="flex items-end justify-between gap-6">
+<section class="py-8 lg:py-12" id="hsk-roadmap">
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-            <p class="text-sm font-semibold uppercase tracking-[0.28em] text-[#991b1b]">Lộ trình</p>
-            <h2 class="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">4 chặng học dễ theo dõi</h2>
+            <p class="text-sm font-semibold uppercase tracking-[0.28em] text-[#991b1b]">Hệ thống chứng chỉ quốc tế</p>
+            <h2 class="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">Lộ trình HSK (HSK 1 – HSK 6)</h2>
+            <p class="mt-3 max-w-2xl text-base text-slate-600">
+                HSK (汉语水平考试) là bộ tiêu chuẩn đánh giá trình độ tiếng Trung được công nhận toàn cầu. Học theo lộ trình từ HSK 1 đến HSK 6 với đầy đủ từ vựng, ngữ pháp, bài khóa và bài tập thực hành.
+            </p>
         </div>
+        <a href="{{ route('hsk.mock.index') }}" class="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 text-xs sm:text-sm font-bold text-white shadow-lg shadow-slate-950/20 hover:bg-[#991b1b] transition">
+            <i data-lucide="award" class="h-4 w-4 text-amber-400"></i>
+            <span>Thi thử HSK Online</span>
+        </a>
     </div>
 
-    <div class="mt-8 grid gap-4 lg:grid-cols-2">
-        @foreach ($roadmap as $item)
-        <div class="flex gap-4 rounded-[1.5rem] border border-white/80 bg-white/75 p-5 shadow-xl shadow-slate-900/5 backdrop-blur">
-            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-950 text-sm font-black text-white">
-                {{ $item['step'] }}
+    @if(isset($levelData) && count($levelData) > 0)
+    <div class="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        @foreach($levelData as $level => $data)
+        @php
+        $isDone = $data['completed_count'] > 0 && $data['progress_pct'] >= 100;
+        $hasContent = $data['flashcard_count'] > 0 || $data['lesson_count'] > 0;
+        @endphp
+        <a href="{{ route('hsk.show', $level) }}"
+            class="group relative overflow-hidden rounded-[2rem] border bg-white p-6 sm:p-7 shadow-xl shadow-slate-900/5 transition hover:-translate-y-1 hover:shadow-2xl hover:shadow-slate-900/10 {{ $data['border'] }}"
+        >
+            {{-- Top accent line --}}
+            <div class="absolute inset-x-0 top-0 h-1.5" style="background: {{ $data['color'] }}"></div>
+
+            {{-- HSK badge --}}
+            <div class="flex items-center justify-between">
+                <span class="rounded-full px-3 py-1 text-xs font-black uppercase tracking-widest {{ $data['badge'] }}">
+                    {{ $data['label'] }}
+                </span>
+                @if($isDone)
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600" title="Đã hoàn thành">
+                    <i data-lucide="circle-check-big" class="h-5 w-5"></i>
+                </span>
+                @elseif($data['progress_pct'] > 0)
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600" title="Đang học">
+                    <i data-lucide="book-open" class="h-5 w-5"></i>
+                </span>
+                @else
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-400" title="Chưa bắt đầu">
+                    <i data-lucide="circle" class="h-5 w-5"></i>
+                </span>
+                @endif
             </div>
+
+            {{-- Chinese chars decoration --}}
+            <p class="mt-4 text-6xl font-black leading-none tracking-tight text-slate-100 select-none transition group-hover:text-slate-200"
+                style="color: {{ $data['color'] }}1A">
+                {{ ['一','二','三','四','五','六'][$level - 1] }}
+            </p>
+
+            <h3 class="mt-3 text-xl font-black text-slate-900">{{ $data['label'] }}</h3>
+            <p class="mt-1 text-sm leading-6 text-slate-600">{{ $data['description'] }}</p>
+
+            <div class="mt-5 grid grid-cols-3 gap-2 text-center text-xs">
+                <div class="rounded-2xl bg-slate-50 p-2">
+                    <p class="font-black text-slate-900">~{{ number_format($data['vocab_count']) }}</p>
+                    <p class="text-slate-500">từ vựng</p>
+                </div>
+                <div class="rounded-2xl bg-slate-50 p-2">
+                    <p class="font-black text-slate-900">{{ $data['lesson_count'] }}</p>
+                    <p class="text-slate-500">bài học</p>
+                </div>
+                <div class="rounded-2xl bg-slate-50 p-2">
+                    <p class="font-black text-slate-900">{{ $data['flashcard_count'] }}</p>
+                    <p class="text-slate-500">flashcard</p>
+                </div>
+            </div>
+
+            @if($data['lesson_count'] > 0)
+            <div class="mt-5">
+                <div class="flex items-center justify-between mb-1.5 text-xs font-semibold text-slate-600">
+                    <span>Tiến độ</span>
+                    <span>{{ $data['completed_count'] }}/{{ $data['lesson_count'] }} bài</span>
+                </div>
+                <div class="h-2 rounded-full bg-slate-100 overflow-hidden">
+                    <div class="h-2 rounded-full transition-all duration-700"
+                        style="width: {{ $data['progress_pct'] }}%; background: {{ $data['color'] }}"></div>
+                </div>
+            </div>
+            @else
+            <p class="mt-5 text-xs text-slate-400 italic">Admin đang cập nhật nội dung cho cấp này.</p>
+            @endif
+
+            <div class="mt-5 flex items-center gap-1.5 text-sm font-bold transition group-hover:gap-2.5" style="color: {{ $data['color'] }}">
+                Bắt đầu học <i data-lucide="arrow-right" class="h-4 w-4 transition-transform group-hover:translate-x-1"></i>
+            </div>
+        </a>
+        @endforeach
+    </div>
+    @endif
+
+    {{-- HSK Mock Exam Callout Banner --}}
+    <div class="mt-10 rounded-[2.5rem] bg-gradient-to-r from-[#991b1b] via-[#7f1d1d] to-slate-950 p-8 sm:p-10 text-white shadow-2xl shadow-red-950/20">
+        <div class="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
-                <h3 class="text-xl font-bold text-slate-950">{{ $item['title'] }}</h3>
-                <p class="mt-2 leading-7 text-slate-600">{{ $item['description'] }}</p>
+                <div class="inline-flex items-center gap-2 rounded-full border border-red-400/30 bg-red-400/10 px-3.5 py-1 text-xs font-bold text-red-200 uppercase tracking-widest backdrop-blur">
+                    <i data-lucide="award" class="h-3.5 w-3.5 text-amber-300"></i>
+                    Chuẩn Cấu Trúc Hanban
+                </div>
+                <h3 class="mt-4 text-2xl sm:text-3xl font-black tracking-tight text-white">
+                    Phòng thi thử HSK Online Chuẩn Quốc Tế
+                </h3>
+                <p class="mt-2.5 max-w-2xl text-sm sm:text-base leading-relaxed text-red-100/80">
+                    Trải nghiệm làm đề thi mô phỏng định dạng HSK thật: tính giờ tự động, chấm điểm Nghe - Đọc tức thì kèm bảng phân tích kết quả chi tiết & cấp giấy chứng nhận online.
+                </p>
+            </div>
+            <div class="flex flex-wrap gap-3">
+                <a href="{{ route('hsk.mock.index') }}"
+                   class="inline-flex items-center gap-2 rounded-2xl bg-white px-6 py-3.5 text-sm font-black text-red-900 shadow-xl transition hover:bg-red-50 hover:scale-105 active:scale-95">
+                    <span>Vào phòng thi thử ngay</span>
+                    <i data-lucide="arrow-right" class="h-4 w-4"></i>
+                </a>
             </div>
         </div>
-        @endforeach
     </div>
 </section>
 @endsection

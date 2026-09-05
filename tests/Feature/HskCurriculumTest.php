@@ -46,10 +46,10 @@ test('hsk curriculum seeder populates hsk 1, 2, 3 lessons with flashcards and qu
     expect($hsk2Lessons)->toHaveCount(15);
     expect($hsk2Lessons->first()->slug)->toBe('hsk2-bai-01-jiu-yue-qu-bei-jing-lv-you-zui-hao');
 
-    // HSK 3
-    $hsk3Lessons = Lesson::where('hsk_level', 3)->get();
-    expect($hsk3Lessons)->toHaveCount(10);
-    expect($hsk3Lessons->first()->slug)->toBe('hsk3-bai-01-zhou-mo-ni-you-shen-me-da-suan');
+    // HSK 4
+    $hsk4Lessons = Lesson::where('hsk_level', 4)->get();
+    expect($hsk4Lessons)->toHaveCount(10);
+    expect($hsk4Lessons->first()->slug)->toBe('hsk4-bai-01-jian-dan-de-ai-qing');
 });
 
 test('artisan app:seed-hsk-curriculum command executes successfully with level option', function () {
@@ -60,7 +60,7 @@ test('artisan app:seed-hsk-curriculum command executes successfully with level o
     expect(Lesson::where('hsk_level', 2)->count())->toBe(0);
 });
 
-test('hsk level show page displays standard lessons', function () {
+test('hsk level show page displays standard lessons with pagination', function () {
     $this->seed(HskCurriculumSeeder::class);
 
     $response = $this->get(route('hsk.show', 1));
@@ -71,19 +71,39 @@ test('hsk level show page displays standard lessons', function () {
     $response->assertSee('chao-hoi-gioi-thieu');
     $response->assertSee('Bài 1: 你好 - Xin chào');
     $response->assertSee('hsk1-bai-01-ni-hao');
+    $response->assertSee('lessons_page=2');
 });
 
-test('lesson show page displays rich content, dialogues, and action buttons', function () {
+test('hsk overview route redirects to home page hsk-roadmap section', function () {
+    $response = $this->get(route('hsk.overview'));
+    $response->assertRedirect(route('home') . '#hsk-roadmap');
+
+    $homeResponse = $this->get(route('home'));
+    $homeResponse->assertSuccessful();
+    $homeResponse->assertSee('id="hsk-roadmap"', false);
+    $homeResponse->assertSee('Lộ trình HSK (HSK 1 – HSK 6)');
+});
+
+test('lesson show page displays rich content, action buttons and tracks student progress', function () {
     $this->seed(HskCurriculumSeeder::class);
 
-    // Check standard lesson
-    $response = $this->get(route('lesson.show', ['slug' => 'hsk1-bai-01-ni-hao']));
+    $user = \App\Models\User::factory()->create();
+
+    // Check standard lesson as authenticated student
+    $response = $this->actingAs($user)->get(route('lesson.show', ['slug' => 'hsk1-bai-01-ni-hao']));
     $response->assertSuccessful();
     $response->assertSee('Bài 1: 你好 - Xin chào');
     $response->assertSee('Bài khóa 1');
     $response->assertSee('Ngữ pháp trọng điểm');
     $response->assertSee(route('flashcards', ['lesson' => 'hsk1-bai-01-ni-hao']));
     $response->assertSee(route('quiz', ['lesson' => 'hsk1-bai-01-ni-hao']));
+
+    // Verify student progress was initialized to in_progress
+    $lesson = Lesson::where('slug', 'hsk1-bai-01-ni-hao')->first();
+    $progress = \App\Models\LessonProgress::where('user_id', $user->id)->where('lesson_id', $lesson->id)->first();
+    expect($progress)->not->toBeNull();
+    expect($progress->status)->toBe('in_progress');
+    expect($progress->progress_percent)->toBeGreaterThanOrEqual(20);
 
     // Check pinyin lesson
     $pinyinResponse = $this->get(route('lesson.show', ['slug' => 'pinyin-co-ban']));

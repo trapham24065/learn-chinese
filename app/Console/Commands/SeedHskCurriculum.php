@@ -15,7 +15,7 @@ class SeedHskCurriculum extends Command
      *
      * @var string
      */
-    protected $signature = 'app:seed-hsk-curriculum {--level= : Cấp độ HSK cụ thể cần nạp (1, 2, hoặc 3)}';
+    protected $signature = 'app:seed-hsk-curriculum {--level= : Cấp độ HSK cụ thể cần nạp (1, 2, 3, hoặc 4)}';
 
     /**
      * The console command description.
@@ -34,8 +34,8 @@ class SeedHskCurriculum extends Command
 
         if ($levelOpt !== null) {
             $specificLevel = (int) $levelOpt;
-            if (!in_array($specificLevel, [1, 2, 3], true)) {
-                $this->error("Cấp độ không hợp lệ. Vui lòng chọn --level=1, 2 hoặc 3.");
+            if (!in_array($specificLevel, [1, 2, 3, 4], true)) {
+                $this->error("Cấp độ không hợp lệ. Vui lòng chọn --level=1, 2, 3 hoặc 4.");
                 return self::FAILURE;
             }
         }
@@ -53,7 +53,7 @@ class SeedHskCurriculum extends Command
         $this->info("                  THỐNG KÊ DỮ LIỆU ĐÃ NẠP                 ");
         $this->info("==========================================================");
 
-        $levelsToCheck = $specificLevel ? [$specificLevel] : [1, 2, 3];
+        $levelsToCheck = $specificLevel ? [$specificLevel] : [1, 2, 3, 4];
         $tableRows = [];
 
         foreach ($levelsToCheck as $lvl) {

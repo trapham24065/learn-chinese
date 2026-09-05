@@ -50,7 +50,7 @@
         <div>
             <span class="rounded-full bg-white/20 px-3 py-1 text-xs font-bold uppercase tracking-widest">{{ $meta['label'] }}</span>
             <h1 class="mt-4 text-4xl font-black tracking-tight sm:text-5xl">{{ $meta['description'] }}</h1>
-            <p class="mt-3 text-white/80">~{{ number_format($meta['vocab_count']) }} từ vựng cần nắm · {{ $lessons->count() }} bài học · {{ $flashcards->count() }} flashcard</p>
+            <p class="mt-3 text-white/80">~{{ number_format($meta['vocab_count']) }} từ vựng cần nắm · {{ $lessons->total() }} bài học · {{ $flashcards->total() }} flashcard</p>
         </div>
         <div class="flex flex-wrap gap-3">
             @if($prevLevel)
@@ -71,34 +71,66 @@
 
 {{-- Lessons in this HSK level --}}
 @if($lessons->isNotEmpty())
-<section class="mb-10">
-    <h2 class="mb-5 flex items-center gap-2 text-lg font-black text-slate-900">
-        <span class="grid h-8 w-8 place-items-center rounded-xl bg-red-50 text-[#991b1b]">
-            <svg class="h-5 w-5"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 6.5 2z" />
-            </svg>
+<section id="lessons" class="mb-10">
+    <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <h2 class="flex items-center gap-2 text-lg font-black text-slate-900">
+            <span class="grid h-8 w-8 place-items-center rounded-xl bg-red-50 text-[#991b1b]">
+                <i data-lucide="book-open" class="h-4 w-4"></i>
+            </span>
+            Bài học thuộc {{ $meta['label'] }} ({{ $lessons->total() }} bài)
+        </h2>
+        @if($lessons->hasPages())
+        <span class="text-xs font-semibold text-slate-500">
+            Trang {{ $lessons->currentPage() }} / {{ $lessons->lastPage() }}
         </span>
+        @endif
+    </div>
 
-        Bài học thuộc {{ $meta['label'] }}
-    </h2>
+    {{-- Banner học tiếp nếu có bài đang học dở --}}
+    @if(isset($inProgressLesson) && $inProgressLesson)
+    <div class="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 p-4 shadow-sm">
+        <div class="flex items-center gap-3">
+            <div class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-500 text-white shadow-md shadow-amber-500/20">
+                <i data-lucide="sparkles" class="h-5 w-5"></i>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold uppercase tracking-wider text-amber-700">Đang học dở ({{ $inProgressLesson->progress_percent ?? 0 }}%)</span>
+                    <span class="text-xs text-slate-400">· Vừa học gần đây</span>
+                </div>
+                <h4 class="font-bold text-slate-900 text-sm sm:text-base">{{ $inProgressLesson->title }}</h4>
+            </div>
+        </div>
+        <a href="{{ route('lesson.show', ['slug' => $inProgressLesson->slug]) }}"
+            class="inline-flex shrink-0 items-center gap-2 rounded-xl bg-amber-600 px-4 py-2 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-amber-700 transition">
+            Học tiếp ngay <i data-lucide="arrow-right" class="h-4 w-4"></i>
+        </a>
+    </div>
+    @endif
+
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         @foreach($lessons as $lesson)
-        @php $status = $progressMap[$lesson->id] ?? 'not_started'; @endphp
-        <div class="group relative overflow-hidden rounded-[1.75rem] border border-white/80 bg-white/80 p-6 shadow-xl shadow-slate-900/5 backdrop-blur transition hover:-translate-y-0.5">
-            <div class="absolute inset-x-0 top-0 h-1" style="background: {{ $lesson->accent_color ?? $meta['color'] }}"></div>
+        @php
+            $prog = $progressMap[$lesson->id] ?? null;
+            $status = is_array($prog) ? ($prog['status'] ?? 'not_started') : ($prog ?? 'not_started');
+            $percent = is_array($prog) ? ($prog['percent'] ?? 0) : 0;
+            $isInProgress = $status === 'in_progress';
+        @endphp
+        <div class="group relative overflow-hidden rounded-[1.75rem] border {{ $isInProgress ? 'border-amber-300 ring-2 ring-amber-400/20' : 'border-white/80' }} bg-white/80 p-6 shadow-xl shadow-slate-900/5 backdrop-blur transition hover:-translate-y-0.5">
+            <div class="absolute inset-x-0 top-0 h-1" style="background: {{ $isInProgress ? '#f59e0b' : ($lesson->accent_color ?? $meta['color']) }}"></div>
             <div class="flex items-start justify-between gap-3">
                 <div>
-                    <span class="text-xs font-semibold uppercase tracking-widest"
-                        style="color: {{ $lesson->accent_color ?? $meta['color'] }}">
-                        {{ $meta['label'] }}
-                    </span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-semibold uppercase tracking-widest"
+                            style="color: {{ $lesson->accent_color ?? $meta['color'] }}">
+                            {{ $meta['label'] }}
+                        </span>
+                        @if($isInProgress)
+                        <span class="inline-flex items-center gap-1 rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800">
+                            <i data-lucide="timer" class="h-3 w-3"></i> {{ $percent }}%
+                        </span>
+                        @endif
+                    </div>
                     <h3 class="mt-2 text-lg font-black text-slate-900">{{ $lesson->title }}</h3>
                     <p class="mt-1 text-sm text-slate-600">{{ $lesson->summary }}</p>
                 </div>
@@ -110,48 +142,13 @@
     @else
         bg-slate-100 text-slate-400
     @endif">
-
                     @if($status === 'completed')
-
-                    {{-- Check --}}
-                    <svg class="h-5 w-5"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <path d="m5 12 4 4L19 6" />
-                    </svg>
-
+                    <i data-lucide="circle-check-big" class="h-5 w-5"></i>
                     @elseif($status === 'in_progress')
-
-                    {{-- Book --}}
-                    <svg class="h-5 w-5"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 6.5 2z" />
-                    </svg>
-
+                    <i data-lucide="book-open" class="h-5 w-5"></i>
                     @else
-
-                    {{-- Circle --}}
-                    <svg class="h-5 w-5"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round">
-                        <circle cx="12" cy="12" r="8" />
-                    </svg>
-
+                    <i data-lucide="circle" class="h-5 w-5"></i>
                     @endif
-
                 </span>
             </div>
             <div class="mt-4 flex items-center gap-3 text-xs text-slate-500">
@@ -163,8 +160,8 @@
             </div>
             <div class="mt-4 flex gap-2">
                 <a href="{{ route('lesson.show', ['slug' => $lesson->slug]) }}"
-                    class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-white py-2 text-center text-xs font-bold text-slate-700 hover:bg-slate-50 transition">
-                    <i data-lucide="book-open" class="h-3.5 w-3.5"></i> Lý thuyết
+                    class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full border {{ $isInProgress ? 'border-amber-400 bg-amber-50 text-amber-950 font-bold' : 'border-slate-200 bg-white text-slate-700 font-bold hover:bg-slate-50' }} py-2 text-center text-xs transition">
+                    <i data-lucide="book-open" class="h-3.5 w-3.5"></i> {{ $isInProgress ? 'Học tiếp (' . $percent . '%)' : 'Lý thuyết' }}
                 </a>
                 <a href="{{ route('flashcards', ['lesson' => $lesson->slug]) }}"
                     class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-slate-100 py-2 text-center text-xs font-bold text-slate-700 hover:bg-slate-200 transition">
@@ -179,12 +176,56 @@
         </div>
         @endforeach
     </div>
+
+    {{-- Custom Pagination links for Lessons --}}
+    @if($lessons->hasPages())
+    <div class="mt-8 flex items-center justify-center gap-2">
+        {{-- Prev --}}
+        @if($lessons->onFirstPage())
+        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed">
+            <i data-lucide="chevron-left" class="h-4 w-4"></i>
+        </span>
+        @else
+        <a href="{{ $lessons->fragment('lessons')->previousPageUrl() }}"
+           class="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-[#991b1b] hover:text-[#991b1b]">
+            <i data-lucide="chevron-left" class="h-4 w-4"></i>
+        </a>
+        @endif
+
+        {{-- Page numbers --}}
+        @foreach($lessons->fragment('lessons')->getUrlRange(max(1, $lessons->currentPage() - 2), min($lessons->lastPage(), $lessons->currentPage() + 2)) as $page => $url)
+        <a href="{{ $url }}"
+           class="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-bold transition
+                  {{ $page == $lessons->currentPage()
+                      ? 'bg-[#991b1b] text-white shadow-md shadow-red-900/20'
+                      : 'border border-slate-200 bg-white text-slate-700 hover:border-[#991b1b] hover:text-[#991b1b]' }}">
+            {{ $page }}
+        </a>
+        @endforeach
+
+        {{-- Next --}}
+        @if($lessons->hasMorePages())
+        <a href="{{ $lessons->fragment('lessons')->nextPageUrl() }}"
+           class="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-[#991b1b] hover:text-[#991b1b]">
+            <i data-lucide="chevron-right" class="h-4 w-4"></i>
+        </a>
+        @else
+        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed">
+            <i data-lucide="chevron-right" class="h-4 w-4"></i>
+        </span>
+        @endif
+    </div>
+
+    <p class="mt-3 text-center text-xs text-slate-400">
+        Hiển thị {{ $lessons->firstItem() }}–{{ $lessons->lastItem() }} trong tổng số {{ $lessons->total() }} bài học
+    </p>
+    @endif
 </section>
 @endif
 
 {{-- Flashcard 3D Deck & Vocabulary Section --}}
 @if($flashcards->isNotEmpty())
-<section class="mb-12">
+<section id="flashcards" class="mb-12">
     <div class="mb-6 flex items-center justify-between">
         <div>
             <h2 class="flex items-center gap-2 text-xl font-black text-slate-900">
@@ -592,14 +633,14 @@
                 <i data-lucide="chevron-left" class="h-4 w-4"></i>
             </span>
             @else
-            <a href="{{ $flashcards->previousPageUrl() }}"
+            <a href="{{ $flashcards->fragment('flashcards')->previousPageUrl() }}"
                class="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-[#991b1b] hover:text-[#991b1b]">
                 <i data-lucide="chevron-left" class="h-4 w-4"></i>
             </a>
             @endif
 
             {{-- Page numbers --}}
-            @foreach($flashcards->getUrlRange(max(1, $flashcards->currentPage() - 2), min($flashcards->lastPage(), $flashcards->currentPage() + 2)) as $page => $url)
+            @foreach($flashcards->fragment('flashcards')->getUrlRange(max(1, $flashcards->currentPage() - 2), min($flashcards->lastPage(), $flashcards->currentPage() + 2)) as $page => $url)
             <a href="{{ $url }}"
                class="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-bold transition
                       {{ $page == $flashcards->currentPage()
@@ -611,7 +652,7 @@
 
             {{-- Next --}}
             @if($flashcards->hasMorePages())
-            <a href="{{ $flashcards->nextPageUrl() }}"
+            <a href="{{ $flashcards->fragment('flashcards')->nextPageUrl() }}"
                class="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-[#991b1b] hover:text-[#991b1b]">
                 <i data-lucide="chevron-right" class="h-4 w-4"></i>
             </a>

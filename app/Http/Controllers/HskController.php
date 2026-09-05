@@ -69,11 +69,9 @@ class HskController extends Controller
         ],
     ];
 
-    public function overview(): View
+    public static function getLevelData($student = null): array
     {
-        $student = Auth::guard('web')->user();
-
-        // C3: Collapse 24 separate queries into 3 aggregate GROUP BY queries
+        // Collapse queries into 3 aggregate GROUP BY queries
         $flashcardCounts = Flashcard::where('is_active', true)
             ->selectRaw('hsk_level, count(*) as total')
             ->groupBy('hsk_level')
@@ -111,7 +109,12 @@ class HskController extends Controller
             ]);
         }
 
-        return view('hsk.overview', compact('levelData', 'student'));
+        return $levelData;
+    }
+
+    public function overview()
+    {
+        return redirect()->to(route('home') . '#hsk-roadmap');
     }
 
     public function show(int $level): View
@@ -126,7 +129,8 @@ class HskController extends Controller
             ->orderBy('sort_order')
             ->orderBy('id')
             ->withCount(['questions', 'flashcards'])
-            ->get();
+            ->paginate(6, ['*'], 'lessons_page')
+            ->withQueryString();
 
         $flashcardsQuery = Flashcard::where('hsk_level', $level)
             ->where('flashcards.is_active', true)
@@ -140,15 +144,35 @@ class HskController extends Controller
             ->select('flashcards.*', 'flashcard_progresses.is_starred as is_starred');
         }
 
-        $flashcards = $flashcardsQuery->orderBy('flashcards.sort_order')->paginate(24);
+        $flashcards = $flashcardsQuery->orderBy('flashcards.sort_order')
+            ->paginate(24, ['*'], 'cards_page')
+            ->withQueryString();
 
         // Per-lesson progress for this student
         $progressMap = [];
+        $inProgressLesson = null;
         if ($student) {
-            $progressMap = LessonProgress::where('user_id', $student->id)
+            $progressRecords = LessonProgress::where('user_id', $student->id)
                 ->whereIn('lesson_id', $lessons->pluck('id'))
-                ->pluck('status', 'lesson_id')
-                ->toArray();
+                ->get();
+
+            foreach ($progressRecords as $rec) {
+                $progressMap[$rec->lesson_id] = [
+                    'status'           => $rec->status,
+                    'percent'          => $rec->progress_percent,
+                    'last_accessed_at' => $rec->last_accessed_at,
+                ];
+            }
+
+            // Find most recently accessed in-progress lesson in this HSK level
+            $inProgressLesson = Lesson::where('hsk_level', $level)
+                ->where('is_published', true)
+                ->join('lesson_progresses', 'lessons.id', '=', 'lesson_progresses.lesson_id')
+                ->where('lesson_progresses.user_id', $student->id)
+                ->where('lesson_progresses.status', 'in_progress')
+                ->select('lessons.*', 'lesson_progresses.progress_percent', 'lesson_progresses.last_accessed_at')
+                ->orderByDesc('lesson_progresses.last_accessed_at')
+                ->first();
         }
 
         $prevLevel = $level > 1 ? $level - 1 : null;
@@ -156,7 +180,7 @@ class HskController extends Controller
 
         return view('hsk.show', compact(
             'level', 'meta', 'student',
-            'lessons', 'flashcards', 'progressMap',
+            'lessons', 'flashcards', 'progressMap', 'inProgressLesson',
             'prevLevel', 'nextLevel'
         ));
     }

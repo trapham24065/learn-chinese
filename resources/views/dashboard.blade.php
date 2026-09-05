@@ -425,9 +425,32 @@
             </div>
         </div>
 
+        {{-- Quick Resume in-progress lesson if any --}}
+        @if($inProgressLessons->isNotEmpty())
+        @php $latestInProgress = $inProgressLessons->sortByDesc('last_accessed_at')->first(); @endphp
+        <div class="mt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 p-4 shadow-sm">
+            <div class="flex items-center gap-3">
+                <div class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-500 text-white shadow-md shadow-amber-500/20">
+                    <i data-lucide="sparkles" class="h-5 w-5"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold uppercase tracking-wider text-amber-700">Đang học dở ({{ $latestInProgress['progress_percent'] }}%)</span>
+                        <span class="text-xs text-slate-400">· Tiếp tục phiên học gần nhất</span>
+                    </div>
+                    <h4 class="font-bold text-slate-900 text-sm sm:text-base">{{ $latestInProgress['title'] }}</h4>
+                </div>
+            </div>
+            <a href="{{ route('lesson.show', ['slug' => $latestInProgress['slug']]) }}"
+                class="inline-flex shrink-0 items-center gap-2 rounded-xl bg-amber-600 px-4 py-2 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-amber-700 transition active:scale-95">
+                Học tiếp ngay <i data-lucide="arrow-right" class="h-4 w-4"></i>
+            </a>
+        </div>
+        @endif
+
         {{-- Lessons Grid --}}
         <div class="mt-6 grid gap-5 md:grid-cols-2">
-            <template x-for="lesson in filteredLessons" :key="lesson.id">
+            <template x-for="lesson in paginatedLessons" :key="lesson.id">
                 <article class="relative flex flex-col justify-between rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm transition hover:shadow-md hover:border-amber-200">
                     <div>
                         <div class="flex items-start justify-between gap-3">
@@ -471,15 +494,20 @@
                     {{-- Actions Row --}}
                     <div class="mt-6 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-4">
                         <div class="flex items-center gap-2">
-                            <a :href="'{{ route('quiz') }}?lesson=' + lesson.slug"
-                               class="inline-flex items-center gap-1.5 rounded-full bg-[#991b1b] px-4 py-2 text-xs font-bold text-white transition hover:bg-red-800 active:scale-95 shadow-sm">
-                                <i data-lucide="target" class="h-3.5 w-3.5"></i>
-                                <span>Làm Quiz</span>
+                            <a :href="'/lessons/' + lesson.slug"
+                               class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50 active:scale-95 shadow-sm">
+                                <i data-lucide="book-open" class="h-3.5 w-3.5"></i>
+                                <span>Lý thuyết</span>
                             </a>
-                            <a href="{{ route('flashcards') }}"
-                               class="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3.5 py-2 text-xs font-bold text-amber-900 transition hover:bg-amber-200 active:scale-95">
+                            <a :href="'{{ route('quiz') }}?lesson=' + lesson.slug"
+                               class="inline-flex items-center gap-1.5 rounded-full bg-[#991b1b] px-3.5 py-2 text-xs font-bold text-white transition hover:bg-red-800 active:scale-95 shadow-sm">
+                                <i data-lucide="target" class="h-3.5 w-3.5"></i>
+                                <span>Quiz</span>
+                            </a>
+                            <a :href="'{{ route('flashcards') }}?lesson=' + lesson.slug"
+                               class="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-2 text-xs font-bold text-amber-900 transition hover:bg-amber-200 active:scale-95">
                                 <i data-lucide="layers" class="h-3.5 w-3.5"></i>
-                                <span>Flashcard</span>
+                                <span>Thẻ</span>
                             </a>
                         </div>
 
@@ -514,6 +542,40 @@
                 </div>
                 <p class="mt-3 text-sm font-bold text-slate-700">Không có bài học nào trong mục này</p>
                 <p class="mt-1 text-xs text-slate-400">Hãy chọn tab khác hoặc bắt đầu học bài mới để theo dõi tiến độ.</p>
+            </div>
+        </div>
+
+        {{-- Pagination for Dashboard Lessons --}}
+        <div x-show="totalLessonPages > 1" class="mt-8 flex flex-col items-center justify-between gap-3 border-t border-slate-100 pt-6 sm:flex-row">
+            <p class="text-xs text-slate-500">
+                Hiển thị <span class="font-bold text-slate-800" x-text="(lessonPage - 1) * lessonsPerPage + 1"></span> –
+                <span class="font-bold text-slate-800" x-text="Math.min(lessonPage * lessonsPerPage, filteredLessons.length)"></span>
+                trong tổng số <span class="font-bold text-slate-800" x-text="filteredLessons.length"></span> bài học
+            </p>
+
+            <div class="flex items-center gap-1.5">
+                <button type="button"
+                        @click="prevLessonPage()"
+                        :disabled="lessonPage <= 1"
+                        class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
+                    <i data-lucide="chevron-left" class="h-4 w-4"></i>
+                </button>
+
+                <template x-for="p in totalLessonPages" :key="p">
+                    <button type="button"
+                            @click="goToLessonPage(p)"
+                            x-text="p"
+                            class="inline-flex h-9 w-9 items-center justify-center rounded-xl text-xs font-bold transition shadow-sm"
+                            :class="lessonPage === p ? 'bg-[#991b1b] text-white shadow-red-900/20' : 'border border-slate-200 bg-white text-slate-700 hover:border-[#991b1b] hover:text-[#991b1b]'">
+                    </button>
+                </template>
+
+                <button type="button"
+                        @click="nextLessonPage()"
+                        :disabled="lessonPage >= totalLessonPages"
+                        class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
+                    <i data-lucide="chevron-right" class="h-4 w-4"></i>
+                </button>
             </div>
         </div>
     </section>
@@ -594,6 +656,8 @@ function studentDashboard() {
         totalLessonsCount: {{ $totalLessonsCount }},
         dailyGoal: 20,
         lessonFilter: 'all',
+        lessonPage: 1,
+        lessonsPerPage: 6,
         lessons: @js($lessons),
         activities: @js($activities),
         isLogging: false,
@@ -602,8 +666,14 @@ function studentDashboard() {
         toastTimeout: null,
 
         initDashboard() {
-            // B6: Refresh icons whenever lessonFilter changes
-            this.$watch('lessonFilter', () => this.$nextTick(() => window.refreshIcons?.()));
+            // Refresh icons whenever lessonFilter or lessonPage changes
+            this.$watch('lessonFilter', () => {
+                this.lessonPage = 1;
+                this.$nextTick(() => window.refreshIcons?.());
+            });
+            this.$watch('lessonPage', () => {
+                this.$nextTick(() => window.refreshIcons?.());
+            });
         },
 
         get todayGoalPercent() {
@@ -613,6 +683,31 @@ function studentDashboard() {
         get filteredLessons() {
             if (this.lessonFilter === 'all') return this.lessons;
             return this.lessons.filter(l => l.status === this.lessonFilter);
+        },
+
+        get totalLessonPages() {
+            return Math.max(1, Math.ceil(this.filteredLessons.length / this.lessonsPerPage));
+        },
+
+        get paginatedLessons() {
+            const start = (this.lessonPage - 1) * this.lessonsPerPage;
+            return this.filteredLessons.slice(start, start + this.lessonsPerPage);
+        },
+
+        prevLessonPage() {
+            if (this.lessonPage > 1) {
+                this.lessonPage--;
+            }
+        },
+
+        nextLessonPage() {
+            if (this.lessonPage < this.totalLessonPages) {
+                this.lessonPage++;
+            }
+        },
+
+        goToLessonPage(p) {
+            this.lessonPage = p;
         },
 
         showToast(msg) {
