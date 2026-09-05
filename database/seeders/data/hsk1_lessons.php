@@ -2,6 +2,372 @@
 
 return [
     [
+        'slug' => 'pinyin-co-ban',
+        'title' => 'Bài mở đầu: Pinyin cơ bản & Ngữ âm chuẩn HSK 1',
+        'summary' => 'Làm quen toàn diện hệ thống Bính âm Hán ngữ: 21 Thanh mẫu, 36 Vận mẫu, 4 Thanh điệu, Quy tắc đánh dấu và Biến điệu quan trọng.',
+        'hsk_level' => 1,
+        'sort_order' => 0,
+        'estimated_minutes' => 30,
+        'accent_color' => '#991b1b',
+        'difficulty' => 'starter',
+        'content' => '
+<div class="space-y-8">
+    <div class="rounded-2xl bg-gradient-to-br from-rose-50 to-red-50/60 p-6 border border-rose-200/80">
+        <h3 class="text-xl font-black text-rose-900 flex items-center gap-2 mb-3">
+            <span class="text-2xl">🎯</span> 1. Bính âm Hán ngữ (Pinyin) là gì?
+        </h3>
+        <p class="text-slate-700 leading-relaxed text-base">
+            <strong>Bính âm Hán ngữ (Hànyǔ Pīnyīn - 汉语拼音)</strong> là hệ thống phiên âm chữ Hán bằng chữ cái Latinh tiêu chuẩn quốc tế. Đây là chìa khóa vàng giúp bạn phát âm chuẩn xác mọi chữ Hán ngay từ bài học đầu tiên.
+        </p>
+        <div class="mt-4 p-4 bg-white rounded-xl border border-rose-100 shadow-xs">
+            <p class="text-sm font-bold text-slate-800 uppercase tracking-wide mb-3">Cấu tạo của một âm tiết tiếng Trung:</p>
+            <div class="flex flex-wrap items-center justify-center gap-3 py-2 text-center font-bold">
+                <div class="px-4 py-2 bg-red-100 text-red-800 rounded-lg">Thanh mẫu (Phụ âm)<br><span class="text-xl font-mono text-red-600">m</span></div>
+                <span class="text-2xl text-slate-400">+</span>
+                <div class="px-4 py-2 bg-amber-100 text-amber-800 rounded-lg">Vận mẫu (Nguyên âm)<br><span class="text-xl font-mono text-amber-600">a</span></div>
+                <span class="text-2xl text-slate-400">+</span>
+                <div class="px-4 py-2 bg-emerald-100 text-emerald-800 rounded-lg">Thanh điệu (Dấu thanh)<br><span class="text-xl font-mono text-emerald-600">ˇ (thanh 3)</span></div>
+                <span class="text-2xl text-slate-400">=</span>
+                <div class="px-5 py-2 bg-slate-900 text-white rounded-lg">Âm đọc hoàn chỉnh<br><span class="text-2xl font-bold text-yellow-400">mǎ (马 - con ngựa)</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-6 space-y-4">
+        <h3 class="text-xl font-black text-slate-900 flex items-center gap-2">
+            <span class="text-2xl">🎵</span> 2. Bốn thanh điệu chuẩn trong tiếng Trung (四声)
+        </h3>
+        <p class="text-slate-700 text-sm leading-relaxed">
+            Tiếng Trung có 4 thanh điệu chính và 1 thanh nhẹ (khinh thanh). Độ cao và hướng đi của giọng quyết định hoàn toàn ý nghĩa của từ:
+        </p>
+        <div class="grid gap-4 sm:grid-cols-2">
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+                <div class="flex items-center justify-between">
+                    <span class="font-black text-red-600 text-lg">Thanh 1 (Âm bổng - 55)</span>
+                    <span class="text-2xl font-mono font-bold text-slate-900">mā (妈)</span>
+                </div>
+                <p class="text-xs text-slate-500 mt-2">Cao độ 5-5. Phát âm cao và bằng phẳng, ngân dài đều (như hát nốt son): <em>māma (mẹ)</em>.</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+                <div class="flex items-center justify-between">
+                    <span class="font-black text-amber-600 text-lg">Thanh 2 (Âm thăng - 35)</span>
+                    <span class="text-2xl font-mono font-bold text-slate-900">má (麻)</span>
+                </div>
+                <p class="text-xs text-slate-500 mt-2">Cao độ 3-5. Giọng đi từ trung bình vút lên cao, tương tự dấu sắc tiếng Việt: <em>má (cây gai, tê)</em>.</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+                <div class="flex items-center justify-between">
+                    <span class="font-black text-blue-600 text-lg">Thanh 3 (Âm khúc - 214)</span>
+                    <span class="text-2xl font-mono font-bold text-slate-900">mǎ (马)</span>
+                </div>
+                <p class="text-xs text-slate-500 mt-2">Cao độ 2-1-4. Giọng hạ xuống mức thấp nhất rồi hơi nhấc lên, tương tự dấu hỏi: <em>mǎ (con ngựa)</em>.</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+                <div class="flex items-center justify-between">
+                    <span class="font-black text-purple-600 text-lg">Thanh 4 (Âm giáng - 51)</span>
+                    <span class="text-2xl font-mono font-bold text-slate-900">mà (骂)</span>
+                </div>
+                <p class="text-xs text-slate-500 mt-2">Cao độ 5-1. Từ độ cao nhất rơi nhanh, dứt khoát xuống mức thấp nhất (như ra lệnh): <em>mà (mắng mỏ)</em>.</p>
+            </div>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+            <span class="font-bold text-emerald-700">★ Thanh nhẹ (Khinh thanh):</span>
+            <span class="text-sm text-slate-700 ml-2">Không đánh dấu trên đầu chữ cái, đọc ngắn, nhẹ và lướt qua (ví dụ chữ thứ 2 trong: <strong>māma 妈妈</strong>, <strong>bàba 爸爸</strong>, <strong>de 的</strong>, <strong>ma 吗</strong>).</span>
+        </div>
+    </div>
+
+    <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-6 space-y-4">
+        <h3 class="text-xl font-black text-slate-900 flex items-center gap-2">
+            <span class="text-2xl">🗣️</span> 3. Hệ thống 21 Thanh mẫu (Phụ âm đầu)
+        </h3>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200 bg-white rounded-xl shadow-xs text-sm">
+                <thead class="bg-slate-100 text-slate-700 font-bold">
+                    <tr>
+                        <th class="px-4 py-3 text-left">Nhóm âm</th>
+                        <th class="px-4 py-3 text-left">Thanh mẫu</th>
+                        <th class="px-4 py-3 text-left">Mẹo phát âm chuẩn</th>
+                        <th class="px-4 py-3 text-left">Ví dụ thực tế</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-slate-700">
+                    <tr>
+                        <td class="px-4 py-3 font-semibold text-slate-900">Âm hai môi & môi răng</td>
+                        <td class="px-4 py-3 font-mono font-bold text-red-600 text-base">b, p, m, f</td>
+                        <td class="px-4 py-3"><strong>b</strong> đọc như "p" tiếng Việt; <strong>p</strong> bật hơi mạnh từ khoang miệng; <strong>m</strong> đọc như "m"; <strong>f</strong> như "ph".</td>
+                        <td class="px-4 py-3 font-mono">bàba (bố), péngyou (bạn)</td>
+                    </tr>
+                    <tr>
+                        <td class="px-4 py-3 font-semibold text-slate-900">Âm đầu lưỡi giữa</td>
+                        <td class="px-4 py-3 font-mono font-bold text-red-600 text-base">d, t, n, l</td>
+                        <td class="px-4 py-3"><strong>d</strong> đọc như "t" tiếng Việt; <strong>t</strong> đọc như "th" bật hơi; <strong>n, l</strong> như tiếng Việt.</td>
+                        <td class="px-4 py-3 font-mono">dà (lớn), tóngxué (bạn học)</td>
+                    </tr>
+                    <tr>
+                        <td class="px-4 py-3 font-semibold text-slate-900">Âm gốc lưỡi</td>
+                        <td class="px-4 py-3 font-mono font-bold text-red-600 text-base">g, k, h</td>
+                        <td class="px-4 py-3"><strong>g</strong> đọc như "c/k"; <strong>k</strong> đọc như "kh" bật hơi mạnh; <strong>h</strong> nằm giữa "h" và "kh" (hơi thở sâu).</td>
+                        <td class="px-4 py-3 font-mono">gāo (cao), kàn (xem), hǎo (tốt)</td>
+                    </tr>
+                    <tr>
+                        <td class="px-4 py-3 font-semibold text-slate-900">Âm mặt lưỡi</td>
+                        <td class="px-4 py-3 font-mono font-bold text-red-600 text-base">j, q, x</td>
+                        <td class="px-4 py-3"><strong>j</strong> đọc như "chi" nhẹ; <strong>q</strong> đọc như "chi" bật hơi mạnh; <strong>x</strong> đọc như "xi" mặt lưỡi dẹt.</td>
+                        <td class="px-4 py-3 font-mono">jiào (tên), qǐng (mời), xièxie (cảm ơn)</td>
+                    </tr>
+                    <tr>
+                        <td class="px-4 py-3 font-semibold text-slate-900">Âm uốn lưỡi (cuộn lưỡi)</td>
+                        <td class="px-4 py-3 font-mono font-bold text-red-600 text-base">zh, ch, sh, r</td>
+                        <td class="px-4 py-3">Đầu lưỡi uốn cong chạm ngạc cứng: <strong>zh</strong> đọc như "tr"; <strong>ch</strong> như "tr" bật hơi; <strong>sh</strong> như "s" uốn lưỡi; <strong>r</strong> rung nhẹ.</td>
+                        <td class="px-4 py-3 font-mono">Zhōngguó (TQ), chī (ăn), shì (là), rén (người)</td>
+                    </tr>
+                    <tr>
+                        <td class="px-4 py-3 font-semibold text-slate-900">Âm đầu lưỡi trước</td>
+                        <td class="px-4 py-3 font-mono font-bold text-red-600 text-base">z, c, s</td>
+                        <td class="px-4 py-3">Đầu lưỡi thẳng chạm mặt sau răng trên: <strong>z</strong> đọc "ch/tz" dẹt miệng; <strong>c</strong> bật hơi ma sát mạnh; <strong>s</strong> đọc như "x" thẳng lưỡi.</td>
+                        <td class="px-4 py-3 font-mono">zàijiàn (tạm biệt), cài (món ăn), sān (ba)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="rounded-2xl border border-amber-200 bg-amber-50/70 p-6 space-y-3">
+        <h3 class="text-xl font-black text-amber-900 flex items-center gap-2">
+            <span class="text-2xl">💡</span> 4. Ba quy tắc biến điệu bắt buộc phải thuộc lòng
+        </h3>
+        <ul class="space-y-3 text-sm text-slate-800">
+            <li class="p-3 bg-white rounded-xl border border-amber-200">
+                <strong>1. Biến điệu hai thanh 3:</strong> Khi 2 thanh 3 đi liền nhau, thanh 3 thứ nhất đọc thành thanh 2:<br>
+                <span class="font-mono text-emerald-700 font-bold">nǐ hǎo ➔ đọc là: ní hǎo</span> (nhưng pinyin viết vẫn giữ nǐ hǎo).
+            </li>
+            <li class="p-3 bg-white rounded-xl border border-amber-200">
+                <strong>2. Biến điệu của chữ 不 (bù):</strong> Khi đứng trước một âm tiết mang thanh 4, chữ 不 đọc thành thanh 2 (bú):<br>
+                <span class="font-mono text-emerald-700 font-bold">bù + shì ➔ bú shì (không phải)</span>, <span class="font-mono text-emerald-700 font-bold">bù + kèqi ➔ bú kèqi (đừng khách sáo)</span>.
+            </li>
+            <li class="p-3 bg-white rounded-xl border border-amber-200">
+                <strong>3. Quy tắc bỏ dấu 2 chấm của chữ "ü":</strong> Khi kết hợp với <strong>j, q, x, y</strong>, chữ <strong>ü</strong> bỏ 2 chấm viết thành <strong>u</strong> nhưng vẫn đọc tròn môi là "ü":<br>
+                <span class="font-mono text-emerald-700 font-bold">j + ü ➔ ju</span>, <span class="font-mono text-emerald-700 font-bold">q + ü ➔ qu</span>, <span class="font-mono text-emerald-700 font-bold">x + ü ➔ xu</span>, <span class="font-mono text-emerald-700 font-bold">y + ü ➔ yu</span>.
+            </li>
+        </ul>
+    </div>
+</div>',
+        'flashcards' => [
+            ['hanzi' => '妈妈', 'pinyin' => 'māma', 'meaning' => 'Mẹ (thanh 1 + thanh nhẹ)', 'example' => '我妈妈是老师。', 'example_pinyin' => 'Wǒ māma shì lǎoshī.', 'example_meaning' => 'Mẹ tôi là giáo viên.'],
+            ['hanzi' => '爸爸', 'pinyin' => 'bàba', 'meaning' => 'Bố, ba (thanh 4 + thanh nhẹ)', 'example' => '我爸爸在医院工作。', 'example_pinyin' => 'Wǒ bàba zài yīyuàn gōngzuò.', 'example_meaning' => 'Bố tôi làm việc ở bệnh viện.'],
+            ['hanzi' => '哥哥', 'pinyin' => 'gēge', 'meaning' => 'Anh trai', 'example' => '他是我哥哥。', 'example_pinyin' => 'Tā shì wǒ gēge.', 'example_meaning' => 'Anh ấy là anh trai tôi.'],
+            ['hanzi' => '弟弟', 'pinyin' => 'dìdi', 'meaning' => 'Em trai', 'example' => '弟弟今年八岁。', 'example_pinyin' => 'Dìdi jīnnián bā suì.', 'example_meaning' => 'Em trai năm nay 8 tuổi.'],
+            ['hanzi' => '妹妹', 'pinyin' => 'mèimei', 'meaning' => 'Em gái', 'example' => '妹妹很漂亮。', 'example_pinyin' => 'Mèimei hěn piàoliang.', 'example_meaning' => 'Em gái rất xinh đẹp.'],
+            ['hanzi' => '你好', 'pinyin' => 'nǐ hǎo', 'meaning' => 'Xin chào (biến điệu 2 thanh 3: ní hǎo)', 'example' => '你好！很高兴认识你。', 'example_pinyin' => 'Nǐ hǎo! Hěn gāoxìng rènshi nǐ.', 'example_meaning' => 'Xin chào! Rất vui được quen bạn.'],
+            ['hanzi' => '谢谢', 'pinyin' => 'xièxie', 'meaning' => 'Cảm ơn (thanh 4 + thanh nhẹ)', 'example' => '谢谢你的帮助。', 'example_pinyin' => 'Xièxie nǐ de bāngzhù.', 'example_meaning' => 'Cảm ơn sự giúp đỡ của bạn.'],
+            ['hanzi' => '再见', 'pinyin' => 'zàijiàn', 'meaning' => 'Tạm biệt, hẹn gặp lại (hai thanh 4)', 'example' => '我们明天再见。', 'example_pinyin' => 'Wǒmen míngtiān zàijiàn.', 'example_meaning' => 'Ngày mai gặp lại nhé.'],
+            ['hanzi' => '很好', 'pinyin' => 'hěn hǎo', 'meaning' => 'Rất tốt, rất khỏe (biến điệu: hén hǎo)', 'example' => '我很好，谢谢你。', 'example_pinyin' => 'Wǒ hěn hǎo, xièxie nǐ.', 'example_meaning' => 'Tôi rất khỏe, cảm ơn bạn.'],
+            ['hanzi' => '不客气', 'pinyin' => 'bú kèqi', 'meaning' => 'Đừng khách sáo (biến điệu chữ 不: bú kèqi)', 'example' => '不客气，请坐。', 'example_pinyin' => 'Bú kèqi, qǐng zuò.', 'example_meaning' => 'Đừng khách sáo, mời ngồi.'],
+        ],
+        'questions' => [
+            [
+                'question' => 'Thanh 1 trong tiếng Trung có cao độ và đặc điểm phát âm như thế nào?',
+                'pinyin' => 'shēngdiào',
+                'options' => ['Cao độ 5-5, cao và bằng phẳng ngân đều', 'Cao độ 5-1, rơi nhanh dứt khoát', 'Cao độ 2-1-4, xuống rồi lên', 'Cao độ 3-5, vút lên cao'],
+                'correct_answer' => 'Cao độ 5-5, cao và bằng phẳng ngân đều',
+                'explanation' => 'Thanh 1 (âm bổng) có cao độ 5-5, phát âm cao ngang, bằng phẳng và kéo dài nhẹ (ví dụ: mā, sān).',
+                'difficulty' => 'starter',
+                'skill_type' => 'listening',
+            ],
+            [
+                'question' => 'Khi hai thanh 3 đi liền nhau (ví dụ: 你好 nǐ hǎo), quy tắc biến điệu chuẩn là gì?',
+                'pinyin' => 'nǐ hǎo biàndiào',
+                'options' => ['Thanh 3 đầu đọc thành thanh 2 (ní hǎo)', 'Thanh 3 sau đọc thành thanh 1', 'Cả hai cùng đọc thành thanh 4', 'Giữ nguyên không thay đổi'],
+                'correct_answer' => 'Thanh 3 đầu đọc thành thanh 2 (ní hǎo)',
+                'explanation' => 'Khi 2 thanh 3 đi liền nhau, thanh 3 thứ nhất chuyển sang đọc thành thanh 2, nhưng khi viết pinyin vẫn giữ nguyên dấu.',
+                'difficulty' => 'starter',
+                'skill_type' => 'grammar',
+            ],
+            [
+                'question' => 'Khi các phụ âm j, q, x, y kết hợp với nguyên âm "ü", chữ viết pinyin sẽ thay đổi như thế nào?',
+                'pinyin' => 'j, q, x + ü',
+                'options' => ['Bỏ dấu 2 chấm trên đầu chữ ü, viết thành u (ju, qu, xu, yu)', 'Giữ nguyên dấu 2 chấm', 'Đổi chữ ü thành chữ i', 'Thêm chữ e vào sau'],
+                'correct_answer' => 'Bỏ dấu 2 chấm trên đầu chữ ü, viết thành u (ju, qu, xu, yu)',
+                'explanation' => 'Quy tắc chính tả Pinyin: j, q, x, y khi đi với ü thì bỏ 2 chấm (ju, qu, xu, yu), nhưng vẫn phát âm tròn môi là ü.',
+                'difficulty' => 'starter',
+                'skill_type' => 'grammar',
+            ],
+            [
+                'question' => 'Trong từ "妈妈" (māma - mẹ), chữ "ma" thứ hai mang thanh gì?',
+                'pinyin' => 'qīngshēng',
+                'options' => ['Thanh nhẹ (Khinh thanh), đọc ngắn và nhẹ', 'Thanh 1', 'Thanh 3', 'Thanh 4'],
+                'correct_answer' => 'Thanh nhẹ (Khinh thanh), đọc ngắn và nhẹ',
+                'explanation' => 'Chữ thứ hai trong các từ xưng hô lặp lại (māma, bàba, gēge, mèimei) đều mang thanh nhẹ (khinh thanh).',
+                'difficulty' => 'starter',
+                'skill_type' => 'listening',
+            ],
+            [
+                'question' => 'Chữ "不" (bù) đọc thành thanh 2 (bú) khi nào?',
+                'pinyin' => 'bú shì',
+                'options' => ['Khi đứng trước âm tiết mang thanh 4 (như 不是 bú shì, 不客气 bú kèqi)', 'Khi đứng trước thanh 1', 'Khi đứng ở cuối câu', 'Khi đứng trước thanh 2'],
+                'correct_answer' => 'Khi đứng trước âm tiết mang thanh 4 (như 不是 bú shì, 不客气 bú kèqi)',
+                'explanation' => 'Chữ 不 (bù) mang thanh 4, khi đứng trước một âm tiết thanh 4 khác sẽ biến điệu thành thanh 2 (bú).',
+                'difficulty' => 'starter',
+                'skill_type' => 'grammar',
+            ],
+        ],
+    ],
+    [
+        'slug' => 'chao-hoi-gioi-thieu',
+        'title' => 'Bài thực hành: Chào hỏi & Tự giới thiệu bản thân',
+        'summary' => 'Mẫu câu giao tiếp cơ bản: Chào hỏi các đối tượng, giới thiệu họ tên, quốc tịch, nghề nghiệp và hỏi thăm người khác.',
+        'hsk_level' => 1,
+        'sort_order' => 0,
+        'estimated_minutes' => 25,
+        'accent_color' => '#b45309',
+        'difficulty' => 'starter',
+        'content' => '
+<div class="space-y-8">
+    <div class="rounded-2xl bg-amber-50/70 p-6 border border-amber-200/80">
+        <h3 class="text-lg font-black text-amber-900 flex items-center gap-2 mb-4">
+            <span class="text-xl">💬</span> Bài khóa 1: Chào hỏi lần đầu gặp gỡ (初次见面)
+        </h3>
+        <div class="space-y-3">
+            <div class="p-4 bg-white rounded-xl shadow-xs border border-amber-100">
+                <p class="text-xl font-bold text-slate-900">A: 你好！</p>
+                <p class="text-sm font-sans text-amber-700 font-medium">Nǐ hǎo!</p>
+                <p class="text-sm text-slate-600 mt-1">Xin chào bạn!</p>
+            </div>
+            <div class="p-4 bg-white rounded-xl shadow-xs border border-amber-100">
+                <p class="text-xl font-bold text-slate-900">B: 你好！很高兴认识你！</p>
+                <p class="text-sm font-sans text-amber-700 font-medium">Nǐ hǎo! Hěn gāoxìng rènshi nǐ!</p>
+                <p class="text-sm text-slate-600 mt-1">Xin chào! Rất vui được quen biết bạn!</p>
+            </div>
+            <div class="p-4 bg-white rounded-xl shadow-xs border border-amber-100">
+                <p class="text-xl font-bold text-slate-900">A: 认识你我也很高兴！</p>
+                <p class="text-sm font-sans text-amber-700 font-medium">Rènshi nǐ wǒ yě hěn gāoxìng!</p>
+                <p class="text-sm text-slate-600 mt-1">Được quen bạn tôi cũng rất vui!</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="rounded-2xl bg-orange-50/70 p-6 border border-orange-200/80">
+        <h3 class="text-lg font-black text-orange-900 flex items-center gap-2 mb-4">
+            <span class="text-xl">💬</span> Bài khóa 2: Hỏi tên, quốc tịch và nghề nghiệp (自我介绍)
+        </h3>
+        <div class="space-y-3">
+            <div class="p-4 bg-white rounded-xl shadow-xs border border-orange-100">
+                <p class="text-xl font-bold text-slate-900">A: 请问，你叫什么名字？</p>
+                <p class="text-sm font-sans text-orange-700 font-medium">Qǐngwèn, nǐ jiào shénme míngzi?</p>
+                <p class="text-sm text-slate-600 mt-1">Xin hỏi, bạn tên là gì?</p>
+            </div>
+            <div class="p-4 bg-white rounded-xl shadow-xs border border-orange-100">
+                <p class="text-xl font-bold text-slate-900">B: 我叫 Minh。你是哪国人？</p>
+                <p class="text-sm font-sans text-orange-700 font-medium">Wǒ jiào Minh. Nǐ shì nǎ guó rén?</p>
+                <p class="text-sm text-slate-600 mt-1">Tôi tên là Minh. Bạn là người nước nào?</p>
+            </div>
+            <div class="p-4 bg-white rounded-xl shadow-xs border border-orange-100">
+                <p class="text-xl font-bold text-slate-900">A: 我是中国人，我是汉语老师。你呢？</p>
+                <p class="text-sm font-sans text-orange-700 font-medium">Wǒ shì Zhōngguó rén, wǒ shì Hànyǔ lǎoshī. Nǐ ne?</p>
+                <p class="text-sm text-slate-600 mt-1">Tôi là người Trung Quốc, tôi là giáo viên tiếng Trung. Còn bạn thì sao?</p>
+            </div>
+            <div class="p-4 bg-white rounded-xl shadow-xs border border-orange-100">
+                <p class="text-xl font-bold text-slate-900">B: 我是越南人，我是学生。</p>
+                <p class="text-sm font-sans text-orange-700 font-medium">Wǒ shì Yuènán rén, wǒ shì xuésheng.</p>
+                <p class="text-sm text-slate-600 mt-1">Tôi là người Việt Nam, tôi là học sinh sinh viên.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <h3 class="text-xl font-black text-slate-900 flex items-center gap-2">
+            <span class="text-xl">📖</span> Ngữ pháp trọng điểm & Mẫu câu ứng dụng
+        </h3>
+
+        <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-6 space-y-3">
+            <h4 class="font-bold text-slate-900 text-base">1. Mẫu câu tự giới thiệu tên mình</h4>
+            <p class="text-slate-700 text-sm leading-relaxed">
+                - Cấu trúc: <strong>我叫 + [Tên]</strong> (Tôi tên là...): <strong>我叫李月 (Tôi tên là Lý Nguyệt)</strong>.<br>
+                - Cách hỏi tên người khác: <strong>你叫什么名字？ (Bạn tên là gì?)</strong>.
+            </p>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-6 space-y-3">
+            <h4 class="font-bold text-slate-900 text-base">2. Cấu trúc định danh với "是" (shì - là)</h4>
+            <p class="text-slate-700 text-sm leading-relaxed">
+                - Khẳng định: <strong>Chủ ngữ + 是 + Danh từ</strong>: <strong>我是越南人 (Tôi là người Việt Nam)</strong>.<br>
+                - Phủ định: <strong>Chủ ngữ + 不是 + Danh từ</strong>: <strong>我不是老师 (Tôi không phải giáo viên)</strong>.<br>
+                - Câu hỏi Yes/No: <strong>Chủ ngữ + 是 + Danh từ + 吗？</strong>: <strong>你是学生吗？ (Bạn là học sinh phải không?)</strong>.
+            </p>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-6 space-y-3">
+            <h4 class="font-bold text-slate-900 text-base">3. Câu hỏi tỉnh lược với "呢" (ne)</h4>
+            <p class="text-slate-700 text-sm leading-relaxed">
+                Dùng khi người nói muốn hỏi lại đối phương về nội dung vừa đề cập trước đó để tránh lặp lại nguyên câu:<br>
+                <strong>我是学生，你呢？ (Tôi là học sinh, còn bạn thì sao?)</strong>.
+            </p>
+        </div>
+    </div>
+</div>',
+        'flashcards' => [
+            ['hanzi' => '你好', 'pinyin' => 'nǐ hǎo', 'meaning' => 'Xin chào (chào bạn bè, người ngang hàng)', 'example' => '你好，很高兴认识你。', 'example_pinyin' => 'Nǐ hǎo, hěn gāoxìng rènshi nǐ.', 'example_meaning' => 'Xin chào, rất vui được quen bạn.'],
+            ['hanzi' => '您好', 'pinyin' => 'nín hǎo', 'meaning' => 'Xin chào (kính ngữ tôn trọng dành cho thầy cô, bề trên)', 'example' => '老师，您好！', 'example_pinyin' => 'Lǎoshī, nín hǎo!', 'example_meaning' => 'Em chào thầy ạ!'],
+            ['hanzi' => '叫', 'pinyin' => 'jiào', 'meaning' => 'Gọi là, tên là', 'example' => '我叫王方。', 'example_pinyin' => 'Wǒ jiào Wáng Fāng.', 'example_meaning' => 'Tôi tên là Vương Phương.'],
+            ['hanzi' => '什么', 'pinyin' => 'shénme', 'meaning' => 'Cái gì, gì (đại từ nghi vấn)', 'example' => '你叫什么名字？', 'example_pinyin' => 'Nǐ jiào shénme míngzi?', 'example_meaning' => 'Bạn tên là gì?'],
+            ['hanzi' => '名字', 'pinyin' => 'míngzi', 'meaning' => 'Tên, họ tên', 'example' => '好名字。', 'example_pinyin' => 'Hǎo míngzi.', 'example_meaning' => 'Tên rất hay.'],
+            ['hanzi' => '是', 'pinyin' => 'shì', 'meaning' => 'Là, phải, đúng', 'example' => '我是学生。', 'example_pinyin' => 'Wǒ shì xuésheng.', 'example_meaning' => 'Tôi là học sinh.'],
+            ['hanzi' => '越南', 'pinyin' => 'Yuènán', 'meaning' => 'Việt Nam', 'example' => '我是越南人。', 'example_pinyin' => 'Wǒ shì Yuènán rén.', 'example_meaning' => 'Tôi là người Việt Nam.'],
+            ['hanzi' => '中国', 'pinyin' => 'Zhōngguó', 'meaning' => 'Trung Quốc', 'example' => '中国很大。', 'example_pinyin' => 'Zhōngguó hěn dà.', 'example_meaning' => 'Trung Quốc rất rộng lớn.'],
+            ['hanzi' => '老师', 'pinyin' => 'lǎoshī', 'meaning' => 'Giáo viên, thầy cô giáo', 'example' => '李老师是我的汉语老师。', 'example_pinyin' => 'Lǐ lǎoshī shì wǒ de Hànyǔ lǎoshī.', 'example_meaning' => 'Cô Lý là giáo viên tiếng Hán của tôi.'],
+            ['hanzi' => '学生', 'pinyin' => 'xuésheng', 'meaning' => 'Học sinh, sinh viên', 'example' => '我们都是学生。', 'example_pinyin' => 'Wǒmen dōu shì xuésheng.', 'example_meaning' => 'Chúng tôi đều là học sinh.'],
+            ['hanzi' => '高兴', 'pinyin' => 'gāoxìng', 'meaning' => 'Vui vẻ, hân hoan', 'example' => '今天我很高兴。', 'example_pinyin' => 'Jīntiān wǒ hěn gāoxìng.', 'example_meaning' => 'Hôm nay tôi rất vui.'],
+            ['hanzi' => '认识', 'pinyin' => 'rènshi', 'meaning' => 'Quen biết, nhận biết', 'example' => '很高兴认识你！', 'example_pinyin' => 'Hěn gāoxìng rènshi nǐ!', 'example_meaning' => 'Rất vui được quen biết bạn!'],
+        ],
+        'questions' => [
+            [
+                'question' => 'Mẫu câu chuẩn dùng để hỏi tên đối phương trong tiếng Trung là gì?',
+                'pinyin' => 'Nǐ jiào shénme míngzi?',
+                'options' => ['你叫什么名字？', '你是哪国人？', '你是谁？', '你好吗？'],
+                'correct_answer' => '你叫什么名字？',
+                'explanation' => 'Cấu trúc hỏi tên thông dụng: 你叫什么名字？ (Bạn tên là gì?).',
+                'difficulty' => 'starter',
+                'skill_type' => 'grammar',
+            ],
+            [
+                'question' => 'Để nói "Tôi là người Việt Nam", câu nói chuẩn xác là:',
+                'pinyin' => 'Wǒ shì Yuènán rén',
+                'options' => ['我是越南人。', '我叫越南人。', '我没有越南人。', '我是人越南。'],
+                'correct_answer' => '我是越南人。',
+                'explanation' => 'Cấu trúc nói quốc tịch: [Chủ ngữ] + 是 + [Tên quốc gia] + 人 -> 我是越南人。',
+                'difficulty' => 'starter',
+                'skill_type' => 'grammar',
+            ],
+            [
+                'question' => 'Khi đối phương nói "很高兴认识你！", câu đáp lại lịch sự và tự nhiên nhất là gì?',
+                'pinyin' => 'Rènshi nǐ wǒ yě hěn gāoxìng',
+                'options' => ['认识你我也很高兴！', '对不起！', '不用谢！', '再见！'],
+                'correct_answer' => '认识你我也很高兴！',
+                'explanation' => 'Đáp lại "Rất vui được quen bạn" là "Được quen bạn tôi cũng rất vui" (认识你我也很高兴).',
+                'difficulty' => 'starter',
+                'skill_type' => 'vocabulary',
+            ],
+            [
+                'question' => 'Dạng phủ định của câu "他是老师" (Anh ấy là giáo viên) là gì?',
+                'pinyin' => 'Tā bú shì lǎoshī',
+                'options' => ['他不是老师。', '他不老师。', '他没是老师。', '他没有老师。'],
+                'correct_answer' => '他不是老师。',
+                'explanation' => 'Phủ định của động từ "是" là "不是" (bú shì).',
+                'difficulty' => 'starter',
+                'skill_type' => 'grammar',
+            ],
+            [
+                'question' => 'Từ "您" (nín) khác với "你" (nǐ) ở điểm nào?',
+                'pinyin' => 'nín vs nǐ',
+                'options' => ['"您" là dạng kính ngữ, thể hiện sự tôn trọng với người lớn tuổi, thầy cô', '"您" dùng cho trẻ em', '"您" là số nhiều của "你"', '"您" chỉ dùng khi tức giận'],
+                'correct_answer' => '"您" là dạng kính ngữ, thể hiện sự tôn trọng với người lớn tuổi, thầy cô',
+                'explanation' => '"您" (nín) chiết tự gồm chữ 你 ở trên và bộ Tâm 心 ở dưới, thể hiện sự tôn kính từ đáy lòng.',
+                'difficulty' => 'starter',
+                'skill_type' => 'vocabulary',
+            ],
+        ],
+    ],
+    [
         'slug' => 'hsk1-bai-01-ni-hao',
         'title' => 'Bài 1: 你好 - Xin chào',
         'summary' => 'Học các đại từ nhân xưng cơ bản, câu chào hỏi thông dụng và quy tắc biến điệu hai thanh 3.',

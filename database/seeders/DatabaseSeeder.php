@@ -131,66 +131,6 @@ class DatabaseSeeder extends Seeder
 
         $questionRows = [
             [
-                'lesson' => 'pinyin-co-ban',
-                'question' => 'Thanh 1 trong tiếng Trung có đặc điểm phát âm như thế nào?',
-                'pinyin' => 'shēngdiào',
-                'options' => ['Cao và bằng phẳng', 'Đi lên từ thấp đến cao', 'Xuống rồi lên', 'Từ cao rơi nhanh xuống'],
-                'correct_answer' => 'Cao và bằng phẳng',
-                'explanation' => 'Thanh 1 (âm bổng) phát âm cao đều, ngang và kéo dài nhẹ (ví dụ: mā).',
-                'difficulty' => 'starter',
-                'sort_order' => 1,
-            ],
-            [
-                'lesson' => 'pinyin-co-ban',
-                'question' => 'Khi hai thanh 3 đi liền nhau (ví dụ: 你好 nǐ hǎo), quy tắc biến điệu là gì?',
-                'pinyin' => 'nǐ hǎo',
-                'options' => ['Thanh 3 đầu đổi thành thanh 2', 'Thanh 3 sau đổi thành thanh 1', 'Cả hai đổi thành thanh 4', 'Giữ nguyên không đổi'],
-                'correct_answer' => 'Thanh 3 đầu đổi thành thanh 2',
-                'explanation' => 'Quy tắc biến âm 2 thanh 3: từ đầu tiên đọc thành thanh 2 (ní hǎo) nhưng khi viết pinyin vẫn giữ nguyên dấu.',
-                'difficulty' => 'starter',
-                'sort_order' => 2,
-            ],
-            [
-                'lesson' => 'chao-hoi-gioi-thieu',
-                'question' => '你好 (nǐ hǎo) có nghĩa là gì?',
-                'pinyin' => 'nǐ hǎo',
-                'options' => ['Cảm ơn', 'Xin chào', 'Tạm biệt', 'Xin lỗi'],
-                'correct_answer' => 'Xin chào',
-                'explanation' => '你好 (nǐ hǎo) là câu chào hỏi cơ bản và thông dụng nhất trong tiếng Trung.',
-                'difficulty' => 'starter',
-                'sort_order' => 1,
-            ],
-            [
-                'lesson' => 'chao-hoi-gioi-thieu',
-                'question' => 'Mẫu câu nào dùng để giới thiệu tên mình?',
-                'pinyin' => 'wǒ jiào...',
-                'options' => ['我叫 Linh。', '他是老师。', '我很高兴。', '再见。'],
-                'correct_answer' => '我叫 Linh。',
-                'explanation' => 'Cấu trúc: 我叫 + [Tên] dùng để nói "Tôi tên là...".',
-                'difficulty' => 'starter',
-                'sort_order' => 2,
-            ],
-            [
-                'lesson' => 'chao-hoi-gioi-thieu',
-                'question' => '再见 (zài jiàn) thường dùng trong hoàn cảnh nào?',
-                'pinyin' => 'zài jiàn',
-                'options' => ['Khi tạm biệt', 'Khi chào buổi sáng', 'Khi giới thiệu bản thân', 'Khi hỏi tuổi'],
-                'correct_answer' => 'Khi tạm biệt',
-                'explanation' => '再见 (zài jiàn) nghĩa đen là "hẹn gặp lại", dùng khi chia tay hoặc tạm biệt.',
-                'difficulty' => 'starter',
-                'sort_order' => 3,
-            ],
-            [
-                'lesson' => 'chao-hoi-gioi-thieu',
-                'question' => '谢谢 (xièxie) dùng để làm gì?',
-                'pinyin' => 'xiè xie',
-                'options' => ['Bày tỏ sự cảm ơn', 'Nói lời xin lỗi', 'Chào khi gặp mặt', 'Hỏi đường'],
-                'correct_answer' => 'Bày tỏ sự cảm ơn',
-                'explanation' => '谢谢 (xièxie) là từ dùng để cảm ơn người khác.',
-                'difficulty' => 'starter',
-                'sort_order' => 4,
-            ],
-            [
                 'lesson' => 'tu-vung-gia-dinh',
                 'question' => 'Từ "老师" trong tiếng Trung có nghĩa là gì?',
                 'pinyin' => 'lǎo shī',
@@ -274,18 +214,6 @@ class DatabaseSeeder extends Seeder
 
         // ─── Flashcard seed data ──────────────────────────────────────────────
         $flashcardRows = [
-            // HSK 1 – Pinyin cơ bản
-            ['lesson' => 'pinyin-co-ban', 'hsk' => 1, 'hanzi' => 'ā', 'pinyin' => 'ā', 'meaning' => 'Thanh 1 – Cao bằng', 'example' => '妈妈 māmā', 'example_pinyin' => 'māmā', 'example_meaning' => 'Mẹ (ví dụ thanh 1)', 'sort_order' => 1],
-            ['lesson' => 'pinyin-co-ban', 'hsk' => 1, 'hanzi' => 'á', 'pinyin' => 'á', 'meaning' => 'Thanh 2 – Lên cao', 'example' => '麻 má', 'example_pinyin' => 'má', 'example_meaning' => 'Tê/cây gai (ví dụ thanh 2)', 'sort_order' => 2],
-            ['lesson' => 'pinyin-co-ban', 'hsk' => 1, 'hanzi' => 'ǎ', 'pinyin' => 'ǎ', 'meaning' => 'Thanh 3 – Xuống rồi lên', 'example' => '马 mǎ', 'example_pinyin' => 'mǎ', 'example_meaning' => 'Con ngựa (ví dụ thanh 3)', 'sort_order' => 3],
-            ['lesson' => 'pinyin-co-ban', 'hsk' => 1, 'hanzi' => 'à', 'pinyin' => 'à', 'meaning' => 'Thanh 4 – Xuống nhanh', 'example' => '骂 mà', 'example_pinyin' => 'mà', 'example_meaning' => 'Mắng chửi (ví dụ thanh 4)', 'sort_order' => 4],
-
-            // HSK 1 – Chào hỏi & giới thiệu
-            ['lesson' => 'chao-hoi-gioi-thieu', 'hsk' => 1, 'hanzi' => '你好', 'pinyin' => 'nǐ hǎo', 'meaning' => 'Xin chào', 'example' => '你好，我叫 Linh。', 'example_pinyin' => 'Nǐ hǎo, wǒ jiào Linh.', 'example_meaning' => 'Xin chào, tôi tên là Linh.', 'sort_order' => 1],
-            ['lesson' => 'chao-hoi-gioi-thieu', 'hsk' => 1, 'hanzi' => '谢谢', 'pinyin' => 'xiè xie', 'meaning' => 'Cảm ơn', 'example' => '谢谢你的帮助。', 'example_pinyin' => 'Xièxie nǐ de bāngzhù.', 'example_meaning' => 'Cảm ơn sự giúp đỡ của bạn.', 'sort_order' => 2],
-            ['lesson' => 'chao-hoi-gioi-thieu', 'hsk' => 1, 'hanzi' => '再见', 'pinyin' => 'zài jiàn', 'meaning' => 'Tạm biệt', 'example' => '我们明天再见。', 'example_pinyin' => 'Wǒmen míngtiān zàijiàn.', 'example_meaning' => 'Hẹn gặp lại ngày mai.', 'sort_order' => 3],
-            ['lesson' => 'chao-hoi-gioi-thieu', 'hsk' => 1, 'hanzi' => '对不起', 'pinyin' => 'duì bu qǐ', 'meaning' => 'Xin lỗi', 'example' => '对不起，我来晚了。', 'example_pinyin' => 'Duìbuqǐ, wǒ lái wǎn le.', 'example_meaning' => 'Xin lỗi, tôi đến muộn.', 'sort_order' => 4],
-
             // HSK 2 – Từ vựng gia đình
             ['lesson' => 'tu-vung-gia-dinh', 'hsk' => 2, 'hanzi' => '学习', 'pinyin' => 'xué xí', 'meaning' => 'Học tập', 'example' => '我每天学习中文。', 'example_pinyin' => 'Wǒ měitiān xuéxí Zhōngwén.', 'example_meaning' => 'Tôi học tiếng Trung mỗi ngày.', 'sort_order' => 1],
             ['lesson' => 'tu-vung-gia-dinh', 'hsk' => 2, 'hanzi' => '朋友', 'pinyin' => 'péng you', 'meaning' => 'Bạn bè', 'example' => '他是我的朋友。', 'example_pinyin' => 'Tā shì wǒ de péngyou.', 'example_meaning' => 'Anh ấy là bạn của tôi.', 'sort_order' => 2],

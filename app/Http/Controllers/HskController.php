@@ -124,6 +124,7 @@ class HskController extends Controller
         $lessons = Lesson::where('hsk_level', $level)
             ->where('is_published', true)
             ->orderBy('sort_order')
+            ->orderBy('id')
             ->withCount(['questions', 'flashcards'])
             ->get();
 
