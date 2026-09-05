@@ -98,6 +98,7 @@ class DashboardController extends Controller
         });
 
         $starredCount = $student->starredFlashcards()->count();
+        $levelData = HskController::getLevelData($student);
 
         return view('dashboard', [
             'student' => $student,
@@ -116,6 +117,7 @@ class DashboardController extends Controller
             'dueFlashcardsCount' => $dueFlashcardsCount,
             'dueFlashcards' => $dueFlashcards,
             'starredCount' => $starredCount,
+            'levelData' => $levelData,
         ]);
     }
 

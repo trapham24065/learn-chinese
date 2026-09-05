@@ -74,14 +74,25 @@ test('hsk level show page displays standard lessons with pagination', function (
     $response->assertSee('lessons_page=2');
 });
 
-test('hsk overview route redirects to home page hsk-roadmap section', function () {
+test('hsk overview route displays hsk overview page with all 6 levels', function () {
     $response = $this->get(route('hsk.overview'));
-    $response->assertRedirect(route('home') . '#hsk-roadmap');
+    $response->assertSuccessful();
+    $response->assertSee('Lộ trình HSK');
+    $response->assertSee('HSK 1');
+    $response->assertSee('HSK 6');
+});
 
-    $homeResponse = $this->get(route('home'));
-    $homeResponse->assertSuccessful();
-    $homeResponse->assertSee('id="hsk-roadmap"', false);
-    $homeResponse->assertSee('Lộ trình HSK (HSK 1 – HSK 6)');
+test('root route redirects authenticated student to dashboard and displays welcome for guests', function () {
+    // Guest
+    $guestResponse = $this->get(route('home'));
+    $guestResponse->assertSuccessful();
+    $guestResponse->assertSee('id="hsk-roadmap"', false);
+    $guestResponse->assertSee('Lộ trình HSK (HSK 1 – HSK 6)');
+
+    // Authenticated student
+    $user = \App\Models\User::factory()->create(['role' => 'student']);
+    $authResponse = $this->actingAs($user)->get(route('home'));
+    $authResponse->assertRedirect(route('dashboard'));
 });
 
 test('lesson show page displays rich content, action buttons and tracks student progress', function () {

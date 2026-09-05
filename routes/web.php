@@ -18,13 +18,17 @@ use Illuminate\Support\Facades\Route;
 
 // C10: Cache only scalar stats (24h) — never cache Eloquent objects (serialization issues)
 Route::get('/', function () {
+    if (auth()->guard('web')->check()) {
+        return redirect()->route('dashboard');
+    }
+
     $lessonCount    = Cache::remember('home_lesson_count',    86400, fn () => Lesson::count());
     $flashcardCount = Cache::remember('home_flashcard_count', 86400, fn () => Flashcard::count());
     $questionCount  = Cache::remember('home_question_count',  86400, fn () => Question::count());
     // featuredLessons NOT cached — Eloquent Collections don't deserialize safely across deployments
     $featuredLessons = Lesson::where('is_published', true)->orderBy('sort_order')->take(3)->get();
 
-    $student = auth()->guard('web')->user();
+    $student = null;
     $levelData = HskController::getLevelData($student);
 
     return view('welcome', compact('lessonCount', 'flashcardCount', 'questionCount', 'featuredLessons', 'levelData', 'student'));

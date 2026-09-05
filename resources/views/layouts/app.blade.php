@@ -18,7 +18,7 @@
         
         {{-- 1. Pinned Top: Brand Logo --}}
         <div class="shrink-0 mb-3">
-            <a href="{{ route('home') }}" class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-950 px-3.5 py-3 text-white shadow-md shadow-slate-950/15 hover:bg-slate-900 transition">
+            <a href="{{ auth()->check() ? route('dashboard') : route('home') }}" class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-950 px-3.5 py-3 text-white shadow-md shadow-slate-950/15 hover:bg-slate-900 transition">
                 <div class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#991b1b]">
                     <span class="text-lg font-black">中</span>
                 </div>
@@ -37,14 +37,14 @@
                 {{-- Group: Học tập & Luyện tập --}}
                 <p class="px-3 pt-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Học tập & Thực hành</p>
 
-                {{-- Dashboard --}}
-                <a href="{{ route('dashboard') }}"
-                    class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('dashboard') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                {{-- Trang chủ (Dashboard) --}}
+                <a href="{{ auth()->check() ? route('dashboard') : route('home') }}"
+                    class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ (request()->routeIs('dashboard') || request()->routeIs('home')) ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
                     <span class="flex items-center gap-3">
-                        <span class="grid h-7 w-7 place-items-center rounded-lg {{ request()->routeIs('dashboard') ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
-                            <i data-lucide="bar-chart-3" class="h-4 w-4"></i>
+                        <span class="grid h-7 w-7 place-items-center rounded-lg {{ (request()->routeIs('dashboard') || request()->routeIs('home')) ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
+                            <i data-lucide="house" class="h-4 w-4"></i>
                         </span>
-                        Tổng quan
+                        Trang chủ
                     </span>
                 </a>
 
@@ -119,18 +119,6 @@
                     </span>
                     <span class="rounded-full bg-amber-100 border border-amber-300 px-1.5 py-0.2 text-[9px] font-black uppercase text-amber-800 {{ request()->routeIs('hsk.mock.*') ? 'bg-white/20 text-white border-transparent' : '' }}">Thi</span>
                 </a>
-
-                {{-- Trang chủ --}}
-                <a href="{{ route('home') }}"
-                    class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('home') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
-                    <span class="flex items-center gap-3">
-                        <span class="grid h-7 w-7 place-items-center rounded-lg {{ request()->routeIs('home') ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
-                            <i data-lucide="house" class="h-4 w-4"></i>
-                        </span>
-                        Trang chủ
-                    </span>
-                </a>
-
             </nav>
 
             {{-- Compact Streak Box --}}
@@ -191,7 +179,7 @@
             {{-- Mobile Top Bar --}}
             <div class="no-print border-b border-slate-200/80 bg-white/80 p-3 backdrop-blur lg:hidden sticky top-0 z-20">
                 <div class="flex items-center gap-2 overflow-x-auto text-xs font-semibold text-slate-700 no-scrollbar pr-4">
-                    <a href="{{ route('dashboard') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('dashboard') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">Tổng quan</a>
+                    <a href="{{ auth()->check() ? route('dashboard') : route('home') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ (request()->routeIs('dashboard') || request()->routeIs('home')) ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">Trang chủ</a>
                     <a href="{{ route('flashcards') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('flashcards') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">Thẻ nhớ</a>
                     <a href="{{ route('stories.index') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('stories.*') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold' }}">Đọc hiểu ✨</a>
                     <a href="{{ route('dictionary.index') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('dictionary.*') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-rose-50 text-rose-800 border border-rose-300 font-bold' }}">Từ điển 🎬</a>

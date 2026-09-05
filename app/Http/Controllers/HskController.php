@@ -112,9 +112,12 @@ class HskController extends Controller
         return $levelData;
     }
 
-    public function overview()
+    public function overview(): View
     {
-        return redirect()->to(route('home') . '#hsk-roadmap');
+        $student = Auth::guard('web')->user();
+        $levelData = self::getLevelData($student);
+
+        return view('hsk.overview', compact('levelData', 'student'));
     }
 
     public function show(int $level): View

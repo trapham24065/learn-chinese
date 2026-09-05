@@ -388,6 +388,63 @@
         </div>
     </section>
 
+    {{-- HSK Quick Navigation & Level Progress --}}
+    @if(isset($levelData))
+    <section class="rounded-[2rem] border border-white/80 bg-white/80 p-6 shadow-xl shadow-slate-900/5 backdrop-blur sm:p-8">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-4">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-[0.24em] text-[#991b1b]">Tiêu chuẩn chứng chỉ quốc tế</p>
+                <h2 class="mt-1 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">Lộ trình HSK 1 – HSK 6</h2>
+            </div>
+            <a href="{{ route('hsk.overview') }}" class="inline-flex items-center gap-1.5 text-xs font-bold text-[#991b1b] hover:text-red-700 transition">
+                <span>Xem chi tiết lộ trình</span>
+                <i data-lucide="arrow-right" class="h-4 w-4"></i>
+            </a>
+        </div>
+
+        <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            @foreach($levelData as $lvl => $data)
+            @php
+                $isDone = $data['completed_count'] > 0 && $data['progress_pct'] >= 100;
+            @endphp
+            <a href="{{ route('hsk.show', $lvl) }}"
+               class="group relative flex flex-col justify-between overflow-hidden rounded-2xl border bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-md {{ $data['border'] }}">
+                <div class="absolute inset-x-0 top-0 h-1" style="background: {{ $data['color'] }}"></div>
+                
+                <div class="flex items-center justify-between">
+                    <span class="rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wider {{ $data['badge'] }}">
+                        HSK {{ $lvl }}
+                    </span>
+                    @if($isDone)
+                        <i data-lucide="circle-check-big" class="h-3.5 w-3.5 text-emerald-500"></i>
+                    @elseif($data['progress_pct'] > 0)
+                        <span class="text-[10px] font-bold text-blue-600">{{ $data['progress_pct'] }}%</span>
+                    @else
+                        <span class="text-[10px] text-slate-400">0%</span>
+                    @endif
+                </div>
+
+                <div class="mt-3">
+                    <p class="text-xs font-bold text-slate-800 group-hover:text-[#991b1b] transition line-clamp-1">
+                        {{ $data['label'] }}
+                    </p>
+                    <p class="text-[11px] text-slate-500 mt-0.5">
+                        {{ $data['lesson_count'] }} bài • {{ $data['flashcard_count'] }} từ
+                    </p>
+                </div>
+
+                <div class="mt-3">
+                    <div class="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
+                        <div class="h-1.5 rounded-full transition-all duration-500"
+                             style="width: {{ $data['progress_pct'] }}%; background: {{ $data['color'] }}"></div>
+                    </div>
+                </div>
+            </a>
+            @endforeach
+        </div>
+    </section>
+    @endif
+
     {{-- Interactive Curriculum / Lộ trình bài học đầy đủ --}}
     <section class="rounded-[2rem] border border-white/80 bg-white/80 p-6 shadow-xl shadow-slate-900/5 backdrop-blur sm:p-8">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-6">
