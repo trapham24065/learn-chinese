@@ -19,9 +19,25 @@ class FlashcardController extends Controller
     {
         $lessons = Lesson::query()
             ->where('is_published', true)
+            ->orderBy('hsk_level')
             ->orderBy('sort_order')
+            ->orderBy('id')
             ->withCount('flashcards')
             ->get();
+
+        $lessonsByLevel = $lessons->where('flashcards_count', '>', 0)->groupBy('hsk_level');
+
+        $availableHskLevels = Flashcard::query()
+            ->where('is_active', true)
+            ->whereNotNull('hsk_level')
+            ->distinct()
+            ->orderBy('hsk_level')
+            ->pluck('hsk_level')
+            ->all();
+
+        if (empty($availableHskLevels)) {
+            $availableHskLevels = [1, 2, 3];
+        }
 
         $lessonSlug  = $request->query('lesson');
         $hskLevel    = $request->query('hsk');
@@ -103,7 +119,7 @@ class FlashcardController extends Controller
 
         return view('flashcards', compact(
             'flashcards', 'lessons', 'lessonSlug', 'hskLevel', 'search', 'isStarred', 'starredCount',
-            'activeLesson', 'totalCount', 'deckBatch', 'deckTotal'
+            'activeLesson', 'totalCount', 'deckBatch', 'deckTotal', 'lessonsByLevel', 'availableHskLevels'
         ));
     }
 

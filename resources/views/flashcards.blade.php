@@ -92,47 +92,114 @@
     </div>
 </section>
 
-{{-- Filters and Search --}}
-<div class="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-    {{-- Lesson Filter Tabs --}}
-    <div class="flex flex-wrap items-center gap-2">
-        <a href="{{ route('flashcards', array_filter(['q' => $search])) }}"
-            class="rounded-full px-4 py-2 text-sm font-semibold transition
-                  {{ (! $lessonSlug && ! $isStarred && ! $hskLevel) ? 'bg-[#991b1b] text-white shadow-md' : 'bg-white/80 text-slate-700 border border-slate-200 hover:border-[#991b1b] hover:text-[#991b1b]' }}">
-            Tất cả
-        </a>
+{{-- Filters and Search Toolbar --}}
+<div class="mb-8 space-y-3">
+    <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        {{-- Primary Filter Tabs, Level Pills & Lesson Dropdown --}}
+        <div class="flex flex-wrap items-center gap-2">
+            {{-- All Tab --}}
+            <a href="{{ route('flashcards', array_filter(['q' => $search])) }}"
+                class="rounded-full px-4 py-2 text-sm font-semibold transition shadow-xs
+                      {{ (! $lessonSlug && ! $isStarred && ! $hskLevel) ? 'bg-[#991b1b] text-white shadow-md' : 'bg-white/80 text-slate-700 border border-slate-200 hover:border-[#991b1b] hover:text-[#991b1b]' }}">
+                Tất cả
+            </a>
 
-        {{-- Starred Words Filter Tab --}}
-        <a href="{{ route('flashcards', array_filter(['starred' => 1, 'q' => $search])) }}"
-            class="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition
-                  {{ $isStarred ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20' : 'bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100 hover:border-amber-300' }}">
-            <i data-lucide="star" class="h-3.5 w-3.5 {{ $isStarred ? 'fill-current text-white' : 'fill-current text-amber-500' }}"></i>
-            <span>Sổ từ đã lưu</span>
-            <span class="rounded-full px-2 py-0.5 text-xs font-bold {{ $isStarred ? 'bg-white/25 text-white' : 'bg-amber-200 text-amber-950' }}">
-                {{ $starredCount }}
-            </span>
-        </a>
+            {{-- Starred Words Filter Tab --}}
+            <a href="{{ route('flashcards', array_filter(['starred' => 1, 'q' => $search])) }}"
+                class="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition shadow-xs
+                      {{ $isStarred ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20' : 'bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100 hover:border-amber-300' }}">
+                <i data-lucide="star" class="h-3.5 w-3.5 {{ $isStarred ? 'fill-current text-white' : 'fill-current text-amber-500' }}"></i>
+                <span>Sổ từ đã lưu</span>
+                <span class="rounded-full px-2 py-0.5 text-xs font-bold {{ $isStarred ? 'bg-white/25 text-white' : 'bg-amber-200 text-amber-950' }}">
+                    {{ $starredCount }}
+                </span>
+            </a>
 
-        @foreach($lessons as $lesson)
-        @if($lesson->flashcards_count > 0)
-        <a href="{{ route('flashcards', array_filter(['lesson' => $lesson->slug, 'q' => $search])) }}"
-            class="rounded-full px-4 py-2 text-sm font-semibold transition
-                      {{ $lessonSlug === $lesson->slug ? 'bg-[#991b1b] text-white shadow-md' : 'bg-white/80 text-slate-700 border border-slate-200 hover:border-[#991b1b] hover:text-[#991b1b]' }}">
-            {{ $lesson->title }}
-        </a>
-        @endif
-        @endforeach
+            <div class="hidden sm:block h-5 w-px bg-slate-200 mx-1"></div>
+
+            {{-- HSK Level Pills --}}
+            @foreach($availableHskLevels as $level)
+            <a href="{{ route('flashcards', array_filter(['hsk' => $level, 'q' => $search])) }}"
+                class="rounded-full px-3.5 py-2 text-sm font-semibold transition shadow-xs
+                      {{ ($hskLevel == $level && ! $lessonSlug && ! $isStarred) ? 'bg-slate-900 text-white shadow-md' : 'bg-white/80 text-slate-700 border border-slate-200 hover:border-slate-400 hover:text-slate-900' }}">
+                HSK {{ $level }}
+            </a>
+            @endforeach
+
+            {{-- Compact Grouped Lesson Selector Dropdown --}}
+            <div class="relative inline-flex items-center">
+                <select onchange="if(this.value){ window.location.href = this.value; }"
+                    class="appearance-none rounded-full border border-slate-200 bg-white/90 py-2 pl-4 pr-9 text-sm font-semibold text-slate-700 shadow-xs outline-none transition hover:border-[#991b1b] focus:border-[#991b1b] focus:ring-1 focus:ring-[#991b1b] cursor-pointer max-w-[240px] sm:max-w-xs truncate">
+                    <option value="{{ route('flashcards', array_filter(['hsk' => $hskLevel, 'q' => $search])) }}">
+                        📖 Chọn bài học cụ thể...
+                    </option>
+                    @foreach($lessonsByLevel as $lvl => $lvlLessons)
+                        <optgroup label="── {{ $lvl ? 'HSK ' . $lvl : 'Bài học' }} ──">
+                            @foreach($lvlLessons as $l)
+                                <option value="{{ route('flashcards', array_filter(['lesson' => $l->slug, 'q' => $search])) }}"
+                                        {{ $lessonSlug === $l->slug ? 'selected' : '' }}>
+                                    {{ $l->title }} ({{ $l->flashcards_count }} từ)
+                                </option>
+                            @endforeach
+                        </optgroup>
+                    @endforeach
+                </select>
+                <i data-lucide="chevron-down" class="pointer-events-none absolute right-3 top-2.5 h-4 w-4 text-slate-400"></i>
+            </div>
+        </div>
+
+        {{-- Search Form --}}
+        <form action="{{ route('flashcards') }}" method="GET" class="relative w-full sm:w-72 shrink-0">
+            @if($lessonSlug) <input type="hidden" name="lesson" value="{{ $lessonSlug }}"> @endif
+            @if($hskLevel && ! $lessonSlug) <input type="hidden" name="hsk" value="{{ $hskLevel }}"> @endif
+            @if($isStarred) <input type="hidden" name="starred" value="1"> @endif
+            <input type="text" name="q" value="{{ $search ?? '' }}" placeholder="Tìm chữ Hán, Pinyin, Nghĩa..." 
+                   class="w-full rounded-full border border-slate-200 bg-white/90 py-2 pl-10 pr-9 text-sm text-slate-800 shadow-xs outline-none transition focus:border-[#991b1b] focus:ring-1 focus:ring-[#991b1b]">
+            <i data-lucide="search" class="absolute left-3.5 top-2.5 h-4 w-4 text-slate-400"></i>
+            @if($search)
+                <a href="{{ route('flashcards', array_filter(['lesson' => $lessonSlug, 'hsk' => $hskLevel, 'starred' => $isStarred ? 1 : null])) }}"
+                   class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 transition"
+                   title="Xóa tìm kiếm">
+                    <i data-lucide="x" class="h-4 w-4"></i>
+                </a>
+            @endif
+        </form>
     </div>
 
-    {{-- Search Form --}}
-    <form action="{{ route('flashcards') }}" method="GET" class="relative w-full lg:max-w-xs">
-        @if($lessonSlug) <input type="hidden" name="lesson" value="{{ $lessonSlug }}"> @endif
-        @if($hskLevel) <input type="hidden" name="hsk" value="{{ $hskLevel }}"> @endif
-        @if($isStarred) <input type="hidden" name="starred" value="1"> @endif
-        <input type="text" name="q" value="{{ $search ?? '' }}" placeholder="Tìm chữ Hán, Pinyin, Nghĩa..." 
-               class="w-full rounded-full border border-slate-200 bg-white/80 py-2 pl-10 pr-4 text-sm text-slate-800 shadow-sm outline-none transition focus:border-[#991b1b] focus:ring-1 focus:ring-[#991b1b]">
-        <i data-lucide="search" class="absolute left-3.5 top-2.5 h-4 w-4 text-slate-400"></i>
-    </form>
+    {{-- Active Filter Tags Row (Shown only when filtering by lesson or searching) --}}
+    @if($activeLesson || $search)
+    <div class="flex flex-wrap items-center gap-2 pt-1 text-xs">
+        <span class="font-medium text-slate-500">Đang lọc theo:</span>
+        
+        @if($activeLesson)
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-red-50 border border-red-200 px-3 py-1 font-medium text-[#991b1b]">
+            <i data-lucide="book-open" class="h-3.5 w-3.5"></i>
+            <span>Bài học: {{ $activeLesson->title }}</span>
+            <a href="{{ route('flashcards', array_filter(['hsk' => $activeLesson->hsk_level, 'q' => $search])) }}" 
+               class="ml-0.5 rounded-full p-0.5 hover:bg-red-200/60 transition text-red-600"
+               title="Bỏ lọc bài học">
+                <i data-lucide="x" class="h-3 w-3"></i>
+            </a>
+        </span>
+        @endif
+
+        @if($search)
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 border border-slate-200 px-3 py-1 font-medium text-slate-700">
+            <i data-lucide="search" class="h-3.5 w-3.5 text-slate-500"></i>
+            <span>Từ khóa: "{{ $search }}"</span>
+            <a href="{{ route('flashcards', array_filter(['lesson' => $lessonSlug, 'hsk' => $hskLevel, 'starred' => $isStarred ? 1 : null])) }}" 
+               class="ml-0.5 rounded-full p-0.5 hover:bg-slate-200 transition text-slate-600"
+               title="Bỏ tìm kiếm">
+                <i data-lucide="x" class="h-3 w-3"></i>
+            </a>
+        </span>
+        @endif
+
+        <a href="{{ route('flashcards') }}" class="text-slate-400 hover:text-[#991b1b] underline font-medium ml-1 transition">
+            Xóa tất cả bộ lọc
+        </a>
+    </div>
+    @endif
 </div>
 
 @if($flashcards->isEmpty())

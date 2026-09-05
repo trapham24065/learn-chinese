@@ -19,8 +19,12 @@ class QuizController extends Controller
         $lessons = Lesson::query()
             ->where('is_published', true)
             ->withCount(['questions' => fn ($q) => $q->where('is_active', true)])
+            ->orderBy('hsk_level')
             ->orderBy('sort_order')
+            ->orderBy('id')
             ->get();
+
+        $lessonsByLevel = $lessons->where('questions_count', '>', 0)->groupBy('hsk_level');
 
         $selectedLessonSlug = $request->query('lesson');
         $selectedLesson = null;
@@ -57,6 +61,7 @@ class QuizController extends Controller
 
         return view('quiz', [
             'lessons'             => $lessons,
+            'lessonsByLevel'      => $lessonsByLevel,
             'selectedLessonSlug'  => $selectedLessonSlug ?: 'all',
             'selectedLesson'      => $selectedLesson,
             'questions'           => $questions,
