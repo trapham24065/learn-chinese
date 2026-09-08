@@ -176,28 +176,205 @@
 
     <main class="min-h-screen flex flex-col justify-between">
         <div>
-            {{-- Mobile Top Bar --}}
-            <div class="no-print border-b border-slate-200/80 bg-white/80 p-3 backdrop-blur lg:hidden sticky top-0 z-20">
-                <div class="flex items-center gap-2 overflow-x-auto text-xs font-semibold text-slate-700 no-scrollbar pr-4">
-                    <a href="{{ auth()->check() ? route('dashboard') : route('home') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ (request()->routeIs('dashboard') || request()->routeIs('home')) ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">Trang chủ</a>
-                    <a href="{{ route('flashcards') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('flashcards') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">Thẻ nhớ</a>
-                    <a href="{{ route('stories.index') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('stories.*') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold' }}">Đọc hiểu ✨</a>
-                    <a href="{{ route('dictionary.index') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('dictionary.*') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-rose-50 text-rose-800 border border-rose-300 font-bold' }}">Từ điển 🎬</a>
-                    <a href="{{ route('quiz') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('quiz') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">Luyện tập</a>
-                    <a href="{{ route('hsk.overview') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ (request()->routeIs('hsk.overview') || request()->routeIs('hsk.show')) ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-100 hover:bg-slate-200' }}">HSK</a>
-                    <a href="{{ route('hsk.mock.index') }}" class="shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 {{ request()->routeIs('hsk.mock.*') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-amber-100 text-amber-900 border border-amber-300' }}">Thi thử HSK ⭐</a>
-                    @if ($authUser)
-                    <form method="POST" action="{{ route('logout') }}" class="inline shrink-0">
-                        @csrf
-                        <button type="submit" class="rounded-full bg-red-50 text-red-700 px-3 py-1.5 text-[10px] sm:text-xs font-bold whitespace-nowrap hover:bg-red-100 transition">Thoát</button>
-                    </form>
-                    @else
-                    <a href="{{ route('register') }}" class="shrink-0 whitespace-nowrap rounded-full bg-[#991b1b] text-white px-3 py-1.5 text-[10px] sm:text-xs font-bold shadow-md">Đăng ký</a>
-                    @endif
-                    {{-- Spacer to add padding at the end of scroll --}}
-                    <div class="w-1 shrink-0"></div>
-                </div>
-            </div>
+            {{-- Mobile Navigation (hidden on lg desktop) --}}
+            <div class="no-print lg:hidden" x-data="{ mobileMenuOpen: false }" @keydown.escape.window="mobileMenuOpen = false">
+
+                {{-- Sticky Top Header Bar --}}
+                <header class="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-slate-200/80 bg-white/95 px-4 py-3 backdrop-blur shadow-sm shadow-slate-900/5">
+
+                    {{-- Left: Brand Logo --}}
+                    <a href="{{ auth()->check() ? route('dashboard') : route('home') }}" class="flex items-center gap-2.5 min-w-0">
+                        <div class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#991b1b] text-white shadow-sm">
+                            <span class="text-sm font-black">中</span>
+                        </div>
+                        <div class="min-w-0 truncate">
+                            <p class="text-sm font-black tracking-tight text-slate-950">Learn Chinese</p>
+                            <p class="text-[10px] text-slate-500 leading-none">Học tiếng Trung</p>
+                        </div>
+                    </a>
+
+                    {{-- Right: User avatar + Hamburger --}}
+                    <div class="flex shrink-0 items-center gap-2">
+                        @if ($authUser)
+                            <a href="{{ route('profile.edit') }}" title="{{ $authUser->name }}"
+                               class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white shadow-sm ring-2 ring-white hover:opacity-90 transition">
+                                {{ strtoupper(substr($authUser->name ?? 'U', 0, 1)) }}
+                            </a>
+                        @else
+                            <a href="{{ route('login') }}" class="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 shadow-sm transition">
+                                Đăng nhập
+                            </a>
+                        @endif
+
+                        {{-- Hamburger Button --}}
+                        <button @click="mobileMenuOpen = true"
+                                aria-label="Mở menu"
+                                class="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95">
+                            <i data-lucide="menu" class="h-5 w-5"></i>
+                        </button>
+                    </div>
+                </header>
+
+                {{-- Dark Backdrop Overlay --}}
+                <div x-show="mobileMenuOpen"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0"
+                     x-transition:enter-end="opacity-100"
+                     x-transition:leave="transition ease-in duration-150"
+                     x-transition:leave-start="opacity-100"
+                     x-transition:leave-end="opacity-0"
+                     @click="mobileMenuOpen = false"
+                     class="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-sm"
+                     style="display:none;"></div>
+
+                {{-- Slide-in Drawer Panel --}}
+                <div x-show="mobileMenuOpen"
+                     x-transition:enter="transition ease-out duration-300 transform"
+                     x-transition:enter-start="-translate-x-full"
+                     x-transition:enter-end="translate-x-0"
+                     x-transition:leave="transition ease-in duration-200 transform"
+                     x-transition:leave-start="translate-x-0"
+                     x-transition:leave-end="-translate-x-full"
+                     class="fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col bg-white shadow-2xl shadow-slate-950/20"
+                     style="display:none;">
+
+                    {{-- Drawer Header --}}
+                    <div class="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 py-4">
+                        <a href="{{ auth()->check() ? route('dashboard') : route('home') }}"
+                           @click="mobileMenuOpen = false"
+                           class="flex items-center gap-3">
+                            <div class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#991b1b] shadow-md shadow-red-950/20">
+                                <span class="text-base font-black text-white">中</span>
+                            </div>
+                            <div>
+                                <p class="text-xs font-black uppercase tracking-[0.15em] text-slate-900">Learn Chinese</p>
+                                <p class="text-[10px] text-slate-500">Học tiếng Trung</p>
+                            </div>
+                        </a>
+                        <button @click="mobileMenuOpen = false"
+                                aria-label="Đóng menu"
+                                class="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 active:scale-95">
+                            <i data-lucide="x" class="h-5 w-5"></i>
+                        </button>
+                    </div>
+
+                    {{-- Drawer Navigation Links --}}
+                    <nav class="flex-1 overflow-y-auto px-4 py-4 space-y-0.5">
+                        <p class="px-2 pb-2 pt-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">Học tập &amp; Thực hành</p>
+
+                        <a href="{{ auth()->check() ? route('dashboard') : route('home') }}"
+                           @click="mobileMenuOpen = false"
+                           class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ (request()->routeIs('dashboard') || request()->routeIs('home')) ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                            <i data-lucide="house" class="h-4 w-4 shrink-0"></i>
+                            Trang chủ
+                        </a>
+
+                        <a href="{{ route('flashcards') }}"
+                           @click="mobileMenuOpen = false"
+                           class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ request()->routeIs('flashcards') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                            <i data-lucide="layers" class="h-4 w-4 shrink-0"></i>
+                            Thẻ ghi nhớ
+                        </a>
+
+                        <a href="{{ route('stories.index') }}"
+                           @click="mobileMenuOpen = false"
+                           class="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ request()->routeIs('stories.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                            <span class="flex items-center gap-3">
+                                <i data-lucide="book-open-check" class="h-4 w-4 shrink-0"></i>
+                                Luyện đọc hiểu
+                            </span>
+                            <span class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black {{ request()->routeIs('stories.*') ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-800' }}">Mới</span>
+                        </a>
+
+                        <a href="{{ route('dictionary.index') }}"
+                           @click="mobileMenuOpen = false"
+                           class="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ request()->routeIs('dictionary.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                            <span class="flex items-center gap-3">
+                                <i data-lucide="video" class="h-4 w-4 shrink-0"></i>
+                                Từ điển &amp; Video
+                            </span>
+                            <span class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black {{ request()->routeIs('dictionary.*') ? 'bg-white/20 text-white' : 'bg-red-100 text-red-800' }}">Hot</span>
+                        </a>
+
+                        <a href="{{ route('quiz') }}"
+                           @click="mobileMenuOpen = false"
+                           class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ request()->routeIs('quiz') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                            <i data-lucide="target" class="h-4 w-4 shrink-0"></i>
+                            Luyện tập nhanh
+                        </a>
+
+                        <p class="px-2 pb-2 pt-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Khung Chứng chỉ HSK</p>
+
+                        <a href="{{ route('hsk.overview') }}"
+                           @click="mobileMenuOpen = false"
+                           class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ (request()->routeIs('hsk.overview') || request()->routeIs('hsk.show')) ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                            <i data-lucide="graduation-cap" class="h-4 w-4 shrink-0"></i>
+                            Lộ trình HSK
+                        </a>
+
+                        <a href="{{ route('hsk.mock.index') }}"
+                           @click="mobileMenuOpen = false"
+                           class="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ request()->routeIs('hsk.mock.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                            <span class="flex items-center gap-3">
+                                <i data-lucide="award" class="h-4 w-4 shrink-0"></i>
+                                Thi thử HSK
+                            </span>
+                            <span class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black {{ request()->routeIs('hsk.mock.*') ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-900' }}">Thi</span>
+                        </a>
+                    </nav>
+
+                    {{-- Drawer Footer: Streak + User Info --}}
+                    <div class="shrink-0 space-y-3 border-t border-slate-100 px-4 py-4">
+
+                        {{-- Streak Box --}}
+                        <div class="flex items-center justify-between rounded-xl bg-slate-950 px-4 py-3 text-white">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="flame" class="h-4 w-4 text-amber-400"></i>
+                                <p class="text-xs font-semibold text-slate-400">Streak học tập</p>
+                            </div>
+                            <p class="text-sm font-black text-amber-300">
+                                {{ str_pad($sidebarStreak ?? 0, 2, '0', STR_PAD_LEFT) }} ngày
+                            </p>
+                        </div>
+
+                        {{-- User Profile / Auth Actions --}}
+                        @if ($authUser)
+                            <div class="flex items-center justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50 p-2">
+                                <a href="{{ route('profile.edit') }}" @click="mobileMenuOpen = false" class="flex min-w-0 items-center gap-2 hover:opacity-80 transition">
+                                    <div class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-slate-900 text-xs font-bold text-white">
+                                        {{ strtoupper(substr($authUser->name ?? 'U', 0, 1)) }}
+                                    </div>
+                                    <div class="min-w-0 truncate">
+                                        <p class="truncate text-xs font-bold text-slate-900">{{ $authUser->name }}</p>
+                                        <p class="truncate text-[10px] text-slate-500">{{ $authUser->isAdmin() ? 'Quản trị viên' : $authUser->email }}</p>
+                                    </div>
+                                </a>
+                                <form method="POST" action="{{ route('logout') }}" class="shrink-0">
+                                    @csrf
+                                    <button type="submit" title="Đăng xuất"
+                                            class="grid h-8 w-8 place-items-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:bg-red-50 hover:text-red-600">
+                                        <i data-lucide="log-out" class="h-3.5 w-3.5"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        @else
+                            <div class="grid grid-cols-2 gap-2">
+                                <a href="{{ route('login') }}" @click="mobileMenuOpen = false"
+                                   class="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-2.5 text-xs font-bold text-slate-700 transition hover:bg-slate-50">
+                                    <i data-lucide="log-in" class="h-3.5 w-3.5"></i>
+                                    Đăng nhập
+                                </a>
+                                <a href="{{ route('register') }}" @click="mobileMenuOpen = false"
+                                   class="flex items-center justify-center gap-1.5 rounded-xl bg-[#991b1b] py-2.5 text-xs font-bold text-white shadow-md shadow-red-950/15 transition hover:bg-red-800">
+                                    <i data-lucide="user-plus" class="h-3.5 w-3.5"></i>
+                                    Đăng ký
+                                </a>
+                            </div>
+                        @endif
+                    </div>
+
+                </div>{{-- End Drawer --}}
+            </div>{{-- End Mobile Navigation --}}
 
             <div class="px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
                 @yield('content')
