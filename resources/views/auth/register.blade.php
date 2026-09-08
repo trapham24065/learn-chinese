@@ -16,6 +16,29 @@
             </p>
         </div>
 
+        @if(function_exists('setting_bool') && ! setting_bool('allow_registration', true))
+            <div class="rounded-2xl border border-amber-200 bg-amber-50/80 p-6 text-center space-y-4">
+                <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+                    <i data-lucide="lock" class="h-6 w-6"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-black text-slate-900">Đăng ký tạm thời đóng</h2>
+                    <p class="mt-1.5 text-xs sm:text-sm text-slate-600 max-w-sm mx-auto">
+                        Hiện tại hệ thống chưa nhận đăng ký tài khoản mới. Vui lòng quay lại sau hoặc liên hệ quản trị viên.
+                    </p>
+                </div>
+                <div class="flex flex-wrap items-center justify-center gap-2.5 pt-2">
+                    <a href="{{ route('home') }}" class="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white transition hover:bg-slate-800">
+                        <i data-lucide="arrow-left" class="h-3.5 w-3.5"></i>
+                        <span>Về trang chủ</span>
+                    </a>
+                    <a href="{{ route('login') }}" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50">
+                        <i data-lucide="log-in" class="h-3.5 w-3.5"></i>
+                        <span>Đăng nhập</span>
+                    </a>
+                </div>
+            </div>
+        @else
         <form method="POST" action="{{ route('register') }}" class="space-y-3.5" x-data="{ showPassword: false }">
             @csrf
 
@@ -128,5 +151,6 @@
                 </p>
             </div>
         </form>
+        @endif
     </div>
 </x-guest-layout>

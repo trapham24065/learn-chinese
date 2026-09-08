@@ -49,6 +49,7 @@
                 </a>
 
                 {{-- Flashcard --}}
+                @if(!function_exists('setting_bool') || setting_bool('feature_flashcards', true))
                 <a href="{{ route('flashcards') }}"
                     class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('flashcards') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
                     <span class="flex items-center gap-3">
@@ -58,8 +59,10 @@
                         Thẻ ghi nhớ
                     </span>
                 </a>
+                @endif
 
                 {{-- Luyện đọc hiểu Graded Reader --}}
+                @if(!function_exists('setting_bool') || setting_bool('feature_stories', true))
                 <a href="{{ route('stories.index') }}"
                     class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('stories.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
                     <span class="flex items-center gap-3">
@@ -70,8 +73,10 @@
                     </span>
                     <span class="rounded-full bg-emerald-100 border border-emerald-300 px-1.5 py-0.2 text-[9px] font-black uppercase text-emerald-800 {{ request()->routeIs('stories.*') ? 'bg-white/20 text-white border-transparent' : '' }}">Mới</span>
                 </a>
+                @endif
 
                 {{-- Tra từ điển & Video YouGlish --}}
+                @if(!function_exists('setting_bool') || setting_bool('feature_dictionary', true))
                 <a href="{{ route('dictionary.index') }}"
                     class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('dictionary.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
                     <span class="flex items-center gap-3">
@@ -82,8 +87,10 @@
                     </span>
                     <span class="rounded-full bg-red-100 border border-red-300 px-1.5 py-0.2 text-[9px] font-black uppercase text-red-800 {{ request()->routeIs('dictionary.*') ? 'bg-white/20 text-white border-transparent' : '' }}">Hot</span>
                 </a>
+                @endif
 
                 {{-- Quiz / Luyện tập nhanh --}}
+                @if(!function_exists('setting_bool') || setting_bool('feature_quiz', true))
                 <a href="{{ route('quiz') }}"
                     class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('quiz') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
                     <span class="flex items-center gap-3">
@@ -93,6 +100,7 @@
                         Luyện tập nhanh
                     </span>
                 </a>
+                @endif
 
                 {{-- Group: Khung HSK --}}
                 <p class="px-3 pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">Khung Chứng chỉ HSK</p>
@@ -109,6 +117,7 @@
                 </a>
 
                 {{-- Thi thử HSK Mô phỏng --}}
+                @if(!function_exists('setting_bool') || setting_bool('feature_hsk_mock', true))
                 <a href="{{ route('hsk.mock.index') }}"
                     class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('hsk.mock.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
                     <span class="flex items-center gap-3">
@@ -119,6 +128,7 @@
                     </span>
                     <span class="rounded-full bg-amber-100 border border-amber-300 px-1.5 py-0.2 text-[9px] font-black uppercase text-amber-800 {{ request()->routeIs('hsk.mock.*') ? 'bg-white/20 text-white border-transparent' : '' }}">Thi</span>
                 </a>
+                @endif
             </nav>
 
             {{-- Compact Streak Box --}}
@@ -269,13 +279,16 @@
                             Trang chủ
                         </a>
 
+                        @if(!function_exists('setting_bool') || setting_bool('feature_flashcards', true))
                         <a href="{{ route('flashcards') }}"
                            @click="mobileMenuOpen = false"
                            class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ request()->routeIs('flashcards') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
                             <i data-lucide="layers" class="h-4 w-4 shrink-0"></i>
                             Thẻ ghi nhớ
                         </a>
+                        @endif
 
+                        @if(!function_exists('setting_bool') || setting_bool('feature_stories', true))
                         <a href="{{ route('stories.index') }}"
                            @click="mobileMenuOpen = false"
                            class="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ request()->routeIs('stories.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
@@ -285,7 +298,9 @@
                             </span>
                             <span class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black {{ request()->routeIs('stories.*') ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-800' }}">Mới</span>
                         </a>
+                        @endif
 
+                        @if(!function_exists('setting_bool') || setting_bool('feature_dictionary', true))
                         <a href="{{ route('dictionary.index') }}"
                            @click="mobileMenuOpen = false"
                            class="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ request()->routeIs('dictionary.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
@@ -295,13 +310,16 @@
                             </span>
                             <span class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black {{ request()->routeIs('dictionary.*') ? 'bg-white/20 text-white' : 'bg-red-100 text-red-800' }}">Hot</span>
                         </a>
+                        @endif
 
+                        @if(!function_exists('setting_bool') || setting_bool('feature_quiz', true))
                         <a href="{{ route('quiz') }}"
                            @click="mobileMenuOpen = false"
                            class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ request()->routeIs('quiz') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
                             <i data-lucide="target" class="h-4 w-4 shrink-0"></i>
                             Luyện tập nhanh
                         </a>
+                        @endif
 
                         <p class="px-2 pb-2 pt-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Khung Chứng chỉ HSK</p>
 
@@ -312,6 +330,7 @@
                             Lộ trình HSK
                         </a>
 
+                        @if(!function_exists('setting_bool') || setting_bool('feature_hsk_mock', true))
                         <a href="{{ route('hsk.mock.index') }}"
                            @click="mobileMenuOpen = false"
                            class="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ request()->routeIs('hsk.mock.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
@@ -321,6 +340,7 @@
                             </span>
                             <span class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black {{ request()->routeIs('hsk.mock.*') ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-900' }}">Thi</span>
                         </a>
+                        @endif
                     </nav>
 
                     {{-- Drawer Footer: Streak + User Info --}}
@@ -375,6 +395,94 @@
 
                 </div>{{-- End Drawer --}}
             </div>{{-- End Mobile Navigation --}}
+
+            {{-- ─── 📢 Announcement Banner ──────────────────────────────── --}}
+            @php
+                $announcementEnabled = function_exists('setting_bool') && setting_bool('announcement_enabled', false);
+                $showAnnouncement = false;
+
+                if ($announcementEnabled) {
+                    $now = now();
+                    $start = function_exists('setting') ? setting('announcement_start') : null;
+                    $end = function_exists('setting') ? setting('announcement_end') : null;
+                    $audience = function_exists('setting') ? setting('announcement_audience', 'all') : 'all';
+
+                    $timeValid = true;
+                    if (!empty($start)) {
+                        try {
+                            if ($now->lt(\Carbon\Carbon::parse($start))) $timeValid = false;
+                        } catch (\Exception $e) {}
+                    }
+                    if (!empty($end)) {
+                        try {
+                            if ($now->gt(\Carbon\Carbon::parse($end))) $timeValid = false;
+                        } catch (\Exception $e) {}
+                    }
+
+                    $audienceValid = match ($audience) {
+                        'guests' => !auth()->check(),
+                        'authenticated' => auth()->check(),
+                        default => true,
+                    };
+
+                    $announcementContent = function_exists('setting') ? setting('announcement_content') : null;
+                    $showAnnouncement = $timeValid && $audienceValid && !empty($announcementContent);
+                }
+            @endphp
+
+            @if($showAnnouncement)
+                @php
+                    $aType = function_exists('setting') ? setting('announcement_type', 'info') : 'info';
+                    $aTitle = function_exists('setting') ? setting('announcement_title') : '';
+                    $aContent = function_exists('setting') ? setting('announcement_content') : '';
+                    $aDismissible = function_exists('setting_bool') ? setting_bool('announcement_dismissible', true) : true;
+                    $aKey = 'announcement_dismissed_' . substr(md5($aContent), 0, 8);
+
+                    $typeClasses = match ($aType) {
+                        'success' => 'bg-emerald-50 border-emerald-200 text-emerald-950',
+                        'warning' => 'bg-amber-50 border-amber-200 text-amber-950',
+                        'error'   => 'bg-rose-50 border-rose-200 text-rose-950',
+                        default   => 'bg-blue-50 border-blue-200 text-blue-950',
+                    };
+                    $iconName = match ($aType) {
+                        'success' => 'circle-check',
+                        'warning' => 'alert-triangle',
+                        'error'   => 'alert-octagon',
+                        default   => 'info',
+                    };
+                    $iconColor = match ($aType) {
+                        'success' => 'text-emerald-600',
+                        'warning' => 'text-amber-600',
+                        'error'   => 'text-rose-600',
+                        default   => 'text-blue-600',
+                    };
+                @endphp
+                <div x-data="{ dismissed: localStorage.getItem('{{ $aKey }}') === '1' }"
+                     x-show="!dismissed"
+                     x-transition:leave="transition ease-in duration-200"
+                     x-transition:leave-start="opacity-100 max-h-40"
+                     x-transition:leave-end="opacity-0 max-h-0"
+                     class="no-print mx-4 mt-4 sm:mx-6 lg:mx-10 overflow-hidden rounded-2xl border p-4 shadow-sm backdrop-blur {{ $typeClasses }}">
+                    <div class="flex items-start gap-3">
+                        <div class="shrink-0 pt-0.5">
+                            <i data-lucide="{{ $iconName }}" class="h-5 w-5 {{ $iconColor }}"></i>
+                        </div>
+                        <div class="flex-1 text-sm">
+                            @if(!empty($aTitle))
+                                <p class="font-bold tracking-tight mb-0.5">{{ $aTitle }}</p>
+                            @endif
+                            <p class="leading-relaxed opacity-90">{{ $aContent }}</p>
+                        </div>
+                        @if($aDismissible)
+                            <button @click="dismissed = true; localStorage.setItem('{{ $aKey }}', '1')"
+                                    aria-label="Đóng thông báo"
+                                    class="shrink-0 -mr-1 -mt-1 p-1 rounded-lg opacity-60 hover:opacity-100 hover:bg-black/5 transition">
+                                <i data-lucide="x" class="h-4 w-4"></i>
+                            </button>
+                        @endif
+                    </div>
+                </div>
+            @endif
 
             <div class="px-4 py-6 sm:px-6 lg:px-10 lg:py-8">
                 @yield('content')

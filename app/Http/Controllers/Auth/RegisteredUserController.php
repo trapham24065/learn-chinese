@@ -30,6 +30,10 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        if (function_exists('setting_bool') && ! setting_bool('allow_registration', true)) {
+            return back()->withErrors(['email' => 'Hệ thống hiện tại chưa nhận đăng ký tài khoản mới.']);
+        }
+
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
