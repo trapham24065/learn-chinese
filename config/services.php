@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'azure_tts' => [
+        'key' => env('AZURE_TTS_KEY'),
+        'region' => env('AZURE_TTS_REGION', env('AZURE_REGION', 'southeastasia')),
+    ],
+
 ];

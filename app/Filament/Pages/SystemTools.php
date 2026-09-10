@@ -36,8 +36,8 @@ class SystemTools extends Page
 
         // Azure TTS Info
         $ttsKey     = config('services.azure_tts.key', env('AZURE_TTS_KEY', ''));
-        $ttsRegion  = config('services.azure_tts.region', env('AZURE_TTS_REGION', ''));
-        $ttsConfigured = !empty($ttsKey) && !empty($ttsRegion);
+        $ttsRegion  = config('services.azure_tts.region', env('AZURE_TTS_REGION', env('AZURE_REGION', 'southeastasia')));
+        $ttsConfigured = !empty($ttsKey);
 
         // System Info
         $appVersion = config('app.version', '1.0.0');
@@ -101,13 +101,13 @@ class SystemTools extends Page
                 ->modalHeading('Test Azure TTS')
                 ->modalDescription('Sẽ gọi API Azure TTS để phát âm câu tiếng Trung. Kiểm tra log nếu không nghe thấy.')
                 ->action(function (): void {
-                    $key    = env('AZURE_TTS_KEY', '');
-                    $region = env('AZURE_TTS_REGION', '');
+                    $key    = config('services.azure_tts.key', env('AZURE_TTS_KEY', ''));
+                    $region = config('services.azure_tts.region', env('AZURE_TTS_REGION', env('AZURE_REGION', 'southeastasia')));
 
-                    if (empty($key) || empty($region)) {
+                    if (empty($key)) {
                         Notification::make()
                             ->title('Chưa cấu hình Azure TTS')
-                            ->body('Vui lòng thiết lập AZURE_TTS_KEY và AZURE_TTS_REGION trong file .env.')
+                            ->body('Vui lòng thiết lập AZURE_TTS_KEY trong file .env.')
                             ->warning()
                             ->send();
                         return;

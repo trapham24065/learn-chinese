@@ -174,7 +174,7 @@
 
                     @if(!$ttsConfigured)
                     <div style="margin-top: 4px; padding: 8px 10px; border-radius: 8px; background: #fffbeb; border: 1px solid #fef3c7; font-size: 0.75rem; color: #92400e; line-height: 1.5;">
-                        ⚠️ Thêm <code style="font-weight: 700; background: rgba(0,0,0,0.05); padding: 1px 4px; border-radius: 4px;">AZURE_TTS_KEY</code> và <code style="font-weight: 700; background: rgba(0,0,0,0.05); padding: 1px 4px; border-radius: 4px;">AZURE_TTS_REGION</code> vào <code>.env</code>.
+                        ⚠️ Thêm <code style="font-weight: 700; background: rgba(0,0,0,0.05); padding: 1px 4px; border-radius: 4px;">AZURE_TTS_KEY</code> vào <code>.env</code> để kích hoạt giọng đọc AI.
                     </div>
                     @endif
                 </div>

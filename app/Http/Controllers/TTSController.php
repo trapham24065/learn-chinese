@@ -16,8 +16,8 @@ class TTSController extends Controller
             return response()->json(['error' => 'Text is required'], 400);
         }
 
-        $region = env('AZURE_REGION', 'southeastasia');
-        $key = env('AZURE_TTS_KEY');
+        $region = config('services.azure_tts.region', env('AZURE_REGION', env('AZURE_TTS_REGION', 'southeastasia')));
+        $key = config('services.azure_tts.key', env('AZURE_TTS_KEY'));
 
         if (!$key) {
             return response()->json(['error' => 'Azure key not configured'], 500);
