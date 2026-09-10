@@ -97,3 +97,25 @@ test('announcement banner is rendered when enabled with content', function () {
     $response->assertSee('Thông báo bảo trì định kỳ');
     $response->assertSee('Hệ thống sẽ cập nhật lúc 23:00 tối nay.');
 });
+
+test('admin can access manage settings page', function () {
+    $admin = User::factory()->create([
+        'role' => User::ROLE_ADMIN,
+    ]);
+
+    $response = $this->actingAs($admin, 'admin')->get('/admin/manage-settings');
+    $response->assertSuccessful();
+    $response->assertSee('Cài đặt chung');
+    $response->assertSee('Thông tin Website');
+});
+
+test('admin can access system tools page', function () {
+    $admin = User::factory()->create([
+        'role' => User::ROLE_ADMIN,
+    ]);
+
+    $response = $this->actingAs($admin, 'admin')->get('/admin/system-tools');
+    $response->assertSuccessful();
+    $response->assertSee('Công cụ hệ thống');
+});
+
