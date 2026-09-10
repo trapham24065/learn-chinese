@@ -59,7 +59,7 @@ class SystemTools extends Page
             // ─── Send Test Email ──────────────────────────────────────────
             Action::make('sendTestEmail')
                 ->label('Gửi email test')
-                ->icon('heroicon-o-envelope')
+                ->icon(Heroicon::OutlinedEnvelope)
                 ->color('primary')
                 ->form([
                     TextInput::make('email')
@@ -95,7 +95,7 @@ class SystemTools extends Page
             // ─── Test TTS ────────────────────────────────────────────────
             Action::make('testTts')
                 ->label('Test giọng đọc TTS')
-                ->icon('heroicon-o-speaker-wave')
+                ->icon(Heroicon::OutlinedSpeakerWave)
                 ->color('warning')
                 ->requiresConfirmation()
                 ->modalHeading('Test Azure TTS')
@@ -141,7 +141,7 @@ class SystemTools extends Page
             // ─── Clear Cache ────────────────────────────────────────────
             Action::make('clearCache')
                 ->label('Xóa cache')
-                ->icon('heroicon-o-trash')
+                ->icon(Heroicon::OutlinedTrash)
                 ->color('danger')
                 ->requiresConfirmation()
                 ->modalHeading('Xác nhận xóa cache')

@@ -6,12 +6,15 @@
         <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
             <div class="mb-4 flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950">
-                        <x-heroicon-o-envelope class="h-5 w-5" />
+                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400 shrink-0" style="width: 2.5rem; height: 2.5rem;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">
+                            <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+                            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                        </svg>
                     </div>
                     <div>
                         <h3 class="text-sm font-bold text-gray-900 dark:text-white">Hệ thống Email (SMTP)</h3>
-                        <p class="text-xs text-gray-500">Cấu hình gửi email tự động</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Cấu hình gửi email tự động</p>
                     </div>
                 </div>
                 @if($smtpConfigured)
@@ -54,12 +57,16 @@
         <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
             <div class="mb-4 flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 text-purple-600 dark:bg-purple-950">
-                        <x-heroicon-o-speaker-wave class="h-5 w-5" />
+                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 text-purple-600 dark:bg-purple-950/60 dark:text-purple-400 shrink-0" style="width: 2.5rem; height: 2.5rem;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">
+                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                        </svg>
                     </div>
                     <div>
                         <h3 class="text-sm font-bold text-gray-900 dark:text-white">Azure Text-to-Speech</h3>
-                        <p class="text-xs text-gray-500">Giọng đọc tiếng Trung tự động</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Giọng đọc tiếng Trung tự động</p>
                     </div>
                 </div>
                 @if($ttsConfigured)
@@ -98,12 +105,16 @@
         {{-- ─── 🗄 Cache & Storage ─────────────────────────────────────── --}}
         <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
             <div class="mb-4 flex items-center gap-3">
-                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-950">
-                    <x-heroicon-o-circle-stack class="h-5 w-5" />
+                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400 shrink-0" style="width: 2.5rem; height: 2.5rem;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">
+                        <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                        <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+                        <path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"></path>
+                    </svg>
                 </div>
                 <div>
                     <h3 class="text-sm font-bold text-gray-900 dark:text-white">Cache & Bộ nhớ</h3>
-                    <p class="text-xs text-gray-500">Trạng thái cache hệ thống</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Trạng thái cache hệ thống</p>
                 </div>
             </div>
             <dl class="space-y-2 text-sm">
@@ -128,12 +139,23 @@
         {{-- ─── 🔧 System Info ─────────────────────────────────────────── --}}
         <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
             <div class="mb-4 flex items-center gap-3">
-                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-gray-600 dark:bg-gray-800">
-                    <x-heroicon-o-cpu-chip class="h-5 w-5" />
+                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300 shrink-0" style="width: 2.5rem; height: 2.5rem;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">
+                        <rect width="16" height="16" x="4" y="4" rx="2"></rect>
+                        <rect width="6" height="6" x="9" y="9" rx="1"></rect>
+                        <path d="M15 2v2"></path>
+                        <path d="M15 20v2"></path>
+                        <path d="M2 15h2"></path>
+                        <path d="M2 9h2"></path>
+                        <path d="M20 15h2"></path>
+                        <path d="M20 9h2"></path>
+                        <path d="M9 2v2"></path>
+                        <path d="M9 20v2"></path>
+                    </svg>
                 </div>
                 <div>
                     <h3 class="text-sm font-bold text-gray-900 dark:text-white">Thông tin hệ thống</h3>
-                    <p class="text-xs text-gray-500">Phiên bản các thành phần</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Phiên bản các thành phần</p>
                 </div>
             </div>
             <dl class="space-y-2 text-sm">
