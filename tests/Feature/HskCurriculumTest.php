@@ -50,6 +50,20 @@ test('hsk curriculum seeder populates hsk 1, 2, 3 lessons with flashcards and qu
     $hsk4Lessons = Lesson::where('hsk_level', 4)->get();
     expect($hsk4Lessons)->toHaveCount(10);
     expect($hsk4Lessons->first()->slug)->toBe('hsk4-bai-01-jian-dan-de-ai-qing');
+
+    // HSK 5
+    $hsk5Lessons = Lesson::where('hsk_level', 5)->get();
+    expect($hsk5Lessons)->toHaveCount(10);
+    expect($hsk5Lessons->first()->slug)->toBe('hsk5-bai-01-ai-de-xi-jie');
+    expect($hsk5Lessons->first()->flashcards()->count())->toBeGreaterThanOrEqual(6);
+    expect($hsk5Lessons->first()->questions()->count())->toBeGreaterThanOrEqual(2);
+
+    // HSK 6
+    $hsk6Lessons = Lesson::where('hsk_level', 6)->get();
+    expect($hsk6Lessons)->toHaveCount(10);
+    expect($hsk6Lessons->first()->slug)->toBe('hsk6-bai-01-gei-zi-ji-jia-man-shui');
+    expect($hsk6Lessons->first()->flashcards()->count())->toBeGreaterThanOrEqual(6);
+    expect($hsk6Lessons->first()->questions()->count())->toBeGreaterThanOrEqual(2);
 });
 
 test('artisan app:seed-hsk-curriculum command executes successfully with level option', function () {
@@ -72,6 +86,20 @@ test('hsk level show page displays standard lessons with pagination', function (
     $response->assertSee('Bài 1: 你好 - Xin chào');
     $response->assertSee('hsk1-bai-01-ni-hao');
     $response->assertSee('lessons_page=2');
+});
+
+test('hsk 5 and hsk 6 show pages display authentic lessons', function () {
+    $this->seed(HskCurriculumSeeder::class);
+
+    $res5 = $this->get(route('hsk.show', 5));
+    $res5->assertSuccessful();
+    $res5->assertSee('Bài 1: 爱的细节');
+    $res5->assertSee('hsk5-bai-01-ai-de-xi-jie');
+
+    $res6 = $this->get(route('hsk.show', 6));
+    $res6->assertSuccessful();
+    $res6->assertSee('Bài 1: 给自己加满水');
+    $res6->assertSee('hsk6-bai-01-gei-zi-ji-jia-man-shui');
 });
 
 test('hsk overview route displays hsk overview page with all 6 levels', function () {
