@@ -77,7 +77,10 @@ class SettingsService
             $value = $value ? '1' : '0';
         }
 
-        Setting::where('key', $key)->update(['value' => $value]);
+        Setting::updateOrCreate(
+            ['key' => $key],
+            ['value' => $value, 'label' => $key]
+        );
 
         // Invalidate the entire settings cache
         Cache::forget(self::CACHE_KEY);
@@ -92,7 +95,10 @@ class SettingsService
             if (is_bool($value)) {
                 $value = $value ? '1' : '0';
             }
-            Setting::where('key', $key)->update(['value' => $value]);
+            Setting::updateOrCreate(
+                ['key' => $key],
+                ['value' => $value, 'label' => $key]
+            );
         }
 
         Cache::forget(self::CACHE_KEY);

@@ -248,5 +248,6 @@ class DatabaseSeeder extends Seeder
         $this->call(HskMockExamQuestionSeeder::class);
         $this->call(GradedStorySeeder::class);
         $this->call(HskCurriculumSeeder::class);
+        $this->call(CourseSeeder::class);
     }
 }

@@ -102,6 +102,22 @@
                 </a>
                 @endif
 
+                {{-- Group: Đào tạo Trực tuyến --}}
+                @if(!function_exists('setting_bool') || setting_bool('feature_courses', true))
+                <p class="px-3 pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">Đào tạo Trực tuyến</p>
+
+                <a href="{{ route('courses.index') }}"
+                    class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('courses.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                    <span class="flex items-center gap-3">
+                        <span class="grid h-7 w-7 place-items-center rounded-lg {{ request()->routeIs('courses.*') ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
+                            <i data-lucide="video" class="h-4 w-4"></i>
+                        </span>
+                        Khóa học Online
+                    </span>
+                    <span class="rounded-full bg-rose-100 border border-rose-300 px-1.5 py-0.2 text-[9px] font-black uppercase text-rose-800 {{ request()->routeIs('courses.*') ? 'bg-white/20 text-white border-transparent' : '' }}">Meet</span>
+                </a>
+                @endif
+
                 {{-- Group: Khung HSK --}}
                 <p class="px-3 pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">Khung Chứng chỉ HSK</p>
 
@@ -318,6 +334,20 @@
                            class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ request()->routeIs('quiz') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
                             <i data-lucide="target" class="h-4 w-4 shrink-0"></i>
                             Luyện tập nhanh
+                        </a>
+                        @endif
+
+                        @if(!function_exists('setting_bool') || setting_bool('feature_courses', true))
+                        <p class="px-2 pb-2 pt-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Đào tạo Trực tuyến</p>
+
+                        <a href="{{ route('courses.index') }}"
+                           @click="mobileMenuOpen = false"
+                           class="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ request()->routeIs('courses.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                            <span class="flex items-center gap-3">
+                                <i data-lucide="video" class="h-4 w-4 shrink-0"></i>
+                                Khóa học Online
+                            </span>
+                            <span class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black {{ request()->routeIs('courses.*') ? 'bg-white/20 text-white' : 'bg-rose-100 text-rose-800' }}">Meet</span>
                         </a>
                         @endif
 

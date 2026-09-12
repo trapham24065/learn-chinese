@@ -10,6 +10,7 @@ use App\Http\Controllers\StoryReadingController;
 use App\Http\Controllers\TTSController;
 use App\Http\Controllers\DictionaryController;
 use App\Http\Controllers\HskMockTestController;
+use App\Http\Controllers\CourseController;
 use App\Models\Flashcard;
 use App\Models\Lesson;
 use App\Models\Question;
@@ -84,6 +85,16 @@ Route::get('/reading', [StoryReadingController::class, 'index'])->name('stories.
 Route::get('/reading/{slug}', [StoryReadingController::class, 'show'])->name('stories.show');
 Route::post('/reading/lookup', [StoryReadingController::class, 'lookup'])->name('stories.lookup');
 Route::post('/reading/{id}/complete', [StoryReadingController::class, 'complete'])->name('stories.complete');
+
+// Khóa học Online qua Google Meet
+Route::prefix('courses')->group(function () {
+    Route::get('/', [CourseController::class, 'index'])->name('courses.index');
+    Route::get('/dang-ky-thanh-cong/{code}', [CourseController::class, 'success'])->name('courses.success');
+    Route::get('/{slug}', [CourseController::class, 'show'])->name('courses.show');
+    Route::post('/{slug}/register', [CourseController::class, 'register'])
+        ->middleware('throttle:5,1')
+        ->name('courses.register');
+});
 
 require __DIR__.'/auth.php';
 

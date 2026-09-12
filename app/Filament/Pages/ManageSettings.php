@@ -68,6 +68,14 @@ class ManageSettings extends Page implements HasForms
             'feature_dictionary'  => (bool) $svc->get('feature_dictionary', '1'),
             'feature_stories'     => (bool) $svc->get('feature_stories', '1'),
             'feature_hsk_mock'    => (bool) $svc->get('feature_hsk_mock', '1'),
+            'feature_courses'     => (bool) $svc->get('feature_courses', '1'),
+
+            // Bank & Courses
+            'bank_id'              => $svc->get('bank_id', 'MB'),
+            'bank_account'         => $svc->get('bank_account', '0988888888'),
+            'bank_account_name'    => $svc->get('bank_account_name', 'TIENG TRUNG CO GIAO'),
+            'course_consult_phone' => $svc->get('course_consult_phone', '0988888888'),
+            'course_consult_zalo'  => $svc->get('course_consult_zalo', '0988888888'),
         ]);
     }
 
@@ -231,7 +239,57 @@ class ManageSettings extends Page implements HasForms
                         Toggle::make('feature_hsk_mock')
                             ->label('Thi thử HSK')
                             ->inline(false),
+
+                        Toggle::make('feature_courses')
+                            ->label('Khóa học & Lớp Online (Meet)')
+                            ->inline(false),
                     ])->columns(3),
+
+                // ─── 💳 VietQR & Bank Settings ──────────────────────────────
+                Section::make('💳 Tài khoản Ngân hàng (VietQR Học phí)')
+                    ->description('Cấu hình thông tin tài khoản ngân hàng để tạo mã thanh toán VietQR tự động cho học viên.')
+                    ->collapsible()
+                    ->schema([
+                        Select::make('bank_id')
+                            ->label('Ngân hàng')
+                            ->options([
+                                'MB' => 'MBBank (Ngân hàng Quân đội)',
+                                'VCB' => 'Vietcombank (Ngân hàng Ngoại thương)',
+                                'TCB' => 'Techcombank (Ngân hàng Kỹ thương)',
+                                'ICB' => 'VietinBank (Ngân hàng Công thương)',
+                                'BIDV' => 'BIDV (Đầu tư & Phát triển)',
+                                'ACB' => 'ACB (Á Châu)',
+                                'VPB' => 'VPBank (Việt Nam Thịnh Vượng)',
+                                'TPB' => 'TPBank (Tiên Phong)',
+                                'MSB' => 'MSB (Hàng Hải)',
+                                'OCB' => 'OCB (Phương Đông)',
+                                'VIB' => 'VIB (Quốc Tế)',
+                            ])
+                            ->default('MB')
+                            ->required(),
+
+                        TextInput::make('bank_account')
+                            ->label('Số tài khoản nhận tiền')
+                            ->required()
+                            ->maxLength(30),
+
+                        TextInput::make('bank_account_name')
+                            ->label('Tên chủ tài khoản (Không dấu)')
+                            ->helperText('Ví dụ: NGUYEN THI HUONG')
+                            ->required()
+                            ->maxLength(100),
+
+                        TextInput::make('course_consult_phone')
+                            ->label('Hotline tư vấn tuyển sinh')
+                            ->helperText('Số điện thoại hiển thị trên các trang khóa học')
+                            ->tel()
+                            ->maxLength(20),
+
+                        TextInput::make('course_consult_zalo')
+                            ->label('SĐT / Link Zalo hỗ trợ')
+                            ->helperText('Học viên có thể bấm vào để chat trực tiếp')
+                            ->maxLength(100),
+                    ])->columns(2),
 
             ])
             ->statePath('data');
