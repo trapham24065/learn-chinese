@@ -159,4 +159,126 @@ class CourseRegistrationTest extends TestCase
         $response->assertSee($registration->registration_code);
         $response->assertSee('img.vietqr.io');
     }
+
+    public function test_authenticated_user_id_is_saved_on_registration(): void
+    {
+        $user = \App\Models\User::factory()->create(['role' => 'student']);
+
+        $response = $this->actingAs($user)->post(route('courses.register', $this->course->slug), [
+            'full_name' => 'Học Viên Có Tài Khoản',
+            'phone' => '0901111222',
+            'current_level' => 'hsk1_2',
+            'email' => $user->email,
+        ]);
+
+        $registration = CourseRegistration::where('phone_normalized', '0901111222')->first();
+
+        $this->assertNotNull($registration);
+        $this->assertEquals($user->id, $registration->user_id);
+    }
+
+    public function test_my_courses_redirects_unauthenticated_user_to_login(): void
+    {
+        $response = $this->get(route('courses.my'));
+
+        $response->assertRedirect(route('login'));
+    }
+
+    public function test_my_courses_shows_registrations_for_authenticated_user(): void
+    {
+        $user = \App\Models\User::factory()->create([
+            'role' => 'student',
+            'email' => 'student@example.com',
+        ]);
+
+        // Registration linked via user_id
+        CourseRegistration::create([
+            'course_id' => $this->course->id,
+            'user_id' => $user->id,
+            'full_name' => 'Test User',
+            'phone' => '0900000001',
+            'current_level' => 'chua_biet_gi',
+            'payment_amount' => $this->course->price,
+        ]);
+
+        // Registration linked via email (no user_id)
+        CourseRegistration::create([
+            'course_id' => $this->course->id,
+            'user_id' => null,
+            'email' => 'student@example.com',
+            'full_name' => 'Test User Email',
+            'phone' => '0900000002',
+            'current_level' => 'chua_biet_gi',
+            'payment_amount' => $this->course->price,
+        ]);
+
+        // Registration belonging to someone else
+        CourseRegistration::create([
+            'course_id' => $this->course->id,
+            'user_id' => null,
+            'email' => 'other@example.com',
+            'full_name' => 'Other User',
+            'phone' => '0900000003',
+            'current_level' => 'chua_biet_gi',
+            'payment_amount' => $this->course->price,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('courses.my'));
+
+        $response->assertStatus(200);
+        $response->assertSee('Test User');
+        $response->assertSee('Test User Email');
+        $response->assertDontSee('Other User');
+    }
+
+    public function test_claim_registration_succeeds_with_matching_email(): void
+    {
+        $user = \App\Models\User::factory()->create([
+            'role' => 'student',
+            'email' => 'claim-test@example.com',
+        ]);
+
+        $registration = CourseRegistration::create([
+            'course_id' => $this->course->id,
+            'user_id' => null,
+            'email' => 'claim-test@example.com',
+            'full_name' => 'Người Claim',
+            'phone' => '0900111222',
+            'current_level' => 'chua_biet_gi',
+            'payment_amount' => $this->course->price,
+        ]);
+
+        $response = $this->actingAs($user)->post(
+            route('courses.claim', $registration->registration_code)
+        );
+
+        $response->assertRedirect(route('courses.my'));
+        $response->assertSessionHas('success');
+        $this->assertEquals($user->id, $registration->fresh()->user_id);
+    }
+
+    public function test_claim_registration_fails_with_wrong_email(): void
+    {
+        $user = \App\Models\User::factory()->create([
+            'role' => 'student',
+            'email' => 'wrong-email@example.com',
+        ]);
+
+        $registration = CourseRegistration::create([
+            'course_id' => $this->course->id,
+            'user_id' => null,
+            'email' => 'correct-email@example.com',
+            'full_name' => 'Người Khác',
+            'phone' => '0900333444',
+            'current_level' => 'chua_biet_gi',
+            'payment_amount' => $this->course->price,
+        ]);
+
+        $response = $this->actingAs($user)->post(
+            route('courses.claim', $registration->registration_code)
+        );
+
+        $response->assertSessionHas('error');
+        $this->assertNull($registration->fresh()->user_id);
+    }
 }

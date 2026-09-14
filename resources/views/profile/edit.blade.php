@@ -353,6 +353,68 @@ $initial       = mb_strtoupper(mb_substr($user->name, 0, 1));
 </div>
 
 {{-- ══════════════════════════════════════════════
+     ZONE 2.5 · COURSES — Khóa học đã đăng ký
+══════════════════════════════════════════════ --}}
+@if(($stats['course_registrations'] ?? 0) > 0 && setting_bool('feature_courses', true))
+<div class="mb-6">
+    <div class="relative overflow-hidden rounded-[2rem] border border-white/80 bg-white/80 p-6 shadow-xl shadow-slate-900/5 backdrop-blur">
+        <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-500"></div>
+
+        <div class="flex items-center justify-between mb-5">
+            <div class="flex items-center gap-3">
+                <div class="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-emerald-50 text-emerald-600">
+                    <i data-lucide="graduation-cap" class="h-5 w-5"></i>
+                </div>
+                <div>
+                    <p class="text-[10px] font-semibold uppercase tracking-[.22em] text-emerald-600">Học trực tiếp</p>
+                    <h2 class="text-lg font-black text-slate-950">Khóa Học Đã Đăng Ký</h2>
+                </div>
+            </div>
+            <a href="{{ route('courses.my') }}"
+               class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 shadow-sm transition">
+                Xem tất cả
+                <i data-lucide="arrow-right" class="h-3 w-3"></i>
+            </a>
+        </div>
+
+        {{-- Summary badge --}}
+        <div class="rounded-2xl bg-emerald-50 border border-emerald-200 px-4 py-3 flex items-center gap-3">
+            <div class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-700 font-black text-lg">
+                {{ $stats['course_registrations'] }}
+            </div>
+            <div>
+                <p class="text-sm font-bold text-emerald-900">
+                    {{ $stats['course_registrations'] }} khóa học đã đăng ký
+                </p>
+                <p class="text-xs text-emerald-700">Nhấn "Xem tất cả" để kiểm tra trạng thái và thông tin thanh toán.</p>
+            </div>
+        </div>
+    </div>
+</div>
+@elseif(setting_bool('feature_courses', true))
+<div class="mb-6">
+    <div class="relative overflow-hidden rounded-[2rem] border border-dashed border-slate-200 bg-white/60 p-6">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-slate-100 text-slate-400">
+                    <i data-lucide="graduation-cap" class="h-5 w-5"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-bold text-slate-700">Chưa đăng ký khóa học nào</p>
+                    <p class="text-xs text-slate-400">Học live với giáo viên qua Google Meet</p>
+                </div>
+            </div>
+            <a href="{{ route('courses.index') }}"
+               class="inline-flex items-center gap-1.5 rounded-xl bg-[#991b1b] px-4 py-2 text-xs font-bold text-white hover:bg-red-800 shadow-md shadow-red-950/15 transition">
+                <i data-lucide="plus" class="h-3.5 w-3.5"></i>
+                Khám phá
+            </a>
+        </div>
+    </div>
+</div>
+@endif
+
+{{-- ══════════════════════════════════════════════
      ZONE 3 · BOTTOM — Quick links + Learning path + Danger
 ══════════════════════════════════════════════ --}}
 <div class="grid gap-4 lg:grid-cols-3">

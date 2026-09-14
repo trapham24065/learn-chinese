@@ -90,6 +90,15 @@ Route::post('/reading/{id}/complete', [StoryReadingController::class, 'complete'
 Route::prefix('courses')->group(function () {
     Route::get('/', [CourseController::class, 'index'])->name('courses.index');
     Route::get('/dang-ky-thanh-cong/{code}', [CourseController::class, 'success'])->name('courses.success');
+
+    // Yêu cầu đăng nhập — phải đặt TRƯỚC /{slug} để tránh bị wildcard bắt nhầm
+    Route::middleware('auth')->group(function () {
+        Route::get('/my-courses', [CourseController::class, 'myRegistrations'])->name('courses.my');
+        Route::post('/claim/{code}', [CourseController::class, 'claimRegistration'])
+            ->middleware('throttle:3,1')
+            ->name('courses.claim');
+    });
+
     Route::get('/{slug}', [CourseController::class, 'show'])->name('courses.show');
     Route::post('/{slug}/register', [CourseController::class, 'register'])
         ->middleware('throttle:5,1')

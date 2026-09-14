@@ -98,6 +98,22 @@ class CourseRegistration extends Model
         return $this->hasMany(CourseRegistrationActivity::class)->orderByDesc('created_at');
     }
 
+    /**
+     * Scope: lấy đơn đăng ký của 1 user (theo user_id nếu có, hoặc email).
+     */
+    public function scopeForUser(\Illuminate\Database\Eloquent\Builder $query, \App\Models\User $user): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->where(function ($q) use ($user) {
+            $q->where('user_id', $user->id);
+            if ($user->email) {
+                $q->orWhere(function ($q2) use ($user) {
+                    $q2->whereNull('user_id')
+                        ->where('email', $user->email);
+                });
+            }
+        });
+    }
+
     public function recordActivity(string $type, string $description, ?array $metadata = null, ?int $userId = null): CourseRegistrationActivity
     {
         return $this->activities()->create([

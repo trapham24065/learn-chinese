@@ -23,6 +23,7 @@ class ProfileController extends Controller
             'lessons'    => \App\Models\Lesson::where('is_published', true)->count(),
             'completed'  => $user->lessonProgresses()->where('status', 'completed')->count(),
             'streak'     => $user->calculateStreak(),
+            'course_registrations' => \App\Models\CourseRegistration::forUser($user)->count(),
         ];
 
         return view('profile.edit', [

@@ -107,15 +107,27 @@
                 <p class="px-3 pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">Đào tạo Trực tuyến</p>
 
                 <a href="{{ route('courses.index') }}"
-                    class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('courses.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                    class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('courses.index') || request()->routeIs('courses.show') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
                     <span class="flex items-center gap-3">
-                        <span class="grid h-7 w-7 place-items-center rounded-lg {{ request()->routeIs('courses.*') ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
+                        <span class="grid h-7 w-7 place-items-center rounded-lg {{ request()->routeIs('courses.index') || request()->routeIs('courses.show') ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
                             <i data-lucide="video" class="h-4 w-4"></i>
                         </span>
                         Khóa học Online
                     </span>
-                    <span class="rounded-full bg-rose-100 border border-rose-300 px-1.5 py-0.2 text-[9px] font-black uppercase text-rose-800 {{ request()->routeIs('courses.*') ? 'bg-white/20 text-white border-transparent' : '' }}">Meet</span>
+                    <span class="rounded-full bg-rose-100 border border-rose-300 px-1.5 py-0.2 text-[9px] font-black uppercase text-rose-800 {{ request()->routeIs('courses.index') || request()->routeIs('courses.show') ? 'bg-white/20 text-white border-transparent' : '' }}">Meet</span>
                 </a>
+
+                @auth
+                <a href="{{ route('courses.my') }}"
+                    class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('courses.my') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                    <span class="flex items-center gap-3">
+                        <span class="grid h-7 w-7 place-items-center rounded-lg {{ request()->routeIs('courses.my') ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
+                            <i data-lucide="bookmark-check" class="h-4 w-4"></i>
+                        </span>
+                        Khóa học của tôi
+                    </span>
+                </a>
+                @endauth
                 @endif
 
                 {{-- Group: Khung HSK --}}
@@ -342,13 +354,22 @@
 
                         <a href="{{ route('courses.index') }}"
                            @click="mobileMenuOpen = false"
-                           class="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ request()->routeIs('courses.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                           class="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ request()->routeIs('courses.index') || request()->routeIs('courses.show') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
                             <span class="flex items-center gap-3">
                                 <i data-lucide="video" class="h-4 w-4 shrink-0"></i>
                                 Khóa học Online
                             </span>
-                            <span class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black {{ request()->routeIs('courses.*') ? 'bg-white/20 text-white' : 'bg-rose-100 text-rose-800' }}">Meet</span>
+                            <span class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black {{ request()->routeIs('courses.index') || request()->routeIs('courses.show') ? 'bg-white/20 text-white' : 'bg-rose-100 text-rose-800' }}">Meet</span>
                         </a>
+
+                        @auth
+                        <a href="{{ route('courses.my') }}"
+                           @click="mobileMenuOpen = false"
+                           class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ request()->routeIs('courses.my') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                            <i data-lucide="bookmark-check" class="h-4 w-4 shrink-0"></i>
+                            Khóa học của tôi
+                        </a>
+                        @endauth
                         @endif
 
                         <p class="px-2 pb-2 pt-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Khung Chứng chỉ HSK</p>

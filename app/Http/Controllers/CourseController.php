@@ -127,4 +127,45 @@ class CourseController extends Controller
 
         return view('courses.success', compact('registration', 'bankId', 'bankAccount', 'bankAccountName', 'vietQrUrl'));
     }
+
+    public function myRegistrations(): View
+    {
+        abort_unless(setting_bool('feature_courses', true), 404);
+
+        $user = auth()->user();
+
+        $registrations = CourseRegistration::forUser($user)
+            ->with(['course', 'courseClass'])
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('courses.my-registrations', compact('registrations'));
+    }
+
+    public function claimRegistration(Request $request, string $code): \Illuminate\Http\RedirectResponse
+    {
+        abort_unless(setting_bool('feature_courses', true), 404);
+
+        $user = auth()->user();
+
+        $registration = CourseRegistration::where('registration_code', $code)
+            ->whereNull('user_id')
+            ->firstOrFail();
+
+        // Xác minh email khớp
+        if (! $user->email || strtolower($registration->email ?? '') !== strtolower($user->email)) {
+            return back()->with('error', 'Email tài khoản của bạn không khớp với đơn đăng ký. Vui lòng kiểm tra lại.');
+        }
+
+        $registration->update(['user_id' => $user->id]);
+
+        $registration->recordActivity(
+            type: 'account_linked',
+            description: "Học viên đã liên kết đơn đăng ký với tài khoản: {$user->email}",
+            userId: $user->id
+        );
+
+        return redirect()->route('courses.my')
+            ->with('success', 'Đã liên kết đơn đăng ký vào tài khoản của bạn thành công!');
+    }
 }
