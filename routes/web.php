@@ -93,7 +93,7 @@ Route::prefix('courses')->group(function () {
 
     // Yêu cầu đăng nhập — phải đặt TRƯỚC /{slug} để tránh bị wildcard bắt nhầm
     Route::middleware('auth')->group(function () {
-        Route::get('/my-courses', [CourseController::class, 'myRegistrations'])->name('courses.my');
+        Route::get('/my-courses', [ProfileController::class, 'edit'])->name('courses.my');
         Route::post('/claim/{code}', [CourseController::class, 'claimRegistration'])
             ->middleware('throttle:3,1')
             ->name('courses.claim');

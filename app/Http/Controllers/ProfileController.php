@@ -18,17 +18,23 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
+        $courseRegistrations = \App\Models\CourseRegistration::forUser($user)
+            ->with(['course', 'courseClass'])
+            ->orderByDesc('created_at')
+            ->get();
+
         $stats = [
             'flashcards' => \App\Models\Flashcard::count(),
             'lessons'    => \App\Models\Lesson::where('is_published', true)->count(),
             'completed'  => $user->lessonProgresses()->where('status', 'completed')->count(),
             'streak'     => $user->calculateStreak(),
-            'course_registrations' => \App\Models\CourseRegistration::forUser($user)->count(),
+            'course_registrations' => $courseRegistrations->count(),
         ];
 
         return view('profile.edit', [
             'user'  => $user,
             'stats' => $stats,
+            'courseRegistrations' => $courseRegistrations,
         ]);
     }
 
