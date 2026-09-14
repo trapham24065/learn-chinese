@@ -145,10 +145,18 @@
         }
     },
 
-    cancelActiveSession() {
-        if (confirm('Bạn có chắc muốn hủy bài thi đang dở để làm lại từ đầu?')) {
+    async cancelActiveSession() {
+        const proceed = await window.dialog.confirm({
+            title: 'Hủy bài thi đang làm dở',
+            text: 'Bạn có chắc muốn hủy bài thi đang dở để làm lại từ đầu? Mọi câu trả lời chưa nộp sẽ bị xóa.',
+            confirmText: 'Hủy bài thi',
+            cancelText: 'Tiếp tục làm',
+            isDestructive: true,
+        });
+        if (proceed) {
             localStorage.removeItem(this.storageKey);
             this.activeSession = null;
+            window.toast.info('Đã hủy bài thi', 'Bạn có thể bắt đầu lại bài thi mới bất cứ lúc nào.');
             setTimeout(() => window.refreshIcons?.(), 50);
         }
     }

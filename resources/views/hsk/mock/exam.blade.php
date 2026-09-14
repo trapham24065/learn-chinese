@@ -212,7 +212,7 @@
         
         const count = this.audioPlayCounts[qId] ?? 0;
         if (count >= 2) {
-            alert('Mỗi câu hỏi phần Nghe chỉ được phát tối đa 2 lần theo quy chế thi HSK.');
+            window.toast.warning('Giới hạn phát âm', 'Mỗi câu hỏi phần Nghe chỉ được phát tối đa 2 lần theo quy chế thi HSK.');
             return;
         }
 
@@ -282,12 +282,12 @@
                 this.clearSession();
                 window.location.href = data.redirect_url;
             } else {
-                alert('Có lỗi xảy ra khi nộp bài: ' + (data.message || 'Vui lòng thử lại.'));
+                window.toast.error('Có lỗi xảy ra khi nộp bài', data.message || 'Vui lòng thử lại.');
                 this.isSubmitting = false;
             }
         } catch (error) {
             console.error('Lỗi khi nộp bài:', error);
-            alert('Không thể kết nối máy chủ để nộp bài. Vui lòng kiểm tra lại mạng.');
+            window.toast.error('Lỗi kết nối', 'Không thể kết nối máy chủ để nộp bài. Vui lòng kiểm tra lại mạng.');
             this.isSubmitting = false;
         }
     }

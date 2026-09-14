@@ -49,7 +49,7 @@
 
         <div class="flex items-center gap-3">
             <button type="button"
-                    onclick="navigator.clipboard.writeText(window.location.href); alert('Đã sao chép liên kết chứng chỉ vào bộ nhớ tạm!');"
+                    onclick="navigator.clipboard.writeText(window.location.href).then(() => window.toast.success('Đã sao chép liên kết chứng chỉ vào bộ nhớ tạm!'));"
                     class="inline-flex items-center gap-2 rounded-2xl bg-white/10 hover:bg-white/20 text-white px-4 py-2.5 text-xs font-bold transition backdrop-blur border border-white/10">
                 <i data-lucide="share-2" class="h-4 w-4"></i>
                 <span>Sao chép link</span>

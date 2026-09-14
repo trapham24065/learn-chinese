@@ -234,18 +234,33 @@ window.gradedReaderApp = function() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
                 body: JSON.stringify({ flashcard_id: this.currentWord.id })
             })
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) {
+                    if (res.status === 401) {
+                        window.dialog.authRequired({
+                            word: this.currentWord.hanzi,
+                            pinyin: this.currentWord.pinyin,
+                            meaning: this.currentWord.meaning,
+                        });
+                    }
+                    throw new Error('Request failed');
+                }
+                return res.json();
+            })
             .then(data => {
                 if (data.success) {
                     this.currentWord.is_starred = data.is_starred;
                     if (data.is_starred) {
                         this.starredList.push(this.currentWord.hanzi);
+                        window.toast.success('Đã lưu vào Sổ tay từ vựng!', this.currentWord.hanzi);
                     } else {
                         this.starredList = this.starredList.filter(c => c !== this.currentWord.hanzi);
+                        window.toast.info('Đã bỏ lưu khỏi Sổ tay từ vựng');
                     }
                 }
             })

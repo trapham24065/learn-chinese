@@ -16,6 +16,21 @@
             </p>
         </div>
 
+        {{-- Error Alert Banner --}}
+        @if ($errors->any())
+            <div class="mb-5 flex items-start gap-3.5 rounded-2xl border border-rose-200 bg-rose-50/90 p-4 shadow-sm text-rose-900">
+                <div class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-rose-100 text-rose-600">
+                    <i data-lucide="alert-triangle" class="h-5 w-5"></i>
+                </div>
+                <div class="flex-1 text-xs leading-relaxed">
+                    <h3 class="font-bold text-rose-950 text-sm">Thiết lập mật khẩu chưa thành công</h3>
+                    <p class="mt-0.5 text-rose-700">
+                        {{ $errors->first() ?: 'Vui lòng kiểm tra lại mật khẩu xác nhận.' }}
+                    </p>
+                </div>
+            </div>
+        @endif
+
         <form method="POST" action="{{ route('password.store') }}" class="space-y-4" x-data="{ showPassword: false }">
             @csrf
 

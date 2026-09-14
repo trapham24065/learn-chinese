@@ -23,6 +23,7 @@
     },
     "dependencies": {
         "hanzi-writer": "^3.7.3",
-        "lucide": "^1.31.0"
+        "lucide": "^1.31.0",
+        "sweetalert2": "^11.26.25"
     }
 }

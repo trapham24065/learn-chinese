@@ -767,7 +767,15 @@ function studentDashboard() {
             this.lessonPage = p;
         },
 
-        showToast(msg) {
+        showToast(msg, isError = false) {
+            if (window.toast) {
+                if (isError) {
+                    window.toast.error(msg);
+                } else {
+                    window.toast.success(msg);
+                }
+                return;
+            }
             this.toastMessage = msg;
             if (this.toastTimeout) clearTimeout(this.toastTimeout);
             this.toastTimeout = setTimeout(() => {
@@ -821,7 +829,7 @@ function studentDashboard() {
                 this.showToast(data.message);
             } catch (e) {
                 // D1: Use toast instead of alert()
-                this.showToast('Đã xảy ra lỗi khi ghi nhận buổi học. Vui lòng thử lại!');
+                this.showToast('Đã xảy ra lỗi khi ghi nhận buổi học. Vui lòng thử lại!', true);
                 console.error(e);
             } finally {
                 this.isLogging = false;
@@ -857,7 +865,7 @@ function studentDashboard() {
                 this.showToast(data.message);
             } catch (e) {
                 // D1: Use toast instead of alert()
-                this.showToast('Đã xảy ra lỗi khi cập nhật tiến độ. Vui lòng thử lại!');
+                this.showToast('Đã xảy ra lỗi khi cập nhật tiến độ. Vui lòng thử lại!', true);
                 console.error(e);
             } finally {
                 this.isUpdatingProgress = null;

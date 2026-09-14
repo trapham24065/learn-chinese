@@ -323,12 +323,21 @@
             if (!res.ok) {
                 target.is_starred = prevState;
                 if (res.status === 401) {
-                    alert('Vui lòng đăng nhập để lưu từ vựng vào Sổ tay yêu thích!');
+                    window.dialog.authRequired({
+                        word: target?.word || '',
+                        pinyin: target?.pinyin || '',
+                        meaning: target?.meaning || '',
+                    });
                 }
             } else {
                 const data = await res.json();
                 target.is_starred = data.is_starred;
                 this.starredCount = data.starred_count;
+                if (data.is_starred) {
+                    window.toast.success('Đã lưu vào Sổ tay từ vựng!', target?.word || '');
+                } else {
+                    window.toast.info('Đã bỏ lưu khỏi Sổ tay từ vựng');
+                }
             }
         } catch(e) {
             target.is_starred = prevState;
@@ -649,11 +658,26 @@
                                 .then(r => {
                                     if (!r.ok) {
                                         isStarred = prev;
-                                        if (r.status === 401) alert('Vui lòng đăng nhập để lưu từ vựng!');
+                                        if (r.status === 401) {
+                                            window.dialog.authRequired({
+                                                word: @json($card->word),
+                                                pinyin: @json($card->pinyin),
+                                                meaning: @json($card->meaning),
+                                            });
+                                        }
                                     }
                                     return r.json();
                                 })
-                                .then(d => { if (d.success) isStarred = d.is_starred; })
+                                .then(d => {
+                                    if (d && d.success) {
+                                        isStarred = d.is_starred;
+                                        if (d.is_starred) {
+                                            window.toast.success('Đã lưu vào Sổ từ vựng!', @json($card->word));
+                                        } else {
+                                            window.toast.info('Đã bỏ lưu khỏi Sổ từ vựng');
+                                        }
+                                    }
+                                })
                                 .catch(() => { isStarred = prev; })
                                 .finally(() => { loading = false; setTimeout(() => window.refreshIcons?.(), 50); });
                             "

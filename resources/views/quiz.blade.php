@@ -449,12 +449,19 @@ function quizApp() {
 
         async submitQuiz() {
             if (this.answeredCount === 0) {
-                alert('Vui lòng chọn ít nhất một đáp án trước khi nộp bài.');
+                window.toast.warning('Vui lòng chọn ít nhất một đáp án trước khi nộp bài!');
                 return;
             }
 
             if (this.answeredCount < this.totalCount) {
-                const proceed = confirm(`Bạn còn ${this.totalCount - this.answeredCount} câu chưa làm. Bạn có chắc chắn muốn nộp bài luôn không?`);
+                const remaining = this.totalCount - this.answeredCount;
+                const proceed = await window.dialog.confirm({
+                    title: 'Chưa hoàn thành tất cả câu hỏi',
+                    text: `Bạn còn ${remaining} câu chưa trả lời. Bạn có chắc chắn muốn nộp bài luôn không?`,
+                    confirmText: 'Nộp bài ngay',
+                    cancelText: 'Tiếp tục làm',
+                    icon: 'question',
+                });
                 if (!proceed) return;
             }
 
@@ -489,7 +496,7 @@ function quizApp() {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } catch (err) {
                 console.error(err);
-                alert("Đã xảy ra lỗi khi chấm điểm. Vui lòng thử lại!");
+                window.toast.error('Đã xảy ra lỗi khi chấm điểm', 'Vui lòng kiểm tra lại kết nối và thử lại!');
             } finally {
                 this.isSubmitting = false;
             }

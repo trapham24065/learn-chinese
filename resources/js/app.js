@@ -1,6 +1,7 @@
 import Alpine from 'alpinejs';
 import { createIcons, icons } from 'lucide';
 import HanziWriter from 'hanzi-writer';
+import './notifications';
 
 window.Alpine = Alpine;
 window.HanziWriter = HanziWriter;

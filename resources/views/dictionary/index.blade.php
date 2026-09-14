@@ -264,13 +264,30 @@ window.dictionaryApp = function () {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
                     body: JSON.stringify({ flashcard_id: this.activeWord.id })
                 });
-                const data = await res.json();
-                if (data.success) {
-                    this.activeWord.is_starred = data.is_starred;
+                if (!res.ok) {
+                    this.activeWord.is_starred = prev;
+                    if (res.status === 401) {
+                        window.dialog.authRequired({
+                            word: this.activeWord.hanzi,
+                            pinyin: this.activeWord.pinyin,
+                            meaning: this.activeWord.meaning,
+                        });
+                    }
+                } else {
+                    const data = await res.json();
+                    if (data.success) {
+                        this.activeWord.is_starred = data.is_starred;
+                        if (data.is_starred) {
+                            window.toast.success('Đã lưu vào Sổ tay từ vựng!', this.activeWord.hanzi);
+                        } else {
+                            window.toast.info('Đã bỏ lưu khỏi Sổ tay từ vựng');
+                        }
+                    }
                 }
             } catch (e) {
                 this.activeWord.is_starred = prev;
