@@ -101,7 +101,7 @@ Route::prefix('courses')->group(function () {
 
     Route::get('/{slug}', [CourseController::class, 'show'])->name('courses.show');
     Route::post('/{slug}/register', [CourseController::class, 'register'])
-        ->middleware('throttle:5,1')
+        ->middleware('throttle:3,1')
         ->name('courses.register');
 });
 

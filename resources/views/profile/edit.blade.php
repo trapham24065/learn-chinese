@@ -125,136 +125,108 @@ $initial       = mb_strtoupper(mb_substr($user->name, 0, 1));
 
     </div>
 
-    {{-- 4 stat tiles – horizontal bento grid --}}
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    {{-- 4 stat tiles – 2x2 balanced Bento Grid matching Avatar Card height --}}
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 h-full">
 
         {{-- Flashcard --}}
-        <div class="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
-            <div class="flex items-center gap-4">
-
-                <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600">
-                    <svg
-                        class="h-5 w-5"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 6.5 2z" />
-                    </svg>
-                </div>
-
-                <div class="min-w-0">
-                    <p class="text-2xl font-black leading-none text-slate-900">
-                        {{ $stats['flashcards'] ?? 0 }}
+        <a href="{{ route('flashcards') }}"
+           class="group flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-red-200">
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Từ vựng</span>
+                    <p class="text-3xl font-black text-slate-900 tracking-tight mt-1">
+                        {{ number_format($stats['flashcards'] ?? 0) }}
                     </p>
-
-                    <p class="mt-1 text-sm text-slate-500">
-                        Flashcard
-                    </p>
+                    <p class="text-xs font-semibold text-slate-700 mt-0.5">Thẻ Flashcard 3D</p>
                 </div>
-
+                <div class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-red-50 text-[#991b1b] transition-transform duration-300 group-hover:scale-110">
+                    <i data-lucide="layers" class="h-5 w-5"></i>
+                </div>
             </div>
-        </div>
-
+            <div class="mt-4 flex items-center justify-between pt-3 border-t border-slate-100 text-xs text-slate-500">
+                <span>Toàn bộ HSK 1 &mdash; 6</span>
+                <span class="font-bold text-[#991b1b] group-hover:translate-x-0.5 transition-transform inline-flex items-center gap-1">
+                    Luyện tập <i data-lucide="arrow-right" class="h-3 w-3"></i>
+                </span>
+            </div>
+        </a>
 
         {{-- Bài học --}}
-        <div class="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
-            <div class="flex items-center gap-4">
-
-                <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                    <svg
-                        class="h-5 w-5"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                        <path d="M6.5 2H20v20H6.5" />
-                        <path d="M4 6h16" />
-                    </svg>
-                </div>
-
-                <div class="min-w-0">
-                    <p class="text-2xl font-black leading-none text-slate-900">
+        <a href="{{ route('hsk.overview') }}"
+           class="group flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-blue-200">
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Giáo trình</span>
+                    <p class="text-3xl font-black text-slate-900 tracking-tight mt-1">
                         {{ $stats['lessons'] ?? 0 }}
                     </p>
-
-                    <p class="mt-1 text-sm text-slate-500">
-                        Bài học
-                    </p>
+                    <p class="text-xs font-semibold text-slate-700 mt-0.5">Bài học tiêu chuẩn</p>
                 </div>
-
+                <div class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-blue-50 text-blue-600 transition-transform duration-300 group-hover:scale-110">
+                    <i data-lucide="book-open" class="h-5 w-5"></i>
+                </div>
             </div>
-        </div>
-
+            <div class="mt-4 flex items-center justify-between pt-3 border-t border-slate-100 text-xs text-slate-500">
+                <span>Hội thoại &amp; ngữ pháp</span>
+                <span class="font-bold text-blue-600 group-hover:translate-x-0.5 transition-transform inline-flex items-center gap-1">
+                    Khám phá <i data-lucide="arrow-right" class="h-3 w-3"></i>
+                </span>
+            </div>
+        </a>
 
         {{-- Hoàn thành --}}
-        <div class="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
-            <div class="flex items-center gap-4">
-
-                <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-                    <svg
-                        class="h-5 w-5"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87
-                             1.18 6.88L12 17.77
-                             5.82 21.02 7 14.14
-                             2 9.27l6.91-1.01L12 2z" />
-                    </svg>
+        <div class="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Tiến độ</span>
+                    <div class="flex items-baseline gap-1.5 mt-1">
+                        <span class="text-3xl font-black text-slate-900 tracking-tight">{{ $stats['completed'] ?? 0 }}</span>
+                        <span class="text-xs font-bold text-slate-400">/ {{ $stats['lessons'] ?? 0 }} bài</span>
+                    </div>
+                    <p class="text-xs font-semibold text-slate-700 mt-0.5">Đã hoàn thành</p>
                 </div>
-
-                <div class="min-w-0">
-                    <p class="text-2xl font-black leading-none text-slate-900">
-                        {{ $stats['completed'] ?? 0 }}
-                    </p>
-
-                    <p class="mt-1 text-sm text-slate-500">
-                        Đã hoàn thành
-                    </p>
+                <div class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-emerald-50 text-emerald-600">
+                    <i data-lucide="circle-check-big" class="h-5 w-5"></i>
                 </div>
-
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-100">
+                <div class="flex items-center justify-between text-[11px] text-slate-500 mb-1.5">
+                    <span>Tỷ lệ hoàn thành</span>
+                    <span class="font-bold text-emerald-600">{{ $pct }}%</span>
+                </div>
+                <div class="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                    <div class="h-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-500"
+                         style="width: {{ $pct }}%;"></div>
+                </div>
             </div>
         </div>
 
-
         {{-- Streak --}}
-        <div class="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
-            <div class="flex items-center gap-4">
-
-                <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-                    <svg
-                        class="h-5 w-5"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="9" />
-                        <path d="M12 7v5l3 2" />
-                    </svg>
+        <div class="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-md">
+            <div class="flex items-start justify-between gap-3">
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Chăm chỉ</span>
+                    <div class="flex items-baseline gap-1 mt-1">
+                        <span class="text-3xl font-black text-slate-900 tracking-tight">{{ $stats['streak'] ?? 0 }}</span>
+                        <span class="text-xs font-bold text-slate-400">ngày</span>
+                    </div>
+                    <p class="text-xs font-semibold text-slate-700 mt-0.5">Chuỗi ngày liên tiếp</p>
                 </div>
-
-                <div class="min-w-0">
-                    <p class="text-2xl font-black leading-none text-slate-900">
-                        {{ $stats['streak'] ?? 0 }}
-                    </p>
-
-                    <p class="mt-1 text-sm text-slate-500">
-                        Ngày liên tiếp
-                    </p>
+                <div class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl {{ ($stats['streak'] ?? 0) > 0 ? 'bg-amber-50 text-amber-500' : 'bg-slate-100 text-slate-400' }}">
+                    <i data-lucide="flame" class="h-5 w-5"></i>
                 </div>
-
+            </div>
+            <div class="mt-4 flex items-center justify-between pt-3 border-t border-slate-100 text-xs">
+                <span class="text-slate-500">Hôm nay</span>
+                @if($studiedToday)
+                    <span class="font-bold text-emerald-600 flex items-center gap-1">
+                        <i data-lucide="check" class="h-3.5 w-3.5"></i> Đã học hôm nay
+                    </span>
+                @else
+                    <span class="font-semibold text-amber-600 flex items-center gap-1">
+                        <i data-lucide="clock" class="h-3.5 w-3.5"></i> Chưa học bài nào
+                    </span>
+                @endif
             </div>
         </div>
 

@@ -336,4 +336,99 @@ class CourseRegistrationTest extends TestCase
         $response->assertSessionHas('error');
         $this->assertNull($registration->fresh()->user_id);
     }
+
+    public function test_duplicate_registration_for_same_course_redirects_to_existing_order(): void
+    {
+        $user = \App\Models\User::factory()->create([
+            'role' => 'student',
+            'email' => 'duplicate.tester@example.com',
+        ]);
+
+        $existing = CourseRegistration::create([
+            'course_id' => $this->course->id,
+            'user_id' => $user->id,
+            'full_name' => 'Duplicate Tester',
+            'phone' => '0912345678',
+            'email' => 'duplicate.tester@example.com',
+            'current_level' => 'chua_biet_gi',
+            'status' => 'pending',
+            'payment_amount' => $this->course->price,
+        ]);
+
+        $initialCount = CourseRegistration::count();
+
+        // Attempting to register again for the same course with the same user
+        $response = $this->actingAs($user)->post(route('courses.register', $this->course->slug), [
+            'full_name' => 'Duplicate Tester',
+            'phone' => '0912345678',
+            'email' => 'duplicate.tester@example.com',
+            'current_level' => 'co_ban_phat_am',
+        ]);
+
+        $response->assertRedirect(route('courses.success', ['code' => $existing->registration_code]));
+        $response->assertSessionHas('info');
+        $this->assertEquals($initialCount, CourseRegistration::count());
+    }
+
+    public function test_registration_blocks_user_exceeding_pending_limit(): void
+    {
+        $user = \App\Models\User::factory()->create([
+            'role' => 'student',
+            'email' => 'quota.tester@example.com',
+        ]);
+
+        // Create 3 other courses and 3 pending registrations
+        for ($i = 1; $i <= 3; $i++) {
+            $c = Course::create([
+                'title' => "Khóa thử nghiệm $i",
+                'slug' => "khoa-thu-nghiem-$i",
+                'category' => 'hsk_starter',
+                'summary' => 'Tóm tắt',
+                'price' => 1000000,
+                'is_active' => true,
+            ]);
+
+            CourseRegistration::create([
+                'course_id' => $c->id,
+                'user_id' => $user->id,
+                'full_name' => 'Quota Tester',
+                'phone' => '0933445566',
+                'email' => 'quota.tester@example.com',
+                'current_level' => 'chua_biet_gi',
+                'status' => 'pending',
+                'payment_amount' => 1000000,
+                'created_at' => now()->subHour(),
+            ]);
+        }
+
+        // Try registering 4th course -> should be blocked by anti-spam quota
+        $response = $this->actingAs($user)->post(route('courses.register', $this->course->slug), [
+            'full_name' => 'Quota Tester',
+            'phone' => '0933445566',
+            'email' => 'quota.tester@example.com',
+            'current_level' => 'chua_biet_gi',
+        ]);
+
+        $response->assertSessionHasErrors(['phone']);
+    }
+
+    public function test_anti_spam_time_gate_drops_lightning_fast_bot_submissions(): void
+    {
+        // Token encrypted at current time (0 seconds elapsed) -> should drop silently
+        $freshToken = encrypt(time());
+
+        $initialCount = CourseRegistration::count();
+
+        $response = $this->post(route('courses.register', $this->course->slug), [
+            '_rendered_at' => $freshToken,
+            'full_name' => 'Speed Bot',
+            'phone' => '0988776655',
+            'email' => 'bot@example.com',
+            'current_level' => 'chua_biet_gi',
+        ]);
+
+        $response->assertRedirect(route('courses.index'));
+        $this->assertEquals($initialCount, CourseRegistration::count());
+    }
 }
+

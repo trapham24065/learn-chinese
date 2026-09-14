@@ -41,16 +41,36 @@ class CourseController extends Controller
             ->take(3)
             ->get();
 
-        return view('courses.show', compact('course', 'otherCourses'));
+        $existingRegistration = null;
+        if (auth()->check()) {
+            $existingRegistration = CourseRegistration::forUser(auth()->user())
+                ->where('course_id', $course->id)
+                ->where('status', '!=', 'cancelled')
+                ->first();
+        }
+
+        return view('courses.show', compact('course', 'otherCourses', 'existingRegistration'));
     }
 
     public function register(Request $request, string $slug): RedirectResponse
     {
         abort_unless(setting_bool('feature_courses', true), 404);
 
-        // Anti-spam Honeypot: bots fill hidden field website_url_hp
+        // Anti-spam 1: Honeypot trap (bot tự điền trường ẩn website_url_hp)
         if (! empty($request->input('website_url_hp'))) {
             return redirect()->route('courses.index');
+        }
+
+        // Anti-spam 2: Time-gate check (nếu gửi form dưới 2 giây -> bot tự động)
+        if ($request->filled('_rendered_at')) {
+            try {
+                $renderedAt = decrypt($request->input('_rendered_at'));
+                if (is_numeric($renderedAt) && (time() - (int)$renderedAt) < 2) {
+                    return redirect()->route('courses.index');
+                }
+            } catch (\Throwable $e) {
+                // Token bị giả mạo hoặc lỗi giải mã -> bỏ qua
+            }
         }
 
         $course = Course::where('slug', $slug)
@@ -77,8 +97,45 @@ class CourseController extends Controller
 
         $phoneNormalized = CourseRegistration::normalizePhone($validated['phone']);
         $email = strtolower(trim($validated['email']));
+        $userId = auth()->id();
 
-        // Anti-spam duplicate check within 5 minutes
+        // Chống đăng ký lặp lại: Nếu đã có đơn cho khóa này và chưa bị hủy
+        $existingActive = CourseRegistration::where('course_id', $course->id)
+            ->where('status', '!=', 'cancelled')
+            ->where(function ($q) use ($userId, $phoneNormalized, $email) {
+                if ($userId) {
+                    $q->where('user_id', $userId);
+                }
+                $q->orWhere('phone_normalized', $phoneNormalized)
+                  ->orWhere('email', $email);
+            })
+            ->first();
+
+        if ($existingActive) {
+            return redirect()->route('courses.success', ['code' => $existingActive->registration_code])
+                ->with('info', "Bạn đã có đơn đăng ký cho khóa học này (Mã đơn: {$existingActive->registration_code}) đang ở trạng thái \"{$existingActive->status_label}\". Giáo viên sẽ liên hệ với bạn trong thời gian sớm nhất!");
+        }
+
+        // Anti-spam 3: Chặn phá hoại gửi request liên tục (tối đa 3 đơn đang pending trong 24h trên cùng IP/SĐT/Email)
+        $pendingRecentCount = CourseRegistration::where(function ($q) use ($userId, $phoneNormalized, $email, $request) {
+                if ($userId) {
+                    $q->where('user_id', $userId);
+                }
+                $q->orWhere('phone_normalized', $phoneNormalized)
+                  ->orWhere('email', $email)
+                  ->orWhere('ip_address', $request->ip());
+            })
+            ->where('status', 'pending')
+            ->where('created_at', '>=', now()->subHours(24))
+            ->count();
+
+        if ($pendingRecentCount >= 3) {
+            return back()->withInput()->withErrors([
+                'phone' => 'Bạn đang có nhiều đơn đăng ký đang chờ xử lý. Vui lòng liên hệ trực tiếp với giáo viên qua Zalo để được xếp lớp nhanh nhất!',
+            ]);
+        }
+
+        // Anti-spam 4: Giới hạn duplicate check trong 5 phút
         $recent = CourseRegistration::where('course_id', $course->id)
             ->where(function ($q) use ($phoneNormalized, $request) {
                 $q->where('phone_normalized', $phoneNormalized)

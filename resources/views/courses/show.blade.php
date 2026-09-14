@@ -204,9 +204,43 @@
                 </div>
                 @endif
 
+                {{-- Existing Registration Notice --}}
+                @if(isset($existingRegistration) && $existingRegistration)
+                <div class="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 space-y-2.5">
+                    <div class="flex items-start gap-3">
+                        <div class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-amber-500 text-white shadow-sm">
+                            <i data-lucide="info" class="h-4 w-4"></i>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-amber-900 block">Đã có đơn đăng ký</span>
+                            <p class="text-xs font-black text-slate-900 mt-0.5">
+                                Bạn đã đăng ký khóa học này (Mã đơn: <span class="font-mono text-[#991b1b]">{{ $existingRegistration->registration_code }}</span>)
+                            </p>
+                            <p class="text-[11px] text-slate-600 mt-0.5">
+                                Trạng thái: <strong class="text-slate-900">{{ $existingRegistration->status_label }}</strong>. Giáo viên đã ghi nhận thông tin của bạn.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-amber-200/60 pl-12">
+                        <a href="{{ route('courses.success', $existingRegistration->registration_code) }}"
+                           class="inline-flex items-center gap-1.5 rounded-xl bg-slate-950 px-3 py-1.5 text-xs font-bold text-white hover:bg-slate-800 transition shadow-sm">
+                            <i data-lucide="qr-code" class="h-3 w-3 text-amber-400"></i>
+                            <span>Xem mã QR &amp; Chi tiết</span>
+                        </a>
+                        <a href="{{ route('profile.edit') }}#my-courses"
+                           class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition shadow-sm">
+                            <span>Kiểm tra trong Hồ sơ</span>
+                        </a>
+                    </div>
+                </div>
+                @endif
+
                 {{-- The Form --}}
                 <form action="{{ route('courses.register', $course->slug) }}" method="POST" class="space-y-3.5">
                     @csrf
+
+                    {{-- Anti-spam bot time-gate token --}}
+                    <input type="hidden" name="_rendered_at" value="{{ encrypt(time()) }}">
 
                     {{-- Honeypot field (hidden from humans, catches automated spam bots) --}}
                     <input type="text" name="website_url_hp" style="display:none !important;" tabindex="-1" autocomplete="off">
@@ -316,10 +350,17 @@
                     </div>
 
                     {{-- Submit Button --}}
+                    @if(isset($existingRegistration) && $existingRegistration)
+                    <button type="submit"
+                            class="w-full rounded-2xl bg-amber-600 py-3 text-center text-sm font-black text-white shadow-lg shadow-amber-950/20 hover:bg-amber-700 active:scale-[0.99] transition">
+                        Gửi Yêu Cầu Đổi Lịch / Cập Nhật Đơn
+                    </button>
+                    @else
                     <button type="submit"
                             class="w-full rounded-2xl bg-[#991b1b] py-3 text-center text-sm font-black text-white shadow-lg shadow-red-950/20 hover:bg-red-800 active:scale-[0.99] transition">
                         Gửi Đăng Ký &amp; Nhận Lộ Trình Học
                     </button>
+                    @endif
 
                     <div class="pt-2 text-[11px] text-slate-400 text-center space-y-1">
                         <p class="flex items-center justify-center gap-1.5">
