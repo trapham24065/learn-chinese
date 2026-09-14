@@ -18,93 +18,100 @@
         </p>
     </div>
 
-    {{-- Account Notification Banner (Hiển thị ngay trên cùng) --}}
+    {{-- Account Notification Banner (Hiển thị ngay trên cùng, màu sắc rõ ràng sắc nét) --}}
     @if(session('auto_account_created'))
-    <div class="rounded-3xl border-2 border-emerald-400 bg-gradient-to-br from-emerald-500/10 via-teal-50/60 to-white p-6 sm:p-7 shadow-lg shadow-emerald-950/5 space-y-4">
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 sm:p-7 shadow-sm space-y-5">
         <div class="flex items-start gap-3.5">
-            <div class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-emerald-600 text-white shadow-md shadow-emerald-950/20">
-                <i data-lucide="sparkles" class="h-6 w-6"></i>
+            <div class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-slate-950 text-amber-400 shadow-md shadow-slate-950/15">
+                <i data-lucide="sparkles" class="h-5 w-5"></i>
             </div>
             <div class="min-w-0 flex-1">
-                <span class="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-800 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider mb-1">
-                    <i data-lucide="check" class="h-3 w-3"></i> Tự động kích hoạt tài khoản
-                </span>
-                <h2 class="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
-                    Tài khoản học viên của bạn đã được khởi tạo &amp; đăng nhập thành công!
+                <div class="flex flex-wrap items-center gap-2 mb-1">
+                    <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800">
+                        <i data-lucide="check" class="h-3 w-3 text-emerald-600"></i> Tự động kích hoạt tài khoản
+                    </span>
+                    <span class="text-[11px] font-medium text-slate-500">Đã đăng nhập</span>
+                </div>
+                <h2 class="text-base sm:text-lg font-black text-slate-950 tracking-tight">
+                    Tài khoản học viên của bạn đã sẵn sàng!
                 </h2>
-                <p class="text-xs text-slate-600 mt-1 leading-relaxed">
-                    Hệ thống đã tự động tạo tài khoản và đăng nhập cho bạn để theo dõi tiến độ lớp học, ôn tập Flashcard 3D và làm bài thi HSK miễn phí.
+                <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+                    Hệ thống đã tự động tạo tài khoản và đăng nhập cho bạn để theo dõi tiến độ lớp học, ôn tập Flashcard và làm bài thi HSK.
                 </p>
             </div>
         </div>
 
-        {{-- Account Credentials Box --}}
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-            <div class="rounded-2xl border border-emerald-200 bg-white p-3.5 shadow-sm">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Tên đăng nhập (Email)</span>
-                <div class="flex items-center justify-between mt-1">
-                    <span class="text-sm font-black font-mono text-slate-900 truncate">{{ session('auto_account_created')['email'] }}</span>
-                    <button @click="copyText('{{ session('auto_account_created')['email'] }}')" type="button" title="Sao chép email" class="text-slate-400 hover:text-slate-700 p-1">
-                        <i data-lucide="copy" class="h-4 w-4"></i>
-                    </button>
+        {{-- Account Credentials Box (High contrast, sạch sẽ) --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {{-- Email Box --}}
+            <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-3.5 flex items-center justify-between">
+                <div class="min-w-0 pr-2">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Tên đăng nhập (Email)</span>
+                    <span class="text-sm font-black font-mono text-slate-900 truncate block mt-0.5">{{ session('auto_account_created')['email'] }}</span>
                 </div>
+                <button @click="copyText('{{ session('auto_account_created')['email'] }}')" type="button" title="Sao chép email"
+                        class="rounded-xl border border-slate-200 bg-white p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition shadow-sm shrink-0">
+                    <i data-lucide="copy" class="h-4 w-4"></i>
+                </button>
             </div>
 
-            <div class="rounded-2xl border-2 border-amber-300 bg-amber-50/80 p-3.5 shadow-sm">
-                <div class="flex items-center justify-between">
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-amber-800">Mật khẩu khởi tạo</span>
-                    <span class="text-[10px] font-bold text-amber-700 bg-amber-200/60 px-1.5 py-0.2 rounded">Số điện thoại của bạn</span>
+            {{-- Password Box (Điểm nhấn Amber ấm áp) --}}
+            <div class="rounded-2xl border border-amber-200 bg-amber-50/50 p-3.5 flex items-center justify-between">
+                <div class="min-w-0 pr-2">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-amber-900">Mật khẩu khởi tạo</span>
+                        <span class="text-[10px] font-bold text-amber-700 bg-amber-100/80 px-1.5 py-0.2 rounded">(Số điện thoại)</span>
+                    </div>
+                    <span class="text-sm font-black font-mono text-amber-950 truncate block mt-0.5">{{ session('auto_account_created')['password'] }}</span>
                 </div>
-                <div class="flex items-center justify-between mt-1">
-                    <span class="text-sm font-black font-mono text-amber-950">{{ session('auto_account_created')['password'] }}</span>
-                    <button @click="copyText('{{ session('auto_account_created')['password'] }}')" type="button" title="Sao chép mật khẩu" class="text-amber-700 hover:text-amber-900 p-1">
-                        <i data-lucide="copy" class="h-4 w-4"></i>
-                    </button>
-                </div>
+                <button @click="copyText('{{ session('auto_account_created')['password'] }}')" type="button" title="Sao chép mật khẩu"
+                        class="rounded-xl border border-amber-200 bg-white p-2 text-amber-800 hover:bg-amber-100 transition shadow-sm shrink-0">
+                    <i data-lucide="copy" class="h-4 w-4"></i>
+                </button>
             </div>
         </div>
 
-        {{-- Quick action links --}}
-        <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-emerald-100/80">
+        {{-- Quick action links (Rõ ràng, tương phản cao) --}}
+        <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100">
             <p class="text-[11px] text-slate-500 flex items-center gap-1.5">
-                <i data-lucide="info" class="h-3.5 w-3.5 text-emerald-600 shrink-0"></i>
+                <i data-lucide="info" class="h-3.5 w-3.5 text-slate-400 shrink-0"></i>
                 <span>Ghi nhớ hoặc sao chép mật khẩu này để đăng nhập trên các thiết bị khác.</span>
             </p>
             <div class="flex items-center gap-2">
-                <a href="{{ route('courses.my') }}" class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-800 transition shadow-sm">
-                    <i data-lucide="bookmark-check" class="h-3.5 w-3.5"></i>
-                    Xem "Khóa học của tôi"
+                <a href="{{ route('courses.my') }}" class="inline-flex items-center gap-1.5 rounded-xl bg-slate-950 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 transition shadow-sm">
+                    <i data-lucide="bookmark-check" class="h-3.5 w-3.5 text-amber-400"></i>
+                    <span>Xem "Khóa học của tôi"</span>
                 </a>
-                <a href="{{ route('profile.edit') }}" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition">
-                    <i data-lucide="key-round" class="h-3.5 w-3.5"></i>
-                    Đổi mật khẩu
+                <a href="{{ route('profile.edit') }}" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition shadow-sm">
+                    <i data-lucide="key-round" class="h-3.5 w-3.5 text-slate-400"></i>
+                    <span>Đổi mật khẩu</span>
                 </a>
             </div>
         </div>
     </div>
     @elseif(session('existing_account_linked'))
-    <div class="rounded-3xl border border-blue-200 bg-blue-50/80 p-5 sm:p-6 flex items-start gap-4">
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm flex items-start gap-4">
         <div class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-blue-600 text-white shadow-md shadow-blue-950/15">
             <i data-lucide="user-check" class="h-5 w-5"></i>
         </div>
         <div class="flex-1 min-w-0">
-            <p class="text-sm font-bold text-blue-950">Đơn đã được tự động liên kết với tài khoản: {{ session('existing_account_linked')['email'] }}</p>
-            <p class="text-xs text-blue-700 mt-1">
+            <p class="text-sm font-bold text-slate-900">Đơn đã được tự động liên kết với tài khoản: {{ session('existing_account_linked')['email'] }}</p>
+            <p class="text-xs text-slate-500 mt-1">
                 Tài khoản này đã tồn tại từ trước trên hệ thống.
                 @auth
                 Bạn hiện đang đăng nhập bằng tài khoản này.
                 @else
-                Vui lòng đăng nhập với mật khẩu bạn đã tạo trước đó để xem đơn.
+                Vui lòng đăng nhập với mật khẩu bạn đã tạo trước đó để theo dõi đơn.
                 @endauth
             </p>
             <div class="mt-3 flex items-center gap-2">
                 @auth
-                <a href="{{ route('courses.my') }}" class="inline-flex items-center gap-1.5 rounded-xl bg-blue-700 px-4 py-2 text-xs font-bold text-white hover:bg-blue-800 transition shadow-sm">
-                    <i data-lucide="bookmark-check" class="h-3.5 w-3.5"></i>
+                <a href="{{ route('courses.my') }}" class="inline-flex items-center gap-1.5 rounded-xl bg-slate-950 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 transition shadow-sm">
+                    <i data-lucide="bookmark-check" class="h-3.5 w-3.5 text-amber-400"></i>
                     Xem trong "Khóa học của tôi" &rarr;
                 </a>
                 @else
-                <a href="{{ route('login') }}" class="inline-flex items-center gap-1.5 rounded-xl bg-blue-700 px-4 py-2 text-xs font-bold text-white hover:bg-blue-800 transition shadow-sm">
+                <a href="{{ route('login') }}" class="inline-flex items-center gap-1.5 rounded-xl bg-slate-950 px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 transition shadow-sm">
                     <i data-lucide="log-in" class="h-3.5 w-3.5"></i>
                     Đăng nhập tài khoản &rarr;
                 </a>
@@ -113,32 +120,32 @@
         </div>
     </div>
     @elseif(auth()->check())
-    <div class="rounded-2xl bg-emerald-50 border border-emerald-200 p-4 flex items-center justify-between gap-4">
+    <div class="rounded-3xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm flex items-center justify-between gap-4">
         <div class="flex items-center gap-3 min-w-0">
-            <div class="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-700">
+            <div class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-700">
                 <i data-lucide="check-circle" class="h-4 w-4"></i>
             </div>
             <div class="min-w-0">
-                <p class="text-xs font-bold text-emerald-900 truncate">Đơn đã được lưu vào tài khoản: {{ auth()->user()->email }}</p>
-                <p class="text-[11px] text-emerald-700">Xem lại bất cứ lúc nào trong "Khóa học của tôi"</p>
+                <p class="text-xs font-bold text-slate-900 truncate">Đơn đã được lưu vào tài khoản: {{ auth()->user()->email }}</p>
+                <p class="text-[11px] text-slate-500">Xem lại bất cứ lúc nào trong "Khóa học của tôi"</p>
             </div>
         </div>
-        <a href="{{ route('courses.my') }}" class="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-emerald-800 transition shadow-sm">
+        <a href="{{ route('courses.my') }}" class="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-slate-950 px-3.5 py-2 text-xs font-bold text-white hover:bg-slate-800 transition shadow-sm">
             Xem ngay &rarr;
         </a>
     </div>
     @elseif($registration->user)
-    <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4 flex items-center justify-between gap-4">
+    <div class="rounded-3xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm flex items-center justify-between gap-4">
         <div class="flex items-center gap-3 min-w-0">
-            <div class="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-slate-200 text-slate-700">
+            <div class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-600">
                 <i data-lucide="user" class="h-4 w-4"></i>
             </div>
             <div class="min-w-0">
-                <p class="text-xs font-bold text-slate-800 truncate">Đơn này thuộc tài khoản: {{ $registration->user->email }}</p>
+                <p class="text-xs font-bold text-slate-900 truncate">Đơn này thuộc tài khoản: {{ $registration->user->email }}</p>
                 <p class="text-[11px] text-slate-500">Đăng nhập với mật khẩu (Số điện thoại) để theo dõi đơn.</p>
             </div>
         </div>
-        <a href="{{ route('login') }}" class="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-slate-800 transition">
+        <a href="{{ route('login') }}" class="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-3.5 py-2 text-xs font-bold text-white hover:bg-slate-800 transition shadow-sm">
             Đăng nhập &rarr;
         </a>
     </div>
