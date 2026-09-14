@@ -265,12 +265,18 @@
                     {{-- Email --}}
                     <div>
                         <label for="email" class="block text-xs font-bold text-slate-700 mb-1">
-                            Địa chỉ Email (để nhận tài liệu &amp; link Meet)
+                            Địa chỉ Email (nhận link Meet &amp; kích hoạt tài khoản) <span class="text-rose-600">*</span>
                         </label>
-                        <input type="email" name="email" id="email"
+                        <input type="email" name="email" id="email" required
                                value="{{ old('email', auth()->user()?->email ?? '') }}"
                                placeholder="email@example.com"
                                class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-[#991b1b] focus:ring-1 focus:ring-[#991b1b] transition">
+                        @guest
+                        <p class="text-[11px] text-slate-500 mt-1 flex items-center gap-1.5">
+                            <i data-lucide="sparkles" class="h-3.5 w-3.5 text-amber-500 shrink-0"></i>
+                            <span>Hệ thống sẽ tự động tạo tài khoản (mật khẩu khởi tạo là <strong>Số điện thoại</strong> của bạn).</span>
+                        </p>
+                        @endguest
                     </div>
 
                     {{-- Trình độ hiện tại --}}

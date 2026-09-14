@@ -134,10 +134,65 @@ class CourseRegistrationTest extends TestCase
         $response = $this->post(route('courses.register', $this->course->slug), [
             'full_name' => '',
             'phone' => '',
+            'email' => '',
             'current_level' => 'invalid_level',
         ]);
 
-        $response->assertSessionHasErrors(['full_name', 'phone', 'current_level']);
+        $response->assertSessionHasErrors(['full_name', 'phone', 'email', 'current_level']);
+    }
+
+    public function test_guest_registration_automatically_creates_user_account_with_phone_password_and_logs_in(): void
+    {
+        $response = $this->post(route('courses.register', $this->course->slug), [
+            'full_name' => 'Lê Hoàng Nam',
+            'phone' => '0912 888 999',
+            'email' => 'hoangnam@example.com',
+            'current_level' => 'chua_biet_gi',
+        ]);
+
+        $registration = CourseRegistration::where('phone_normalized', '0912888999')->first();
+        $this->assertNotNull($registration);
+
+        // Check user was created
+        $user = \App\Models\User::where('email', 'hoangnam@example.com')->first();
+        $this->assertNotNull($user);
+        $this->assertEquals('Lê Hoàng Nam', $user->name);
+        $this->assertEquals($user->id, $registration->user_id);
+
+        // Check password is phone normalized
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('0912888999', $user->password));
+
+        // Check user is automatically authenticated!
+        $this->assertAuthenticatedAs($user);
+
+        // Check success page has account details
+        $response->assertRedirect(route('courses.success', $registration->registration_code));
+        $successResponse = $this->get(route('courses.success', $registration->registration_code));
+        $successResponse->assertSee('hoangnam@example.com');
+        $successResponse->assertSee('0912888999');
+        $successResponse->assertSee('Tự động kích hoạt tài khoản');
+    }
+
+    public function test_guest_registration_with_existing_email_links_registration_without_overwriting_password(): void
+    {
+        $existingUser = \App\Models\User::factory()->create([
+            'email' => 'da.co.tk@example.com',
+            'password' => \Illuminate\Support\Facades\Hash::make('secret123'),
+        ]);
+
+        $response = $this->post(route('courses.register', $this->course->slug), [
+            'full_name' => 'Tên Mới',
+            'phone' => '0933 444 555',
+            'email' => 'da.co.tk@example.com',
+            'current_level' => 'hsk1_2',
+        ]);
+
+        $registration = CourseRegistration::where('phone_normalized', '0933444555')->first();
+        $this->assertNotNull($registration);
+        $this->assertEquals($existingUser->id, $registration->user_id);
+
+        // Password should NOT be overwritten
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('secret123', $existingUser->fresh()->password));
     }
 
     public function test_success_page_displays_registration_details_and_vietqr(): void
