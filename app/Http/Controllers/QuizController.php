@@ -13,9 +13,19 @@ use Illuminate\View\View;
 class QuizController extends Controller
 {
     private const QUIZ_PER_SESSION = 10;
+    private const VALID_COUNTS = [10, 20, 30];
 
     public function index(Request $request): View
     {
+        // --- Validate & parse filters ---
+        $selectedLevel = $request->query('level');
+        $selectedLevel = in_array((int) $selectedLevel, [1, 2, 3, 4, 5, 6], true)
+            ? (int) $selectedLevel : null;
+
+        $requestedCount = (int) $request->query('count', self::QUIZ_PER_SESSION);
+        $perSession = in_array($requestedCount, self::VALID_COUNTS, true)
+            ? $requestedCount : self::QUIZ_PER_SESSION;
+
         $lessons = Lesson::query()
             ->where('is_published', true)
             ->withCount(['questions' => fn ($q) => $q->where('is_active', true)])
@@ -29,27 +39,39 @@ class QuizController extends Controller
         $selectedLessonSlug = $request->query('lesson');
         $selectedLesson = null;
 
+        // --- Build base query ---
         $query = Question::query()
             ->where('is_active', true)
             ->with('lesson');
 
+        // Filter by HSK level (takes priority when no specific lesson is selected)
+        if ($selectedLevel && (! $selectedLessonSlug || $selectedLessonSlug === 'all')) {
+            $query->where('hsk_level', $selectedLevel);
+        }
+
+        // Filter by specific lesson
         if ($selectedLessonSlug && $selectedLessonSlug !== 'all') {
             $selectedLesson = $lessons->firstWhere('slug', $selectedLessonSlug);
             if ($selectedLesson) {
                 $query->where('lesson_id', $selectedLesson->id);
+                // Auto-set level from selected lesson
+                if (! $selectedLevel) {
+                    $selectedLevel = $selectedLesson->hsk_level;
+                }
             }
         }
 
-        // Total pool size (before limiting)
+        // --- Total pool size (before limiting) ---
         $totalPoolCount = (clone $query)->count();
 
-        // C5: Replace ORDER BY RAND() with PHP shuffle on IDs to avoid MySQL temp table sort
+        // --- Fetch random questions via PHP shuffle (avoids MySQL ORDER BY RAND()) ---
         $allIds = (clone $query)->pluck('id')->toArray();
         shuffle($allIds);
-        $selectedIds = array_slice($allIds, 0, self::QUIZ_PER_SESSION);
-        $questions = \App\Models\Question::whereIn('id', $selectedIds)->get()
+        $selectedIds = array_slice($allIds, 0, $perSession);
+        $questions = Question::whereIn('id', $selectedIds)->get()
             ->sortBy(fn ($q) => array_search($q->id, $selectedIds))->values();
 
+        // --- User session stats ---
         $user = Auth::guard('web')->user();
         $recentQuizSessions = $user
             ? $user->studySessions()->where('session_type', 'quiz')->orderByDesc('completed_at')->take(5)->get()
@@ -59,19 +81,30 @@ class QuizController extends Controller
             ? (int) round((float) $recentQuizSessions->avg('score'))
             : 85;
 
+        // --- Question counts by level for filter badges ---
+        $questionCountsByLevel = Question::query()
+            ->where('is_active', true)
+            ->selectRaw('hsk_level, count(*) as count')
+            ->groupBy('hsk_level')
+            ->pluck('count', 'hsk_level');
+
         return view('quiz', [
-            'lessons'             => $lessons,
-            'lessonsByLevel'      => $lessonsByLevel,
-            'selectedLessonSlug'  => $selectedLessonSlug ?: 'all',
-            'selectedLesson'      => $selectedLesson,
-            'questions'           => $questions,
-            'totalActiveQuestions' => Question::query()->where('is_active', true)->count(),
-            'totalPoolCount'      => $totalPoolCount,
-            'perSession'          => self::QUIZ_PER_SESSION,
-            'userAverageScore'    => $userAverageScore,
-            'recentSessionsCount' => $recentQuizSessions->count(),
+            'lessons'               => $lessons,
+            'lessonsByLevel'        => $lessonsByLevel,
+            'selectedLessonSlug'    => $selectedLessonSlug ?: 'all',
+            'selectedLesson'        => $selectedLesson,
+            'selectedLevel'         => $selectedLevel,
+            'questions'             => $questions,
+            'totalActiveQuestions'  => Question::query()->where('is_active', true)->count(),
+            'totalPoolCount'        => $totalPoolCount,
+            'perSession'            => $perSession,
+            'validCounts'           => self::VALID_COUNTS,
+            'userAverageScore'      => $userAverageScore,
+            'recentSessionsCount'   => $recentQuizSessions->count(),
+            'questionCountsByLevel' => $questionCountsByLevel,
         ]);
     }
+
 
     public function submit(Request $request): JsonResponse
     {

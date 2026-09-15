@@ -79,48 +79,104 @@
         </div>
     </section>
 
-    {{-- Lesson Filter Toolbar --}}
-    <section class="flex flex-wrap items-center gap-2 border-b border-slate-200/80 pb-4">
-        <span class="mr-2 text-xs font-bold uppercase tracking-wider text-slate-500">Chủ đề:</span>
-        <a href="{{ route('quiz') }}"
-           class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition {{ $selectedLessonSlug === 'all' ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'bg-white/80 text-slate-700 hover:bg-white hover:text-[#991b1b] border border-slate-200' }}">
-            <span>Tất cả</span>
-            <span class="rounded-full px-2 py-0.5 text-xs {{ $selectedLessonSlug === 'all' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600' }}">
-                {{ $totalActiveQuestions }}
-            </span>
-        </a>
+    {{-- Filter Toolbar: HSK Level Tabs + Lesson Selector + Count Picker --}}
+    <section class="space-y-3 border-b border-slate-200/80 pb-5">
 
-        {{-- Grouped Lesson Selector Dropdown --}}
-        <div class="relative inline-flex items-center">
-            <select onchange="if(this.value){ window.location.href = this.value; }"
-                class="appearance-none rounded-full border border-slate-200 bg-white/90 py-2 pl-4 pr-9 text-sm font-semibold text-slate-700 shadow-xs outline-none transition hover:border-[#991b1b] focus:border-[#991b1b] focus:ring-1 focus:ring-[#991b1b] cursor-pointer max-w-[260px] sm:max-w-xs truncate">
-                <option value="{{ route('quiz') }}">
-                    📖 Chọn bài học để luyện tập...
-                </option>
-                @foreach($lessonsByLevel as $lvl => $lvlLessons)
-                    <optgroup label="── {{ $lvl ? 'HSK ' . $lvl : 'Chủ đề' }} ──">
-                        @foreach($lvlLessons as $l)
-                            <option value="{{ route('quiz', ['lesson' => $l->slug]) }}"
-                                    {{ $selectedLessonSlug === $l->slug ? 'selected' : '' }}>
-                                {{ $l->title }} ({{ $l->questions_count }} câu)
-                            </option>
-                        @endforeach
-                    </optgroup>
-                @endforeach
-            </select>
-            <i data-lucide="chevron-down" class="pointer-events-none absolute right-3 top-2.5 h-4 w-4 text-slate-400"></i>
+        {{-- Row 1: HSK Level quick-filter tabs --}}
+        <div class="flex flex-wrap items-center gap-2">
+            <span class="mr-1 text-xs font-bold uppercase tracking-wider text-slate-500">Cấp độ:</span>
+
+            {{-- All --}}
+            <a href="{{ route('quiz') }}"
+               class="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition
+                      {{ !$selectedLevel && $selectedLessonSlug === 'all' ? 'bg-slate-950 text-white shadow-md' : 'bg-white border border-slate-200 text-slate-700 hover:border-slate-400' }}">
+                <span>Tất cả</span>
+                <span class="rounded-full px-1.5 py-0.5 text-xs {{ !$selectedLevel && $selectedLessonSlug === 'all' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600' }}">
+                    {{ $totalActiveQuestions }}
+                </span>
+            </a>
+
+            {{-- HSK 1-6 tabs --}}
+            @foreach([1,2,3,4,5,6] as $lvl)
+                @php
+                    $lvlColors = [
+                        1 => ['active' => 'bg-red-700 text-white shadow-md shadow-red-900/20', 'badge' => 'bg-white/20 text-white', 'inactive' => 'bg-red-50 border border-red-200 text-red-800 hover:bg-red-100'],
+                        2 => ['active' => 'bg-orange-600 text-white shadow-md shadow-orange-900/20', 'badge' => 'bg-white/20 text-white', 'inactive' => 'bg-orange-50 border border-orange-200 text-orange-800 hover:bg-orange-100'],
+                        3 => ['active' => 'bg-amber-600 text-white shadow-md shadow-amber-900/20', 'badge' => 'bg-white/20 text-white', 'inactive' => 'bg-amber-50 border border-amber-200 text-amber-800 hover:bg-amber-100'],
+                        4 => ['active' => 'bg-emerald-700 text-white shadow-md shadow-emerald-900/20', 'badge' => 'bg-white/20 text-white', 'inactive' => 'bg-emerald-50 border border-emerald-200 text-emerald-800 hover:bg-emerald-100'],
+                        5 => ['active' => 'bg-blue-700 text-white shadow-md shadow-blue-900/20', 'badge' => 'bg-white/20 text-white', 'inactive' => 'bg-blue-50 border border-blue-200 text-blue-800 hover:bg-blue-100'],
+                        6 => ['active' => 'bg-purple-700 text-white shadow-md shadow-purple-900/20', 'badge' => 'bg-white/20 text-white', 'inactive' => 'bg-purple-50 border border-purple-200 text-purple-800 hover:bg-purple-100'],
+                    ];
+                    $isActive = $selectedLevel === $lvl && $selectedLessonSlug === 'all';
+                    $lvlCount = $questionCountsByLevel[$lvl] ?? 0;
+                @endphp
+                <a href="{{ route('quiz', ['level' => $lvl]) }}"
+                   class="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition
+                          {{ $isActive ? $lvlColors[$lvl]['active'] : $lvlColors[$lvl]['inactive'] }}">
+                    <span>HSK {{ $lvl }}</span>
+                    <span class="rounded-full px-1.5 py-0.5 text-xs {{ $isActive ? $lvlColors[$lvl]['badge'] : 'bg-white/60 text-slate-600' }}">
+                        {{ $lvlCount }}
+                    </span>
+                </a>
+            @endforeach
         </div>
 
-        @if($selectedLesson)
-        <span class="inline-flex items-center gap-1.5 rounded-full bg-red-50 border border-red-200 px-3.5 py-1.5 text-xs font-semibold text-[#991b1b]">
-            <i data-lucide="book-open" class="h-3.5 w-3.5"></i>
-            <span>{{ $selectedLesson->title }} ({{ count($questions) }} câu)</span>
-            <a href="{{ route('quiz') }}" class="ml-1 rounded-full p-0.5 hover:bg-red-200/60 transition text-red-600" title="Bỏ lọc bài học">
-                <i data-lucide="x" class="h-3 w-3"></i>
-            </a>
-        </span>
-        @endif
+        {{-- Row 2: Lesson dropdown + count selector --}}
+        <div class="flex flex-wrap items-center gap-3">
+            {{-- Lesson dropdown --}}
+            <div class="relative inline-flex items-center">
+                <select onchange="if(this.value){ window.location.href = this.value; }"
+                    class="appearance-none rounded-full border border-slate-200 bg-white/90 py-2 pl-4 pr-9 text-sm font-semibold text-slate-700 shadow-xs outline-none transition hover:border-[#991b1b] focus:border-[#991b1b] focus:ring-1 focus:ring-[#991b1b] cursor-pointer max-w-[280px] sm:max-w-xs truncate">
+                    <option value="{{ route('quiz', $selectedLevel ? ['level' => $selectedLevel] : []) }}">
+                        📖 Chọn bài học cụ thể...
+                    </option>
+                    @foreach($lessonsByLevel as $lvl => $lvlLessons)
+                        <optgroup label="── HSK {{ $lvl }} ──">
+                            @foreach($lvlLessons as $l)
+                                <option value="{{ route('quiz', ['lesson' => $l->slug]) }}"
+                                        {{ $selectedLessonSlug === $l->slug ? 'selected' : '' }}>
+                                    {{ $l->title }} ({{ $l->questions_count }} câu)
+                                </option>
+                            @endforeach
+                        </optgroup>
+                    @endforeach
+                </select>
+                <i data-lucide="chevron-down" class="pointer-events-none absolute right-3 top-2.5 h-4 w-4 text-slate-400"></i>
+            </div>
+
+            {{-- Question count picker --}}
+            <div class="flex items-center gap-1.5">
+                <span class="text-xs font-semibold text-slate-500">Số câu:</span>
+                @foreach($validCounts as $cnt)
+                    @php
+                        $cntParams = array_filter([
+                            'level'  => $selectedLevel,
+                            'lesson' => $selectedLessonSlug !== 'all' ? $selectedLessonSlug : null,
+                            'count'  => $cnt,
+                        ]);
+                    @endphp
+                    <a href="{{ route('quiz', $cntParams) }}"
+                       class="inline-flex h-8 w-10 items-center justify-center rounded-full text-xs font-bold transition
+                              {{ $perSession === $cnt ? 'bg-slate-950 text-white shadow-sm' : 'bg-white border border-slate-200 text-slate-600 hover:border-slate-400' }}">
+                        {{ $cnt }}
+                    </a>
+                @endforeach
+            </div>
+
+            {{-- Active lesson badge + clear button --}}
+            @if($selectedLesson)
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-red-50 border border-red-200 px-3.5 py-1.5 text-xs font-semibold text-[#991b1b]">
+                    <i data-lucide="book-open" class="h-3.5 w-3.5"></i>
+                    <span>{{ $selectedLesson->title }}</span>
+                    <a href="{{ route('quiz', $selectedLevel ? ['level' => $selectedLevel] : []) }}"
+                       class="ml-1 rounded-full p-0.5 hover:bg-red-200/60 transition text-red-600" title="Bỏ lọc bài học">
+                        <i data-lucide="x" class="h-3 w-3"></i>
+                    </a>
+                </span>
+            @endif
+        </div>
     </section>
+
 
     {{-- Result Banner when Submitted --}}
     <section x-show="isSubmitted" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="rounded-[2rem] bg-gradient-to-br from-slate-950 via-slate-900 to-[#991b1b] p-6 text-white shadow-2xl shadow-red-950/20 sm:p-8">
