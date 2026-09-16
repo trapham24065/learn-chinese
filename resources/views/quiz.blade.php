@@ -261,7 +261,38 @@
                         </h2>
                     </div>
 
+                    {{-- Listening Audio Player (only for listening questions with audio_text) --}}
+                    @if ($question->skill_type === 'listening' && $question->audio_text)
+                        <div class="mt-4 flex items-center gap-4 rounded-2xl border border-blue-200 bg-blue-50/70 px-5 py-4">
+                            {{-- Skill badge --}}
+                            <span class="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-800">
+                                <i data-lucide="headphones" class="h-3.5 w-3.5"></i>
+                                Câu nghe
+                            </span>
+
+                            {{-- Audio text preview (the Chinese text to be read) --}}
+                            <span class="flex-1 font-mono text-lg font-bold text-slate-900 tracking-wide">
+                                {{ $question->audio_text }}
+                            </span>
+
+                            {{-- Play button (Web Speech API TTS) - use data-audio to avoid inline JS escaping issues --}}
+                            <button type="button"
+                                    data-audio="{{ $question->audio_text }}"
+                                    onclick="playQuizAudio(this, this.dataset.audio)"
+                                    title="Nghe đoạn âm thanh"
+                                    class="tts-btn inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg shadow-blue-500/30 transition hover:bg-blue-700 active:scale-95">
+                                <i data-lucide="play" class="h-5 w-5 tts-play-icon"></i>
+                                <i data-lucide="square" class="h-5 w-5 tts-stop-icon hidden"></i>
+                            </button>
+
+                            {{-- Replay hint --}}
+                            <span class="hidden text-xs text-blue-600 sm:block">Nhấn để nghe lại</span>
+                        </div>
+                    @endif
+
+
                     {{-- Options List --}}
+
                     <div class="mt-6 grid gap-3 sm:grid-cols-2">
                         @foreach ($question->options as $option)
                             <button type="button"
@@ -407,6 +438,90 @@
 
 {{-- Alpine.js Quiz Logic --}}
 <script>
+// ─── TTS Audio Player for Listening Questions ────────────────────────────────
+let _activeTtsBtn = null;
+
+function playQuizAudio(btn, text) {
+    if (!('speechSynthesis' in window)) {
+        alert('Trình duyệt của bạn không hỗ trợ đọc âm thanh. Vui lòng dùng Chrome hoặc Edge.');
+        return;
+    }
+
+    const playIcon = btn.querySelector('.tts-play-icon');
+    const stopIcon = btn.querySelector('.tts-stop-icon');
+
+    // If this button is already playing → stop it
+    if (_activeTtsBtn === btn) {
+        window.speechSynthesis.cancel();
+        _activeTtsBtn = null;
+        playIcon.classList.remove('hidden');
+        stopIcon.classList.add('hidden');
+        btn.classList.remove('bg-rose-600', 'hover:bg-rose-700');
+        btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+        return;
+    }
+
+    // If another button is playing → cancel it first
+    if (_activeTtsBtn) {
+        window.speechSynthesis.cancel();
+        const prevPlay = _activeTtsBtn.querySelector('.tts-play-icon');
+        const prevStop = _activeTtsBtn.querySelector('.tts-stop-icon');
+        if (prevPlay) prevPlay.classList.remove('hidden');
+        if (prevStop) prevStop.classList.add('hidden');
+        _activeTtsBtn.classList.remove('bg-rose-600', 'hover:bg-rose-700');
+        _activeTtsBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+    }
+
+    // Start new speech
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'zh-CN';
+    utterance.rate = 0.85;
+    utterance.pitch = 1;
+
+    // Try to pick a Chinese voice
+    const voices = window.speechSynthesis.getVoices();
+    const zhVoice = voices.find(v => v.lang.startsWith('zh'));
+    if (zhVoice) utterance.voice = zhVoice;
+
+    // UI: switch to stop state
+    _activeTtsBtn = btn;
+    playIcon.classList.add('hidden');
+    stopIcon.classList.remove('hidden');
+    btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+    btn.classList.add('bg-rose-600', 'hover:bg-rose-700');
+
+    utterance.onend = () => {
+        if (_activeTtsBtn === btn) {
+            _activeTtsBtn = null;
+            playIcon.classList.remove('hidden');
+            stopIcon.classList.add('hidden');
+            btn.classList.remove('bg-rose-600', 'hover:bg-rose-700');
+            btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+        }
+    };
+
+    utterance.onerror = () => {
+        if (_activeTtsBtn === btn) {
+            _activeTtsBtn = null;
+            playIcon.classList.remove('hidden');
+            stopIcon.classList.add('hidden');
+            btn.classList.remove('bg-rose-600', 'hover:bg-rose-700');
+            btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+        }
+    };
+
+    window.speechSynthesis.speak(utterance);
+}
+
+// Pre-load voices when page loads (required by some browsers)
+if ('speechSynthesis' in window) {
+    window.speechSynthesis.getVoices();
+    window.speechSynthesis.addEventListener('voiceschanged', () => {
+        window.speechSynthesis.getVoices();
+    });
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 function quizApp() {
     return {
         answers: {},
