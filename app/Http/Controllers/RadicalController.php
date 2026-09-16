@@ -87,10 +87,16 @@ class RadicalController extends Controller
      */
     public function show(string $slug): View
     {
+        $radicalNumber = is_numeric($slug) 
+            ? (int) $slug 
+            : (preg_match('/^b(\d+)/i', $slug, $m) ? (int) $m[1] : null);
+
         $radical = Radical::query()
             ->where('slug', $slug)
+            ->when($radicalNumber, fn ($q) => $q->orWhere('radical_number', $radicalNumber))
             ->orWhere('character', $slug)
             ->orWhere('display_character', $slug)
+            ->orWhere('slug', 'like', "%-{$slug}")
             ->with(['characters' => function ($q) {
                 $q->orderBy('is_featured', 'desc')
                   ->orderBy('hsk_level')
