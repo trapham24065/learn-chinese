@@ -15,11 +15,11 @@
     </nav>
 
     {{-- ══ 2. RADICAL HERO DETAIL CARD ══ --}}
-    <div class="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+    <div class="w-full rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
+        <div class="flex flex-col lg:flex-row gap-8 items-start">
             
-            {{-- Left column: Visual HanziWriter Canvas & Controls (4 cols) --}}
-            <div class="lg:col-span-4 flex flex-col items-center justify-center p-6 rounded-2xl bg-gradient-to-b from-amber-50/60 to-red-50/40 border border-amber-200/60 shadow-inner text-center">
+            {{-- Left column: Visual HanziWriter Canvas & Controls (Fixed width on desktop, full on mobile) --}}
+            <div class="w-full lg:w-72 shrink-0 flex flex-col items-center justify-center p-6 rounded-2xl bg-gradient-to-b from-amber-50/60 to-red-50/40 border border-amber-200/60 shadow-inner text-center">
                 
                 {{-- HanziWriter Canvas Target --}}
                 <div class="relative overflow-hidden rounded-2xl border-2 border-dashed border-amber-300 bg-white shadow-sm" style="width: 220px; height: 220px;">
@@ -72,8 +72,8 @@
                 @endif
             </div>
 
-            {{-- Right column: Information, Mnemonic & Positioning (8 cols) --}}
-            <div class="lg:col-span-8 space-y-6">
+            {{-- Right column: Information, Mnemonic & Positioning --}}
+            <div class="flex-1 min-w-0 space-y-6 w-full">
                 
                 {{-- Header line: Name, Badges --}}
                 <div>
