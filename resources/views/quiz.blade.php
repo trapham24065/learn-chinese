@@ -296,16 +296,18 @@
                     <div class="mt-6 grid gap-3 sm:grid-cols-2">
                         @foreach ($question->options as $option)
                             <button type="button"
-                                    @click="selectOption({{ $question->id }}, @js($option))"
+                                    data-qid="{{ $question->id }}"
+                                    data-val="{{ $option }}"
+                                    @click="selectOption($el.dataset.qid, $el.dataset.val)"
                                     :disabled="isSubmitted"
                                     class="relative flex items-center justify-between rounded-2xl border p-4 text-left font-medium transition"
-                                    :class="getOptionClass({{ $question->id }}, @js($option))">
+                                    :class="getOptionClass($el.dataset.qid, $el.dataset.val)">
                                 <span class="flex items-center gap-3">
                                     <span class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-bold transition"
-                                          :class="getOptionRadioClass({{ $question->id }}, @js($option))">
-                                        <span x-show="isOptionSelected({{ $question->id }}, @js($option))" class="h-2 w-2 rounded-full bg-current"></span>
+                                          :class="getOptionRadioClass($el.dataset.qid, $el.dataset.val)">
+                                        <span x-show="isOptionSelected($el.dataset.qid, $el.dataset.val)" class="h-2 w-2 rounded-full bg-current"></span>
                                     </span>
-                                    <span class="text-sm sm:text-base" :class="getOptionTextClass({{ $question->id }}, @js($option))">
+                                    <span class="text-sm sm:text-base" :class="getOptionTextClass($el.dataset.qid, $el.dataset.val)">
                                         {{ $option }}
                                     </span>
                                 </span>
@@ -313,10 +315,10 @@
                                 {{-- Icon indicator after submit --}}
                                 <template x-if="isSubmitted">
                                     <span>
-                                        <template x-if="isCorrectOption({{ $question->id }}, @js($option))">
+                                        <template x-if="isCorrectOption($el.dataset.qid, $el.dataset.val)">
                                             <i data-lucide="circle-check-big" class="h-5 w-5 text-emerald-600"></i>
                                         </template>
-                                        <template x-if="isUserWrongOption({{ $question->id }}, @js($option))">
+                                        <template x-if="isUserWrongOption($el.dataset.qid, $el.dataset.val)">
                                             <i data-lucide="circle-x" class="h-5 w-5 text-rose-600"></i>
                                         </template>
                                     </span>
@@ -324,6 +326,7 @@
                             </button>
                         @endforeach
                     </div>
+
 
                     {{-- Explanation Box (Revealed after Submit) --}}
                     <div x-show="isSubmitted"
@@ -544,74 +547,74 @@ function quizApp() {
             return Math.round((this.answeredCount / this.totalCount) * 100);
         },
 
-        selectOption(questionId, option) {
+        selectOption(qId, option) {
             if (this.isSubmitted) return;
-            this.answers[questionId] = option;
+            this.answers[+qId] = option;
         },
 
-        isOptionSelected(questionId, option) {
-            return this.answers[questionId] === option;
+        isOptionSelected(qId, option) {
+            return this.answers[+qId] === option;
         },
 
-        isCorrectOption(questionId, option) {
-            if (!this.isSubmitted || !this.results?.details?.[questionId]) return false;
-            return this.results.details[questionId].correct_answer === option;
+        isCorrectOption(qId, option) {
+            if (!this.isSubmitted || !this.results?.details?.[+qId]) return false;
+            return this.results.details[+qId].correct_answer === option;
         },
 
-        isUserWrongOption(questionId, option) {
-            if (!this.isSubmitted || !this.results?.details?.[questionId]) return false;
-            const detail = this.results.details[questionId];
+        isUserWrongOption(qId, option) {
+            if (!this.isSubmitted || !this.results?.details?.[+qId]) return false;
+            const detail = this.results.details[+qId];
             return detail.user_answer === option && !detail.is_correct;
         },
 
-        getOptionClass(questionId, option) {
+        getOptionClass(qId, option) {
             if (!this.isSubmitted) {
-                if (this.isOptionSelected(questionId, option)) {
+                if (this.isOptionSelected(qId, option)) {
                     return 'border-[#991b1b] bg-red-50/60 text-[#991b1b] shadow-md';
                 }
                 return 'border-slate-200 bg-slate-50 hover:border-amber-300 hover:bg-white text-slate-700';
             }
 
-            if (this.isCorrectOption(questionId, option)) {
+            if (this.isCorrectOption(qId, option)) {
                 return 'border-emerald-500 bg-emerald-50 text-emerald-950 font-bold ring-1 ring-emerald-500';
             }
 
-            if (this.isUserWrongOption(questionId, option)) {
+            if (this.isUserWrongOption(qId, option)) {
                 return 'border-rose-500 bg-rose-50 text-rose-950 ring-1 ring-rose-500 line-through opacity-90';
             }
 
             return 'border-slate-200 bg-slate-50/50 text-slate-400 opacity-60';
         },
 
-        getOptionRadioClass(questionId, option) {
+        getOptionRadioClass(qId, option) {
             if (!this.isSubmitted) {
-                if (this.isOptionSelected(questionId, option)) {
+                if (this.isOptionSelected(qId, option)) {
                     return 'border-[#991b1b] bg-[#991b1b] text-white';
                 }
                 return 'border-slate-300 bg-white text-transparent';
             }
 
-            if (this.isCorrectOption(questionId, option)) {
+            if (this.isCorrectOption(qId, option)) {
                 return 'border-emerald-600 bg-emerald-600 text-white';
             }
 
-            if (this.isUserWrongOption(questionId, option)) {
+            if (this.isUserWrongOption(qId, option)) {
                 return 'border-rose-600 bg-rose-600 text-white';
             }
 
             return 'border-slate-300 bg-slate-100 text-transparent';
         },
 
-        getOptionTextClass(questionId, option) {
+        getOptionTextClass(qId, option) {
             if (!this.isSubmitted) {
-                return this.isOptionSelected(questionId, option) ? 'font-bold text-[#991b1b]' : 'text-slate-700';
+                return this.isOptionSelected(qId, option) ? 'font-bold text-[#991b1b]' : 'text-slate-700';
             }
 
-            if (this.isCorrectOption(questionId, option)) {
+            if (this.isCorrectOption(qId, option)) {
                 return 'font-bold text-emerald-900';
             }
 
-            if (this.isUserWrongOption(questionId, option)) {
+            if (this.isUserWrongOption(qId, option)) {
                 return 'text-rose-900';
             }
 
