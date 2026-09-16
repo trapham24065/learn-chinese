@@ -581,6 +581,58 @@
                 }
             }
         };
+
+        window.toggleCardStar = async function(state, el) {
+            if (state.loading) return;
+            state.loading = true;
+            const prev = state.isStarred;
+            state.isStarred = !prev;
+
+            const cardId = parseInt(el.dataset.id, 10);
+            const hanzi = el.dataset.hanzi || '';
+            const pinyin = el.dataset.pinyin || '';
+            const meaning = el.dataset.meaning || '';
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+            try {
+                const res = await fetch('{{ route("flashcards.toggleStar") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({ flashcard_id: cardId })
+                });
+
+                if (!res.ok) {
+                    state.isStarred = prev;
+                    if (res.status === 401) {
+                        window.dialog?.authRequired({
+                            word: hanzi,
+                            pinyin: pinyin,
+                            meaning: meaning,
+                        });
+                    }
+                    return;
+                }
+
+                const data = await res.json();
+                if (data && data.success) {
+                    state.isStarred = data.is_starred;
+                    if (data.is_starred) {
+                        window.toast?.success('Đã lưu vào Sổ tay từ vựng!', hanzi);
+                    } else {
+                        window.toast?.info('Đã bỏ lưu khỏi Sổ tay từ vựng');
+                    }
+                }
+            } catch (e) {
+                state.isStarred = prev;
+            } finally {
+                state.loading = false;
+                setTimeout(() => window.refreshIcons?.(), 50);
+            }
+        };
     </script>
     <x-toast />
 </body>

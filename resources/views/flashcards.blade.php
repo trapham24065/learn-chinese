@@ -324,7 +324,7 @@
                 target.is_starred = prevState;
                 if (res.status === 401) {
                     window.dialog.authRequired({
-                        word: target?.word || '',
+                        word: target?.hanzi || '',
                         pinyin: target?.pinyin || '',
                         meaning: target?.meaning || '',
                     });
@@ -334,7 +334,7 @@
                 target.is_starred = data.is_starred;
                 this.starredCount = data.starred_count;
                 if (data.is_starred) {
-                    window.toast.success('Đã lưu vào Sổ tay từ vựng!', target?.word || '');
+                    window.toast.success('Đã lưu vào Sổ tay từ vựng!', target?.hanzi || '');
                 } else {
                     window.toast.info('Đã bỏ lưu khỏi Sổ tay từ vựng');
                 }
@@ -641,46 +641,11 @@
                     {{-- Star Button on Grid Card --}}
                     <button type="button"
                             x-data="{ isStarred: {{ ($card->is_starred ?? false) ? 'true' : 'false' }}, loading: false }"
-                            @click.prevent="
-                                if (loading) return;
-                                loading = true;
-                                const prev = isStarred;
-                                isStarred = !prev;
-                                fetch('{{ route('flashcards.toggleStar') }}', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'Accept': 'application/json',
-                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                    },
-                                    body: JSON.stringify({ flashcard_id: {{ $card->id }} })
-                                })
-                                .then(r => {
-                                    if (!r.ok) {
-                                        isStarred = prev;
-                                        if (r.status === 401) {
-                                            window.dialog.authRequired({
-                                                word: @json($card->word),
-                                                pinyin: @json($card->pinyin),
-                                                meaning: @json($card->meaning),
-                                            });
-                                        }
-                                    }
-                                    return r.json();
-                                })
-                                .then(d => {
-                                    if (d && d.success) {
-                                        isStarred = d.is_starred;
-                                        if (d.is_starred) {
-                                            window.toast.success('Đã lưu vào Sổ từ vựng!', @json($card->word));
-                                        } else {
-                                            window.toast.info('Đã bỏ lưu khỏi Sổ từ vựng');
-                                        }
-                                    }
-                                })
-                                .catch(() => { isStarred = prev; })
-                                .finally(() => { loading = false; setTimeout(() => window.refreshIcons?.(), 50); });
-                            "
+                            data-id="{{ $card->id }}"
+                            data-hanzi="{{ $card->hanzi }}"
+                            data-pinyin="{{ $card->pinyin }}"
+                            data-meaning="{{ $card->meaning }}"
+                            @click.prevent="window.toggleCardStar($data, $el)"
                             class="flex h-8 w-8 items-center justify-center rounded-full transition hover:scale-110 active:scale-95"
                             :class="isStarred ? 'text-amber-500 bg-amber-50 shadow-sm' : 'text-slate-300 hover:text-amber-400 hover:bg-slate-50'"
                             :title="isStarred ? 'Bỏ lưu khỏi Sổ từ' : 'Lưu vào Sổ từ vựng'">
