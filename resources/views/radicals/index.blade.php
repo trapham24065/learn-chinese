@@ -54,6 +54,7 @@
                 @if($selectedStrokes) <input type="hidden" name="strokes" value="{{ $selectedStrokes }}"> @endif
                 @if($onlyCommon) <input type="hidden" name="common" value="1"> @endif
                 @if($selectedPosition) <input type="hidden" name="position" value="{{ $selectedPosition }}"> @endif
+                @if($perPage && $perPage !== 36) <input type="hidden" name="per_page" value="{{ $perPage }}"> @endif
 
                 <input type="text" 
                        name="q" 
@@ -141,7 +142,7 @@
         <div class="flex flex-wrap items-center justify-between gap-2 pt-2 text-xs border-t border-slate-100">
             <div class="flex flex-wrap items-center gap-1.5 text-slate-500">
                 <span>Đang hiển thị:</span>
-                <strong class="text-slate-800">{{ $radicals->count() }} bộ thủ</strong>
+                <strong class="text-slate-800">{{ $radicals->total() }} bộ thủ</strong>
                 @if($onlyCommon) <span class="rounded-full bg-amber-100 px-2 py-0.5 text-amber-800 font-medium">Top 100 thông dụng</span> @endif
                 @if($selectedStrokes) <span class="rounded-full bg-red-100 px-2 py-0.5 text-red-800 font-medium">{{ $selectedStrokes }} nét</span> @endif
                 @if($selectedPosition) <span class="rounded-full bg-blue-100 px-2 py-0.5 text-blue-800 font-medium">{{ $positionOptions[$selectedPosition] ?? $selectedPosition }}</span> @endif
@@ -229,6 +230,97 @@
                 </a>
             @endforeach
         </div>
+
+        {{-- ══ 4. PAGINATION & PER-PAGE SELECTOR ══ --}}
+        @if($radicals->hasPages() || $radicals->total() > 24)
+        <div class="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-200/80">
+            
+            {{-- Page info & Per-page switcher --}}
+            <div class="flex flex-wrap items-center gap-3 text-xs text-slate-500 order-2 sm:order-1">
+                <span>
+                    Hiển thị <strong class="text-slate-800">{{ $radicals->firstItem() ?? 0 }}</strong> – <strong class="text-slate-800">{{ $radicals->lastItem() ?? 0 }}</strong> trên tổng số <strong class="text-slate-800">{{ $radicals->total() }}</strong> bộ thủ
+                </span>
+                
+                <span class="text-slate-300 hidden sm:inline">|</span>
+                
+                <div class="flex items-center gap-1.5">
+                    <span>Số lượng:</span>
+                    <select onchange="window.location.href=this.value" 
+                            class="rounded-xl border border-slate-200 bg-white py-1 pl-2.5 pr-7 text-xs font-semibold text-slate-700 shadow-2xs transition hover:border-slate-300 focus:border-[#991b1b] focus:ring-1 focus:ring-red-100 cursor-pointer">
+                        <option value="{{ request()->fullUrlWithQuery(['per_page' => 24, 'page' => 1]) }}" {{ $perPage == 24 ? 'selected' : '' }}>24 / trang</option>
+                        <option value="{{ request()->fullUrlWithQuery(['per_page' => 36, 'page' => 1]) }}" {{ $perPage == 36 ? 'selected' : '' }}>36 / trang</option>
+                        <option value="{{ request()->fullUrlWithQuery(['per_page' => 48, 'page' => 1]) }}" {{ $perPage == 48 ? 'selected' : '' }}>48 / trang</option>
+                        <option value="{{ request()->fullUrlWithQuery(['per_page' => 'all', 'page' => 1]) }}" {{ $perPage === 'all' ? 'selected' : '' }}>Tất cả (214)</option>
+                    </select>
+                </div>
+            </div>
+
+            {{-- Pagination Buttons --}}
+            @if($radicals->hasPages())
+            <div class="flex items-center gap-1.5 order-1 sm:order-2">
+                {{-- Prev --}}
+                @if($radicals->onFirstPage())
+                    <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed">
+                        <i data-lucide="chevron-left" class="h-4 w-4"></i>
+                    </span>
+                @else
+                    <a href="{{ $radicals->previousPageUrl() }}"
+                       class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-2xs transition hover:border-[#991b1b] hover:text-[#991b1b]"
+                       title="Trang trước">
+                        <i data-lucide="chevron-left" class="h-4 w-4"></i>
+                    </a>
+                @endif
+
+                {{-- First page button if far --}}
+                @if($radicals->currentPage() > 3)
+                    <a href="{{ $radicals->url(1) }}"
+                       class="inline-flex h-9 min-w-[36px] px-2.5 items-center justify-center rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 transition hover:border-[#991b1b] hover:text-[#991b1b]">
+                        1
+                    </a>
+                    @if($radicals->currentPage() > 4)
+                        <span class="px-1 text-slate-400 text-xs">...</span>
+                    @endif
+                @endif
+
+                {{-- Middle pages window --}}
+                @foreach($radicals->getUrlRange(max(1, $radicals->currentPage() - 2), min($radicals->lastPage(), $radicals->currentPage() + 2)) as $page => $url)
+                    <a href="{{ $url }}"
+                       class="inline-flex h-9 min-w-[36px] px-2.5 items-center justify-center rounded-xl text-xs font-bold transition
+                              {{ $page == $radicals->currentPage()
+                                  ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15'
+                                  : 'border border-slate-200 bg-white text-slate-700 hover:border-[#991b1b] hover:text-[#991b1b]' }}">
+                        {{ $page }}
+                    </a>
+                @endforeach
+
+                {{-- Last page button if far --}}
+                @if($radicals->currentPage() < $radicals->lastPage() - 2)
+                    @if($radicals->currentPage() < $radicals->lastPage() - 3)
+                        <span class="px-1 text-slate-400 text-xs">...</span>
+                    @endif
+                    <a href="{{ $radicals->url($radicals->lastPage()) }}"
+                       class="inline-flex h-9 min-w-[36px] px-2.5 items-center justify-center rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 transition hover:border-[#991b1b] hover:text-[#991b1b]">
+                        {{ $radicals->lastPage() }}
+                    </a>
+                @endif
+
+                {{-- Next --}}
+                @if($radicals->hasMorePages())
+                    <a href="{{ $radicals->nextPageUrl() }}"
+                       class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-2xs transition hover:border-[#991b1b] hover:text-[#991b1b]"
+                       title="Trang tiếp theo">
+                        <i data-lucide="chevron-right" class="h-4 w-4"></i>
+                    </a>
+                @else
+                    <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed">
+                        <i data-lucide="chevron-right" class="h-4 w-4"></i>
+                    </span>
+                @endif
+            </div>
+            @endif
+
+        </div>
+        @endif
     @endif
 
 </div>

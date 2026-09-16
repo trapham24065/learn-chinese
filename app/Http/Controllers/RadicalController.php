@@ -52,7 +52,17 @@ class RadicalController extends Controller
             $query->orderBy('sort_order');
         }
 
-        $radicals = $query->get();
+        $perPageParam = $request->query('per_page', '36');
+        if ($perPageParam === 'all') {
+            $perPage = 214;
+        } else {
+            $perPage = (int) $perPageParam;
+            if (!in_array($perPage, [24, 36, 48, 72, 214])) {
+                $perPage = 36;
+            }
+        }
+
+        $radicals = $query->paginate($perPage)->withQueryString();
 
         // Statistics for filter badges
         $totalCount = Radical::count();
@@ -79,6 +89,7 @@ class RadicalController extends Controller
             'commonCount'        => $commonCount,
             'strokeDistribution' => $strokeDistribution,
             'positionOptions'    => $positionOptions,
+            'perPage'            => $perPageParam === 'all' ? 'all' : $perPage,
         ]);
     }
 

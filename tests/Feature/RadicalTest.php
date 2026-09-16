@@ -184,3 +184,44 @@ test('radical service can resolve radicals for compound words', function () {
     expect($result)->toHaveCount(2);
     expect($result->pluck('character')->toArray())->toContain('人', '女');
 });
+
+test('radicals index page supports pagination and per_page selection', function () {
+    // Create 40 radicals
+    for ($i = 1; $i <= 40; $i++) {
+        Radical::create([
+            'radical_number'    => $i,
+            'character'         => "字{$i}",
+            'display_character' => "字{$i}",
+            'slug'              => "b{$i}-bo-thu-{$i}",
+            'name_vi'           => "Bộ thứ {$i}",
+            'pinyin'            => "zì{$i}",
+            'meaning_vi'        => "Ý nghĩa {$i}",
+            'stroke_count'      => ($i % 5) + 1,
+            'position'          => 'standalone',
+            'sort_order'        => $i,
+        ]);
+    }
+
+    // Default per_page = 36
+    $response = $this->get('/radicals');
+    $response->assertSuccessful();
+    $response->assertSee('Bộ thứ 1');
+    $response->assertSee('Bộ thứ 36');
+    $response->assertDontSee('Bộ thứ 37'); // On page 2
+    $response->assertSee('Hiển thị');
+    $response->assertSee('trên tổng số');
+
+    // Page 2
+    $responsePage2 = $this->get('/radicals?page=2');
+    $responsePage2->assertSuccessful();
+    $responsePage2->assertSee('Bộ thứ 37');
+    $responsePage2->assertSee('Bộ thứ 40');
+    $responsePage2->assertDontSee('Bộ thứ 1');
+
+    // Custom per_page = 24
+    $response24 = $this->get('/radicals?per_page=24');
+    $response24->assertSuccessful();
+    $response24->assertSee('Bộ thứ 1');
+    $response24->assertSee('Bộ thứ 24');
+    $response24->assertDontSee('Bộ thứ 25');
+});
