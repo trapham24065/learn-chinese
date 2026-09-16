@@ -91,6 +91,18 @@
                 </a>
                 @endif
 
+                {{-- 214 Bộ thủ Khang Hy --}}
+                <a href="{{ route('radicals.index') }}"
+                    class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('radicals.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                    <span class="flex items-center gap-3">
+                        <span class="grid h-7 w-7 place-items-center rounded-lg {{ request()->routeIs('radicals.*') ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
+                            <i data-lucide="layout-grid" class="h-4 w-4"></i>
+                        </span>
+                        214 Bộ thủ
+                    </span>
+                    <span class="rounded-full bg-amber-100 border border-amber-300 px-1.5 py-0.2 text-[9px] font-black uppercase text-amber-800 {{ request()->routeIs('radicals.*') ? 'bg-white/20 text-white border-transparent' : '' }}">Hay</span>
+                </a>
+
                 {{-- Quiz / Luyện tập nhanh --}}
                 @if(!function_exists('setting_bool') || setting_bool('feature_quiz', true))
                 <a href="{{ route('quiz') }}"
@@ -341,6 +353,17 @@
                             <span class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black {{ request()->routeIs('dictionary.*') ? 'bg-white/20 text-white' : 'bg-red-100 text-red-800' }}">Hot</span>
                         </a>
                         @endif
+
+                        {{-- 214 Bộ thủ Khang Hy Mobile --}}
+                        <a href="{{ route('radicals.index') }}"
+                           @click="mobileMenuOpen = false"
+                           class="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ request()->routeIs('radicals.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                            <span class="flex items-center gap-3">
+                                <i data-lucide="layout-grid" class="h-4 w-4 shrink-0"></i>
+                                214 Bộ thủ
+                            </span>
+                            <span class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black {{ request()->routeIs('radicals.*') ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-800' }}">Hay</span>
+                        </a>
 
                         @if(!function_exists('setting_bool') || setting_bool('feature_quiz', true))
                         <a href="{{ route('quiz') }}"

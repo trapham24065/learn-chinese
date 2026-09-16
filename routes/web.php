@@ -11,6 +11,7 @@ use App\Http\Controllers\TTSController;
 use App\Http\Controllers\DictionaryController;
 use App\Http\Controllers\HskMockTestController;
 use App\Http\Controllers\CourseController;
+use App\Http\Controllers\RadicalController;
 use App\Models\Flashcard;
 use App\Models\Lesson;
 use App\Models\Question;
@@ -64,6 +65,9 @@ Route::post('/quiz/submit', [QuizController::class, 'submit'])->name('quiz.submi
 
 Route::get('/dictionary', [DictionaryController::class, 'index'])->name('dictionary.index');
 Route::get('/dictionary/search', [DictionaryController::class, 'search'])->name('dictionary.search');
+
+Route::get('/radicals', [RadicalController::class, 'index'])->name('radicals.index');
+Route::get('/radicals/{slug}', [RadicalController::class, 'show'])->name('radicals.show');
 
 Route::prefix('hsk/mock-test')->group(function () {
     Route::get('/', [HskMockTestController::class, 'index'])->name('hsk.mock.index');
