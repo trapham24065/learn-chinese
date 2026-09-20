@@ -94,18 +94,39 @@
 
 {{-- Filters and Search Toolbar --}}
 <div class="mb-8 space-y-3">
+    {{-- HSK Standard Mode Switcher --}}
+    <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-white/80 border border-slate-200/90 p-2.5 shadow-xs backdrop-blur-sm">
+        <div class="flex items-center gap-2 text-xs font-bold text-slate-500 pl-1.5">
+            <i data-lucide="layers" class="h-4 w-4 text-[#991b1b]"></i>
+            <span>Tiêu chuẩn HSK:</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+            <a href="{{ route('flashcards', array_filter(['standard' => 'hsk_2_0', 'hsk' => $hskLevel, 'lesson' => $lessonSlug, 'q' => $search, 'starred' => $isStarred ? 1 : null])) }}"
+               class="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition
+                      {{ ($standardCode ?? 'hsk_2_0') === 'hsk_2_0' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}">
+                <span>HSK 2.0 (2010)</span>
+            </a>
+            <a href="{{ route('flashcards', array_filter(['standard' => 'hsk_3_0_2026', 'hsk' => $hskLevel, 'lesson' => $lessonSlug, 'q' => $search, 'starred' => $isStarred ? 1 : null])) }}"
+               class="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition
+                      {{ ($standardCode ?? '') === 'hsk_3_0_2026' ? 'bg-[#991b1b] text-white shadow-sm ring-2 ring-red-200' : 'bg-red-50 text-[#991b1b] hover:bg-red-100 border border-red-100' }}">
+                <i data-lucide="sparkles" class="h-3 w-3"></i>
+                <span>HSK 3.0 (Áp dụng 12/2026)</span>
+            </a>
+        </div>
+    </div>
+
     <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         {{-- Primary Filter Tabs, Level Pills & Lesson Dropdown --}}
         <div class="flex flex-wrap items-center gap-2">
             {{-- All Tab --}}
-            <a href="{{ route('flashcards', array_filter(['q' => $search])) }}"
+            <a href="{{ route('flashcards', array_filter(['standard' => $standardCode, 'q' => $search])) }}"
                 class="rounded-full px-4 py-2 text-sm font-semibold transition shadow-xs
                       {{ (! $lessonSlug && ! $isStarred && ! $hskLevel) ? 'bg-[#991b1b] text-white shadow-md' : 'bg-white/80 text-slate-700 border border-slate-200 hover:border-[#991b1b] hover:text-[#991b1b]' }}">
                 Tất cả
             </a>
 
             {{-- Starred Words Filter Tab --}}
-            <a href="{{ route('flashcards', array_filter(['starred' => 1, 'q' => $search])) }}"
+            <a href="{{ route('flashcards', array_filter(['standard' => $standardCode, 'starred' => 1, 'q' => $search])) }}"
                 class="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition shadow-xs
                       {{ $isStarred ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20' : 'bg-amber-50 text-amber-900 border border-amber-200 hover:bg-amber-100 hover:border-amber-300' }}">
                 <i data-lucide="star" class="h-3.5 w-3.5 {{ $isStarred ? 'fill-current text-white' : 'fill-current text-amber-500' }}"></i>
@@ -119,9 +140,9 @@
 
             {{-- HSK Level Pills --}}
             @foreach($availableHskLevels as $level)
-            <a href="{{ route('flashcards', array_filter(['hsk' => $level, 'q' => $search])) }}"
+            <a href="{{ route('flashcards', array_filter(['standard' => $standardCode, 'hsk' => $level, 'q' => $search])) }}"
                 class="rounded-full px-3.5 py-2 text-sm font-semibold transition shadow-xs
-                      {{ ($hskLevel == $level && ! $lessonSlug && ! $isStarred) ? 'bg-slate-900 text-white shadow-md' : 'bg-white/80 text-slate-700 border border-slate-200 hover:border-slate-400 hover:text-slate-900' }}">
+                      {{ ($hskLevel == $level && ! $lessonSlug && ! $isStarred) ? (($standardCode === 'hsk_3_0_2026') ? 'bg-[#991b1b] text-white shadow-md' : 'bg-slate-900 text-white shadow-md') : 'bg-white/80 text-slate-700 border border-slate-200 hover:border-slate-400 hover:text-slate-900' }}">
                 HSK {{ $level }}
             </a>
             @endforeach
@@ -130,13 +151,13 @@
             <div class="relative inline-flex items-center">
                 <select onchange="if(this.value){ window.location.href = this.value; }"
                     class="appearance-none rounded-full border border-slate-200 bg-white/90 py-2 pl-4 pr-9 text-sm font-semibold text-slate-700 shadow-xs outline-none transition hover:border-[#991b1b] focus:border-[#991b1b] focus:ring-1 focus:ring-[#991b1b] cursor-pointer max-w-[240px] sm:max-w-xs truncate">
-                    <option value="{{ route('flashcards', array_filter(['hsk' => $hskLevel, 'q' => $search])) }}">
+                    <option value="{{ route('flashcards', array_filter(['standard' => $standardCode, 'hsk' => $hskLevel, 'q' => $search])) }}">
                         📖 Chọn bài học cụ thể...
                     </option>
                     @foreach($lessonsByLevel as $lvl => $lvlLessons)
                         <optgroup label="── {{ $lvl ? 'HSK ' . $lvl : 'Bài học' }} ──">
                             @foreach($lvlLessons as $l)
-                                <option value="{{ route('flashcards', array_filter(['lesson' => $l->slug, 'q' => $search])) }}"
+                                <option value="{{ route('flashcards', array_filter(['standard' => $standardCode, 'lesson' => $l->slug, 'q' => $search])) }}"
                                         {{ $lessonSlug === $l->slug ? 'selected' : '' }}>
                                     {{ $l->title }} ({{ $l->flashcards_count }} từ)
                                 </option>
@@ -254,6 +275,7 @@
     offset: {{ $deckBatch->count() }},
     lessonSlug: '{{ $lessonSlug ?? '' }}',
     hskLevel: '{{ $hskLevel ?? '' }}',
+    standardCode: '{{ $standardCode ?? 'hsk_2_0' }}',
     searchQuery: '{{ $search ?? '' }}',
     isStarredFilter: {{ $isStarred ? 'true' : 'false' }},
     starredCount: {{ $starredCount }},
@@ -379,6 +401,7 @@
             const params = new URLSearchParams({ offset: this.offset });
             if (this.lessonSlug) params.append('lesson', this.lessonSlug);
             if (this.hskLevel) params.append('hsk', this.hskLevel);
+            if (this.standardCode) params.append('standard', this.standardCode);
             if (this.searchQuery) params.append('q', this.searchQuery);
             if (this.isStarredFilter) params.append('starred', '1');
             const res = await fetch(`{{ route('flashcards.cards') }}?${params}`);
@@ -474,8 +497,20 @@
                 <div class="flip-card-inner" :class="{ flipped }">
                     {{-- Front: Hanzi + Lesson label + Star button --}}
                     <div class="flip-card-front relative flex flex-col items-center justify-center gap-3 bg-slate-950 p-8 text-white shadow-2xl shadow-slate-950/20">
-                        <span class="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-slate-300"
-                            x-text="card.lesson"></span>
+                        <div class="flex flex-wrap items-center justify-center gap-1.5">
+                            <template x-if="card.hsk2_level">
+                                <span class="rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold text-slate-300"
+                                      x-text="'HSK 2.0: C' + card.hsk2_level" title="Chuẩn HSK 2.0 (2010)"></span>
+                            </template>
+                            <template x-if="card.hsk3_level">
+                                <span class="rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 px-2.5 py-0.5 text-[11px] font-bold"
+                                      x-text="'HSK 3.0: C' + card.hsk3_level" title="Chuẩn HSK 3.0 (Triển khai 12/2026)"></span>
+                            </template>
+                            <template x-if="card.lesson">
+                                <span class="rounded-full bg-white/10 px-3 py-0.5 text-xs font-semibold uppercase tracking-widest text-slate-300"
+                                      x-text="card.lesson"></span>
+                            </template>
+                        </div>
                         <p class="text-8xl font-black leading-none tracking-tight" x-text="card.hanzi"></p>
                         <p class="mt-2 text-sm text-slate-400">Bấm để xem nghĩa 👆</p>
 
@@ -512,6 +547,20 @@
 
                         <div class="flex flex-1 flex-col justify-center gap-4 p-8 pr-16">
                             <div>
+                                <div class="flex flex-wrap items-center gap-1.5 mb-2">
+                                    <template x-if="card.hsk2_level">
+                                        <span class="rounded-md bg-slate-100 border border-slate-200 px-2 py-0.5 text-[11px] font-bold text-slate-700"
+                                              x-text="'HSK 2.0: Cấp ' + card.hsk2_level"></span>
+                                    </template>
+                                    <template x-if="card.hsk3_level">
+                                        <span class="rounded-md bg-red-50 border border-red-200 px-2 py-0.5 text-[11px] font-bold text-[#991b1b]"
+                                              x-text="'HSK 3.0: Cấp ' + card.hsk3_level"></span>
+                                    </template>
+                                    <template x-if="!card.hsk2_level && !card.hsk3_level && card.hsk_level">
+                                        <span class="rounded-md bg-red-50 border border-red-200 px-2 py-0.5 text-[11px] font-bold text-[#991b1b]"
+                                              x-text="'HSK ' + card.hsk_level"></span>
+                                    </template>
+                                </div>
                                 <p class="text-xs font-semibold uppercase tracking-[0.22em] text-[#991b1b]" x-text="card.pinyin"></p>
                                 <p class="mt-2 text-4xl font-black tracking-tight text-slate-950" x-text="card.meaning"></p>
                             </div>
@@ -652,15 +701,33 @@
                         <i data-lucide="star" class="h-4 w-4" :class="{ 'fill-current': isStarred }"></i>
                     </button>
 
-                    @if($card->hsk_level)
-                    <span class="shrink-0 rounded-xl bg-red-50/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-red-600 border border-red-100">
-                        HSK {{ $card->hsk_level }}
-                    </span>
-                    @elseif($card->lesson)
-                    <span class="shrink-0 rounded-xl bg-amber-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-700 border border-amber-100">
-                        L{{ $card->lesson_id }}
-                    </span>
-                    @endif
+                    <div class="flex flex-col items-end gap-1">
+                        <div class="flex flex-wrap items-center justify-end gap-1">
+                            @if($card->hsk2Level())
+                            <span class="shrink-0 rounded-lg bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700 border border-slate-200"
+                                  title="Chuẩn HSK 2.0 (2010)">
+                                2.0: C{{ $card->hsk2Level() }}
+                            </span>
+                            @endif
+                            @if($card->hsk3Level())
+                            <span class="shrink-0 rounded-lg bg-red-50 px-2 py-0.5 text-[10px] font-bold text-[#991b1b] border border-red-200"
+                                  title="Chuẩn HSK 3.0 (Triển khai 12/2026)">
+                                3.0: C{{ $card->hsk3Level() }}
+                            </span>
+                            @endif
+                            @if(!$card->hsk2Level() && !$card->hsk3Level() && $card->hsk_level)
+                            <span class="shrink-0 rounded-lg bg-red-50/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-600 border border-red-100">
+                                HSK {{ $card->hsk_level }}
+                            </span>
+                            @endif
+                        </div>
+                        @if($card->lesson)
+                        <span class="shrink-0 rounded-lg bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-100/80 max-w-[120px] truncate"
+                              title="{{ $card->lesson->title }}">
+                            {{ $card->lesson->title }}
+                        </span>
+                        @endif
+                    </div>
                 </div>
             </div>
 

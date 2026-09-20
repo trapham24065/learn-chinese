@@ -406,7 +406,20 @@ window.dictionaryApp = function () {
                                     <p class="text-xs text-slate-500 line-clamp-1" x-text="item.meaning"></p>
                                 </div>
                             </div>
-                            <span class="rounded-lg bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 uppercase" x-text="'HSK ' + item.hsk_level"></span>
+                            <div class="flex flex-col items-end gap-1 shrink-0">
+                                <template x-if="item.hsk2_level">
+                                    <span class="rounded-md bg-slate-100 border border-slate-200 px-1.5 py-0.5 text-[10px] font-bold text-slate-600"
+                                          x-text="'2.0: C' + item.hsk2_level"></span>
+                                </template>
+                                <template x-if="item.hsk3_level">
+                                    <span class="rounded-md bg-red-50 border border-red-200 px-1.5 py-0.5 text-[10px] font-bold text-[#991b1b]"
+                                          x-text="'3.0: C' + item.hsk3_level"></span>
+                                </template>
+                                <template x-if="!item.hsk2_level && !item.hsk3_level && item.hsk_level">
+                                    <span class="rounded-lg bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 uppercase"
+                                          x-text="'HSK ' + item.hsk_level"></span>
+                                </template>
+                            </div>
                         </button>
                     </template>
 
@@ -509,9 +522,21 @@ window.dictionaryApp = function () {
                     <div x-show="!activeWord.is_fallback" class="rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-sm relative overflow-hidden">
                         {{-- Top Badges & Actions --}}
                         <div class="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
-                            <div class="flex items-center gap-2">
-                                <span class="rounded-xl bg-red-100 border border-red-200 px-3 py-1 text-xs font-black text-[#991b1b] uppercase tracking-wider"
-                                      x-text="'HSK ' + activeWord.hsk_level"></span>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <template x-if="activeWord.hsk2_level">
+                                    <span class="rounded-xl bg-slate-100 border border-slate-200 px-2.5 py-1 text-xs font-bold text-slate-700"
+                                          title="Chuẩn HSK 2.0 (2010)"
+                                          x-text="'HSK 2.0: Cấp ' + activeWord.hsk2_level"></span>
+                                </template>
+                                <template x-if="activeWord.hsk3_level">
+                                    <span class="rounded-xl bg-red-100 border border-red-200 px-2.5 py-1 text-xs font-black text-[#991b1b]"
+                                          title="Chuẩn HSK 3.0 (Triển khai 12/2026)"
+                                          x-text="'HSK 3.0: Cấp ' + activeWord.hsk3_level"></span>
+                                </template>
+                                <template x-if="!activeWord.hsk2_level && !activeWord.hsk3_level && activeWord.hsk_level">
+                                    <span class="rounded-xl bg-red-100 border border-red-200 px-3 py-1 text-xs font-black text-[#991b1b] uppercase tracking-wider"
+                                          x-text="'HSK ' + activeWord.hsk_level"></span>
+                                </template>
                                 <span class="rounded-xl bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-500">Từ vựng</span>
                             </div>
 

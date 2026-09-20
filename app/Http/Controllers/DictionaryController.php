@@ -83,11 +83,13 @@ class DictionaryController extends Controller
             'detected_type' => $detectedType,
             'total'         => $candidates->count(),
             'results'       => $candidates->take(12)->map(fn ($c) => [
-                'id'        => $c->id,
-                'hanzi'     => $c->hanzi,
-                'pinyin'    => $c->pinyin,
-                'meaning'   => $c->meaning,
-                'hsk_level' => $c->hsk_level,
+                'id'         => $c->id,
+                'hanzi'      => $c->hanzi,
+                'pinyin'     => $c->pinyin,
+                'meaning'    => $c->meaning,
+                'hsk_level'  => $c->hsk_level,
+                'hsk2_level' => $c->hsk2Level(),
+                'hsk3_level' => $c->hsk3Level(),
             ]),
             'exact'         => $exact,
         ]);
@@ -132,7 +134,7 @@ class DictionaryController extends Controller
      */
     protected function findCandidates(string $query, string $type, ?int $hsk = null)
     {
-        $builder = Flashcard::query()->where('is_active', true);
+        $builder = Flashcard::query()->where('is_active', true)->with('vocabulary.hskLevels.standard');
 
         if ($hsk) {
             $builder->where('hsk_level', $hsk);
@@ -214,6 +216,9 @@ class DictionaryController extends Controller
             'pinyin'          => $card->pinyin,
             'meaning'         => $card->meaning,
             'hsk_level'       => $card->hsk_level,
+            'hsk2_level'      => $card->hsk2Level(),
+            'hsk3_level'      => $card->hsk3Level(),
+            'all_hsk_levels'  => $card->allHskLevels(),
             'example'         => $card->example,
             'example_pinyin'  => $card->example_pinyin,
             'example_meaning' => $card->example_meaning,

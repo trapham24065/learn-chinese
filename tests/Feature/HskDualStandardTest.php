@@ -154,4 +154,95 @@ class HskDualStandardTest extends TestCase
             ->expectsOutputToContain('KIỂM TRA DỮ LIỆU ĐA CHUẨN HSK 2.0 & HSK 3.0')
             ->assertExitCode(0);
     }
+
+    public function test_flashcard_page_renders_with_standard_switcher_and_dual_badges(): void
+    {
+        $response = $this->get(route('flashcards'));
+
+        $response->assertStatus(200);
+        $response->assertSee('Tiêu chuẩn HSK:');
+        $response->assertSee('HSK 2.0 (2010)');
+        $response->assertSee('HSK 3.0 (Áp dụng 12/2026)');
+    }
+
+    public function test_flashcards_filtering_by_hsk3_standard(): void
+    {
+        $hsk3 = HskStandard::findByCode(HskStandard::CODE_HSK_3_0_2026);
+
+        // Word '爱好': HSK 2.0 Level 3, HSK 3.0 Level 1
+        $vocab = Vocabulary::create(['hanzi' => '爱好', 'pinyin' => 'ài hào', 'meaning' => 'Sở thích']);
+        VocabularyHskLevel::create(['vocabulary_id' => $vocab->id, 'hsk_standard_id' => $hsk3->id, 'level' => 1]);
+
+        Flashcard::create([
+            'vocabulary_id' => $vocab->id,
+            'hanzi'         => '爱好',
+            'pinyin'        => 'ài hào',
+            'meaning'       => 'Sở thích',
+            'hsk_level'     => 3, // Legacy HSK 2.0 level
+            'is_active'     => true,
+        ]);
+
+        // Filter by HSK 3.0 Cấp 1
+        $resHsk3 = $this->get(route('flashcards', ['standard' => 'hsk_3_0_2026', 'hsk' => 1]));
+        $resHsk3->assertStatus(200);
+        $resHsk3->assertSee('爱好');
+
+        // Filter by HSK 2.0 Cấp 1 (where 爱好 was Level 3, so it should NOT appear)
+        $resHsk2 = $this->get(route('flashcards', ['standard' => 'hsk_2_0', 'hsk' => 1]));
+        $resHsk2->assertStatus(200);
+        $resHsk2->assertDontSee('爱好');
+    }
+
+    public function test_flashcards_cards_json_endpoint_returns_dual_levels(): void
+    {
+        $hsk2 = HskStandard::findByCode(HskStandard::CODE_HSK_2_0);
+        $hsk3 = HskStandard::findByCode(HskStandard::CODE_HSK_3_0_2026);
+
+        $vocab = Vocabulary::create(['hanzi' => '苹果', 'pinyin' => 'píng guǒ', 'meaning' => 'Quả táo']);
+        VocabularyHskLevel::create(['vocabulary_id' => $vocab->id, 'hsk_standard_id' => $hsk2->id, 'level' => 1]);
+        VocabularyHskLevel::create(['vocabulary_id' => $vocab->id, 'hsk_standard_id' => $hsk3->id, 'level' => 3]);
+
+        Flashcard::create([
+            'vocabulary_id' => $vocab->id,
+            'hanzi'         => '苹果',
+            'pinyin'        => 'píng guǒ',
+            'meaning'       => 'Quả táo',
+            'hsk_level'     => 1,
+            'is_active'     => true,
+        ]);
+
+        $response = $this->getJson(route('flashcards.cards', ['q' => '苹果']));
+        $response->assertStatus(200);
+        $response->assertJsonPath('cards.0.hanzi', '苹果');
+        $response->assertJsonPath('cards.0.hsk2_level', 1);
+        $response->assertJsonPath('cards.0.hsk3_level', 3);
+    }
+
+    public function test_dictionary_search_api_returns_dual_hsk_levels(): void
+    {
+        $hsk2 = HskStandard::findByCode(HskStandard::CODE_HSK_2_0);
+        $hsk3 = HskStandard::findByCode(HskStandard::CODE_HSK_3_0_2026);
+
+        $vocab = Vocabulary::create(['hanzi' => '安静', 'pinyin' => 'ān jìng', 'meaning' => 'Yên tĩnh']);
+        VocabularyHskLevel::create(['vocabulary_id' => $vocab->id, 'hsk_standard_id' => $hsk2->id, 'level' => 3]);
+        VocabularyHskLevel::create(['vocabulary_id' => $vocab->id, 'hsk_standard_id' => $hsk3->id, 'level' => 2]);
+
+        Flashcard::create([
+            'vocabulary_id' => $vocab->id,
+            'hanzi'         => '安静',
+            'pinyin'        => 'ān jìng',
+            'meaning'       => 'Yên tĩnh',
+            'hsk_level'     => 3,
+            'is_active'     => true,
+        ]);
+
+        $response = $this->getJson(route('dictionary.search', ['q' => '安静']));
+        $response->assertStatus(200);
+        $response->assertJsonPath('success', true);
+        $response->assertJsonPath('results.0.hanzi', '安静');
+        $response->assertJsonPath('results.0.hsk2_level', 3);
+        $response->assertJsonPath('results.0.hsk3_level', 2);
+        $response->assertJsonPath('exact.hsk2_level', 3);
+        $response->assertJsonPath('exact.hsk3_level', 2);
+    }
 }

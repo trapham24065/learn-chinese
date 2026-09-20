@@ -39,10 +39,11 @@ class FlashcardController extends Controller
             $availableHskLevels = [1, 2, 3];
         }
 
-        $lessonSlug  = $request->query('lesson');
-        $hskLevel    = $request->query('hsk');
-        $search      = $request->query('q');
-        $isStarred   = $request->boolean('starred') || $request->query('starred') === '1';
+        $lessonSlug   = $request->query('lesson');
+        $hskLevel     = $request->query('hsk');
+        $standardCode = $request->query('standard', 'hsk_2_0');
+        $search       = $request->query('q');
+        $isStarred    = $request->boolean('starred') || $request->query('starred') === '1';
         $activeLesson = null;
 
         $user = Auth::guard('web')->user();
@@ -50,7 +51,7 @@ class FlashcardController extends Controller
 
         $query = Flashcard::query()
             ->where('flashcards.is_active', true)
-            ->with('lesson');
+            ->with(['lesson', 'vocabulary.hskLevels.standard']);
 
         $now = now()->toDateTimeString();
 
@@ -80,7 +81,14 @@ class FlashcardController extends Controller
                 $query->where('flashcards.lesson_id', $activeLesson->id);
             }
         } elseif ($hskLevel) {
-            $query->where('flashcards.hsk_level', (int) $hskLevel);
+            if ($standardCode === 'hsk_3_0_2026' || $standardCode === 'hsk_3_0_2021') {
+                $query->whereHas('vocabulary.hskLevels', function ($q) use ($standardCode, $hskLevel) {
+                    $q->where('level', (int) $hskLevel)
+                      ->whereHas('standard', fn($sq) => $sq->where('code', $standardCode));
+                });
+            } else {
+                $query->where('flashcards.hsk_level', (int) $hskLevel);
+            }
         }
 
         if ($search) {
@@ -107,6 +115,9 @@ class FlashcardController extends Controller
                 'lesson'          => $f->lesson?->title ?? 'Chung',
                 'lesson_id'       => $f->lesson_id,
                 'is_starred'      => (bool) ($f->is_starred ?? false),
+                'hsk2_level'      => $f->hsk2Level(),
+                'hsk3_level'      => $f->hsk3Level(),
+                'hsk_level'       => $f->hsk_level,
             ]);
 
         // Total for deck so JS knows if there are more batches
@@ -118,25 +129,27 @@ class FlashcardController extends Controller
         $totalCount = Flashcard::where('is_active', true)->count();
 
         return view('flashcards', compact(
-            'flashcards', 'lessons', 'lessonSlug', 'hskLevel', 'search', 'isStarred', 'starredCount',
+            'flashcards', 'lessons', 'lessonSlug', 'hskLevel', 'standardCode', 'search', 'isStarred', 'starredCount',
             'activeLesson', 'totalCount', 'deckBatch', 'deckTotal', 'lessonsByLevel', 'availableHskLevels'
         ));
     }
 
     /**
      * JSON endpoint: load next batch of deck cards.
-     * GET /flashcards/cards?offset=20&lesson=slug&hsk=1&starred=1
+     * GET /flashcards/cards?offset=20&lesson=slug&hsk=1&standard=hsk_3_0_2026&starred=1
      */
     public function cards(Request $request): JsonResponse
     {
-        $offset     = (int) $request->query('offset', 0);
-        $lessonSlug = $request->query('lesson');
-        $hskLevel   = $request->query('hsk');
-        $search     = $request->query('q');
-        $isStarred  = $request->boolean('starred') || $request->query('starred') === '1';
+        $offset       = (int) $request->query('offset', 0);
+        $lessonSlug   = $request->query('lesson');
+        $hskLevel     = $request->query('hsk');
+        $standardCode = $request->query('standard', 'hsk_2_0');
+        $search       = $request->query('q');
+        $isStarred    = $request->boolean('starred') || $request->query('starred') === '1';
 
         $query = Flashcard::query()
-            ->where('flashcards.is_active', true);
+            ->where('flashcards.is_active', true)
+            ->with(['lesson', 'vocabulary.hskLevels.standard']);
 
         $user = Auth::guard('web')->user();
         $now = now()->toDateTimeString();
@@ -165,7 +178,14 @@ class FlashcardController extends Controller
             $lesson = Lesson::where('slug', $lessonSlug)->first();
             if ($lesson) $query->where('flashcards.lesson_id', $lesson->id);
         } elseif ($hskLevel) {
-            $query->where('flashcards.hsk_level', (int) $hskLevel);
+            if ($standardCode === 'hsk_3_0_2026' || $standardCode === 'hsk_3_0_2021') {
+                $query->whereHas('vocabulary.hskLevels', function ($q) use ($standardCode, $hskLevel) {
+                    $q->where('level', (int) $hskLevel)
+                      ->whereHas('standard', fn($sq) => $sq->where('code', $standardCode));
+                });
+            } else {
+                $query->where('flashcards.hsk_level', (int) $hskLevel);
+            }
         }
 
         if ($search) {
@@ -188,6 +208,9 @@ class FlashcardController extends Controller
                 'lesson'          => $f->lesson?->title ?? 'Chung',
                 'lesson_id'       => $f->lesson_id,
                 'is_starred'      => (bool) ($f->is_starred ?? false),
+                'hsk2_level'      => $f->hsk2Level(),
+                'hsk3_level'      => $f->hsk3Level(),
+                'hsk_level'       => $f->hsk_level,
             ]);
 
         return response()->json([
