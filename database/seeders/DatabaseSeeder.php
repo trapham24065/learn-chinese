@@ -250,5 +250,6 @@ class DatabaseSeeder extends Seeder
         $this->call(HskCurriculumSeeder::class);
         $this->call(CourseSeeder::class);
         $this->call(RadicalSeeder::class);
+        $this->call(HskFullVocabularySeeder::class);
     }
 }
