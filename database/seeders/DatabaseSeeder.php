@@ -251,5 +251,8 @@ class DatabaseSeeder extends Seeder
         $this->call(CourseSeeder::class);
         $this->call(RadicalSeeder::class);
         $this->call(HskFullVocabularySeeder::class);
+        $this->call(HskStandardSeeder::class);
+        $this->call(VocabularyMigrationSeeder::class);
+        $this->call(Hsk3VocabularySeeder::class);
     }
 }

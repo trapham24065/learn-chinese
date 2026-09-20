@@ -11,6 +11,7 @@ class Flashcard extends Model
     use HasFactory;
 
     protected $fillable = [
+        'vocabulary_id',
         'lesson_id',
         'hanzi',
         'pinyin',
@@ -35,5 +36,44 @@ class Flashcard extends Model
     public function lesson(): BelongsTo
     {
         return $this->belongsTo(Lesson::class);
+    }
+
+    public function vocabulary(): BelongsTo
+    {
+        return $this->belongsTo(Vocabulary::class);
+    }
+
+    public function hskLevel(string $standardCode = HskStandard::CODE_HSK_2_0): ?int
+    {
+        if ($this->vocabulary) {
+            $level = $this->vocabulary->hskLevelFor($standardCode);
+            if ($level !== null) {
+                return $level;
+            }
+        }
+
+        return $standardCode === HskStandard::CODE_HSK_2_0 ? $this->hsk_level : null;
+    }
+
+    public function hsk2Level(): ?int
+    {
+        return $this->hskLevel(HskStandard::CODE_HSK_2_0);
+    }
+
+    public function hsk3Level(): ?int
+    {
+        return $this->vocabulary?->hsk3Level();
+    }
+
+    public function allHskLevels(): array
+    {
+        if ($this->vocabulary) {
+            $levels = $this->vocabulary->allHskLevels();
+            if (!empty($levels)) {
+                return $levels;
+            }
+        }
+
+        return $this->hsk_level ? [HskStandard::CODE_HSK_2_0 => $this->hsk_level] : [];
     }
 }
