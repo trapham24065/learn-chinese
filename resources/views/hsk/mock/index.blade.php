@@ -27,7 +27,7 @@
                 Thi thử HSK mô phỏng chuẩn quốc tế
             </h1>
             <p class="mt-5 max-w-xl text-base sm:text-lg text-white/80 leading-relaxed font-normal">
-                Làm bài thi tổng hợp có đồng hồ đếm ngược, phân tích toàn diện 3 kỹ năng <strong>Nghe hiểu</strong>, <strong>Đọc hiểu</strong>, <strong>Ngữ pháp</strong> và nhận <strong>Chứng chỉ Online</strong> ngay khi đạt điểm đỗ!
+                Làm bài thi tổng hợp có đồng hồ đếm ngược theo <strong>quy chuẩn HSK quốc tế</strong>: HSK 1–2 gồm <strong>2 kỹ năng (Nghe & Đọc)</strong> thang 200 điểm; HSK 3–6 gồm <strong>3 kỹ năng (Nghe, Đọc, Viết)</strong> thang 300 điểm. Nhận <strong>Chứng chỉ Online</strong> ngay khi đạt điểm đỗ!
             </p>
 
             {{-- Feature Badges --}}
@@ -38,7 +38,7 @@
                 </div>
                 <div class="flex items-center gap-2 rounded-2xl bg-white/10 px-4 py-2.5 backdrop-blur border border-white/10">
                     <i data-lucide="bar-chart-3" class="h-4 w-4 text-emerald-400"></i>
-                    <span>Bảng điểm chi tiết 3 kỹ năng</span>
+                    <span>Bảng điểm chuẩn quốc tế</span>
                 </div>
                 <div class="flex items-center gap-2 rounded-2xl bg-white/10 px-4 py-2.5 backdrop-blur border border-white/10">
                     <i data-lucide="award" class="h-4 w-4 text-amber-300"></i>
@@ -58,7 +58,7 @@
                 <div class="rounded-2xl bg-slate-950/40 p-4 border border-white/5">
                     <p class="text-xs text-slate-300">Điểm cao nhất</p>
                     <p class="mt-1 text-3xl font-black text-amber-300">
-                        {{ $stats['highest_score'] }} <span class="text-xs font-normal text-slate-300">/ 300</span>
+                        {{ $stats['highest_score'] }}
                     </p>
                 </div>
                 <div class="rounded-2xl bg-slate-950/40 p-4 border border-white/5">
@@ -74,7 +74,7 @@
                 </div>
             </div>
             <p class="mt-4 text-xs text-slate-300/80 leading-relaxed italic">
-                * Thang điểm 300 chuẩn quốc tế (100đ Nghe + 100đ Đọc + 100đ Ngữ pháp). Đạt từ 180 điểm trở lên được cấp chứng chỉ.
+                * Thang 200 điểm cho HSK 1–2 (Đỗ từ 120 điểm); Thang 300 điểm cho HSK 3–6 (Đỗ từ 180 điểm). Đạt điểm đỗ sẽ được cấp chứng chỉ điện tử.
             </p>
         </div>
     </div>
@@ -220,16 +220,26 @@
                         </span>
                         <span class="font-bold text-slate-900">{{ $spec['reading_count'] }} câu (100đ)</span>
                     </div>
+                    @if($spec['has_writing'] ?? false)
                     <div class="flex items-center justify-between">
                         <span class="flex items-center gap-1.5">
                             <i data-lucide="pen-tool" class="h-3.5 w-3.5 text-purple-600"></i>
-                            Phần 3: Ngữ pháp
+                            Phần 3: Viết & Ngữ pháp
                         </span>
                         <span class="font-bold text-slate-900">{{ $spec['grammar_count'] }} câu (100đ)</span>
                     </div>
+                    @else
+                    <div class="flex items-center justify-between text-slate-400">
+                        <span class="flex items-center gap-1.5">
+                            <i data-lucide="minus-circle" class="h-3.5 w-3.5 text-slate-400"></i>
+                            Phần 3: Không thi Viết
+                        </span>
+                        <span class="font-medium text-slate-400">Chuẩn HSK 1–2</span>
+                    </div>
+                    @endif
                     <div class="pt-2 border-t border-slate-200/80 flex items-center justify-between font-bold text-slate-900">
                         <span>Tổng số câu:</span>
-                        <span>{{ $spec['question_count'] }} câu · 300 điểm</span>
+                        <span>{{ $spec['question_count'] }} câu · {{ $spec['max_score'] }}đ (Đỗ: {{ $spec['pass_score'] }}đ)</span>
                     </div>
                 </div>
             </div>
@@ -344,7 +354,7 @@
                     <th class="px-5 py-3.5">Thời gian</th>
                     <th class="px-5 py-3.5">Nghe</th>
                     <th class="px-5 py-3.5">Đọc</th>
-                    <th class="px-5 py-3.5">Ngữ pháp</th>
+                    <th class="px-5 py-3.5">Viết / Ngữ pháp</th>
                     <th class="px-5 py-3.5">Tổng điểm</th>
                     <th class="px-5 py-3.5">Kết quả</th>
                     <th class="px-5 py-3.5 rounded-r-2xl text-right">Thao tác</th>
@@ -366,12 +376,18 @@
                     </td>
                     <td class="px-5 py-4 font-semibold text-blue-600">{{ $item->listening_score }}/100</td>
                     <td class="px-5 py-4 font-semibold text-emerald-600">{{ $item->reading_score }}/100</td>
-                    <td class="px-5 py-4 font-semibold text-purple-600">{{ $item->grammar_score }}/100</td>
+                    <td class="px-5 py-4 font-semibold text-purple-600">
+                        @if($item->hsk_level <= 2)
+                            <span class="text-xs text-slate-400 font-normal">Không thi</span>
+                        @else
+                            {{ $item->grammar_score }}/100
+                        @endif
+                    </td>
                     <td class="px-5 py-4">
                         <span class="text-base font-black {{ $item->passed ? 'text-emerald-600' : 'text-slate-800' }}">
                             {{ $item->total_score }}
                         </span>
-                        <span class="text-xs text-slate-400">/300</span>
+                        <span class="text-xs text-slate-400">/{{ $item->max_score ?? 300 }}</span>
                     </td>
                     <td class="px-5 py-4">
                         @if($item->passed)

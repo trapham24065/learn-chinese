@@ -396,7 +396,7 @@
                     <template x-if="currentQ?.skill_type === 'grammar'">
                         <span class="inline-flex items-center gap-1 rounded-xl bg-purple-50 border border-purple-200 px-3 py-1 text-xs font-bold text-purple-700">
                             <i data-lucide="pen-tool" class="h-3.5 w-3.5"></i>
-                            <span>Phần 3: Ngữ pháp</span>
+                            <span>Phần 3: Viết & Ngữ pháp</span>
                         </span>
                     </template>
                 </div>
@@ -580,7 +580,7 @@
                 </p>
                 <ul class="space-y-1 list-disc pl-4 text-amber-800/90">
                     <li>Hết giờ đồng hồ sẽ tự động nộp bài và khóa đề thi.</li>
-                    <li>Đạt từ <strong>180/300 điểm</strong> trở lên để nhận Chứng chỉ Online.</li>
+                    <li>Đạt từ <strong>{{ $spec['pass_score'] }}/{{ $spec['max_score'] }} điểm</strong> trở lên để nhận Chứng chỉ Online.</li>
                     <li>Có thể bấm "Đánh dấu xem lại" để kiểm tra trước khi nộp.</li>
                 </ul>
             </div>
@@ -688,7 +688,7 @@
             </div>
             <h3 class="mt-5 text-xl font-black text-slate-900">Hết giờ làm bài!</h3>
             <p class="mt-2 text-xs text-slate-500 leading-relaxed">
-                Hệ thống đang tự động nộp bài và chấm điểm 3 kỹ năng của bạn...
+                Hệ thống đang tự động nộp bài và chấm điểm bài thi của bạn...
             </p>
         </div>
     </div>

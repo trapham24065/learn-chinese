@@ -20,40 +20,43 @@ class HskMockTestController extends Controller
         1 => [
             'label' => 'HSK 1',
             'title' => 'Bài thi thử mô phỏng HSK 1',
-            'desc' => 'Đánh giá năng lực tiếng Trung sơ cấp (150 từ vựng cốt lõi)',
-            'time_limit' => 20, // minutes
-            'question_count' => 30,
+            'desc' => 'Đánh giá năng lực tiếng Trung sơ cấp (150 từ vựng cốt lõi - Chuẩn quốc tế: 2 kỹ năng Nghe & Đọc)',
+            'time_limit' => 25, // minutes
+            'question_count' => 20,
             'listening_count' => 10,
             'reading_count' => 10,
-            'grammar_count' => 10,
-            'max_score' => 300,
-            'pass_score' => 180,
+            'grammar_count' => 0,
+            'has_writing' => false,
+            'max_score' => 200,
+            'pass_score' => 120,
             'color' => '#dc2626',
             'badge_bg' => 'bg-red-50 text-red-700 border-red-200',
         ],
         2 => [
             'label' => 'HSK 2',
             'title' => 'Bài thi thử mô phỏng HSK 2',
-            'desc' => 'Đánh giá giao tiếp sinh hoạt cơ bản (300 từ vựng)',
-            'time_limit' => 25, // minutes
-            'question_count' => 35,
+            'desc' => 'Đánh giá giao tiếp sinh hoạt cơ bản (300 từ vựng - Chuẩn quốc tế: 2 kỹ năng Nghe & Đọc)',
+            'time_limit' => 30, // minutes
+            'question_count' => 25,
             'listening_count' => 10,
             'reading_count' => 15,
-            'grammar_count' => 10,
-            'max_score' => 300,
-            'pass_score' => 180,
+            'grammar_count' => 0,
+            'has_writing' => false,
+            'max_score' => 200,
+            'pass_score' => 120,
             'color' => '#d97706',
             'badge_bg' => 'bg-amber-50 text-amber-700 border-amber-200',
         ],
         3 => [
             'label' => 'HSK 3',
             'title' => 'Bài thi thử mô phỏng HSK 3',
-            'desc' => 'Đánh giá khả năng giao tiếp học tập & công việc (600 từ vựng)',
+            'desc' => 'Đánh giá khả năng giao tiếp học tập & công việc (600 từ vựng - 3 kỹ năng Nghe, Đọc, Viết)',
             'time_limit' => 35, // minutes
-            'question_count' => 40,
+            'question_count' => 30,
             'listening_count' => 10,
-            'reading_count' => 15,
-            'grammar_count' => 15,
+            'reading_count' => 10,
+            'grammar_count' => 10,
+            'has_writing' => true,
             'max_score' => 300,
             'pass_score' => 180,
             'color' => '#2563eb',
@@ -62,12 +65,13 @@ class HskMockTestController extends Controller
         4 => [
             'label' => 'HSK 4',
             'title' => 'Bài thi thử mô phỏng HSK 4',
-            'desc' => 'Đánh giá khả năng thảo luận các chủ đề sâu rộng (1.200 từ vựng)',
-            'time_limit' => 40,
-            'question_count' => 45,
-            'listening_count' => 15,
+            'desc' => 'Đánh giá khả năng thảo luận các chủ đề sâu rộng (1.200 từ vựng - 3 kỹ năng Nghe, Đọc, Viết)',
+            'time_limit' => 45,
+            'question_count' => 35,
+            'listening_count' => 10,
             'reading_count' => 15,
-            'grammar_count' => 15,
+            'grammar_count' => 10,
+            'has_writing' => true,
             'max_score' => 300,
             'pass_score' => 180,
             'color' => '#7c3aed',
@@ -76,12 +80,13 @@ class HskMockTestController extends Controller
         5 => [
             'label' => 'HSK 5',
             'title' => 'Bài thi thử mô phỏng HSK 5',
-            'desc' => 'Đánh giá khả năng đọc báo chí, xem phim Trung Quốc (2.500 từ vựng)',
-            'time_limit' => 50,
-            'question_count' => 50,
-            'listening_count' => 15,
-            'reading_count' => 20,
+            'desc' => 'Đánh giá khả năng đọc báo chí, xem phim Trung Quốc (2.500 từ vựng - 3 kỹ năng Nghe, Đọc, Viết)',
+            'time_limit' => 55,
+            'question_count' => 40,
+            'listening_count' => 10,
+            'reading_count' => 15,
             'grammar_count' => 15,
+            'has_writing' => true,
             'max_score' => 300,
             'pass_score' => 180,
             'color' => '#059669',
@@ -90,12 +95,13 @@ class HskMockTestController extends Controller
         6 => [
             'label' => 'HSK 6',
             'title' => 'Bài thi thử mô phỏng HSK 6',
-            'desc' => 'Đánh giá trình độ tiếng Trung cao cấp, diễn đạt như người bản xứ (5.000+ từ)',
-            'time_limit' => 50,
-            'question_count' => 50,
-            'listening_count' => 15,
-            'reading_count' => 20,
+            'desc' => 'Đánh giá trình độ tiếng Trung cao cấp, diễn đạt như người bản xứ (5.000+ từ - 3 kỹ năng Nghe, Đọc, Viết)',
+            'time_limit' => 60,
+            'question_count' => 40,
+            'listening_count' => 10,
+            'reading_count' => 15,
             'grammar_count' => 15,
+            'has_writing' => true,
             'max_score' => 300,
             'pass_score' => 180,
             'color' => '#0f172a',
@@ -139,38 +145,35 @@ class HskMockTestController extends Controller
 
         $spec = self::LEVEL_SPECS[$level];
 
-        // Gather questions: Priority matching hsk_level and skill_type
+        // Gather questions: Strict matching to exact hsk_level and skill_type
         $listeningPool = Question::where('is_active', true)
-            ->where(function ($q) use ($level) {
-                $q->where('hsk_level', $level)->orWhere('hsk_level', '<=', $level);
-            })
+            ->where('hsk_level', $level)
             ->where('skill_type', 'listening')
             ->inRandomOrder()
             ->take($spec['listening_count'])
             ->get();
 
         $readingPool = Question::where('is_active', true)
-            ->where(function ($q) use ($level) {
-                $q->where('hsk_level', $level)->orWhere('hsk_level', '<=', $level);
-            })
+            ->where('hsk_level', $level)
             ->where('skill_type', 'reading')
             ->inRandomOrder()
             ->take($spec['reading_count'])
             ->get();
 
-        $grammarPool = Question::where('is_active', true)
-            ->where(function ($q) use ($level) {
-                $q->where('hsk_level', $level)->orWhere('hsk_level', '<=', $level);
-            })
-            ->where('skill_type', 'grammar')
-            ->inRandomOrder()
-            ->take($spec['grammar_count'])
-            ->get();
+        $grammarPool = ($spec['grammar_count'] > 0)
+            ? Question::where('is_active', true)
+                ->where('hsk_level', $level)
+                ->where('skill_type', 'grammar')
+                ->inRandomOrder()
+                ->take($spec['grammar_count'])
+                ->get()
+            : collect();
 
-        // If any section pool is smaller than required, supplement from general active questions
+        // If any section pool is smaller than required, supplement ONLY from the SAME hsk_level
         if ($listeningPool->count() < $spec['listening_count']) {
             $needed = $spec['listening_count'] - $listeningPool->count();
             $supplement = Question::where('is_active', true)
+                ->where('hsk_level', $level)
                 ->where('skill_type', 'listening')
                 ->whereNotIn('id', $listeningPool->pluck('id'))
                 ->inRandomOrder()
@@ -182,6 +185,7 @@ class HskMockTestController extends Controller
         if ($readingPool->count() < $spec['reading_count']) {
             $needed = $spec['reading_count'] - $readingPool->count();
             $supplement = Question::where('is_active', true)
+                ->where('hsk_level', $level)
                 ->where('skill_type', 'reading')
                 ->whereNotIn('id', $readingPool->pluck('id'))
                 ->inRandomOrder()
@@ -190,9 +194,10 @@ class HskMockTestController extends Controller
             $readingPool = $readingPool->merge($supplement);
         }
 
-        if ($grammarPool->count() < $spec['grammar_count']) {
+        if ($spec['grammar_count'] > 0 && $grammarPool->count() < $spec['grammar_count']) {
             $needed = $spec['grammar_count'] - $grammarPool->count();
             $supplement = Question::where('is_active', true)
+                ->where('hsk_level', $level)
                 ->where('skill_type', 'grammar')
                 ->whereNotIn('id', $grammarPool->pluck('id'))
                 ->inRandomOrder()
@@ -201,26 +206,16 @@ class HskMockTestController extends Controller
             $grammarPool = $grammarPool->merge($supplement);
         }
 
-        // If general questions still needed, fill with any active questions
         $allQuestions = $listeningPool->merge($readingPool)->merge($grammarPool);
-        if ($allQuestions->count() < $spec['question_count']) {
-            $needed = $spec['question_count'] - $allQuestions->count();
-            $more = Question::where('is_active', true)
-                ->whereNotIn('id', $allQuestions->pluck('id'))
-                ->inRandomOrder()
-                ->take($needed)
-                ->get();
-            $allQuestions = $allQuestions->merge($more);
-        }
 
-        $formattedQuestions = $allQuestions->values()->map(function ($q, $index) {
+        $formattedQuestions = $allQuestions->values()->map(function ($q, $index) use ($level) {
             return [
                 'index'          => $index + 1,
                 'id'             => $q->id,
                 'skill_type'     => $q->skill_type ?? 'reading',
                 'skill_name'     => match ($q->skill_type) {
                     'listening' => 'Nghe hiểu',
-                    'grammar'   => 'Ngữ pháp',
+                    'grammar'   => ($level <= 2 ? 'Đọc hiểu' : 'Viết & Ngữ pháp'),
                     default     => 'Đọc hiểu',
                 },
                 'question'       => $q->question,
@@ -320,15 +315,17 @@ class HskMockTestController extends Controller
 
         $totalQuestions = count($details);
 
-        // Calculate scores scaled to 100 per skill (Total 300 scale)
+        // Calculate scores scaled to 100 per skill
         // If 0 questions answered correctly in a skill or 0 questions present, score is 0
         $listeningScore = $listeningTotal > 0 ? (int) round(($listeningCorrect / $listeningTotal) * 100) : 0;
         $readingScore = $readingTotal > 0 ? (int) round(($readingCorrect / $readingTotal) * 100) : 0;
-        $grammarScore = $grammarTotal > 0 ? (int) round(($grammarCorrect / $grammarTotal) * 100) : 0;
+        $grammarScore = ($spec['grammar_count'] > 0 && $grammarTotal > 0)
+            ? (int) round(($grammarCorrect / $grammarTotal) * 100)
+            : 0;
 
-        // Total score out of 300
-        $totalScore = $listeningScore + $readingScore + $grammarScore;
-        $passed = $totalScore >= $spec['pass_score']; // >= 180 (60%)
+        // Total score: 200 pts for HSK 1-2 (Listening + Reading), 300 pts for HSK 3-6 (Listening + Reading + Writing)
+        $totalScore = $listeningScore + $readingScore + ($spec['has_writing'] ? $grammarScore : 0);
+        $passed = $totalScore >= $spec['pass_score'];
 
         $user = Auth::guard('web')->user();
         $certificateCode = $passed ? MockTest::generateCertificateCode($level) : null;
@@ -367,7 +364,7 @@ class HskMockTestController extends Controller
                 'user_id'          => $user->id,
                 'session_type'     => 'quiz',
                 'duration_minutes' => $durationMinutes,
-                'score'            => (int) round(($totalScore / 300) * 100),
+                'score'            => (int) round(($totalScore / $spec['max_score']) * 100),
                 'started_at'       => now()->subSeconds($durationSecs),
                 'completed_at'     => now(),
             ]);

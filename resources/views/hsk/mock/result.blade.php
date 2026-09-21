@@ -34,7 +34,7 @@
                 @if($test->passed)
                     Chúc mừng bạn đã xuất sắc vượt qua bài thi thử HSK với xếp loại <strong>{{ $test->grade_text }}</strong>! Bạn đã đủ điều kiện nhận <strong>Giấy chứng nhận Online hoàn thành bài thi thử</strong>.
                 @else
-                    Bạn đạt <strong>{{ $test->total_score }}/300 điểm</strong> (cần tối thiểu 180 điểm để đỗ). Hãy xem lại các câu trả lời sai bên dưới để ôn tập củng cố thêm nhé!
+                    Bạn đạt <strong>{{ $test->total_score }}/{{ $test->max_score }} điểm</strong> (cần tối thiểu {{ $spec['pass_score'] }} điểm để đỗ). Hãy xem lại các câu trả lời sai bên dưới để ôn tập củng cố thêm nhé!
                 @endif
             </p>
 
@@ -85,7 +85,7 @@
                 <span class="text-6xl sm:text-7xl font-black tracking-tight {{ $test->passed ? 'text-amber-300' : 'text-white' }}">
                     {{ $test->total_score }}
                 </span>
-                <span class="text-xl font-bold text-white/50">/ 300</span>
+                <span class="text-xl font-bold text-white/50">/ {{ $test->max_score }}</span>
             </div>
             
             <div class="mt-3 inline-block rounded-full px-4 py-1 text-xs font-black uppercase tracking-wider {{ $test->passed ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30' : 'bg-red-500/20 text-red-300 border border-red-400/30' }}">
@@ -102,14 +102,16 @@
     </div>
 </section>
 
-{{-- Skill Breakdown Section (3 Kỹ năng: Nghe, Đọc, Ngữ pháp) --}}
+{{-- Skill Breakdown Section --}}
 <section class="mb-12">
     <div class="mb-6">
         <p class="text-xs font-bold uppercase tracking-[0.24em] text-[#991b1b]">Phân tích năng lực</p>
-        <h2 class="mt-1 text-2xl sm:text-3xl font-black text-slate-900">Bảng điểm chi tiết theo 3 kỹ năng</h2>
+        <h2 class="mt-1 text-2xl sm:text-3xl font-black text-slate-900">
+            Bảng điểm chi tiết theo {{ $test->hsk_level <= 2 ? '2' : '3' }} kỹ năng
+        </h2>
     </div>
 
-    <div class="grid gap-6 sm:grid-cols-3">
+    <div class="grid gap-6 {{ $test->hsk_level <= 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-3' }}">
         
         {{-- Skill 1: Listening --}}
         <div class="rounded-[2rem] border border-blue-100 bg-gradient-to-br from-white to-blue-50/50 p-6 shadow-xl shadow-slate-900/5">
@@ -165,19 +167,20 @@
             <p class="mt-2 text-right text-[11px] font-bold text-emerald-600">{{ $test->reading_percent }}% độ chính xác</p>
         </div>
 
-        {{-- Skill 3: Grammar --}}
+        @if($test->hsk_level >= 3)
+        {{-- Skill 3: Grammar / Writing --}}
         <div class="rounded-[2rem] border border-purple-100 bg-gradient-to-br from-white to-purple-50/50 p-6 shadow-xl shadow-slate-900/5">
             <div class="flex items-center justify-between">
                 <div class="grid h-12 w-12 place-items-center rounded-2xl bg-purple-600 text-white shadow-md shadow-purple-600/20">
                     <i data-lucide="pen-tool" class="h-6 w-6"></i>
                 </div>
                 <span class="text-xs font-bold text-purple-700 bg-purple-100 px-3 py-1 rounded-full">
-                    Ngữ pháp
+                    Viết & Ngữ pháp
                 </span>
             </div>
 
-            <h3 class="mt-4 text-lg font-black text-slate-900">Phần 3: Ngữ pháp & Cấu trúc</h3>
-            <p class="text-xs text-slate-500 mt-0.5">Lượng từ, trợ từ, cấu trúc câu & trật tự từ</p>
+            <h3 class="mt-4 text-lg font-black text-slate-900">Phần 3: Viết & Ngữ pháp</h3>
+            <p class="text-xs text-slate-500 mt-0.5">Lượng từ, trợ từ, cấu trúc câu & diễn đạt</p>
 
             <div class="mt-6 flex items-baseline justify-between">
                 <span class="text-4xl font-black text-purple-700">{{ $test->grammar_score }}</span>
@@ -191,6 +194,7 @@
             </div>
             <p class="mt-2 text-right text-[11px] font-bold text-purple-600">{{ $test->grammar_percent }}% độ chính xác</p>
         </div>
+        @endif
 
     </div>
 </section>

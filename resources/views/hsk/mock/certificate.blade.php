@@ -114,28 +114,30 @@
 
         {{-- Score Summary Table Grid --}}
         <div class="relative mt-8 rounded-2xl bg-amber-50/70 border border-amber-200/80 p-5 max-w-xl mx-auto shadow-sm">
-            <div class="grid grid-cols-4 gap-2 text-center text-xs">
+            <div class="grid {{ $test->hsk_level <= 2 ? 'grid-cols-3' : 'grid-cols-4' }} gap-2 text-center text-xs">
                 <div class="border-r border-amber-200/80 pr-2">
                     <p class="text-slate-500 text-[11px] font-semibold">听力 (Nghe)</p>
                     <p class="mt-1 text-base sm:text-lg font-black text-blue-700">{{ $test->listening_score }} <span class="text-[10px] text-slate-400 font-normal">/100</span></p>
                 </div>
-                <div class="border-r border-amber-200/80 pr-2">
+                <div class="{{ $test->hsk_level <= 2 ? 'border-r border-amber-200/80 pr-2' : 'border-r border-amber-200/80 pr-2' }}">
                     <p class="text-slate-500 text-[11px] font-semibold">阅读 (Đọc)</p>
                     <p class="mt-1 text-base sm:text-lg font-black text-emerald-700">{{ $test->reading_score }} <span class="text-[10px] text-slate-400 font-normal">/100</span></p>
                 </div>
+                @if($test->hsk_level >= 3)
                 <div class="border-r border-amber-200/80 pr-2">
-                    <p class="text-slate-500 text-[11px] font-semibold">语法 (Ngữ pháp)</p>
+                    <p class="text-slate-500 text-[11px] font-semibold">书写/语法 (Viết)</p>
                     <p class="mt-1 text-base sm:text-lg font-black text-purple-700">{{ $test->grammar_score }} <span class="text-[10px] text-slate-400 font-normal">/100</span></p>
                 </div>
+                @endif
                 <div>
                     <p class="text-slate-500 text-[11px] font-bold">总分 (Tổng)</p>
-                    <p class="mt-1 text-lg sm:text-xl font-black text-[#991b1b]">{{ $test->total_score }} <span class="text-[10px] text-slate-400 font-normal">/300</span></p>
+                    <p class="mt-1 text-lg sm:text-xl font-black text-[#991b1b]">{{ $test->total_score }} <span class="text-[10px] text-slate-400 font-normal">/{{ $test->max_score }}</span></p>
                 </div>
             </div>
             
             <div class="mt-3 pt-2.5 border-t border-amber-200/80 flex items-center justify-between text-xs text-slate-600 font-semibold px-2">
                 <span>Xếp loại: <strong class="text-emerald-700">{{ $test->grade_text }}</strong></span>
-                <span>Tỷ lệ đạt: <strong class="text-slate-900">{{ (int)round(($test->total_score / 300) * 100) }}%</strong></span>
+                <span>Tỷ lệ đạt: <strong class="text-slate-900">{{ (int)round(($test->total_score / $test->max_score) * 100) }}%</strong></span>
             </div>
         </div>
 
