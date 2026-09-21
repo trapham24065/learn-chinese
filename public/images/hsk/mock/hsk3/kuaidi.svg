@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <linearGradient id="parcel_bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#e2e8f0"/>
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="16" fill="url(#parcel_bg)"/>
+  <!-- Isometric box -->
+  <!-- Top surface -->
+  <polygon points="60,26 94,44 60,60 26,44" fill="#d97706"/>
+  <!-- Left surface -->
+  <polygon points="26,44 60,60 60,96 26,78" fill="#b45309"/>
+  <!-- Right surface -->
+  <polygon points="60,60 94,44 94,78 60,96" fill="#92400e"/>
+  <!-- Packing tape on top -->
+  <polygon points="56,28 64,32 64,58 56,54" fill="#fef3c7" opacity="0.8"/>
+  <polygon points="56,54 64,58 64,96 56,92" fill="#fde68a" opacity="0.8"/>
+  <!-- Delivery label -->
+  <polygon points="34,54 48,61 48,72 34,65" fill="#ffffff"/>
+  <line x1="37" y1="58" x2="45" y2="62" stroke="#1e293b" stroke-width="1.5"/>
+  <line x1="37" y1="62" x2="45" y2="66" stroke="#1e293b" stroke-width="1.5"/>
+  <!-- Shadow below -->
+  <ellipse cx="60" cy="100" rx="38" ry="8" fill="#94a3b8" opacity="0.4"/>
+</svg>

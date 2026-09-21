@@ -528,5 +528,86 @@ class HskMockTestTest extends TestCase
         $this->assertNotNull($mockTest->certificate_code);
         $this->assertStringStartsWith('LC-HSK2-', $mockTest->certificate_code);
     }
+
+    public function test_hsk3_exam_room_loads_multimedia_picture_questions_and_all_three_skills(): void
+    {
+        $student = User::factory()->create(['role' => User::ROLE_STUDENT]);
+
+        $response = $this->actingAs($student)->get(route('hsk.mock.start', 3));
+
+        $response->assertStatus(200);
+        $response->assertViewHas('questions');
+
+        $questions = $response->viewData('questions');
+        $this->assertNotEmpty($questions);
+
+        // Ensure 3 skills are present
+        $skills = $questions->pluck('skill_type')->unique()->toArray();
+        $this->assertContains('listening', $skills);
+        $this->assertContains('reading', $skills);
+        $this->assertContains('grammar', $skills);
+
+        // Ensure questions in exam room include HSK 3 SVGs and picture question types
+        $hasPictureQuestion = false;
+        $hasHsk3Svg = false;
+
+        foreach ($questions as $q) {
+            if (in_array($q['question_type'] ?? '', ['picture_true_false', 'picture_choice'])) {
+                $hasPictureQuestion = true;
+            }
+            if (str_contains($q['image'] ?? '', 'images/hsk/mock/hsk3/')) {
+                $hasHsk3Svg = true;
+            }
+            if (!empty($q['image_set'])) {
+                foreach ($q['image_set'] as $imgItem) {
+                    if (str_contains($imgItem['image'] ?? '', 'images/hsk/mock/hsk3/')) {
+                        $hasHsk3Svg = true;
+                    }
+                }
+            }
+        }
+
+        $this->assertTrue($hasPictureQuestion, 'HSK 3 exam room should contain picture question types.');
+        $this->assertTrue($hasHsk3Svg, 'HSK 3 exam room should reference HSK 3 SVGs.');
+    }
+
+    public function test_submitting_hsk3_mock_test_scores_on_300_point_scale_with_picture_answers(): void
+    {
+        $student = User::factory()->create(['role' => User::ROLE_STUDENT]);
+
+        $questions = Question::where('is_active', true)->where('hsk_level', 3)->get();
+        $this->assertNotEmpty($questions);
+
+        $answers = [];
+        foreach ($questions as $q) {
+            $answers[$q->id] = $q->correct_answer;
+        }
+
+        $response = $this->actingAs($student)->postJson(route('hsk.mock.submit', 3), [
+            'answers'          => $answers,
+            'duration_seconds' => 900,
+            'exam_standard'    => 'hsk_2_0',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success'     => true,
+            'passed'      => true,
+            'total_score' => 300,
+        ]);
+
+        $this->assertDatabaseHas('mock_tests', [
+            'user_id'       => $student->id,
+            'hsk_level'     => 3,
+            'exam_standard' => 'hsk_2_0',
+            'passed'        => true,
+            'total_score'   => 300,
+            'max_score'     => 300,
+        ]);
+
+        $mockTest = MockTest::where('user_id', $student->id)->latest()->first();
+        $this->assertNotNull($mockTest->certificate_code);
+        $this->assertStringStartsWith('LC-HSK3-', $mockTest->certificate_code);
+    }
 }
 

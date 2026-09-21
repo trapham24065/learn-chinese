@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <linearGradient id="luggage_bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f0fdf4"/>
+      <stop offset="100%" stop-color="#dcfce7"/>
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="16" fill="url(#luggage_bg)"/>
+  <!-- Pull handle extended -->
+  <path d="M48,34 L48,16 Q60,12 72,16 L72,34" fill="none" stroke="#475569" stroke-width="3" stroke-linecap="round"/>
+  <rect x="52" y="13" width="16" height="4" rx="2" fill="#0f172a"/>
+  <!-- Suitcase body -->
+  <rect x="34" y="34" width="52" height="66" rx="8" fill="#0284c7"/>
+  <!-- Ridges / stripes on suitcase -->
+  <line x1="44" y1="42" x2="44" y2="92" stroke="#0369a1" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="52" y1="42" x2="52" y2="92" stroke="#0369a1" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="60" y1="42" x2="60" y2="92" stroke="#0369a1" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="68" y1="42" x2="68" y2="92" stroke="#0369a1" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="76" y1="42" x2="76" y2="92" stroke="#0369a1" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Side handle -->
+  <rect x="86" y="58" width="3" height="18" rx="1.5" fill="#0f172a"/>
+  <!-- Wheels -->
+  <ellipse cx="44" cy="103" rx="4" ry="4" fill="#1e293b"/>
+  <ellipse cx="76" cy="103" rx="4" ry="4" fill="#1e293b"/>
+  <!-- Floor shadow -->
+  <ellipse cx="60" cy="106" rx="34" ry="4" fill="#94a3b8" opacity="0.4"/>
+</svg>
