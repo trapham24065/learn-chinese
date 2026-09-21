@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <rect width="120" height="120" rx="24" fill="#f8fafc"/>
+  <!-- Head & Hair -->
+  <circle cx="60" cy="38" r="16" fill="#fed7aa"/>
+  <path d="M44 34 c0 -12 32 -12 32 0 c-4 -6 -12 -8 -20 -6 c-6 1 -10 3 -12 6 z" fill="#334155"/>
+  <!-- Eyes & Smile -->
+  <circle cx="55" cy="38" r="1.5" fill="#1e293b"/>
+  <circle cx="65" cy="38" r="1.5" fill="#1e293b"/>
+  <path d="M57 44 q3 3 6 0" stroke="#1e293b" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <!-- Doctor White Coat & Body -->
+  <path d="M32 98 v-30 c0 -10 8 -14 18 -14 h20 c10 0 18 4 18 14 v30 z" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="2"/>
+  <!-- Inner shirt / tie -->
+  <path d="M52 54 l8 14 l8 -14 z" fill="#0284c7"/>
+  <!-- Stethoscope around neck -->
+  <path d="M48 54 c0 16 6 24 12 24 s12 -8 12 -24" fill="none" stroke="#475569" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="60" cy="80" r="4.5" fill="#94a3b8" stroke="#475569" stroke-width="2"/>
+  <!-- Red Cross Badge -->
+  <rect x="38" y="66" width="10" height="10" rx="2" fill="#ef4444"/>
+  <path d="M43 68 v6 M40 71 h6" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+</svg>

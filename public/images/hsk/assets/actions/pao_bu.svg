@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <rect width="120" height="120" rx="24" fill="#f8fafc"/>
+  <!-- Ground Track -->
+  <line x1="16" y1="102" x2="104" y2="102" stroke="#cbd5e1" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Runner Head -->
+  <circle cx="68" cy="28" r="11" fill="#fed7aa"/>
+  <path d="M60 26 c0 -8 18 -8 18 0 c-2 -4 -8 -6 -13 -4 c-3 1 -4 2 -5 4 z" fill="#334155"/>
+  <!-- Runner Torso (slanted forward) -->
+  <path d="M64 38 l-10 26" stroke="#0284c7" stroke-width="8" stroke-linecap="round"/>
+  <!-- Arms running -->
+  <path d="M58 44 l-14 8 l-6 -10" fill="none" stroke="#fed7aa" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M62 42 l14 6 l10 -6" fill="none" stroke="#fed7aa" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Front leg (bent forward) -->
+  <path d="M54 64 l16 12 l-6 18" fill="none" stroke="#1d4ed8" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Back leg (stretched back) -->
+  <path d="M54 64 l-16 10 l-14 -4" fill="none" stroke="#1d4ed8" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Shoes -->
+  <rect x="60" y="92" width="10" height="6" rx="2" fill="#ef4444"/>
+  <rect x="20" y="68" width="10" height="6" rx="2" fill="#ef4444"/>
+  <!-- Wind / Speed lines -->
+  <line x1="24" y1="36" x2="38" y2="36" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="18" y1="44" x2="36" y2="44" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round"/>
+</svg>

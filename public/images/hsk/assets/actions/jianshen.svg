@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <rect width="120" height="120" rx="24" fill="#f8fafc"/>
+  <!-- Dumbbell tilted slightly at -25 degrees -->
+  <g transform="translate(60, 60) rotate(-28) translate(-60, -60)">
+    <!-- Dumbbell Bar -->
+    <rect x="24" y="56" width="72" height="8" rx="2" fill="#94a3b8"/>
+    <!-- Knurled Grip on handle -->
+    <rect x="44" y="55" width="32" height="10" rx="2" fill="#64748b"/>
+    <line x1="50" y1="56" x2="50" y2="64" stroke="#475569" stroke-width="1"/>
+    <line x1="55" y1="56" x2="55" y2="64" stroke="#475569" stroke-width="1"/>
+    <line x1="60" y1="56" x2="60" y2="64" stroke="#475569" stroke-width="1"/>
+    <line x1="65" y1="56" x2="65" y2="64" stroke="#475569" stroke-width="1"/>
+    <line x1="70" y1="56" x2="70" y2="64" stroke="#475569" stroke-width="1"/>
+    <!-- Left Weight Plates -->
+    <rect x="26" y="38" width="12" height="44" rx="4" fill="#0284c7"/>
+    <rect x="18" y="44" width="8" height="32" rx="3" fill="#0369a1"/>
+    <rect x="14" y="54" width="4" height="12" rx="2" fill="#1e293b"/>
+    <!-- Right Weight Plates -->
+    <rect x="82" y="38" width="12" height="44" rx="4" fill="#0284c7"/>
+    <rect x="94" y="44" width="8" height="32" rx="3" fill="#0369a1"/>
+    <rect x="102" y="54" width="4" height="12" rx="2" fill="#1e293b"/>
+  </g>
+  <!-- Energy / sweat / dynamic motion badges -->
+  <path d="M84 22 l2 4 l4 2 l-4 2 l-2 4 l-2 -4 l-4 -2 l4 -2 z" fill="#f59e0b"/>
+  <path d="M30 90 l2 4 l4 2 l-4 2 l-2 4 l-2 -4 l-4 -2 l4 -2 z" fill="#f59e0b"/>
+</svg>

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <rect width="120" height="120" rx="24" fill="#f8fafc"/>
+  <!-- Sailboat Mast & Sail -->
+  <line x1="58" y1="20" x2="58" y2="70" stroke="#78350f" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Main white/blue sail -->
+  <path d="M62 24 l32 40 h-32 z" fill="#38bdf8"/>
+  <path d="M54 30 l-24 34 h24 z" fill="#0284c7"/>
+  <!-- Pennant flag on top -->
+  <polygon points="58,20 68,24 58,28" fill="#ef4444"/>
+  <!-- Boat Hull -->
+  <path d="M22 68 l10 18 h56 l12 -18 z" fill="#ea580c"/>
+  <rect x="22" y="68" width="78" height="4" fill="#c2410c"/>
+  <!-- Sea Waves -->
+  <path d="M14 88 q14 -6 28 0 t28 0 t28 0" fill="none" stroke="#0284c7" stroke-width="4" stroke-linecap="round"/>
+  <path d="M18 98 q14 -6 28 0 t28 0 t28 0" fill="none" stroke="#38bdf8" stroke-width="3.5" stroke-linecap="round"/>
+</svg>

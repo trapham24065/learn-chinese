@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <rect width="120" height="120" rx="24" fill="#f8fafc"/>
+  <!-- Watermelon Slice (semicircle/crescent) -->
+  <g transform="translate(60, 60) rotate(-15) translate(-60, -60)">
+    <!-- Outer green rind -->
+    <path d="M20 54 c0 34 26 50 40 50 s40 -16 40 -50 z" fill="#15803d"/>
+    <!-- Light green inner rind -->
+    <path d="M24 54 c0 30 24 44 36 44 s36 -14 36 -44 z" fill="#86efac"/>
+    <!-- Red flesh -->
+    <path d="M28 54 c0 26 22 38 32 38 s32 -12 32 -38 z" fill="#ef4444"/>
+    <!-- Seeds -->
+    <ellipse cx="46" cy="62" rx="2" ry="3.5" transform="rotate(-15 46 62)" fill="#1e293b"/>
+    <ellipse cx="60" cy="60" rx="2" ry="3.5" fill="#1e293b"/>
+    <ellipse cx="74" cy="62" rx="2" ry="3.5" transform="rotate(15 74 62)" fill="#1e293b"/>
+    <ellipse cx="52" cy="74" rx="2" ry="3.5" transform="rotate(-10 52 74)" fill="#1e293b"/>
+    <ellipse cx="68" cy="74" rx="2" ry="3.5" transform="rotate(10 68 74)" fill="#1e293b"/>
+  </g>
+</svg>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <rect width="120" height="120" rx="24" fill="#f8fafc"/>
+  <!-- Saucer -->
+  <ellipse cx="60" cy="92" rx="42" ry="8" fill="#cbd5e1"/>
+  <ellipse cx="60" cy="90" rx="38" ry="6" fill="#e2e8f0"/>
+  <!-- Teacup Body -->
+  <path d="M30 46 h60 c0 26 -12 40 -30 40 s-30 -14 -30 -40 z" fill="#0284c7"/>
+  <path d="M35 50 h50 c0 22 -10 32 -25 32 s-25 -10 -25 -32 z" fill="#38bdf8"/>
+  <ellipse cx="60" cy="46" rx="30" ry="7" fill="#0369a1"/>
+  <ellipse cx="60" cy="46" rx="27" ry="5.5" fill="#0284c7"/>
+  <!-- Tea Liquid -->
+  <ellipse cx="60" cy="47" rx="25" ry="4.5" fill="#b45309"/>
+  <!-- Handle -->
+  <path d="M90 52 c12 0 14 18 0 24" fill="none" stroke="#0284c7" stroke-width="6" stroke-linecap="round"/>
+  <!-- Steam lines -->
+  <path d="M48 36 c-3 -6 3 -12 0 -18" fill="none" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/>
+  <path d="M60 34 c-4 -6 4 -12 0 -18" fill="none" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/>
+  <path d="M72 36 c-3 -6 3 -12 0 -18" fill="none" stroke="#94a3b8" stroke-width="3" stroke-linecap="round"/>
+</svg>

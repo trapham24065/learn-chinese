@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <defs>
+    <linearGradient id="sky3_1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e0f2fe"/>
+      <stop offset="100%" stop-color="#bae6fd"/>
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="16" fill="url(#sky3_1)"/>
+  <circle cx="95" cy="28" r="10" fill="#f59e0b"/>
+  <!-- Mountain peaks -->
+  <polygon points="10,110 50,45 85,110" fill="#94a3b8"/>
+  <polygon points="40,58 50,45 60,58 54,64 50,60 45,64" fill="#f8fafc"/>
+  <polygon points="45,110 82,32 118,110" fill="#0d9488"/>
+  <polygon points="72,48 82,32 92,48 86,54 82,50 78,54" fill="#ccfbf1"/>
+  <!-- Hiker -->
+  <circle cx="48" cy="76" r="5" fill="#f97316"/>
+  <path d="M44,82 L52,82 L50,96 L46,96 Z" fill="#2563eb"/>
+  <!-- Backpack -->
+  <rect x="41" y="83" width="4" height="8" rx="2" fill="#d97706"/>
+  <!-- Legs -->
+  <line x1="47" y1="96" x2="43" y2="108" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="49" y1="96" x2="54" y2="108" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Walking stick -->
+  <line x1="53" y1="88" x2="57" y2="108" stroke="#78350f" stroke-width="1.5" stroke-linecap="round"/>
+</svg>

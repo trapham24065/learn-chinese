@@ -121,4 +121,38 @@ class Vocabulary extends Model
               ->orWhere('meaning', 'like', "%{$term}%");
         });
     }
+
+    /**
+     * Linked media assets.
+     */
+    public function mediaAssets(): BelongsToMany
+    {
+        return $this->belongsToMany(MediaAsset::class, 'media_asset_vocabularies')
+            ->withPivot('relation_type')
+            ->withTimestamps();
+    }
+
+    /**
+     * Get the primary media asset for this vocabulary term.
+     */
+    public function primaryMediaAsset(): ?MediaAsset
+    {
+        if ($this->relationLoaded('mediaAssets')) {
+            return $this->mediaAssets->firstWhere('pivot.relation_type', 'primary')
+                ?? $this->mediaAssets->first();
+        }
+
+        return $this->mediaAssets()
+            ->wherePivot('relation_type', 'primary')
+            ->first()
+            ?? $this->mediaAssets()->first();
+    }
+
+    /**
+     * Get image file path of the primary asset or null.
+     */
+    public function assetImagePath(): ?string
+    {
+        return $this->primaryMediaAsset()?->file_path;
+    }
 }

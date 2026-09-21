@@ -254,5 +254,6 @@ class DatabaseSeeder extends Seeder
         $this->call(HskStandardSeeder::class);
         $this->call(VocabularyMigrationSeeder::class);
         $this->call(Hsk3VocabularySeeder::class);
+        $this->call(HskMediaAssetSeeder::class);
     }
 }
