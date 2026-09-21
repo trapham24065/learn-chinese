@@ -142,11 +142,34 @@ class MediaAsset extends Model
             : 0;
 
         return [
-            'questions_count'  => $questionCount,
-            'flashcards_count' => $flashcardCount,
+            'questions_count'    => $questionCount,
+            'flashcards_count'   => $flashcardCount,
             'vocabularies_count' => count($vocabIds),
-            'total_references' => $questionCount + $flashcardCount + count($vocabIds),
+            'total_references'   => $questionCount + $flashcardCount + count($vocabIds),
         ];
+    }
+
+    /**
+     * Human-readable list of places this asset is being used.
+     *
+     * @return array<string>
+     */
+    public function usageSummaryStrings(): array
+    {
+        $locations = [];
+        $usage = $this->usageLocations();
+
+        if ($usage['questions_count'] > 0) {
+            $locations[] = "{$usage['questions_count']} câu hỏi đề thi / bài tập";
+        }
+        if ($usage['flashcards_count'] > 0) {
+            $locations[] = "{$usage['flashcards_count']} thẻ flashcard";
+        }
+        if ($usage['vocabularies_count'] > 0) {
+            $locations[] = "{$usage['vocabularies_count']} từ vựng liên kết";
+        }
+
+        return $locations;
     }
 
     /**
