@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <rect width="120" height="120" rx="24" fill="#f8fafc"/>
+  <!-- Swimmer Head & Cap -->
+  <circle cx="42" cy="46" r="12" fill="#fed7aa"/>
+  <path d="M30 46 a12 12 0 0 1 24 0 z" fill="#0284c7"/>
+  <!-- Swimming Goggles -->
+  <rect x="42" y="44" width="8" height="5" rx="2" fill="#1e293b"/>
+  <line x1="38" y1="46" x2="42" y2="46" stroke="#1e293b" stroke-width="2"/>
+  <!-- Swimmer Arms moving -->
+  <path d="M48 54 c8 -4 18 -14 26 -16 c4 2 2 8 -4 12 l-22 14" fill="#ea580c"/>
+  <!-- Swimmer Body in water -->
+  <ellipse cx="66" cy="62" rx="24" ry="7" transform="rotate(-10 66 62)" fill="#ea580c"/>
+  <!-- Water Waves -->
+  <path d="M16 70 q12 -8 24 0 t24 0 t24 0 t24 0" fill="none" stroke="#38bdf8" stroke-width="4" stroke-linecap="round"/>
+  <path d="M14 84 q12 -8 24 0 t24 0 t24 0 t24 0" fill="none" stroke="#0284c7" stroke-width="4" stroke-linecap="round"/>
+  <path d="M16 98 q12 -8 24 0 t24 0 t24 0 t24 0" fill="none" stroke="#0369a1" stroke-width="4" stroke-linecap="round"/>
+</svg>

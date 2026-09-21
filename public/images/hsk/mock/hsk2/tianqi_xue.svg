@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <rect width="120" height="120" rx="24" fill="#f8fafc"/>
+  <!-- Snow ground mound -->
+  <path d="M12 104 c20 -8 40 -4 60 -4 s40 4 48 4 v8 h-108 z" fill="#e2e8f0"/>
+  <!-- Snowman Bottom Body -->
+  <circle cx="60" cy="80" r="22" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <!-- Coal buttons -->
+  <circle cx="60" cy="74" r="2.5" fill="#334155"/>
+  <circle cx="60" cy="84" r="2.5" fill="#334155"/>
+  <!-- Snowman Head -->
+  <circle cx="60" cy="46" r="15" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <!-- Coal eyes & smile -->
+  <circle cx="55" cy="43" r="2" fill="#334155"/>
+  <circle cx="65" cy="43" r="2" fill="#334155"/>
+  <!-- Carrot nose -->
+  <polygon points="60,48 70,50 60,52" fill="#ea580c"/>
+  <!-- Red Cozy Scarf -->
+  <path d="M46 58 c4 2 24 2 28 0 c2 4 -2 8 -6 8 h-16 c-4 0 -8 -4 -6 -8 z" fill="#dc2626"/>
+  <path d="M62 62 v16 h-8 v-16 z" fill="#b91c1c"/>
+  <!-- Twig arms -->
+  <path d="M40 76 l-16 -8 m6 2 l-6 -6" stroke="#78350f" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M80 76 l16 -8 m-6 2 l6 -6" stroke="#78350f" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Falling Snowflakes ❄ -->
+  <g fill="#38bdf8">
+    <circle cx="28" cy="28" r="2.5"/>
+    <circle cx="88" cy="24" r="3"/>
+    <circle cx="36" cy="50" r="2"/>
+    <circle cx="86" cy="48" r="2.5"/>
+    <circle cx="98" cy="70" r="2"/>
+  </g>
+</svg>

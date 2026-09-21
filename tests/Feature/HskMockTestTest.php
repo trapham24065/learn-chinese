@@ -453,5 +453,80 @@ class HskMockTestTest extends TestCase
         $response->assertSee('chuzuche.svg');
         $response->assertSee('feiji.svg');
     }
+
+    public function test_hsk2_exam_room_loads_multimedia_picture_questions(): void
+    {
+        $student = User::factory()->create(['role' => User::ROLE_STUDENT]);
+
+        $response = $this->actingAs($student)->get(route('hsk.mock.start', 2));
+
+        $response->assertStatus(200);
+        $response->assertViewHas('questions');
+
+        $questions = $response->viewData('questions');
+        $this->assertNotEmpty($questions);
+
+        // Ensure questions in exam room include HSK 2 SVGs and picture question types
+        $hasPictureQuestion = false;
+        $hasHsk2Svg = false;
+
+        foreach ($questions as $q) {
+            if (in_array($q['question_type'] ?? '', ['picture_true_false', 'picture_choice'])) {
+                $hasPictureQuestion = true;
+            }
+            if (str_contains($q['image'] ?? '', 'images/hsk/mock/hsk2/')) {
+                $hasHsk2Svg = true;
+            }
+            if (!empty($q['image_set'])) {
+                foreach ($q['image_set'] as $imgItem) {
+                    if (str_contains($imgItem['image'] ?? '', 'images/hsk/mock/hsk2/')) {
+                        $hasHsk2Svg = true;
+                    }
+                }
+            }
+        }
+
+        $this->assertTrue($hasPictureQuestion, 'HSK 2 exam room should contain picture question types.');
+        $this->assertTrue($hasHsk2Svg, 'HSK 2 exam room should reference HSK 2 SVGs.');
+    }
+
+    public function test_submitting_hsk2_mock_test_scores_on_200_point_scale_with_picture_answers(): void
+    {
+        $student = User::factory()->create(['role' => User::ROLE_STUDENT]);
+
+        $questions = Question::where('is_active', true)->where('hsk_level', 2)->get();
+        $this->assertNotEmpty($questions);
+
+        $answers = [];
+        foreach ($questions as $q) {
+            $answers[$q->id] = $q->correct_answer;
+        }
+
+        $response = $this->actingAs($student)->postJson(route('hsk.mock.submit', 2), [
+            'answers'          => $answers,
+            'duration_seconds' => 600,
+            'exam_standard'    => 'hsk_2_0',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success'     => true,
+            'passed'      => true,
+            'total_score' => 200,
+        ]);
+
+        $this->assertDatabaseHas('mock_tests', [
+            'user_id'       => $student->id,
+            'hsk_level'     => 2,
+            'exam_standard' => 'hsk_2_0',
+            'passed'        => true,
+            'total_score'   => 200,
+            'max_score'     => 200,
+        ]);
+
+        $mockTest = MockTest::where('user_id', $student->id)->latest()->first();
+        $this->assertNotNull($mockTest->certificate_code);
+        $this->assertStringStartsWith('LC-HSK2-', $mockTest->certificate_code);
+    }
 }
 
