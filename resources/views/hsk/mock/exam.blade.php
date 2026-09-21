@@ -274,6 +274,7 @@
                     question_ids: this.questions.map(q => q.id),
                     answers: this.answers,
                     duration_seconds: Math.max(1, durationSeconds),
+                    exam_standard: 'hsk_2_0',
                 })
             });
 
@@ -450,45 +451,144 @@
                     </template>
                 </div>
 
-                {{-- Multiple Choice Options List --}}
-                <div class="mt-8 space-y-3">
-                    <template x-for="(option, optIdx) in currentQ?.options" :key="optIdx">
-                        <div @click="selectAnswer(option)"
-                             class="group flex items-center justify-between gap-4 rounded-2xl border p-4 sm:p-5 cursor-pointer transition-all duration-200 select-none"
-                             :class="answers[currentQ?.id] === option ? 'border-[#991b1b] bg-red-50/70 shadow-md ring-1 ring-[#991b1b]' : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/80'">
-                            
-                            <div class="flex items-center gap-3.5">
-                                {{-- Option Letter (A, B, C, D) --}}
-                                <span class="grid h-8 w-8 shrink-0 place-items-center rounded-xl text-xs font-black transition"
-                                      :class="answers[currentQ?.id] === option ? 'bg-[#991b1b] text-white shadow-sm' : 'bg-slate-100 text-slate-700 group-hover:bg-slate-200'"
-                                      x-text="['A', 'B', 'C', 'D', 'E', 'F'][optIdx] ?? (optIdx + 1)">
-                                </span>
+                {{-- Single Illustration Image (for picture_true_false or single image question) --}}
+                <template x-if="currentQ?.image">
+                    <div class="mt-6 flex justify-center">
+                        <div class="relative rounded-3xl border border-slate-200/80 bg-slate-50/80 p-5 shadow-sm max-w-xs w-full flex flex-col items-center justify-center">
+                            <img :src="currentQ.image" :alt="currentQ.image_alt || 'Hình minh họa đề thi'" class="h-44 sm:h-48 w-auto object-contain drop-shadow-sm select-none pointer-events-none" loading="lazy">
+                            <template x-if="currentQ?.image_alt">
+                                <span class="mt-2.5 text-xs font-semibold text-slate-500" x-text="currentQ.image_alt"></span>
+                            </template>
+                        </div>
+                    </div>
+                </template>
 
-                                <span class="text-sm sm:text-base font-semibold leading-relaxed"
-                                      :class="answers[currentQ?.id] === option ? 'text-slate-950 font-bold' : 'text-slate-700'"
-                                      x-text="option">
-                                </span>
+                {{-- Case 1: Picture True / False (判断对错) --}}
+                <template x-if="currentQ?.question_type === 'picture_true_false'">
+                    <div class="mt-8 grid grid-cols-2 gap-4 sm:gap-6">
+                        {{-- Button TRUE (对) --}}
+                        <div @click="selectAnswer('对')"
+                             class="group flex flex-col items-center justify-center gap-3 rounded-3xl border-2 p-6 sm:p-8 cursor-pointer transition-all duration-200 select-none text-center"
+                             :class="(answers[currentQ?.id] === '对' || answers[currentQ?.id] === 'true') ? 'border-emerald-600 bg-emerald-50 shadow-lg ring-2 ring-emerald-600/20 -translate-y-1' : 'border-slate-200 bg-white hover:border-emerald-300 hover:bg-emerald-50/30 hover:-translate-y-0.5'">
+                            <div class="grid h-14 w-14 sm:h-16 sm:w-16 place-items-center rounded-2xl transition"
+                                 :class="(answers[currentQ?.id] === '对' || answers[currentQ?.id] === 'true') ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30' : 'bg-emerald-100 text-emerald-700 group-hover:scale-105'">
+                                <i data-lucide="check" class="h-8 w-8 stroke-[3]"></i>
                             </div>
-
-                            {{-- Selected Checkmark --}}
-                            <div class="shrink-0">
-                                <span class="flex h-6 w-6 items-center justify-center rounded-full border transition-all duration-200"
-                                      :class="answers[currentQ?.id] === option ? 'border-[#991b1b] bg-[#991b1b] text-white shadow-sm' : 'border-slate-300 bg-white'">
-                                    <svg x-show="answers[currentQ?.id] === option"
-                                         style="display: none;"
-                                         class="h-3.5 w-3.5 stroke-[3]"
-                                         viewBox="0 0 24 24"
-                                         fill="none"
-                                         stroke="currentColor"
-                                         stroke-linecap="round"
-                                         stroke-linejoin="round">
-                                        <polyline points="20 6 9 17 4 12"></polyline>
-                                    </svg>
+                            <div>
+                                <span class="text-lg sm:text-xl font-black"
+                                      :class="(answers[currentQ?.id] === '对' || answers[currentQ?.id] === 'true') ? 'text-emerald-900' : 'text-slate-800'">
+                                    Đúng (对)
                                 </span>
+                                <p class="text-xs text-slate-400 font-semibold mt-0.5">Hình khớp nội dung</p>
                             </div>
                         </div>
-                    </template>
-                </div>
+
+                        {{-- Button FALSE (错) --}}
+                        <div @click="selectAnswer('错')"
+                             class="group flex flex-col items-center justify-center gap-3 rounded-3xl border-2 p-6 sm:p-8 cursor-pointer transition-all duration-200 select-none text-center"
+                             :class="(answers[currentQ?.id] === '错' || answers[currentQ?.id] === 'false') ? 'border-red-600 bg-red-50 shadow-lg ring-2 ring-red-600/20 -translate-y-1' : 'border-slate-200 bg-white hover:border-red-300 hover:bg-red-50/30 hover:-translate-y-0.5'">
+                            <div class="grid h-14 w-14 sm:h-16 sm:w-16 place-items-center rounded-2xl transition"
+                                 :class="(answers[currentQ?.id] === '错' || answers[currentQ?.id] === 'false') ? 'bg-red-600 text-white shadow-md shadow-red-600/30' : 'bg-red-100 text-red-700 group-hover:scale-105'">
+                                <i data-lucide="x" class="h-8 w-8 stroke-[3]"></i>
+                            </div>
+                            <div>
+                                <span class="text-lg sm:text-xl font-black"
+                                      :class="(answers[currentQ?.id] === '错' || answers[currentQ?.id] === 'false') ? 'text-red-900' : 'text-slate-800'">
+                                    Sai (错)
+                                </span>
+                                <p class="text-xs text-slate-400 font-semibold mt-0.5">Hình không khớp</p>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                {{-- Case 2: Picture Choice Grid (看图选择 A/B/C) --}}
+                <template x-if="currentQ?.question_type === 'picture_choice' && currentQ?.image_set">
+                    <div class="mt-8 grid gap-4 sm:grid-cols-3">
+                        <template x-for="(item, itemIdx) in currentQ.image_set" :key="item.key || itemIdx">
+                            <div @click="selectAnswer(item.key)"
+                                 class="group flex flex-col items-center justify-between rounded-3xl border-2 p-4 sm:p-5 cursor-pointer transition-all duration-200 select-none relative"
+                                 :class="answers[currentQ?.id] === item.key ? 'border-[#991b1b] bg-red-50/70 shadow-lg ring-2 ring-[#991b1b]/20 -translate-y-1' : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/80 hover:-translate-y-0.5'">
+                                
+                                {{-- Card Header: Letter A / B / C & selection indicator --}}
+                                <div class="w-full flex items-center justify-between mb-3">
+                                    <span class="grid h-9 w-9 place-items-center rounded-2xl text-sm font-black transition"
+                                          :class="answers[currentQ?.id] === item.key ? 'bg-[#991b1b] text-white shadow-md shadow-red-900/20' : 'bg-slate-100 text-slate-700 group-hover:bg-slate-200'"
+                                          x-text="item.key">
+                                    </span>
+
+                                    <span class="flex h-6 w-6 items-center justify-center rounded-full border transition"
+                                          :class="answers[currentQ?.id] === item.key ? 'border-[#991b1b] bg-[#991b1b] text-white shadow-sm' : 'border-slate-300 bg-white'">
+                                        <svg x-show="answers[currentQ?.id] === item.key"
+                                             class="h-3.5 w-3.5 stroke-[3]"
+                                             viewBox="0 0 24 24"
+                                             fill="none"
+                                             stroke="currentColor"
+                                             stroke-linecap="round"
+                                             stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </span>
+                                </div>
+
+                                {{-- Image preview container --}}
+                                <div class="h-32 sm:h-36 w-full flex items-center justify-center p-2">
+                                    <img :src="'/' + item.image.replace(/^\//, '')"
+                                         :alt="item.alt || ('Hình ' + item.key)"
+                                         class="h-full w-auto object-contain drop-shadow-sm select-none pointer-events-none"
+                                         loading="lazy">
+                                </div>
+
+                                {{-- Image Alt Text / Label --}}
+                                <template x-if="item.alt">
+                                    <p class="mt-3 text-xs font-semibold text-slate-500 line-clamp-1 text-center" x-text="item.alt"></p>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                {{-- Case 3: Default Multiple Choice Options List (for standard text options) --}}
+                <template x-if="currentQ?.question_type !== 'picture_true_false' && (currentQ?.question_type !== 'picture_choice' || !currentQ?.image_set)">
+                    <div class="mt-8 space-y-3">
+                        <template x-for="(option, optIdx) in currentQ?.options" :key="optIdx">
+                            <div @click="selectAnswer(option)"
+                                 class="group flex items-center justify-between gap-4 rounded-2xl border p-4 sm:p-5 cursor-pointer transition-all duration-200 select-none"
+                                 :class="answers[currentQ?.id] === option ? 'border-[#991b1b] bg-red-50/70 shadow-md ring-1 ring-[#991b1b]' : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/80'">
+                                
+                                <div class="flex items-center gap-3.5">
+                                    {{-- Option Letter (A, B, C, D) --}}
+                                    <span class="grid h-8 w-8 shrink-0 place-items-center rounded-xl text-xs font-black transition"
+                                          :class="answers[currentQ?.id] === option ? 'bg-[#991b1b] text-white shadow-sm' : 'bg-slate-100 text-slate-700 group-hover:bg-slate-200'"
+                                          x-text="['A', 'B', 'C', 'D', 'E', 'F'][optIdx] ?? (optIdx + 1)">
+                                    </span>
+
+                                    <span class="text-sm sm:text-base font-semibold leading-relaxed"
+                                          :class="answers[currentQ?.id] === option ? 'text-slate-950 font-bold' : 'text-slate-700'"
+                                          x-text="option">
+                                    </span>
+                                </div>
+
+                                {{-- Selected Checkmark --}}
+                                <div class="shrink-0">
+                                    <span class="flex h-6 w-6 items-center justify-center rounded-full border transition-all duration-200"
+                                          :class="answers[currentQ?.id] === option ? 'border-[#991b1b] bg-[#991b1b] text-white shadow-sm' : 'border-slate-300 bg-white'">
+                                        <svg x-show="answers[currentQ?.id] === option"
+                                             style="display: none;"
+                                             class="h-3.5 w-3.5 stroke-[3]"
+                                             viewBox="0 0 24 24"
+                                             fill="none"
+                                             stroke="currentColor"
+                                             stroke-linecap="round"
+                                             stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"></polyline>
+                                        </svg>
+                                    </span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
             </div>
 
             {{-- Bottom Navigation Controls --}}

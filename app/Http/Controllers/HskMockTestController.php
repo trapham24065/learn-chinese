@@ -218,6 +218,11 @@ class HskMockTestController extends Controller
                     'grammar'   => ($level <= 2 ? 'Đọc hiểu' : 'Viết & Ngữ pháp'),
                     default     => 'Đọc hiểu',
                 },
+                'question_type'  => $q->question_type ?? 'multiple_choice',
+                'media_type'     => $q->media_type ?? 'text',
+                'image'          => $q->image ? asset($q->image) : null,
+                'image_alt'      => $q->image_alt,
+                'image_set'      => is_array($q->image_set) ? $q->image_set : (json_decode($q->image_set ?? '[]', true) ?: null),
                 'question'       => $q->question,
                 'pinyin'         => $q->pinyin,
                 'audio_text'     => $q->audio_text,
@@ -244,6 +249,7 @@ class HskMockTestController extends Controller
             'answers'          => ['nullable', 'array'],
             'question_ids'     => ['nullable', 'array'],
             'duration_seconds' => ['required', 'integer', 'min:1'],
+            'exam_standard'    => ['nullable', 'string', 'max:32'],
         ]);
 
         $spec = self::LEVEL_SPECS[$level] ?? self::LEVEL_SPECS[1];
@@ -276,7 +282,18 @@ class HskMockTestController extends Controller
             $skill = $question->skill_type ?? 'reading';
             $userAns = isset($submittedAnswers[$qId]) ? trim((string) $submittedAnswers[$qId]) : '';
             $correctAns = trim((string) $question->correct_answer);
-            $isCorrect = ($userAns !== '' && mb_strtolower($userAns) === mb_strtolower($correctAns));
+
+            // Flexible matching for both letter (A/B/C/D), string equality, and boolean True/False (对/错)
+            $isCorrect = false;
+            if ($userAns !== '') {
+                if (mb_strtolower($userAns) === mb_strtolower($correctAns)) {
+                    $isCorrect = true;
+                } elseif (in_array(mb_strtolower($correctAns), ['对', 'true', '1', 'đúng', 'dung']) && in_array(mb_strtolower($userAns), ['对', 'true', '1', 'đúng', 'dung'])) {
+                    $isCorrect = true;
+                } elseif (in_array(mb_strtolower($correctAns), ['错', 'false', '0', 'sai']) && in_array(mb_strtolower($userAns), ['错', 'false', '0', 'sai'])) {
+                    $isCorrect = true;
+                }
+            }
 
             if ($skill === 'listening') {
                 $listeningTotal++;
@@ -302,6 +319,10 @@ class HskMockTestController extends Controller
             $details[] = [
                 'id'             => $question->id,
                 'skill_type'     => $skill,
+                'question_type'  => $question->question_type ?? 'multiple_choice',
+                'image'          => $question->image ? asset($question->image) : null,
+                'image_alt'      => $question->image_alt,
+                'image_set'      => is_array($question->image_set) ? $question->image_set : json_decode($question->image_set ?? '[]', true),
                 'question'       => $question->question,
                 'pinyin'         => $question->pinyin,
                 'audio_text'     => $question->audio_text,
@@ -336,6 +357,7 @@ class HskMockTestController extends Controller
         $mockTest = MockTest::create([
             'user_id'            => $user?->id,
             'hsk_level'          => $level,
+            'exam_standard'      => $validated['exam_standard'] ?? 'hsk_2_0',
             'title'              => $spec['title'],
             'total_questions'    => $totalQuestions,
             'correct_answers'    => $totalCorrect,

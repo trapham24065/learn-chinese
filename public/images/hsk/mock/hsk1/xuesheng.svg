@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <rect width="120" height="120" rx="24" fill="#f8fafc"/>
+  <!-- Backpack straps behind -->
+  <path d="M38 56 c-6 10 -6 24 0 34" fill="none" stroke="#ea580c" stroke-width="4" stroke-linecap="round"/>
+  <path d="M82 56 c6 10 6 24 0 34" fill="none" stroke="#ea580c" stroke-width="4" stroke-linecap="round"/>
+  <!-- Head & cap / hair -->
+  <circle cx="60" cy="38" r="16" fill="#fed7aa"/>
+  <!-- Baseball cap -->
+  <path d="M44 36 c0 -12 32 -12 32 0 z" fill="#e11d48"/>
+  <path d="M72 36 h14 c2 0 4 2 2 4 l-16 2 z" fill="#be123c"/>
+  <!-- Eyes & smile -->
+  <circle cx="56" cy="40" r="1.5" fill="#1e293b"/>
+  <circle cx="66" cy="40" r="1.5" fill="#1e293b"/>
+  <path d="M58 46 q3 3 6 0" stroke="#1e293b" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <!-- Body / Hoodie -->
+  <path d="M38 98 v-28 c0 -8 8 -12 14 -12 h16 c6 0 14 4 14 12 v28 z" fill="#3b82f6"/>
+  <!-- Book held in arms -->
+  <rect x="46" y="70" width="28" height="20" rx="3" fill="#10b981"/>
+  <line x1="60" y1="70" x2="60" y2="90" stroke="#059669" stroke-width="2"/>
+  <line x1="50" y1="76" x2="56" y2="76" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+  <line x1="50" y1="82" x2="56" y2="82" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+  <!-- Hands holding book -->
+  <circle cx="44" cy="80" r="4" fill="#fed7aa"/>
+  <circle cx="76" cy="80" r="4" fill="#fed7aa"/>
+</svg>

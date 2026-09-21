@@ -295,6 +295,45 @@
             </div>
             @endif
 
+            {{-- Single Illustration Image (if present) --}}
+            @if(!empty($item['image']))
+            <div class="my-3 flex justify-center sm:justify-start">
+                <div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 max-w-[180px]">
+                    <img src="{{ $item['image'] }}" alt="{{ $item['image_alt'] ?? 'Hình minh họa' }}" class="h-32 w-auto object-contain mx-auto" loading="lazy">
+                    @if(!empty($item['image_alt']))
+                    <p class="mt-1 text-center text-[10px] font-semibold text-slate-400">{{ $item['image_alt'] }}</p>
+                    @endif
+                </div>
+            </div>
+            @endif
+
+            {{-- Image set choices (if present) --}}
+            @if(!empty($item['image_set']) && is_array($item['image_set']))
+            <div class="my-4 grid grid-cols-3 gap-3 max-w-md">
+                @foreach($item['image_set'] as $imgChoice)
+                @php
+                    $k = $imgChoice['key'] ?? '';
+                    $isUserChoice = (strtoupper($item['user_answer'] ?? '') === strtoupper($k));
+                    $isCorrectChoice = (strtoupper($item['correct_answer'] ?? '') === strtoupper($k));
+                @endphp
+                <div class="rounded-2xl border-2 p-2.5 flex flex-col items-center justify-between text-center transition {{ $isCorrectChoice ? 'border-emerald-500 bg-emerald-50/50 ring-2 ring-emerald-500/20' : ($isUserChoice ? 'border-red-500 bg-red-50/50 ring-2 ring-red-500/20' : 'border-slate-200 bg-slate-50/50') }}">
+                    <div class="w-full flex items-center justify-between text-[11px] font-bold mb-1">
+                        <span class="px-1.5 py-0.5 rounded {{ $isCorrectChoice ? 'bg-emerald-600 text-white' : ($isUserChoice ? 'bg-red-600 text-white' : 'bg-slate-200 text-slate-700') }}">{{ $k }}</span>
+                        @if($isCorrectChoice)
+                        <span class="text-emerald-600 font-extrabold text-xs">✓ Đúng</span>
+                        @elseif($isUserChoice)
+                        <span class="text-red-500 font-extrabold text-xs">✗ Chọn</span>
+                        @endif
+                    </div>
+                    <img src="/{{ ltrim($imgChoice['image'] ?? '', '/') }}" alt="{{ $imgChoice['alt'] ?? '' }}" class="h-20 w-auto object-contain my-1" loading="lazy">
+                    @if(!empty($imgChoice['alt']))
+                    <p class="text-[10px] text-slate-500 line-clamp-1">{{ $imgChoice['alt'] }}</p>
+                    @endif
+                </div>
+                @endforeach
+            </div>
+            @endif
+
             {{-- Question text & pinyin --}}
             <p class="text-base font-bold text-slate-900">{{ $item['question'] }}</p>
             @if(!empty($item['pinyin']))

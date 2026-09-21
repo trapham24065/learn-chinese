@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="100%" height="100%">
+  <rect width="120" height="120" rx="24" fill="#f8fafc"/>
+  <!-- Rain Cloud -->
+  <path d="M36 62 h50 a16 16 0 0 0 4 -31 a22 22 0 0 0 -40 -6 a18 18 0 0 0 -14 37 z" fill="#64748b"/>
+  <path d="M38 60 h46 a14 14 0 0 0 4 -27 a19 19 0 0 0 -36 -5 a15 15 0 0 0 -14 32 z" fill="#94a3b8"/>
+  <!-- Raindrops -->
+  <line x1="36" y1="74" x2="30" y2="88" stroke="#0284c7" stroke-width="4" stroke-linecap="round"/>
+  <line x1="52" y1="74" x2="46" y2="88" stroke="#0284c7" stroke-width="4" stroke-linecap="round"/>
+  <line x1="68" y1="74" x2="62" y2="88" stroke="#0284c7" stroke-width="4" stroke-linecap="round"/>
+  <line x1="84" y1="74" x2="78" y2="88" stroke="#0284c7" stroke-width="4" stroke-linecap="round"/>
+  <line x1="44" y1="92" x2="38" y2="106" stroke="#38bdf8" stroke-width="4" stroke-linecap="round"/>
+  <line x1="60" y1="92" x2="54" y2="106" stroke="#38bdf8" stroke-width="4" stroke-linecap="round"/>
+  <line x1="76" y1="92" x2="70" y2="106" stroke="#38bdf8" stroke-width="4" stroke-linecap="round"/>
+</svg>
