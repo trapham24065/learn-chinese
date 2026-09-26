@@ -315,7 +315,8 @@
 
         const playerEl = document.getElementById('flashcard-deck-player');
         if (playerEl) {
-            playerEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            const topPos = playerEl.getBoundingClientRect().top + window.pageYOffset - 90;
+            window.scrollTo({ top: Math.max(0, topPos), behavior: 'smooth' });
         }
         setTimeout(() => window.refreshIcons?.(), 60);
     },
@@ -467,7 +468,7 @@
             });
         } catch(e) {}
     },
-}" x-init="ready = true; setTimeout(() => window.refreshIcons?.(), 50);" class="space-y-8">
+}" x-init="ready = true; window.__deckPlayer = this; setTimeout(() => window.refreshIcons?.(), 50);" class="space-y-8">
 
     {{-- Skeleton loader while initializing --}}
     <div x-show="!ready" class="flex flex-col items-center gap-6">
@@ -693,7 +694,7 @@
 </div>
 
 {{-- Static card grid with pagination --}}
-<section class="mt-12">
+<section class="mt-12" x-data>
     <div class="mb-5 flex items-center justify-between flex-wrap gap-3">
         <p class="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">
             Toàn bộ {{ $deckTotal }} thẻ trong bộ này
@@ -723,7 +724,9 @@
             ];
         @endphp
         <article 
+            x-data
             @click="window.selectFlashcard({{ Js::from($cardPayload) }})"
+            onclick="window.selectFlashcard({{ Js::from($cardPayload) }})"
             class="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-slate-200/70 bg-white/80 p-5 shadow-sm backdrop-blur transition-all duration-200 hover:border-[#991b1b]/50 hover:shadow-xl hover:-translate-y-0.5 cursor-pointer">
             <div class="flex items-start justify-between gap-3">
                 <div class="flex-1 min-w-0">
@@ -988,8 +991,23 @@
 </div>
 
 <script>
-window.selectFlashcard = function(cardData) {
-    window.dispatchEvent(new CustomEvent('select-card', { detail: cardData }));
-};
+(function() {
+    let lastSelectTime = 0;
+    window.selectFlashcard = function(cardData) {
+        if (!cardData) return;
+        const now = Date.now();
+        if (now - lastSelectTime < 300) return; // Prevent double invocation from both @click and onclick
+        lastSelectTime = now;
+
+        // 1. Direct call to Alpine player if reference is bound
+        if (window.__deckPlayer && typeof window.__deckPlayer.selectCard === 'function') {
+            window.__deckPlayer.selectCard(cardData);
+            return;
+        }
+
+        // 2. Dispatch custom event as fallback
+        window.dispatchEvent(new CustomEvent('select-card', { detail: cardData }));
+    };
+})();
 </script>
 @endsection
