@@ -266,3 +266,21 @@ test('searching flashcards by keyword filters results and renders active tag', f
     $response->assertDontSee('香蕉');
     $response->assertSeeText('Từ khóa: "táo"');
 });
+
+test('flashcard grid items contain click to flip attributes and selectFlashcard handler', function () {
+    Flashcard::create([
+        'hanzi' => '猫',
+        'pinyin' => 'māo',
+        'meaning' => 'Con mèo',
+        'hsk_level' => 1,
+        'is_active' => true,
+        'sort_order' => 1,
+    ]);
+
+    $response = $this->get(route('flashcards'));
+
+    $response->assertSuccessful();
+    $response->assertSee('window.selectFlashcard');
+    $response->assertSee('Lật thẻ này trên bảng học');
+    $response->assertSee('flashcard-deck-player');
+});

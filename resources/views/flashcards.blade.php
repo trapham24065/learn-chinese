@@ -268,7 +268,9 @@
 @else
 
 {{-- Interactive Flashcard Deck with Alpine.js (batch loading) --}}
-<div x-data="{
+<div id="flashcard-deck-player"
+     @select-card.window="selectCard($event.detail)"
+     x-data="{
     ready: false,
     cards: {{ Js::from($deckBatch) }},
     total: {{ $deckTotal }},
@@ -283,6 +285,7 @@
     flipped: false,
     done: [],
     loading: false,
+    justSelected: false,
     sessionLogged: false,
     sessionStartTime: Date.now(),
 
@@ -293,6 +296,29 @@
             : 0;
     },
     get hasMore() { return this.offset < this.total; },
+
+    selectCard(cardData) {
+        if (!cardData || !cardData.id) return;
+
+        let index = this.cards.findIndex(c => c.id === cardData.id);
+        if (index === -1) {
+            this.cards.push(cardData);
+            index = this.cards.length - 1;
+            this.total = Math.max(this.total, this.cards.length);
+        }
+
+        this.current = index;
+        this.flipped = false;
+        this.done = this.done.filter(i => i !== index);
+        this.justSelected = true;
+        setTimeout(() => { this.justSelected = false; }, 2000);
+
+        const playerEl = document.getElementById('flashcard-deck-player');
+        if (playerEl) {
+            playerEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        setTimeout(() => window.refreshIcons?.(), 60);
+    },
 
     flip() { this.flipped = !this.flipped; },
 
@@ -471,12 +497,20 @@
                 <div class="h-2 rounded-full bg-gradient-to-r from-[#991b1b] to-amber-400 transition-all duration-500"
                     :style="`width: ${progress}%`"></div>
             </div>
-            <span class="shrink-0 text-sm font-semibold text-slate-600">
-                <span x-text="current + 1"></span> / <span x-text="total"></span>
-                <template x-if="loading">
-                    <span class="ml-1 inline-block h-3 w-3 animate-spin rounded-full border-2 border-[#991b1b] border-t-transparent"></span>
+            <div class="flex items-center gap-2">
+                <template x-if="justSelected">
+                    <span class="inline-flex items-center gap-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 px-2.5 py-0.5 text-xs font-bold animate-pulse">
+                        <i data-lucide="sparkles" class="h-3 w-3 text-amber-600"></i>
+                        <span>Đã mở thẻ: <strong x-text="card?.hanzi"></strong></span>
+                    </span>
                 </template>
-            </span>
+                <span class="shrink-0 text-sm font-semibold text-slate-600">
+                    <span x-text="current + 1"></span> / <span x-text="total"></span>
+                    <template x-if="loading">
+                        <span class="ml-1 inline-block h-3 w-3 animate-spin rounded-full border-2 border-[#991b1b] border-t-transparent"></span>
+                    </template>
+                </span>
+            </div>
         </div>
 
         {{-- Dot navigation --}}
@@ -493,7 +527,10 @@
         <template x-if="card && current < cards.length && done.length < cards.length">
             <div class="flex flex-col items-center gap-6">
             {{-- Flip card --}}
-            <div class="flip-card w-full max-w-lg cursor-pointer" style="height: 320px;" @click="flip()">
+            <div class="flip-card w-full max-w-lg cursor-pointer transition-all duration-300 rounded-[2rem]"
+                 :class="justSelected ? 'ring-4 ring-amber-400 ring-offset-4 ring-offset-slate-900 shadow-2xl scale-[1.01]' : ''"
+                 style="height: 320px;" 
+                 @click="flip()">
                 <div class="flip-card-inner" :class="{ flipped }">
                     {{-- Front: Hanzi + Lesson label + Star button --}}
                     <div class="flip-card-front relative flex flex-col items-center justify-center gap-3 bg-slate-950 p-8 text-white shadow-2xl shadow-slate-950/20">
@@ -668,13 +705,32 @@
 
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         @foreach($flashcards as $card)
-        <article class="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-slate-200/60 bg-white/80 p-5 shadow-sm backdrop-blur transition hover:border-slate-300 hover:shadow-md">
+        @php
+            $cardPayload = [
+                'id'              => $card->id,
+                'hanzi'           => $card->hanzi,
+                'pinyin'          => $card->pinyin,
+                'meaning'         => $card->meaning,
+                'example'         => $card->example,
+                'example_pinyin'  => $card->example_pinyin,
+                'example_meaning' => $card->example_meaning,
+                'lesson'          => $card->lesson?->title ?? 'Chung',
+                'lesson_id'       => $card->lesson_id,
+                'is_starred'      => (bool) ($card->is_starred ?? false),
+                'hsk2_level'      => $card->hsk2Level(),
+                'hsk3_level'      => $card->hsk3Level(),
+                'hsk_level'       => $card->hsk_level,
+            ];
+        @endphp
+        <article 
+            @click="window.selectFlashcard({{ Js::from($cardPayload) }})"
+            class="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-slate-200/70 bg-white/80 p-5 shadow-sm backdrop-blur transition-all duration-200 hover:border-[#991b1b]/50 hover:shadow-xl hover:-translate-y-0.5 cursor-pointer">
             <div class="flex items-start justify-between gap-3">
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2">
                         <p class="truncate text-xs font-bold uppercase tracking-widest text-slate-400">{{ $card->pinyin }}</p>
                         <button type="button"
-                            onclick="window.playChineseVoice('{{ addslashes($card->hanzi) }}')"
+                            onclick="event.stopPropagation(); window.playChineseVoice('{{ addslashes($card->hanzi) }}')"
                             class="text-slate-300 transition hover:text-blue-500 focus:outline-none"
                             title="Nghe phát âm">
                             <i data-lucide="volume-2" class="h-3.5 w-3.5"></i>
@@ -694,7 +750,7 @@
                             data-hanzi="{{ $card->hanzi }}"
                             data-pinyin="{{ $card->pinyin }}"
                             data-meaning="{{ $card->meaning }}"
-                            @click.prevent="window.toggleCardStar($data, $el)"
+                            @click.stop.prevent="window.toggleCardStar($data, $el)"
                             class="flex h-8 w-8 items-center justify-center rounded-full transition hover:scale-110 active:scale-95"
                             :class="isStarred ? 'text-amber-500 bg-amber-50 shadow-sm' : 'text-slate-300 hover:text-amber-400 hover:bg-slate-50'"
                             :title="isStarred ? 'Bỏ lưu khỏi Sổ từ' : 'Lưu vào Sổ từ vựng'">
@@ -740,6 +796,18 @@
                 <p class="mt-1 text-xs text-slate-500 line-clamp-2">{{ $card->example_meaning }}</p>
             </div>
             @endif
+
+            {{-- Quick action footer --}}
+            <div class="mt-3.5 flex items-center justify-between border-t border-dashed border-slate-200/90 pt-2.5 text-xs">
+                <span class="inline-flex items-center gap-1.5 font-bold text-slate-400 group-hover:text-[#991b1b] transition">
+                    <i data-lucide="layers" class="h-3.5 w-3.5 text-slate-400 group-hover:text-[#991b1b]"></i>
+                    <span>Lật thẻ này trên bảng học</span>
+                </span>
+                <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold text-slate-600 group-hover:bg-[#991b1b] group-hover:text-white transition">
+                    <span>Lên bảng</span>
+                    <i data-lucide="arrow-up" class="h-2.5 w-2.5"></i>
+                </span>
+            </div>
         </article>
         @endforeach
     </div>
@@ -919,4 +987,9 @@
     </div>
 </div>
 
+<script>
+window.selectFlashcard = function(cardData) {
+    window.dispatchEvent(new CustomEvent('select-card', { detail: cardData }));
+};
+</script>
 @endsection
