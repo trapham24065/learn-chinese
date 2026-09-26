@@ -12,6 +12,7 @@ use App\Http\Controllers\DictionaryController;
 use App\Http\Controllers\HskMockTestController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\RadicalController;
+use App\Http\Controllers\PinyinController;
 use App\Models\Flashcard;
 use App\Models\Lesson;
 use App\Models\Question;
@@ -68,6 +69,11 @@ Route::get('/dictionary/search', [DictionaryController::class, 'search'])->name(
 
 Route::get('/radicals', [RadicalController::class, 'index'])->name('radicals.index');
 Route::get('/radicals/{slug}', [RadicalController::class, 'show'])->name('radicals.show');
+
+// Bảng phát âm Pinyin & Luyện âm chuẩn
+Route::get('/pinyin', [PinyinController::class, 'index'])->name('pinyin.index');
+Route::get('/pinyin/search', [PinyinController::class, 'search'])->name('pinyin.search');
+Route::get('/pinyin/syllable/{syllable}', [PinyinController::class, 'syllable'])->name('pinyin.syllable');
 
 Route::prefix('hsk/mock-test')->group(function () {
     Route::get('/', [HskMockTestController::class, 'index'])->name('hsk.mock.index');
