@@ -13,6 +13,7 @@ use App\Http\Controllers\HskMockTestController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\RadicalController;
 use App\Http\Controllers\PinyinController;
+use App\Http\Controllers\LearningActivityController;
 use App\Models\Flashcard;
 use App\Models\Lesson;
 use App\Models\Question;
@@ -47,6 +48,7 @@ Route::prefix('student')->group(function () {
     Route::middleware(['auth', 'student'])->group(function () {
         Route::post('/progress/update', [DashboardController::class, 'updateProgress'])->name('student.progress.update');
         Route::post('/session/log', [DashboardController::class, 'logSession'])->name('student.session.log');
+        Route::post('/activity/log', [LearningActivityController::class, 'log'])->name('student.activity.log');
         Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
         Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

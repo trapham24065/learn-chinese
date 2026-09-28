@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -73,6 +74,21 @@ class User extends Authenticatable implements FilamentUser
     public function courseRegistrations(): HasMany
     {
         return $this->hasMany(CourseRegistration::class);
+    }
+
+    public function learningActivities(): HasMany
+    {
+        return $this->hasMany(LearningActivity::class);
+    }
+
+    public function learningStats(): HasOne
+    {
+        return $this->hasOne(UserLearningStat::class);
+    }
+
+    public function dailyProgresses(): HasMany
+    {
+        return $this->hasMany(UserDailyProgress::class);
     }
 
     public function isAdmin(): bool

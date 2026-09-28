@@ -100,7 +100,16 @@
             <i data-lucide="layers" class="h-4 w-4 text-[#991b1b]"></i>
             <span>Tiêu chuẩn HSK:</span>
         </div>
-        <div class="flex items-center gap-1.5">
+        <div class="flex items-center gap-2">
+            <div x-data="{ sfx: window.soundEngine?.isSfxEnabled() ?? true }" class="mr-1">
+                <button type="button" @click="sfx = window.soundEngine?.toggleSfx()" 
+                        class="inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-bold transition"
+                        :class="sfx ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-xs' : 'bg-slate-100 text-slate-400 border border-slate-200'"
+                        title="Bật/Tắt âm thanh phản hồi (SFX)">
+                    <i data-lucide="volume-2" class="h-3.5 w-3.5" :class="sfx ? 'text-emerald-600' : 'text-slate-400'"></i>
+                    <span x-text="sfx ? 'SFX Bật' : 'SFX Tắt'"></span>
+                </button>
+            </div>
             <a href="{{ route('flashcards', array_filter(['standard' => 'hsk_2_0', 'hsk' => $hskLevel, 'lesson' => $lessonSlug, 'q' => $search, 'starred' => $isStarred ? 1 : null])) }}"
                class="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition
                       {{ ($standardCode ?? 'hsk_2_0') === 'hsk_2_0' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}">
@@ -288,6 +297,16 @@
     justSelected: false,
     sessionLogged: false,
     sessionStartTime: Date.now(),
+    streakCount: 0,
+    floatingXp: null,
+    _floatingTimer: null,
+
+    showFloatingXp(xp) {
+        this.floatingXp = xp;
+        if (this._floatingTimer) clearTimeout(this._floatingTimer);
+        this._floatingTimer = setTimeout(() => { this.floatingXp = null; }, 1800);
+        setTimeout(() => window.refreshIcons?.(), 30);
+    },
 
     get card() { return this.cards[this.current] ?? null; },
     get progress() {
@@ -321,7 +340,10 @@
         setTimeout(() => window.refreshIcons?.(), 60);
     },
 
-    flip() { this.flipped = !this.flipped; },
+    flip() {
+        this.flipped = !this.flipped;
+        window.soundEngine?.play('whoosh');
+    },
 
     async next() {
         if (!this.done.includes(this.current)) this.done.push(this.current);
@@ -338,7 +360,8 @@
             await this.loadMore();
             setTimeout(() => { this.current++; setTimeout(() => window.refreshIcons?.(), 50); }, 150);
         } else {
-            // A3: Trigger icon refresh so completion screen icons render correctly
+            // Completed deck
+            window.soundEngine?.play('fanfare');
             this.logSession();
             this.$nextTick(() => window.refreshIcons?.());
         }
@@ -397,8 +420,20 @@
     async submitReview(quality) {
         if (!this.card) return;
 
+        const isKnown = (quality === 'known' || quality >= 4);
+        if (isKnown) {
+            this.streakCount = (this.streakCount || 0) + 1;
+            if (this.streakCount > 0 && this.streakCount % 5 === 0) {
+                window.soundEngine?.play('milestone');
+            } else {
+                window.soundEngine?.play('ding');
+            }
+        } else {
+            this.streakCount = 0;
+            window.soundEngine?.play('tap');
+        }
+
         try {
-            // B4: await so network/HTTP errors are properly caught
             await fetch('{{ route('flashcards.review') }}', {
                 method: 'POST',
                 headers: {
@@ -411,6 +446,31 @@
                 })
             });
         } catch(e) { console.error('submitReview error:', e); }
+
+        @auth
+        try {
+            const idempotencyKey = `fc_${this.card.id}_${quality}_${Math.floor(Date.now() / 60000)}`;
+            const res = await fetch('{{ route('student.activity.log') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    activity_type: isKnown ? 'flashcard_known' : 'flashcard_review',
+                    source_type: 'flashcard',
+                    source_id: this.card.id,
+                    idempotency_key: idempotencyKey,
+                    meta: { quality: quality, streak_count: this.streakCount }
+                })
+            });
+            const data = await res.json();
+            if (data?.xp?.earned > 0) {
+                this.showFloatingXp(data.xp.earned);
+            }
+        } catch(e) {}
+        @endauth
 
         this.next();
     },
@@ -491,7 +551,20 @@
     </div>
 
     {{-- Real Interactive Deck (shown when ready) --}}
-    <div x-show="ready" x-cloak class="space-y-8">
+    <div x-show="ready" x-cloak class="space-y-8 relative">
+        {{-- Floating XP Notification --}}
+        <div x-show="floatingXp" 
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 -translate-y-2 scale-90"
+             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0 -translate-y-4"
+             class="pointer-events-none fixed top-24 right-8 z-50 flex items-center gap-1.5 rounded-full bg-amber-400 px-3.5 py-1.5 text-xs font-black text-slate-950 shadow-lg shadow-amber-400/30">
+            <i data-lucide="sparkles" class="h-3.5 w-3.5 fill-current"></i>
+            <span x-text="'+' + floatingXp + ' XP'"></span>
+        </div>
+
         {{-- Progress bar --}}
         <div class="flex items-center gap-4">
             <div class="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
@@ -599,14 +672,14 @@
                                               x-text="'HSK ' + card.hsk_level"></span>
                                     </template>
                                 </div>
-                                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-[#991b1b]" x-text="card.pinyin"></p>
+                                <p class="text-sm font-semibold tracking-wider" x-html="window.formatTonePinyin ? window.formatTonePinyin(card.pinyin) : card.pinyin"></p>
                                 <p class="mt-2 text-4xl font-black tracking-tight text-slate-950" x-text="card.meaning"></p>
                             </div>
                             <template x-if="card.example">
                                 <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4">
                                     <p class="text-sm text-slate-500">Ví dụ</p>
                                     <p class="mt-1 text-base font-semibold text-slate-900" x-text="card.example"></p>
-                                    <p class="mt-0.5 text-xs text-slate-500" x-text="card.example_pinyin"></p>
+                                    <p class="mt-0.5 text-xs text-slate-500" x-html="window.formatTonePinyin ? window.formatTonePinyin(card.example_pinyin) : card.example_pinyin"></p>
                                     <p class="mt-0.5 text-xs text-slate-600 italic" x-text="card.example_meaning"></p>
                                 </div>
                             </template>
@@ -731,7 +804,7 @@
             <div class="flex items-start justify-between gap-3">
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2">
-                        <p class="truncate text-xs font-bold uppercase tracking-widest text-slate-400">{{ $card->pinyin }}</p>
+                        <x-tone-pinyin :text="$card->pinyin" class="truncate text-xs font-semibold tracking-wider" />
                         <button type="button"
                             onclick="event.stopPropagation(); window.playChineseVoice('{{ addslashes($card->hanzi) }}')"
                             class="text-slate-300 transition hover:text-blue-500 focus:outline-none"
@@ -794,7 +867,7 @@
             <div class="mt-4 border-t border-slate-100 pt-3">
                 <p class="text-sm font-medium text-slate-800">{{ $card->example }}</p>
                 @if($card->example_pinyin)
-                <p class="mt-0.5 text-[11px] text-slate-400">{{ $card->example_pinyin }}</p>
+                <x-tone-pinyin :text="$card->example_pinyin" class="mt-0.5 text-[11px]" />
                 @endif
                 <p class="mt-1 text-xs text-slate-500 line-clamp-2">{{ $card->example_meaning }}</p>
             </div>

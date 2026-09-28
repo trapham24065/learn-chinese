@@ -2,6 +2,8 @@ import Alpine from 'alpinejs';
 import { createIcons, icons } from 'lucide';
 import HanziWriter from 'hanzi-writer';
 import './notifications';
+import './sound-engine';
+import './tone-pinyin';
 
 window.Alpine = Alpine;
 window.HanziWriter = HanziWriter;

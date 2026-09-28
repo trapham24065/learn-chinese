@@ -84,48 +84,78 @@
         </div>
 
         {{-- Today Goal Card --}}
-        <div class="rounded-[2rem] bg-slate-950 p-6 text-white shadow-2xl shadow-slate-950/20">
-            <div class="flex items-center justify-between">
-                <p class="text-xs font-semibold uppercase tracking-[0.28em] text-amber-200/80">Hôm nay</p>
-                <span class="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-amber-300">
-                    Mục tiêu: <span x-text="dailyGoal">20</span> phút
-                </span>
+        <div class="rounded-[2rem] bg-slate-950 p-6 text-white shadow-2xl shadow-slate-950/20 flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between">
+                    <p class="text-xs font-semibold uppercase tracking-[0.28em] text-amber-200/80">Mục tiêu hôm nay</p>
+                    <div class="flex items-center gap-2">
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-400/20 border border-amber-400/30 px-3 py-0.5 text-xs font-bold text-amber-300">
+                            <i data-lucide="sparkles" class="h-3 w-3 fill-current"></i>
+                            <span>{{ $totalXp }} XP</span>
+                        </span>
+                        @if($dailyGoal['completed'])
+                            <span class="rounded-full bg-emerald-500/20 border border-emerald-500/30 px-2.5 py-0.5 text-[11px] font-bold text-emerald-300">
+                                ✓ Hoàn thành
+                            </span>
+                        @endif
+                    </div>
+                </div>
+
+                <div class="mt-4 flex items-end justify-between gap-4">
+                    <div>
+                        <p class="text-xs text-slate-400">Tiến độ ngày</p>
+                        <p class="mt-1 text-3xl font-black sm:text-4xl text-amber-300">
+                            {{ $dailyGoal['progress_percent'] }}%
+                        </p>
+                    </div>
+                    <div class="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-right">
+                        <p class="text-[10px] uppercase tracking-wider text-slate-400">Chuỗi ngày (Streak)</p>
+                        <p class="mt-0.5 text-lg font-black text-white flex items-center justify-end gap-1">
+                            <i data-lucide="flame" class="h-4 w-4 text-amber-400"></i>
+                            <span>{{ $streakDays }} ngày</span>
+                        </p>
+                    </div>
+                </div>
+
+                {{-- Progress bar --}}
+                <div class="mt-3.5">
+                    <div class="h-2.5 w-full overflow-hidden rounded-full bg-white/10">
+                        <div class="h-full rounded-full bg-gradient-to-r from-amber-400 via-rose-500 to-emerald-400 transition-all duration-500"
+                             style="width: {{ $dailyGoal['progress_percent'] }}%"></div>
+                    </div>
+                </div>
+
+                {{-- Metrics breakdown --}}
+                <div class="mt-4 grid grid-cols-2 gap-2 text-xs">
+                    <div class="rounded-xl border border-white/5 bg-white/5 px-3 py-2 flex items-center justify-between">
+                        <span class="text-slate-400 flex items-center gap-1.5">
+                            <i data-lucide="layers" class="h-3.5 w-3.5 text-rose-400"></i>
+                            <span>Flashcards</span>
+                        </span>
+                        <span class="font-bold text-white">{{ $dailyGoal['flashcards']['current'] }}/{{ $dailyGoal['flashcards']['target'] }}</span>
+                    </div>
+                    <div class="rounded-xl border border-white/5 bg-white/5 px-3 py-2 flex items-center justify-between">
+                        <span class="text-slate-400 flex items-center gap-1.5">
+                            <i data-lucide="target" class="h-3.5 w-3.5 text-emerald-400"></i>
+                            <span>Quiz</span>
+                        </span>
+                        <span class="font-bold text-white">{{ $dailyGoal['quiz']['current'] }}/{{ $dailyGoal['quiz']['target'] }}</span>
+                    </div>
+                </div>
             </div>
 
-            <div class="mt-4 flex items-end justify-between gap-4">
-                <div>
-                    <p class="text-xs text-slate-400">Thời gian đã học</p>
-                    <p class="mt-1 text-3xl font-black sm:text-4xl">
-                        <span x-text="todayMinutes">{{ $todayMinutes }}</span> phút
-                    </p>
-                </div>
-                <div class="rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-right">
-                    <p class="text-[10px] uppercase tracking-wider text-slate-400">Đạt chỉ tiêu</p>
-                    <p class="mt-0.5 text-xl font-black text-amber-300" x-text="todayGoalPercent + '%'">
-                        {{ min(100, (int) round(($todayMinutes / 20) * 100)) }}%
-                    </p>
-                </div>
-            </div>
-
-            <div class="mt-4">
-                <div class="h-2.5 w-full overflow-hidden rounded-full bg-white/10">
-                    <div class="h-full rounded-full bg-gradient-to-r from-amber-300 to-red-400 transition-all duration-500"
-                         :style="'width: ' + todayGoalPercent + '%'"></div>
-                </div>
-            </div>
-
-            <div class="mt-4 flex items-center justify-between text-xs text-slate-300">
-                <span x-show="todayMinutes >= dailyGoal" class="text-emerald-300 font-semibold inline-flex items-center gap-1.5">
-                    <i data-lucide="party-popper" class="h-4 w-4 text-amber-400"></i>
-                    <span>Hoàn thành xuất sắc mục tiêu ngày!</span>
-                </span>
-                <span x-show="todayMinutes < dailyGoal" class="text-slate-400">
-                    Còn <strong class="text-white" x-text="dailyGoal - todayMinutes"></strong> phút để đạt chỉ tiêu hôm nay.
-                </span>
-                <span class="inline-flex items-center gap-1 text-amber-200">
-                    <i data-lucide="flame" class="h-3.5 w-3.5 text-amber-400"></i>
-                    <span>Streak <span x-text="streakDays">{{ $streakDays }}</span> ngày</span>
-                </span>
+            <div class="mt-4 flex items-center justify-between text-xs text-slate-300 border-t border-white/10 pt-3">
+                @if($dailyGoal['completed'])
+                    <span class="text-emerald-300 font-semibold inline-flex items-center gap-1.5">
+                        <i data-lucide="party-popper" class="h-4 w-4 text-amber-400"></i>
+                        <span>Đã hoàn thành mục tiêu ngày hôm nay!</span>
+                    </span>
+                @else
+                    <span class="text-slate-400">
+                        Ôn thêm {{ max(0, $dailyGoal['flashcards']['target'] - $dailyGoal['flashcards']['current']) }} thẻ hoặc {{ max(0, $dailyGoal['quiz']['target'] - $dailyGoal['quiz']['current']) }} câu quiz để đạt 100%.
+                    </span>
+                @endif
+                <span class="text-slate-400 text-[11px]">Hôm nay</span>
             </div>
         </div>
     </section>
@@ -210,47 +240,58 @@
     </section>
     @endif
 
-    {{-- Overview 4 Stat Cards --}}
-    <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <article class="rounded-[1.75rem] border border-white/80 bg-white/80 p-6 shadow-xl shadow-slate-900/5 backdrop-blur transition hover:-translate-y-0.5">
+    {{-- Overview Stat Cards --}}
+    <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <article class="rounded-[1.75rem] border border-white/80 bg-white/80 p-5 shadow-xl shadow-slate-900/5 backdrop-blur transition hover:-translate-y-0.5">
             <div class="flex items-center justify-between">
                 <p class="text-xs font-semibold uppercase tracking-[0.22em] text-[#991b1b]">Streak</p>
                 <i data-lucide="flame" class="h-5 w-5 text-amber-500"></i>
             </div>
-            <p class="mt-3 text-4xl font-black tracking-tight text-slate-950">
+            <p class="mt-3 text-3xl font-black tracking-tight text-slate-950">
                 <span x-text="streakDays">{{ $streakDays }}</span> ngày
             </p>
             <p class="mt-2 text-xs text-slate-500">Giữ nhịp học liên tục</p>
         </article>
 
-        <article class="rounded-[1.75rem] border border-white/80 bg-white/80 p-6 shadow-xl shadow-slate-900/5 backdrop-blur transition hover:-translate-y-0.5">
+        <article class="rounded-[1.75rem] border border-amber-200/80 bg-gradient-to-br from-amber-50/80 to-white/90 p-5 shadow-xl shadow-amber-500/5 backdrop-blur transition hover:-translate-y-0.5">
+            <div class="flex items-center justify-between">
+                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-amber-700">Tích lũy XP</p>
+                <i data-lucide="sparkles" class="h-5 w-5 text-amber-500 fill-current"></i>
+            </div>
+            <p class="mt-3 text-3xl font-black tracking-tight text-amber-950">
+                {{ number_format($totalXp) }} <span class="text-base font-bold text-amber-600">XP</span>
+            </p>
+            <p class="mt-2 text-xs text-amber-700/80">Điểm kinh nghiệm học</p>
+        </article>
+
+        <article class="rounded-[1.75rem] border border-white/80 bg-white/80 p-5 shadow-xl shadow-slate-900/5 backdrop-blur transition hover:-translate-y-0.5">
             <div class="flex items-center justify-between">
                 <p class="text-xs font-semibold uppercase tracking-[0.22em] text-[#991b1b]">Điểm trung bình</p>
                 <i data-lucide="target" class="h-5 w-5 text-[#991b1b]"></i>
             </div>
-            <p class="mt-3 text-4xl font-black tracking-tight text-slate-950">
+            <p class="mt-3 text-3xl font-black tracking-tight text-slate-950">
                 {{ $averageScore }}%
             </p>
-            <p class="mt-2 text-xs text-slate-500">Dựa trên các bài Quiz đã làm</p>
+            <p class="mt-2 text-xs text-slate-500">Dựa trên các bài Quiz</p>
         </article>
 
-        <article class="rounded-[1.75rem] border border-white/80 bg-white/80 p-6 shadow-xl shadow-slate-900/5 backdrop-blur transition hover:-translate-y-0.5">
+        <article class="rounded-[1.75rem] border border-white/80 bg-white/80 p-5 shadow-xl shadow-slate-900/5 backdrop-blur transition hover:-translate-y-0.5">
             <div class="flex items-center justify-between">
                 <p class="text-xs font-semibold uppercase tracking-[0.22em] text-[#991b1b]">Bài hoàn thành</p>
                 <i data-lucide="book-open" class="h-5 w-5 text-[#991b1b]"></i>
             </div>
-            <p class="mt-3 text-4xl font-black tracking-tight text-slate-950">
+            <p class="mt-3 text-3xl font-black tracking-tight text-slate-950">
                 <span x-text="completedLessonsCount">{{ $completedLessonsCount }}</span> / <span x-text="totalLessonsCount">{{ $totalLessonsCount }}</span>
             </p>
             <p class="mt-2 text-xs text-slate-500">Theo lộ trình bài học</p>
         </article>
 
-        <article class="rounded-[1.75rem] border border-white/80 bg-white/80 p-6 shadow-xl shadow-slate-900/5 backdrop-blur transition hover:-translate-y-0.5">
+        <article class="rounded-[1.75rem] border border-white/80 bg-white/80 p-5 shadow-xl shadow-slate-900/5 backdrop-blur transition hover:-translate-y-0.5 sm:col-span-2 lg:col-span-1">
             <div class="flex items-center justify-between">
                 <p class="text-xs font-semibold uppercase tracking-[0.22em] text-[#991b1b]">Tỉ lệ hoàn thành</p>
                 <i data-lucide="trending-up" class="h-5 w-5 text-[#991b1b]"></i>
             </div>
-            <p class="mt-3 text-4xl font-black tracking-tight text-slate-950">
+            <p class="mt-3 text-3xl font-black tracking-tight text-slate-950">
                 <span x-text="completionRate">{{ $completionRate }}</span>%
             </p>
             <p class="mt-2 text-xs text-slate-500">Tiến độ khóa học tổng thể</p>

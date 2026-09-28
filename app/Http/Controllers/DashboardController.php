@@ -100,6 +100,15 @@ class DashboardController extends Controller
         $starredCount = $student->starredFlashcards()->count();
         $levelData = HskController::getLevelData($student);
 
+        $dailyGoalService = app(\App\Services\DailyGoalService::class);
+        $streakService = app(\App\Services\StreakService::class);
+        $dailyGoal = $dailyGoalService->getTodaySummary($student);
+        $activeStreak = $streakService->getCurrentStreak($student);
+        if ($activeStreak === 0 && $streakDays > 0) {
+            $activeStreak = $streakDays;
+        }
+        $totalXp = $student->learningStats?->total_xp ?? 0;
+
         return view('dashboard', [
             'student' => $student,
             'lessons' => $lessons,
@@ -109,7 +118,7 @@ class DashboardController extends Controller
             'overview' => $overview,
             'weeklyChart' => $weeklyChart,
             'chartMax' => $chartMax,
-            'streakDays' => $streakDays,
+            'streakDays' => $activeStreak,
             'todayMinutes' => $todayMinutes,
             'averageScore' => $averageScore,
             'completionRate' => $completionRate,
@@ -118,6 +127,8 @@ class DashboardController extends Controller
             'dueFlashcards' => $dueFlashcards,
             'starredCount' => $starredCount,
             'levelData' => $levelData,
+            'dailyGoal' => $dailyGoal,
+            'totalXp' => $totalXp,
         ]);
     }
 

@@ -68,3 +68,11 @@
     background: #cbd5e1;
 }
 
+/* Tone-colored Pinyin Design System */
+.tone-1 { color: #e11d48 !important; font-weight: 600; } /* Tone 1 - Rose (High Flat) */
+.tone-2 { color: #059669 !important; font-weight: 600; } /* Tone 2 - Emerald (Rising) */
+.tone-3 { color: #0284c7 !important; font-weight: 600; } /* Tone 3 - Sky Blue (Dipping) */
+.tone-4 { color: #7c3aed !important; font-weight: 600; } /* Tone 4 - Violet (Falling) */
+.tone-0 { color: #64748b !important; font-weight: 500; } /* Tone 0 - Slate (Neutral) */
+
+

@@ -28,11 +28,22 @@
             <p class="mt-3 max-w-2xl text-base leading-7 text-slate-700 sm:text-lg">
                 Làm nhanh 5–10 câu hỏi ngắn để củng cố ngay từ vựng, pinyin, chữ Hán và ngữ nghĩa vừa học theo từng chủ đề bài học.
             </p>
-            <a href="{{ request()->fullUrl() }}"
-               class="mt-4 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-[#991b1b] hover:text-[#991b1b]">
-                <i data-lucide="refresh-cw" class="h-3.5 w-3.5"></i>
-                Đổi bộ câu hỏi mới
-            </a>
+            <div class="mt-4 flex flex-wrap items-center gap-2.5">
+                <a href="{{ request()->fullUrl() }}"
+                   class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-[#991b1b] hover:text-[#991b1b]">
+                    <i data-lucide="refresh-cw" class="h-3.5 w-3.5"></i>
+                    Đổi bộ câu hỏi mới
+                </a>
+                <div x-data="{ sfx: window.soundEngine?.isSfxEnabled() ?? true }">
+                    <button type="button" @click="sfx = window.soundEngine?.toggleSfx()" 
+                            class="inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-bold transition shadow-xs"
+                            :class="sfx ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-white text-slate-400 border-slate-200'"
+                            title="Bật/Tắt âm thanh tương tác">
+                        <i data-lucide="volume-2" class="h-3.5 w-3.5" :class="sfx ? 'text-emerald-600' : 'text-slate-400'"></i>
+                        <span x-text="sfx ? 'SFX Bật' : 'SFX Tắt'"></span>
+                    </button>
+                </div>
+            </div>
         </div>
 
         {{-- Dynamic Live Stats Panel --}}
@@ -239,8 +250,8 @@
 
                         <div class="flex items-center gap-2">
                             @if ($question->pinyin)
-                                <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-                                    {{ $question->pinyin }}
+                                <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold">
+                                    <x-tone-pinyin :text="$question->pinyin" />
                                 </span>
                             @endif
 
@@ -550,6 +561,7 @@ function quizApp() {
         selectOption(qId, option) {
             if (this.isSubmitted) return;
             this.answers[+qId] = option;
+            window.soundEngine?.play('tap');
         },
 
         isOptionSelected(qId, option) {
@@ -664,6 +676,42 @@ function quizApp() {
                 const data = await response.json();
                 this.results = data;
                 this.isSubmitted = true;
+
+                // Tiered SFX Feedback
+                if (data.score >= 80) {
+                    window.soundEngine?.play('fanfare');
+                } else if (data.score >= 50) {
+                    window.soundEngine?.play('milestone');
+                } else {
+                    window.soundEngine?.play('ding');
+                }
+
+                // Log Learning Activity
+                @auth
+                try {
+                    const idempotencyKey = `quiz_${Date.now()}_${data.score}`;
+                    await fetch('{{ route('student.activity.log') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            activity_type: 'quiz_completed',
+                            source_type: 'quiz',
+                            idempotency_key: idempotencyKey,
+                            meta: {
+                                score: data.score,
+                                correct_count: data.correct_count,
+                                total: this.totalCount,
+                                duration_seconds: durationSeconds
+                            }
+                        })
+                    });
+                } catch(e) {}
+                @endauth
+
                 setTimeout(() => window.refreshIcons?.(), 50);
 
                 // Smooth scroll to top to see score
