@@ -22,6 +22,10 @@ class XpService
         'reading_completed' => 25,
         'pinyin_practice' => 2,
         'daily_goal_bonus' => 20,
+        'fast_match' => 15,
+        'fast_match_completed' => 15,
+        'audio_quiz' => 15,
+        'audio_quiz_completed' => 15,
     ];
 
     /**
@@ -59,9 +63,26 @@ class XpService
         }
 
         // Determine XP amount
-        $xpEarned = isset($meta['xp']) && is_numeric($meta['xp'])
-            ? min(100, max(0, (int) $meta['xp']))
-            : (self::XP_RULES[$activityType] ?? 1);
+        if (isset($meta['xp']) && is_numeric($meta['xp'])) {
+            $xpEarned = min(100, max(0, (int) $meta['xp']));
+        } elseif (in_array($activityType, ['fast_match', 'fast_match_completed', 'audio_quiz', 'audio_quiz_completed'])) {
+            // Anti-farming diminishing returns for mini-games
+            $today = Carbon::now(config('app.timezone', 'Asia/Ho_Chi_Minh'))->toDateString();
+            $todayCount = LearningActivity::where('user_id', $user->id)
+                ->whereIn('activity_type', ['fast_match', 'fast_match_completed', 'audio_quiz', 'audio_quiz_completed'])
+                ->whereDate('created_at', $today)
+                ->count();
+
+            if ($todayCount === 0) {
+                $xpEarned = 15; // 1st meaningful play of day
+            } elseif ($todayCount < 3) {
+                $xpEarned = 5;  // 2nd and 3rd replay
+            } else {
+                $xpEarned = 0;  // 4th+ replay (anti-farming)
+            }
+        } else {
+            $xpEarned = self::XP_RULES[$activityType] ?? 1;
+        }
 
         $stats = UserLearningStat::firstOrCreate(
             ['user_id' => $user->id],

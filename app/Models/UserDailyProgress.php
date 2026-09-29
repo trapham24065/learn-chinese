@@ -16,6 +16,9 @@ class UserDailyProgress extends Model
         'quiz_count',
         'reading_minutes',
         'pinyin_count',
+        'practice_count',
+        'fast_match_count',
+        'audio_quiz_count',
         'xp_earned',
         'is_goal_completed',
     ];
@@ -26,6 +29,9 @@ class UserDailyProgress extends Model
         'quiz_count' => 'integer',
         'reading_minutes' => 'integer',
         'pinyin_count' => 'integer',
+        'practice_count' => 'integer',
+        'fast_match_count' => 'integer',
+        'audio_quiz_count' => 'integer',
         'xp_earned' => 'integer',
         'is_goal_completed' => 'boolean',
     ];

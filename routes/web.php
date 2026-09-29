@@ -14,6 +14,9 @@ use App\Http\Controllers\CourseController;
 use App\Http\Controllers\RadicalController;
 use App\Http\Controllers\PinyinController;
 use App\Http\Controllers\LearningActivityController;
+use App\Http\Controllers\GameController;
+use App\Http\Controllers\FastMatchController;
+use App\Http\Controllers\AudioQuizController;
 use App\Models\Flashcard;
 use App\Models\Lesson;
 use App\Models\Question;
@@ -115,6 +118,21 @@ Route::prefix('courses')->group(function () {
     Route::post('/{slug}/register', [CourseController::class, 'register'])
         ->middleware('throttle:3,1')
         ->name('courses.register');
+});
+
+// Mini-games & Interactive Practice (Phase 2)
+Route::prefix('games')->group(function () {
+    Route::get('/', [GameController::class, 'index'])->name('games.index');
+
+    // Fast Match (Nối từ siêu tốc)
+    Route::get('/fast-match', [FastMatchController::class, 'index'])->name('games.fast-match');
+    Route::get('/fast-match/data', [FastMatchController::class, 'sessionData'])->name('games.fast-match.data');
+    Route::post('/fast-match/finish', [FastMatchController::class, 'finish'])->name('games.fast-match.finish');
+
+    // Audio Pop Quiz (Đố vui phản xạ âm thanh)
+    Route::get('/audio-quiz', [AudioQuizController::class, 'index'])->name('games.audio-quiz');
+    Route::get('/audio-quiz/data', [AudioQuizController::class, 'sessionData'])->name('games.audio-quiz.data');
+    Route::post('/audio-quiz/finish', [AudioQuizController::class, 'finish'])->name('games.audio-quiz.finish');
 });
 
 require __DIR__.'/auth.php';

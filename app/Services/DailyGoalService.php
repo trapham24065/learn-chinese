@@ -12,6 +12,7 @@ class DailyGoalService
     public const TARGET_QUIZ = 5;
     public const TARGET_READING_MINUTES = 5;
     public const TARGET_PINYIN = 10;
+    public const TARGET_PRACTICE = 3;
 
     /**
      * Get the active timezone.
@@ -39,6 +40,9 @@ class DailyGoalService
                 'quiz_count' => 0,
                 'reading_minutes' => 0,
                 'pinyin_count' => 0,
+                'practice_count' => 0,
+                'fast_match_count' => 0,
+                'audio_quiz_count' => 0,
                 'xp_earned' => 0,
                 'is_goal_completed' => false,
             ]
@@ -47,16 +51,6 @@ class DailyGoalService
 
     /**
      * Record daily progress for an activity.
-     *
-     * @return array{
-     *     flashcards: array{current: int, target: int},
-     *     quiz: array{current: int, target: int},
-     *     reading_minutes: array{current: int, target: int},
-     *     pinyin: array{current: int, target: int},
-     *     progress_percent: int,
-     *     completed: bool,
-     *     just_completed: bool
-     * }
      */
     public function recordProgress(User $user, string $activityType, int $xpEarned = 0, array $meta = []): array
     {
@@ -73,6 +67,12 @@ class DailyGoalService
                 ? max(1, (int) $meta['minutes'])
                 : 2;
             $progress->reading_minutes += $minutes;
+        } elseif (str_starts_with($activityType, 'fast_match')) {
+            $progress->practice_count += 1;
+            $progress->fast_match_count += 1;
+        } elseif (str_starts_with($activityType, 'audio_quiz')) {
+            $progress->practice_count += 1;
+            $progress->audio_quiz_count += 1;
         }
 
         if ($xpEarned > 0) {
@@ -80,11 +80,12 @@ class DailyGoalService
         }
 
         // Calculate flexible composite progress (capped at 100)
-        // 10 flashcards = 100%, 5 quiz questions = 100%, 5 reading mins = 100%, 10 pinyin = 100%
+        // 10 flashcards = 100%, 5 quiz questions = 100%, 5 reading mins = 100%, 10 pinyin = 100%, 3 practice sessions = 100%
         $score = ($progress->flashcards_count * 10)
             + ($progress->quiz_count * 20)
             + ($progress->reading_minutes * 20)
-            + ($progress->pinyin_count * 10);
+            + ($progress->pinyin_count * 10)
+            + ($progress->practice_count * 34);
 
         $percent = min(100, (int) round($score));
 
@@ -113,6 +114,12 @@ class DailyGoalService
                 'current' => $progress->pinyin_count,
                 'target' => self::TARGET_PINYIN,
             ],
+            'practice' => [
+                'current' => $progress->practice_count,
+                'target' => self::TARGET_PRACTICE,
+            ],
+            'fast_match_count' => $progress->fast_match_count,
+            'audio_quiz_count' => $progress->audio_quiz_count,
             'progress_percent' => $percent,
             'completed' => (bool) $progress->is_goal_completed,
             'just_completed' => $justCompleted,
@@ -129,7 +136,8 @@ class DailyGoalService
         $score = ($progress->flashcards_count * 10)
             + ($progress->quiz_count * 20)
             + ($progress->reading_minutes * 20)
-            + ($progress->pinyin_count * 10);
+            + ($progress->pinyin_count * 10)
+            + ($progress->practice_count * 34);
 
         $percent = min(100, (int) round($score));
 
@@ -150,6 +158,12 @@ class DailyGoalService
                 'current' => $progress->pinyin_count,
                 'target' => self::TARGET_PINYIN,
             ],
+            'practice' => [
+                'current' => $progress->practice_count,
+                'target' => self::TARGET_PRACTICE,
+            ],
+            'fast_match_count' => $progress->fast_match_count,
+            'audio_quiz_count' => $progress->audio_quiz_count,
             'progress_percent' => $percent,
             'completed' => (bool) $progress->is_goal_completed,
             'xp_earned_today' => $progress->xp_earned,

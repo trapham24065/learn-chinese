@@ -79,6 +79,11 @@
                         <i data-lucide="target" class="h-4 w-4"></i>
                         <span>Luyện tập nhanh</span>
                     </a>
+                    <a href="{{ route('games.index') }}"
+                       class="inline-flex items-center gap-1.5 rounded-full bg-red-50 border border-red-200/80 px-3.5 py-1.5 text-xs font-bold text-red-900 transition hover:bg-red-100 active:scale-95">
+                        <i data-lucide="gamepad-2" class="h-4 w-4 text-[#991b1b]"></i>
+                        <span>Mini-game ({{ $dailyGoal['practice']['current'] ?? 0 }}/{{ $dailyGoal['practice']['target'] ?? 3 }})</span>
+                    </a>
                 </div>
             </div>
         </div>
@@ -126,20 +131,27 @@
                 </div>
 
                 {{-- Metrics breakdown --}}
-                <div class="mt-4 grid grid-cols-2 gap-2 text-xs">
-                    <div class="rounded-xl border border-white/5 bg-white/5 px-3 py-2 flex items-center justify-between">
-                        <span class="text-slate-400 flex items-center gap-1.5">
+                <div class="mt-4 grid grid-cols-3 gap-2 text-xs">
+                    <div class="rounded-xl border border-white/5 bg-white/5 px-2.5 py-2 flex items-center justify-between">
+                        <span class="text-slate-400 flex items-center gap-1">
                             <i data-lucide="layers" class="h-3.5 w-3.5 text-rose-400"></i>
-                            <span>Flashcards</span>
+                            <span class="truncate">Thẻ</span>
                         </span>
-                        <span class="font-bold text-white">{{ $dailyGoal['flashcards']['current'] }}/{{ $dailyGoal['flashcards']['target'] }}</span>
+                        <span class="font-bold text-white text-[11px]">{{ $dailyGoal['flashcards']['current'] }}/{{ $dailyGoal['flashcards']['target'] }}</span>
                     </div>
-                    <div class="rounded-xl border border-white/5 bg-white/5 px-3 py-2 flex items-center justify-between">
-                        <span class="text-slate-400 flex items-center gap-1.5">
+                    <div class="rounded-xl border border-white/5 bg-white/5 px-2.5 py-2 flex items-center justify-between">
+                        <span class="text-slate-400 flex items-center gap-1">
                             <i data-lucide="target" class="h-3.5 w-3.5 text-emerald-400"></i>
-                            <span>Quiz</span>
+                            <span class="truncate">Quiz</span>
                         </span>
-                        <span class="font-bold text-white">{{ $dailyGoal['quiz']['current'] }}/{{ $dailyGoal['quiz']['target'] }}</span>
+                        <span class="font-bold text-white text-[11px]">{{ $dailyGoal['quiz']['current'] }}/{{ $dailyGoal['quiz']['target'] }}</span>
+                    </div>
+                    <div class="rounded-xl border border-white/5 bg-white/5 px-2.5 py-2 flex items-center justify-between">
+                        <span class="text-slate-400 flex items-center gap-1">
+                            <i data-lucide="gamepad-2" class="h-3.5 w-3.5 text-amber-400"></i>
+                            <span class="truncate">Game</span>
+                        </span>
+                        <span class="font-bold text-white text-[11px]">{{ $dailyGoal['practice']['current'] ?? 0 }}/{{ $dailyGoal['practice']['target'] ?? 3 }}</span>
                     </div>
                 </div>
             </div>
