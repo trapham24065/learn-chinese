@@ -477,26 +477,47 @@ if (window.Alpine && typeof window.Alpine.data === 'function') {
                         $speakerHanzi = trim($sm[1]);
                     }
 
-                    // Prepare words list and ensure dialogue speaker characters are never missing
-                    $sentenceWords = $sentence['words'] ?? [];
-                    if (is_array($sentenceWords) && count($sentenceWords) > 0) {
-                        if ($speakerHanzi && (!isset($sentenceWords[0]['hanzi']) || !str_contains($sentenceWords[0]['hanzi'], $speakerHanzi))) {
-                            if (str_starts_with(trim($sentenceChinese), $speakerHanzi)) {
-                                array_unshift($sentenceWords, 
-                                    [
-                                        'hanzi' => $speakerHanzi,
-                                        'pinyin' => $sentence['speaker_pinyin'] ?? '',
-                                        'meaning' => $speakerVi ? ($speakerVi . ' (người nói)') : 'Người nói',
-                                        'hsk_level' => $story->hsk_level ?? 1,
-                                    ],
-                                    [
-                                        'hanzi' => '：',
-                                        'pinyin' => '',
-                                        'meaning' => '',
-                                        'hsk_level' => $story->hsk_level ?? 1,
-                                    ]
-                                );
+                    // 1. Build an index of annotated words from $sentence['words']
+                    $annotatedWords = [];
+                    if (isset($sentence['words']) && is_array($sentence['words'])) {
+                        foreach ($sentence['words'] as $w) {
+                            if (!empty($w['hanzi'])) {
+                                $annotatedWords[$w['hanzi']] = $w;
                             }
+                        }
+                    }
+
+                    // 2. Tokenize the full Chinese sentence (the true source of truth)
+                    if (str_contains($sentenceChinese, ' ')) {
+                        $rawTokens = array_values(array_filter(explode(' ', $sentenceChinese), fn($t) => trim($t) !== ''));
+                    } else {
+                        $rawTokens = preg_split('/(?<!^)(?!$)/u', $sentenceChinese) ?: [];
+                    }
+
+                    // 3. Prepare display items preserving ALL words and punctuation
+                    $displayItems = [];
+                    foreach ($rawTokens as $token) {
+                        $trimmed = trim($token);
+                        if ($trimmed === '') continue;
+
+                        if (!preg_match('/[\x{4e00}-\x{9fa5}a-zA-Z0-9]/u', $trimmed)) {
+                            // Punctuation symbol
+                            $displayItems[] = [
+                                'type' => 'punct',
+                                'text' => $trimmed,
+                            ];
+                        } else {
+                            // Hanzi or word token: use annotation if available, otherwise fallback
+                            $wordData = $annotatedWords[$trimmed] ?? [
+                                'hanzi'     => $trimmed,
+                                'pinyin'    => '',
+                                'meaning'   => '',
+                                'hsk_level' => (int) ($story->hsk_level ?? 1),
+                            ];
+                            $displayItems[] = [
+                                'type' => 'word',
+                                'data' => $wordData,
+                            ];
                         }
                     }
                 @endphp
@@ -533,8 +554,9 @@ if (window.Alpine && typeof window.Alpine.data === 'function') {
                     {{-- Chinese Text with Word-by-Word Clickable Chips --}}
                     <div class="chinese-reading-line flex flex-wrap items-end gap-x-2 gap-y-3 leading-loose select-text"
                          :class="fontSizeClass">
-                        @if(isset($sentenceWords) && is_array($sentenceWords) && count($sentenceWords) > 0)
-                            @foreach($sentenceWords as $wIdx => $word)
+                        @foreach($displayItems as $item)
+                            @if($item['type'] === 'word')
+                                @php $word = $item['data']; @endphp
                                 <span class="interactive-word inline-flex flex-col items-center cursor-pointer rounded-lg px-1.5 py-0.5 transition-all duration-150 group/word relative select-text"
                                       :class="activeWordHanzi === '{{ $word['hanzi'] }}' ? 'bg-red-100 text-red-900 ring-2 ring-red-400' : 'hover:bg-amber-100/80 hover:text-slate-900 text-slate-800'"
                                       @click.stop='openLookup($event, @json($word))'>
@@ -550,32 +572,12 @@ if (window.Alpine && typeof window.Alpine.data === 'function') {
                                         {{ $word['hanzi'] }}
                                     </span>
                                 </span>
-                            @endforeach
-                        @else
-                            @php
-                                if (str_contains($sentenceChinese, ' ')) {
-                                    $tokens = array_values(array_filter(explode(' ', $sentenceChinese), fn($t) => trim($t) !== ''));
-                                } else {
-                                    $tokens = preg_split('/(?<!^)(?!$)/u', $sentenceChinese) ?: [];
-                                }
-                            @endphp
-                            @foreach($tokens as $token)
-                                @php $trimmed = trim($token); @endphp
-                                @if(preg_match('/[\x{4e00}-\x{9fa5}]/u', $trimmed))
-                                    <span class="interactive-word inline-flex flex-col items-center cursor-pointer rounded-lg px-1.5 py-0.5 transition-all duration-150 group/word relative select-text"
-                                          :class="activeWordHanzi === '{{ $trimmed }}' ? 'bg-red-100 text-red-900 ring-2 ring-red-400' : 'hover:bg-amber-100/80 hover:text-slate-900 text-slate-800'"
-                                          @click.stop='openLookup($event, { hanzi: "{{ $trimmed }}" })'>
-                                        <span class="font-medium tracking-wide">
-                                            {{ $trimmed }}
-                                        </span>
-                                    </span>
-                                @else
-                                    <span class="font-normal text-slate-600 tracking-wide px-0.5 select-text">
-                                        {{ $trimmed }}
-                                    </span>
-                                @endif
-                            @endforeach
-                        @endif
+                            @else
+                                <span class="font-normal text-slate-600 tracking-wide px-0.5 select-text">
+                                    {{ $item['text'] }}
+                                </span>
+                            @endif
+                        @endforeach
                     </div>
 
                     {{-- Full Sentence Pinyin --}}
