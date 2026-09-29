@@ -185,12 +185,16 @@ test('admin can view stories resource in filament', function () {
     $response->assertSuccessful();
 });
 
-test('stories library renders pagination when stories exceed per page limit', function () {
-    Story::factory()->count(15)->create(['is_published' => true]);
+test('all stories from GradedStorySeeder can be rendered without errors', function () {
+    $this->seed(\Database\Seeders\GradedStorySeeder::class);
 
-    $response = $this->get('/reading');
-    $response->assertSuccessful();
-    $response->assertSee('Hiển thị 1–12 trong tổng số 15 bài đọc hiểu');
-    $response->assertSee('?page=2');
+    $stories = Story::where('is_published', true)->get();
+    expect($stories->count())->toBeGreaterThan(0);
+
+    foreach ($stories as $story) {
+        $response = $this->get("/reading/{$story->slug}");
+        $response->assertSuccessful();
+        $response->assertSee($story->title);
+    }
 });
 

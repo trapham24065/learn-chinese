@@ -2,7 +2,7 @@
 
 @section('content')
 <script>
-window.gradedReaderApp = function() {
+function gradedReaderApp() {
     return {
         showPinyin: true,
         showTranslation: true,
@@ -26,27 +26,27 @@ window.gradedReaderApp = function() {
             hanzi: '',
             pinyin: '',
             meaning: '',
-            hsk_level: {{ $story->hsk_level }},
+            hsk_level: {{ (int) ($story->hsk_level ?? 1) }},
             is_starred: false
         },
-        starredList: @json($starredCharacters),
+        starredList: @json($starredCharacters ?? []),
 
         // Quiz State
         quizAnswers: {},
         quizSubmitted: false,
         quizScore: 0,
-        isCompleted: {{ $story->isCompletedBy() ? 'true' : 'false' }},
+        isCompleted: {{ ($story->isCompletedBy() ?? false) ? 'true' : 'false' }},
 
         // Hanzi Writer State
         showWriterModal: false,
         writerInstance: null,
 
         get fontSizeClass() {
-            return this.fontSizes[this.fontSizeIndex];
+            return this.fontSizes[this.fontSizeIndex] || 'text-lg';
         },
 
         get fontSizeLabel() {
-            return ['Nhỏ', 'Vừa', 'Lớn', 'Cực đại'][this.fontSizeIndex];
+            return ['Nhỏ', 'Vừa', 'Lớn', 'Cực đại'][this.fontSizeIndex] || 'Vừa';
         },
 
         init() {
@@ -72,6 +72,7 @@ window.gradedReaderApp = function() {
         },
 
         openLookup(event, word) {
+            if (!word) return;
             const rect = event.currentTarget.getBoundingClientRect();
             const popoverWidth = window.innerWidth < 640 ? 280 : 320;
             
@@ -89,14 +90,15 @@ window.gradedReaderApp = function() {
             }
 
             this.popoverPos = { x: posX, y: posY };
-            this.activeWordHanzi = word.hanzi;
+            this.activeWordHanzi = word.hanzi || '';
+            const isStarred = Array.isArray(this.starredList) ? this.starredList.includes(word.hanzi) : false;
             this.currentWord = {
-                id: null,
-                hanzi: word.hanzi,
+                id: word.id || null,
+                hanzi: word.hanzi || '',
                 pinyin: word.pinyin || '',
                 meaning: word.meaning || '',
-                hsk_level: {{ $story->hsk_level }},
-                is_starred: this.starredList.includes(word.hanzi)
+                hsk_level: word.hsk_level || {{ (int) ($story->hsk_level ?? 1) }},
+                is_starred: isStarred
             };
             this.lookupVisible = true;
 
@@ -111,7 +113,7 @@ window.gradedReaderApp = function() {
             })
             .then(res => res.json())
             .then(data => {
-                if (data.found) {
+                if (data && data.found) {
                     this.currentWord.id = data.id;
                     if (!this.currentWord.meaning) this.currentWord.meaning = data.meaning;
                     if (!this.currentWord.pinyin) this.currentWord.pinyin = data.pinyin;
@@ -148,8 +150,8 @@ window.gradedReaderApp = function() {
             })
             .then(res => res.json())
             .then(data => {
-                // Fix A1: TTSController returns 'audio' key (base64), not 'audio_url'
-                if (data.audio) {
+                // TTSController returns 'audio' key (base64)
+                if (data && data.audio) {
                     const audio = new Audio(data.audio);
                     audio.playbackRate = this.playbackSpeed;
                     this.currentAudio = audio;
@@ -174,7 +176,6 @@ window.gradedReaderApp = function() {
         },
 
         playSentence(idx, text) {
-            // Fix B2: cancel previous sentenceTimeout to avoid clearing wrong highlight
             if (this.sentenceTimeoutId) clearTimeout(this.sentenceTimeoutId);
             this.currentPlayingSentenceIndex = idx;
             this.speakWord(text);
@@ -200,7 +201,7 @@ window.gradedReaderApp = function() {
             if (this.playTimeoutId) { clearTimeout(this.playTimeoutId); this.playTimeoutId = null; }
             this.isPlayingAll = true;
 
-            const sentences = @json(array_column($story->content_json, 'chinese'));
+            const sentences = @json(array_column($story->content_json ?? [], 'chinese'));
             let current = 0;
 
             const playNext = () => {
@@ -224,6 +225,7 @@ window.gradedReaderApp = function() {
         },
 
         toggleStarWord() {
+            if (!this.currentWord) return;
             if (!this.currentWord.id) {
                 // If not in DB yet, toggle locally
                 this.currentWord.is_starred = !this.currentWord.is_starred;
@@ -241,7 +243,7 @@ window.gradedReaderApp = function() {
             })
             .then(res => {
                 if (!res.ok) {
-                    if (res.status === 401) {
+                    if (res.status === 401 && window.dialog) {
                         window.dialog.authRequired({
                             word: this.currentWord.hanzi,
                             pinyin: this.currentWord.pinyin,
@@ -253,14 +255,15 @@ window.gradedReaderApp = function() {
                 return res.json();
             })
             .then(data => {
-                if (data.success) {
+                if (data && data.success) {
                     this.currentWord.is_starred = data.is_starred;
+                    if (!Array.isArray(this.starredList)) this.starredList = [];
                     if (data.is_starred) {
                         this.starredList.push(this.currentWord.hanzi);
-                        window.toast.success('Đã lưu vào Sổ tay từ vựng!', this.currentWord.hanzi);
+                        if (window.toast) window.toast.success('Đã lưu vào Sổ tay từ vựng!', this.currentWord.hanzi);
                     } else {
                         this.starredList = this.starredList.filter(c => c !== this.currentWord.hanzi);
-                        window.toast.info('Đã bỏ lưu khỏi Sổ tay từ vựng');
+                        if (window.toast) window.toast.info('Đã bỏ lưu khỏi Sổ tay từ vựng');
                     }
                 }
             })
@@ -340,7 +343,18 @@ window.gradedReaderApp = function() {
             }).catch(() => {});
         }
     };
-};
+}
+window.gradedReaderApp = gradedReaderApp;
+
+// Register with Alpine via Alpine.data
+document.addEventListener('alpine:init', function() {
+    if (window.Alpine && typeof window.Alpine.data === 'function') {
+        window.Alpine.data('gradedReaderApp', gradedReaderApp);
+    }
+});
+if (window.Alpine && typeof window.Alpine.data === 'function') {
+    window.Alpine.data('gradedReaderApp', gradedReaderApp);
+}
 </script>
 
 <div x-data="gradedReaderApp()" x-init="init()" class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative" @click="closeLookup()">
@@ -405,9 +419,8 @@ window.gradedReaderApp = function() {
                 <button type="button" @click="togglePlayAll()"
                         :class="isPlayingAll ? 'bg-red-600 text-white shadow-red-200' : 'bg-slate-900 text-white hover:bg-slate-800'"
                         class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition shadow-sm">
-                    {{-- B1: Use two static icons with x-show instead of dynamic :data-lucide --}}
                     <i x-show="!isPlayingAll" data-lucide="play" class="h-3.5 w-3.5"></i>
-                    <i x-show="isPlayingAll" data-lucide="pause" class="h-3.5 w-3.5" x-cloak></i>
+                    <i x-show="isPlayingAll" data-lucide="pause" class="h-3.5 w-3.5" style="display: none;"></i>
                     <span x-text="isPlayingAll ? 'Tạm dừng' : 'Nghe toàn bài'"></span>
                 </button>
 
@@ -448,6 +461,20 @@ window.gradedReaderApp = function() {
         {{-- Sentences List --}}
         <div class="space-y-6 sm:space-y-8">
             @foreach($story->content_json as $sIdx => $sentence)
+                @php
+                    $sentenceChinese = $sentence['chinese'] ?? '';
+                    $sentencePinyin = $sentence['pinyin'] ?? '';
+                    $sentenceVietnamese = $sentence['vietnamese'] ?? '';
+                    $speakerHanzi = $sentence['speaker'] ?? null;
+                    $speakerVi = $sentence['speaker_vi'] ?? null;
+
+                    // Automatically extract dialogue speaker prefix if present (e.g. "王明 ： ..." or "管理员 ： ...")
+                    if (!$speakerHanzi && preg_match('/^([\x{4e00}-\x{9fa5}a-zA-Z0-9_\s]+)\s*[：:]\s*(.*)$/u', $sentenceChinese, $sm)) {
+                        $speakerHanzi = trim($sm[1]);
+                        $sentenceChinese = trim($sm[2]);
+                    }
+                @endphp
+
                 <div class="group relative rounded-2xl p-4 sm:p-5 transition-all duration-200 border border-transparent"
                      :class="{
                          'bg-amber-50/80 border-amber-200 shadow-sm': currentPlayingSentenceIndex === {{ $sIdx }},
@@ -455,13 +482,25 @@ window.gradedReaderApp = function() {
                      }"
                      id="sentence-block-{{ $sIdx }}">
                     
-                    {{-- Sentence Top Toolbar (Play Audio Single Sentence) --}}
-                    <div class="flex items-center justify-between mb-2">
+                    {{-- Sentence Top Toolbar (Speaker badge + Audio Play Single Sentence) --}}
+                    <div class="flex items-center justify-between gap-2 mb-2.5">
+                        @if($speakerHanzi)
+                            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-100/90 text-amber-900 border border-amber-300 text-xs font-bold shadow-xs">
+                                <i data-lucide="message-circle" class="h-3.5 w-3.5 text-amber-700"></i>
+                                <span>{{ $speakerHanzi }}</span>
+                                @if($speakerVi)
+                                    <span class="text-[11px] font-normal text-amber-700">({{ $speakerVi }})</span>
+                                @endif
+                            </div>
+                        @else
+                            <span class="text-[11px] font-semibold text-slate-400">Câu {{ $sIdx + 1 }}</span>
+                        @endif
+
                         <button type="button" @click.stop="playSentence({{ $sIdx }}, '{{ addslashes($sentence['chinese']) }}')"
                                 class="inline-flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-red-600 transition"
                                 title="Nghe đọc riêng câu này">
                             <i data-lucide="volume-2" class="h-4 w-4"></i>
-                            <span class="text-[11px]">Câu {{ $sIdx + 1 }}</span>
+                            <span class="text-[11px]">Phát âm</span>
                         </button>
                     </div>
 
@@ -472,11 +511,11 @@ window.gradedReaderApp = function() {
                             @foreach($sentence['words'] as $wIdx => $word)
                                 <span class="interactive-word inline-flex flex-col items-center cursor-pointer rounded-lg px-1.5 py-0.5 transition-all duration-150 group/word relative select-text"
                                       :class="activeWordHanzi === '{{ $word['hanzi'] }}' ? 'bg-red-100 text-red-900 ring-2 ring-red-400' : 'hover:bg-amber-100/80 hover:text-slate-900 text-slate-800'"
-                                      @click.stop="openLookup($event, {{ json_encode($word) }})">
-                                    {{-- Ruby Pinyin Annotation --}}
-                                    <span x-show="showPinyin" x-cloak
-                                          class="text-[11px] sm:text-xs font-semibold text-amber-700 tracking-normal pointer-events-none select-none -mb-1">
-                                        {{ $word['pinyin'] ?? '' }}
+                                      @click.stop='openLookup($event, @json($word))'>
+                                    {{-- Ruby Pinyin Annotation with Tone-colored Styling --}}
+                                    <span x-show="showPinyin"
+                                          class="text-[11px] sm:text-xs font-semibold tracking-normal pointer-events-none select-none -mb-1">
+                                        <x-tone-pinyin :text="$word['pinyin'] ?? ''" />
                                     </span>
                                     {{-- Hanzi Character --}}
                                     <span class="font-medium tracking-wide">
@@ -486,25 +525,24 @@ window.gradedReaderApp = function() {
                             @endforeach
                         @else
                             @php
-                                $chineseText = $sentence['chinese'] ?? '';
-                                if (str_contains($chineseText, ' ')) {
-                                    $tokens = array_filter(explode(' ', $chineseText));
+                                if (str_contains($sentenceChinese, ' ')) {
+                                    $tokens = array_values(array_filter(explode(' ', $sentenceChinese), fn($t) => trim($t) !== ''));
                                 } else {
-                                    $tokens = preg_split('/(?<!^)(?!$)/u', $chineseText) ?: [];
+                                    $tokens = preg_split('/(?<!^)(?!$)/u', $sentenceChinese) ?: [];
                                 }
                             @endphp
                             @foreach($tokens as $token)
                                 @php $trimmed = trim($token); @endphp
                                 @if(preg_match('/[\x{4e00}-\x{9fa5}]/u', $trimmed))
-                                    <span class="interactive-word inline-flex flex-col items-center cursor-pointer rounded-lg px-1 py-0.5 transition-all duration-150 group/word relative select-text"
+                                    <span class="interactive-word inline-flex flex-col items-center cursor-pointer rounded-lg px-1.5 py-0.5 transition-all duration-150 group/word relative select-text"
                                           :class="activeWordHanzi === '{{ $trimmed }}' ? 'bg-red-100 text-red-900 ring-2 ring-red-400' : 'hover:bg-amber-100/80 hover:text-slate-900 text-slate-800'"
-                                          @click.stop="openLookup($event, { hanzi: '{{ $trimmed }}' })">
+                                          @click.stop='openLookup($event, { hanzi: "{{ $trimmed }}" })'>
                                         <span class="font-medium tracking-wide">
                                             {{ $trimmed }}
                                         </span>
                                     </span>
                                 @else
-                                    <span class="font-normal text-slate-600 tracking-wide px-0.5">
+                                    <span class="font-normal text-slate-600 tracking-wide px-0.5 select-text">
                                         {{ $trimmed }}
                                     </span>
                                 @endif
@@ -512,17 +550,19 @@ window.gradedReaderApp = function() {
                         @endif
                     </div>
 
-                    {{-- Full Sentence Pinyin (if words not pre-tokenized) --}}
-                    @if((empty($sentence['words']) || count($sentence['words']) === 0) && !empty($sentence['pinyin']))
-                        <div x-show="showPinyin" x-cloak class="mt-2 text-xs sm:text-sm font-semibold text-amber-800 tracking-wide">
-                            {{ $sentence['pinyin'] }}
+                    {{-- Full Sentence Pinyin --}}
+                    @if(!empty($sentencePinyin))
+                        <div x-show="showPinyin" class="mt-2 text-xs sm:text-sm font-semibold tracking-wide">
+                            <x-tone-pinyin :text="$sentencePinyin" />
                         </div>
                     @endif
 
                     {{-- Vietnamese Translation --}}
-                    <div x-show="showTranslation" x-cloak class="mt-2.5 pt-2 border-t border-slate-100 text-xs sm:text-sm text-slate-500 font-medium leading-relaxed">
-                        {{ $sentence['vietnamese'] ?? '' }}
-                    </div>
+                    @if(!empty($sentenceVietnamese))
+                        <div x-show="showTranslation" class="mt-2.5 pt-2 border-t border-slate-100 text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
+                            {{ $sentenceVietnamese }}
+                        </div>
+                    @endif
 
                 </div>
             @endforeach
@@ -703,10 +743,10 @@ window.gradedReaderApp = function() {
 
                 {{-- Toggle Star / Save to favorites --}}
                 <button type="button" @click="toggleStarWord()"
-                        :class="currentWord?.is_starred ? 'bg-amber-400/20 text-amber-400 border border-amber-400/40' : 'bg-slate-800 text-slate-400 hover:text-white'"
+                        :class="(currentWord && currentWord.is_starred) ? 'bg-amber-400/20 text-amber-400 border border-amber-400/40' : 'bg-slate-800 text-slate-400 hover:text-white'"
                         class="h-8 w-8 rounded-xl flex items-center justify-center transition"
                         title="Lưu vào Sổ từ vựng yêu thích">
-                    <i data-lucide="star" :class="currentWord?.is_starred ? 'fill-amber-400' : ''" class="h-4 w-4"></i>
+                    <i data-lucide="star" :class="(currentWord && currentWord.is_starred) ? 'fill-amber-400' : ''" class="h-4 w-4"></i>
                 </button>
             </div>
         </div>
