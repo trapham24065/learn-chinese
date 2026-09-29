@@ -106,7 +106,7 @@
                         class="inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-bold transition"
                         :class="sfx ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-xs' : 'bg-slate-100 text-slate-400 border border-slate-200'"
                         title="Bật/Tắt âm thanh phản hồi (SFX)">
-                    <i data-lucide="volume-2" class="h-3.5 w-3.5" :class="sfx ? 'text-emerald-600' : 'text-slate-400'"></i>
+                    <i data-lucide="volume-2" class="h-3.5 w-3.5"></i>
                     <span x-text="sfx ? 'SFX Bật' : 'SFX Tắt'"></span>
                 </button>
             </div>
@@ -630,7 +630,9 @@
                                 class="absolute top-6 right-6 flex h-11 w-11 items-center justify-center rounded-full transition-all duration-300 hover:scale-110 active:scale-95 shadow-md"
                                 :class="card.is_starred ? 'bg-amber-400 text-slate-950 shadow-amber-400/30 ring-2 ring-amber-300' : 'bg-white/10 text-white hover:bg-white/20'"
                                 :title="card.is_starred ? 'Bỏ lưu từ này' : 'Lưu vào Sổ từ vựng'">
-                            <i data-lucide="star" class="h-5 w-5" :class="{ 'fill-current': card.is_starred }"></i>
+                            <span :class="{ 'fill-current': card.is_starred }" class="inline-flex">
+                                <i data-lucide="star" class="h-5 w-5"></i>
+                            </span>
                         </button>
 
                         {{-- Actions (Write & Speak) --}}
@@ -653,7 +655,9 @@
                                 class="absolute top-6 right-6 flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 hover:scale-110 active:scale-95 shadow-sm"
                                 :class="card.is_starred ? 'bg-amber-100 text-amber-600 ring-1 ring-amber-300' : 'bg-slate-100 text-slate-400 hover:text-amber-500 hover:bg-amber-50'"
                                 :title="card.is_starred ? 'Bỏ lưu từ này' : 'Lưu vào Sổ từ vựng'">
-                            <i data-lucide="star" class="h-5 w-5" :class="{ 'fill-current': card.is_starred }"></i>
+                            <span :class="{ 'fill-current': card.is_starred }" class="inline-flex">
+                                <i data-lucide="star" class="h-5 w-5"></i>
+                            </span>
                         </button>
 
                         <div class="flex flex-1 flex-col justify-center gap-4 p-8 pr-16">
@@ -730,8 +734,12 @@
                     @click="next()"
                     class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-40">
                     <span class="hidden sm:inline" x-text="current === cards.length - 1 ? 'Xong' : 'Tiếp'"></span>
-                    <i x-show="current < cards.length - 1" data-lucide="arrow-right" class="h-4 w-4"></i>
-                    <i x-show="current === cards.length - 1" data-lucide="circle-check" class="h-4 w-4"></i>
+                    <span x-show="current < cards.length - 1" class="inline-flex">
+                        <i data-lucide="arrow-right" class="h-4 w-4"></i>
+                    </span>
+                    <span x-show="current === cards.length - 1" class="inline-flex" style="display: none;">
+                        <i data-lucide="circle-check" class="h-4 w-4"></i>
+                    </span>
                 </button>
 
             </div>
@@ -830,7 +838,9 @@
                             class="flex h-8 w-8 items-center justify-center rounded-full transition hover:scale-110 active:scale-95"
                             :class="isStarred ? 'text-amber-500 bg-amber-50 shadow-sm' : 'text-slate-300 hover:text-amber-400 hover:bg-slate-50'"
                             :title="isStarred ? 'Bỏ lưu khỏi Sổ từ' : 'Lưu vào Sổ từ vựng'">
-                        <i data-lucide="star" class="h-4 w-4" :class="{ 'fill-current': isStarred }"></i>
+                        <span :class="{ 'fill-current': isStarred }" class="inline-flex">
+                            <i data-lucide="star" class="h-4 w-4"></i>
+                        </span>
                     </button>
 
                     <div class="flex flex-col items-end gap-1">

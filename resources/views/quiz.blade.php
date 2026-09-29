@@ -39,7 +39,7 @@
                             class="inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-bold transition shadow-xs"
                             :class="sfx ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-white text-slate-400 border-slate-200'"
                             title="Bật/Tắt âm thanh tương tác">
-                        <i data-lucide="volume-2" class="h-3.5 w-3.5" :class="sfx ? 'text-emerald-600' : 'text-slate-400'"></i>
+                        <i data-lucide="volume-2" class="h-3.5 w-3.5"></i>
                         <span x-text="sfx ? 'SFX Bật' : 'SFX Tắt'"></span>
                     </button>
                 </div>
@@ -395,7 +395,9 @@
                                 class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#991b1b] px-8 py-3.5 text-base font-bold text-white shadow-xl shadow-red-950/20 transition hover:bg-red-800 hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">
                             <svg x-show="isSubmitting" class="h-5 w-5 animate-spin text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
                             <span x-text="isSubmitting ? 'Đang chấm điểm...' : 'Nộp bài & Chấm điểm'"></span>
-                            <i x-show="!isSubmitting" data-lucide="target" class="h-5 w-5"></i>
+                            <span x-show="!isSubmitting" class="inline-flex">
+                                <i data-lucide="target" class="h-5 w-5"></i>
+                            </span>
                         </button>
                     </template>
 

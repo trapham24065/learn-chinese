@@ -50,7 +50,7 @@ function gradedReaderApp() {
         },
 
         init() {
-            if (window.refreshIcons) window.refreshIcons();
+            // Alpine handles reactivity cleanly; icons are managed by global lifecycle
         },
 
         increaseFontSize() {
@@ -419,8 +419,12 @@ if (window.Alpine && typeof window.Alpine.data === 'function') {
                 <button type="button" @click="togglePlayAll()"
                         :class="isPlayingAll ? 'bg-red-600 text-white shadow-red-200' : 'bg-slate-900 text-white hover:bg-slate-800'"
                         class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition shadow-sm">
-                    <i x-show="!isPlayingAll" data-lucide="play" class="h-3.5 w-3.5"></i>
-                    <i x-show="isPlayingAll" data-lucide="pause" class="h-3.5 w-3.5" style="display: none;"></i>
+                    <span x-show="!isPlayingAll" class="inline-flex items-center">
+                        <i data-lucide="play" class="h-3.5 w-3.5"></i>
+                    </span>
+                    <span x-show="isPlayingAll" class="inline-flex items-center" style="display: none;">
+                        <i data-lucide="pause" class="h-3.5 w-3.5"></i>
+                    </span>
                     <span x-text="isPlayingAll ? 'Tạm dừng' : 'Nghe toàn bài'"></span>
                 </button>
 
@@ -471,7 +475,29 @@ if (window.Alpine && typeof window.Alpine.data === 'function') {
                     // Automatically extract dialogue speaker prefix if present (e.g. "王明 ： ..." or "管理员 ： ...")
                     if (!$speakerHanzi && preg_match('/^([\x{4e00}-\x{9fa5}a-zA-Z0-9_\s]+)\s*[：:]\s*(.*)$/u', $sentenceChinese, $sm)) {
                         $speakerHanzi = trim($sm[1]);
-                        $sentenceChinese = trim($sm[2]);
+                    }
+
+                    // Prepare words list and ensure dialogue speaker characters are never missing
+                    $sentenceWords = $sentence['words'] ?? [];
+                    if (is_array($sentenceWords) && count($sentenceWords) > 0) {
+                        if ($speakerHanzi && (!isset($sentenceWords[0]['hanzi']) || !str_contains($sentenceWords[0]['hanzi'], $speakerHanzi))) {
+                            if (str_starts_with(trim($sentenceChinese), $speakerHanzi)) {
+                                array_unshift($sentenceWords, 
+                                    [
+                                        'hanzi' => $speakerHanzi,
+                                        'pinyin' => $sentence['speaker_pinyin'] ?? '',
+                                        'meaning' => $speakerVi ? ($speakerVi . ' (người nói)') : 'Người nói',
+                                        'hsk_level' => $story->hsk_level ?? 1,
+                                    ],
+                                    [
+                                        'hanzi' => '：',
+                                        'pinyin' => '',
+                                        'meaning' => '',
+                                        'hsk_level' => $story->hsk_level ?? 1,
+                                    ]
+                                );
+                            }
+                        }
                     }
                 @endphp
 
@@ -507,16 +533,18 @@ if (window.Alpine && typeof window.Alpine.data === 'function') {
                     {{-- Chinese Text with Word-by-Word Clickable Chips --}}
                     <div class="chinese-reading-line flex flex-wrap items-end gap-x-2 gap-y-3 leading-loose select-text"
                          :class="fontSizeClass">
-                        @if(isset($sentence['words']) && is_array($sentence['words']) && count($sentence['words']) > 0)
-                            @foreach($sentence['words'] as $wIdx => $word)
+                        @if(isset($sentenceWords) && is_array($sentenceWords) && count($sentenceWords) > 0)
+                            @foreach($sentenceWords as $wIdx => $word)
                                 <span class="interactive-word inline-flex flex-col items-center cursor-pointer rounded-lg px-1.5 py-0.5 transition-all duration-150 group/word relative select-text"
                                       :class="activeWordHanzi === '{{ $word['hanzi'] }}' ? 'bg-red-100 text-red-900 ring-2 ring-red-400' : 'hover:bg-amber-100/80 hover:text-slate-900 text-slate-800'"
                                       @click.stop='openLookup($event, @json($word))'>
                                     {{-- Ruby Pinyin Annotation with Tone-colored Styling --}}
-                                    <span x-show="showPinyin"
-                                          class="text-[11px] sm:text-xs font-semibold tracking-normal pointer-events-none select-none -mb-1">
-                                        <x-tone-pinyin :text="$word['pinyin'] ?? ''" />
-                                    </span>
+                                    @if(!empty($word['pinyin']))
+                                        <span x-show="showPinyin"
+                                              class="text-[11px] sm:text-xs font-semibold tracking-normal pointer-events-none select-none -mb-1">
+                                            <x-tone-pinyin :text="$word['pinyin']" />
+                                        </span>
+                                    @endif
                                     {{-- Hanzi Character --}}
                                     <span class="font-medium tracking-wide">
                                         {{ $word['hanzi'] }}
@@ -678,7 +706,12 @@ if (window.Alpine && typeof window.Alpine.data === 'function') {
                     :disabled="isCompleted"
                     :class="isCompleted ? 'bg-emerald-100 text-emerald-800' : 'bg-red-600 text-white hover:bg-red-700'"
                     class="mt-4 inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition shadow-md">
-                <i :data-lucide="isCompleted ? 'check-circle' : 'circle-check'" class="h-4 w-4"></i>
+                <span x-show="!isCompleted" class="inline-flex items-center">
+                    <i data-lucide="circle-check" class="h-4 w-4"></i>
+                </span>
+                <span x-show="isCompleted" class="inline-flex items-center" style="display: none;">
+                    <i data-lucide="check-circle" class="h-4 w-4"></i>
+                </span>
                 <span x-text="isCompleted ? 'Đã hoàn thành bài đọc ✓' : 'Đánh dấu hoàn thành bài đọc'"></span>
             </button>
         </div>
@@ -746,7 +779,12 @@ if (window.Alpine && typeof window.Alpine.data === 'function') {
                         :class="(currentWord && currentWord.is_starred) ? 'bg-amber-400/20 text-amber-400 border border-amber-400/40' : 'bg-slate-800 text-slate-400 hover:text-white'"
                         class="h-8 w-8 rounded-xl flex items-center justify-center transition"
                         title="Lưu vào Sổ từ vựng yêu thích">
-                    <i data-lucide="star" :class="(currentWord && currentWord.is_starred) ? 'fill-amber-400' : ''" class="h-4 w-4"></i>
+                    <span x-show="Boolean(currentWord && currentWord.is_starred)" class="inline-flex items-center">
+                        <i data-lucide="star" class="h-4 w-4 fill-amber-400 text-amber-400"></i>
+                    </span>
+                    <span x-show="!Boolean(currentWord && currentWord.is_starred)" class="inline-flex items-center">
+                        <i data-lucide="star" class="h-4 w-4 text-slate-400"></i>
+                    </span>
                 </button>
             </div>
         </div>

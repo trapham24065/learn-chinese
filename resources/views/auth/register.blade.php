@@ -120,8 +120,12 @@
                             @click="showPassword = !showPassword" 
                             class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600 focus:outline-none"
                             title="Hiện/Ẩn mật khẩu">
-                        <i x-show="!showPassword" data-lucide="eye" class="h-4 w-4"></i>
-                        <i x-show="showPassword" data-lucide="eye-off" class="h-4 w-4" style="display: none;"></i>
+                        <span x-show="!showPassword" class="inline-flex">
+                            <i data-lucide="eye" class="h-4 w-4"></i>
+                        </span>
+                        <span x-show="showPassword" class="inline-flex" style="display: none;">
+                            <i data-lucide="eye-off" class="h-4 w-4"></i>
+                        </span>
                     </button>
                 </div>
                 <x-input-error :messages="$errors->get('password')" class="mt-1.5" />

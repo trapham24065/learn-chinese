@@ -547,7 +547,12 @@ window.dictionaryApp = function () {
                                         :class="activeWord.is_starred ? 'text-amber-500 bg-amber-50 border-amber-200' : 'text-slate-400 bg-slate-50 hover:text-slate-600'"
                                         class="h-9 w-9 rounded-xl border border-slate-200 flex items-center justify-center transition"
                                         title="Lưu từ vào danh sách ôn tập">
-                                    <i data-lucide="star" :class="activeWord.is_starred ? 'fill-amber-400' : ''" class="h-4 w-4"></i>
+                                    <span x-show="Boolean(activeWord && activeWord.is_starred)" class="inline-flex">
+                                        <i data-lucide="star" class="h-4 w-4 fill-amber-400 text-amber-500"></i>
+                                    </span>
+                                    <span x-show="!Boolean(activeWord && activeWord.is_starred)" class="inline-flex">
+                                        <i data-lucide="star" class="h-4 w-4 text-slate-400"></i>
+                                    </span>
                                 </button>
 
                                 {{-- Pronunciation audio --}}

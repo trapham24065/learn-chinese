@@ -344,7 +344,7 @@
                 {{-- Countdown Badge --}}
                 <div class="flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-black transition-all shadow-inner"
                      :class="isTimeWarning ? 'bg-red-500 text-white animate-pulse shadow-red-500/20' : 'bg-slate-900 text-amber-300'">
-                    <i data-lucide="timer" class="h-4 w-4" :class="isTimeWarning ? 'text-white' : 'text-amber-400'"></i>
+                    <i data-lucide="timer" class="h-4 w-4"></i>
                     <span x-text="formattedTime" class="tracking-widest font-mono text-base"></span>
                 </div>
 
@@ -407,7 +407,9 @@
                         @click="toggleFlag(currentQ?.id)"
                         class="inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition"
                         :class="isFlagged(currentQ?.id) ? 'bg-amber-100 border-amber-300 text-amber-900 shadow-sm' : 'border-slate-200 text-slate-500 hover:bg-slate-50'">
-                    <i data-lucide="bookmark" class="h-3.5 w-3.5" :class="isFlagged(currentQ?.id) ? 'fill-current text-amber-600' : ''"></i>
+                    <span :class="isFlagged(currentQ?.id) ? 'fill-current text-amber-600' : ''" class="inline-flex">
+                        <i data-lucide="bookmark" class="h-3.5 w-3.5"></i>
+                    </span>
                     <span x-text="isFlagged(currentQ?.id) ? 'Đã đánh dấu xem lại' : 'Đánh dấu xem lại'"></span>
                 </button>
             </div>
@@ -435,7 +437,9 @@
                                     @click="playAudio(currentQ.audio_text, currentQ.id)"
                                     :disabled="isPlayingAudio || (audioPlayCounts[currentQ.id] >= 2)"
                                     class="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-xs font-bold text-white shadow-md transition hover:bg-blue-700 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50">
-                                <i data-lucide="volume-2" class="h-4 w-4" :class="isPlayingAudio ? 'animate-bounce' : ''"></i>
+                                <span :class="isPlayingAudio ? 'animate-bounce' : ''" class="inline-flex">
+                                    <i data-lucide="volume-2" class="h-4 w-4"></i>
+                                </span>
                                 <span x-text="isPlayingAudio ? 'Đang phát...' : ((audioPlayCounts[currentQ.id] >= 2) ? 'Đã hết lượt nghe' : 'Nghe phát âm')"></span>
                             </button>
                         </div>

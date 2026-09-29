@@ -171,7 +171,9 @@
             <div class="flex items-center gap-2">
                 <div class="flex items-center gap-1 rounded-full px-3 py-0.5 text-xs font-black transition-transform"
                      :class="combo > 0 ? 'bg-amber-400/20 text-amber-300 border border-amber-400/30 scale-105' : 'bg-white/5 text-slate-400'">
-                    <i data-lucide="flame" class="h-3.5 w-3.5" :class="combo >= 3 ? 'text-amber-400 animate-pulse' : 'text-slate-400'"></i>
+                    <span :class="combo >= 3 ? 'text-amber-400 animate-pulse' : 'text-slate-400'" class="inline-flex">
+                        <i data-lucide="flame" class="h-3.5 w-3.5"></i>
+                    </span>
                     <span x-text="`Combo x${combo}`"></span>
                 </div>
             </div>

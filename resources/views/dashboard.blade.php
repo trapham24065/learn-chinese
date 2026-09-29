@@ -710,9 +710,15 @@
                         <div class="flex items-center gap-3">
                             <span class="grid h-10 w-10 shrink-0 place-items-center rounded-2xl"
                                   :class="act.type === 'quiz' ? 'bg-amber-100 text-amber-900' : (act.type === 'flashcard' ? 'bg-red-100 text-[#991b1b]' : 'bg-blue-100 text-blue-900')">
-                                <i x-show="act.type === 'quiz'" data-lucide="target" class="h-5 w-5 text-amber-600"></i>
-                                <i x-show="act.type === 'flashcard'" data-lucide="layers" class="h-5 w-5 text-[#991b1b]"></i>
-                                <i x-show="act.type !== 'quiz' && act.type !== 'flashcard'" data-lucide="book-open" class="h-5 w-5 text-blue-600"></i>
+                                <span x-show="act.type === 'quiz'" class="inline-flex">
+                                    <i data-lucide="target" class="h-5 w-5 text-amber-600"></i>
+                                </span>
+                                <span x-show="act.type === 'flashcard'" class="inline-flex" style="display: none;">
+                                    <i data-lucide="layers" class="h-5 w-5 text-[#991b1b]"></i>
+                                </span>
+                                <span x-show="act.type !== 'quiz' && act.type !== 'flashcard'" class="inline-flex" style="display: none;">
+                                    <i data-lucide="book-open" class="h-5 w-5 text-blue-600"></i>
+                                </span>
                             </span>
                             <div>
                                 <h4 class="text-sm font-bold text-slate-950" x-text="act.title"></h4>
