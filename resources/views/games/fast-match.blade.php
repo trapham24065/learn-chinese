@@ -314,6 +314,21 @@
             <span class="text-[11px] text-amber-700 font-semibold">+34% mục tiêu ngày</span>
         </div>
 
+        {{-- GUEST PROGRESS CLAIM REMINDER --}}
+        @guest
+        <div class="mt-4 rounded-2xl bg-amber-50/90 border border-amber-200/90 p-3.5 text-left flex items-start gap-3">
+            <i data-lucide="sparkles" class="h-5 w-5 text-amber-600 shrink-0 mt-0.5 fill-current"></i>
+            <div>
+                <p class="text-xs font-bold text-amber-950">
+                    Bạn đang có <span class="text-sm font-black text-amber-700" x-text="result && result.guest_progress ? result.guest_progress.total_xp : (result ? result.xp_earned : 0)"></span> XP đang chờ lưu
+                </p>
+                <p class="text-[11px] text-amber-800/90 mt-0.5">
+                    <a href="{{ route('register') }}" class="font-bold underline hover:text-amber-950">Đăng ký miễn phí</a> để giữ lại tiến độ học tập.
+                </p>
+            </div>
+        </div>
+        @endguest
+
         {{-- MISTAKE-DRIVEN SRS REVIEW SECTION --}}
         <div class="mt-6 pt-6 border-t border-slate-100">
             <template x-if="result && result.missed_words && result.missed_words.length > 0">
@@ -614,6 +629,13 @@ function fastMatchGame() {
             this.stopTimer();
             this.lockInput = true;
 
+            // Retrieve existing guest progress from localStorage
+            let existingGuest = null;
+            try {
+                const raw = localStorage.getItem('chinese_guest_progress');
+                if (raw) existingGuest = JSON.parse(raw);
+            } catch (e) {}
+
             try {
                 const res = await fetch('/games/fast-match/finish', {
                     method: 'POST',
@@ -625,7 +647,9 @@ function fastMatchGame() {
                     body: JSON.stringify({
                         token: this.token,
                         moves: this.moves,
-                        duration_seconds: Math.max(1, this.elapsedSeconds)
+                        duration_seconds: Math.max(1, this.elapsedSeconds),
+                        guest_uuid: existingGuest?.guest_uuid || null,
+                        claim_token: existingGuest?.claim_token || null
                     })
                 });
 
@@ -635,6 +659,21 @@ function fastMatchGame() {
                 }
 
                 this.result = data;
+
+                // If guest received signed claim token, securely persist in localStorage
+                if (data.guest_progress && data.claim_token) {
+                    try {
+                        localStorage.setItem('chinese_guest_progress', JSON.stringify({
+                            version: 1,
+                            guest_uuid: data.guest_progress.guest_uuid,
+                            xp: data.guest_progress.total_xp,
+                            activities: data.guest_progress.activities_count,
+                            last_activity_at: new Date().toISOString(),
+                            claim_token: data.claim_token
+                        }));
+                    } catch (e) {}
+                }
+
                 this.currentReviewList = data.missed_words || [];
                 this.currentReviewIdx = 0;
 

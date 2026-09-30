@@ -17,6 +17,7 @@ use App\Http\Controllers\LearningActivityController;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\FastMatchController;
 use App\Http\Controllers\AudioQuizController;
+use App\Http\Controllers\GuestProgressClaimController;
 use App\Models\Flashcard;
 use App\Models\Lesson;
 use App\Models\Question;
@@ -52,6 +53,7 @@ Route::prefix('student')->group(function () {
         Route::post('/progress/update', [DashboardController::class, 'updateProgress'])->name('student.progress.update');
         Route::post('/session/log', [DashboardController::class, 'logSession'])->name('student.session.log');
         Route::post('/activity/log', [LearningActivityController::class, 'log'])->name('student.activity.log');
+        Route::post('/claim-guest-progress', [GuestProgressClaimController::class, 'claim'])->name('student.claim-guest-progress');
         Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
         Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

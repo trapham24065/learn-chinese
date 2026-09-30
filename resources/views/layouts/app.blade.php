@@ -236,7 +236,31 @@
                 </form>
             </div>
             @else
-            <div class="space-y-1.5">
+            <div class="space-y-1.5" x-data="{ guestXp: 0 }" x-init="
+                try {
+                    const raw = localStorage.getItem('chinese_guest_progress');
+                    if (raw) {
+                        const parsed = JSON.parse(raw);
+                        guestXp = parsed.xp || 0;
+                    }
+                } catch(e) {}
+            ">
+                <template x-if="guestXp > 0">
+                    <div class="mb-2 rounded-xl bg-amber-50 border border-amber-200/90 p-2.5 text-xs text-amber-900">
+                        <div class="flex items-start gap-2">
+                            <i data-lucide="sparkles" class="h-4 w-4 text-amber-600 shrink-0 mt-0.5 fill-current"></i>
+                            <div>
+                                <p class="font-bold text-[11px] leading-tight">
+                                    Bạn đang có <span class="font-black text-amber-800" x-text="guestXp"></span> XP đang chờ lưu
+                                </p>
+                                <p class="text-[10px] text-amber-700/90 mt-0.5 leading-snug">
+                                    Đăng ký miễn phí để giữ lại tiến độ học tập.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
                 <a href="{{ route('login') }}" class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 shadow-sm transition">
                     <i data-lucide="log-in" class="h-3.5 w-3.5"></i>
                     <span>Đăng nhập</span>
@@ -500,17 +524,43 @@
                                 </form>
                             </div>
                         @else
-                            <div class="grid grid-cols-2 gap-2">
-                                <a href="{{ route('login') }}" @click="mobileMenuOpen = false"
-                                   class="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-2.5 text-xs font-bold text-slate-700 transition hover:bg-slate-50">
-                                    <i data-lucide="log-in" class="h-3.5 w-3.5"></i>
-                                    Đăng nhập
-                                </a>
-                                <a href="{{ route('register') }}" @click="mobileMenuOpen = false"
-                                   class="flex items-center justify-center gap-1.5 rounded-xl bg-[#991b1b] py-2.5 text-xs font-bold text-white shadow-md shadow-red-950/15 transition hover:bg-red-800">
-                                    <i data-lucide="user-plus" class="h-3.5 w-3.5"></i>
-                                    Đăng ký
-                                </a>
+                            <div x-data="{ guestXp: 0 }" x-init="
+                                try {
+                                    const raw = localStorage.getItem('chinese_guest_progress');
+                                    if (raw) {
+                                        const parsed = JSON.parse(raw);
+                                        guestXp = parsed.xp || 0;
+                                    }
+                                } catch(e) {}
+                            ">
+                                <template x-if="guestXp > 0">
+                                    <div class="mb-2 rounded-xl bg-amber-50 border border-amber-200/90 p-2.5 text-xs text-amber-900">
+                                        <div class="flex items-start gap-2">
+                                            <i data-lucide="sparkles" class="h-4 w-4 text-amber-600 shrink-0 mt-0.5 fill-current"></i>
+                                            <div>
+                                                <p class="font-bold text-[11px] leading-tight">
+                                                    Bạn đang có <span class="font-black text-amber-800" x-text="guestXp"></span> XP đang chờ lưu
+                                                </p>
+                                                <p class="text-[10px] text-amber-700/90 mt-0.5 leading-snug">
+                                                    Đăng ký miễn phí để giữ lại tiến độ học tập.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <div class="grid grid-cols-2 gap-2">
+                                    <a href="{{ route('login') }}" @click="mobileMenuOpen = false"
+                                       class="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-2.5 text-xs font-bold text-slate-700 transition hover:bg-slate-50">
+                                        <i data-lucide="log-in" class="h-3.5 w-3.5"></i>
+                                        Đăng nhập
+                                    </a>
+                                    <a href="{{ route('register') }}" @click="mobileMenuOpen = false"
+                                       class="flex items-center justify-center gap-1.5 rounded-xl bg-[#991b1b] py-2.5 text-xs font-bold text-white shadow-md shadow-red-950/15 transition hover:bg-red-800">
+                                        <i data-lucide="user-plus" class="h-3.5 w-3.5"></i>
+                                        Đăng ký
+                                    </a>
+                                </div>
                             </div>
                         @endif
                     </div>
@@ -703,6 +753,51 @@
             }
         };
     </script>
+
+    @auth
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                const rawGuest = localStorage.getItem('chinese_guest_progress');
+                if (!rawGuest) return;
+
+                const guestData = JSON.parse(rawGuest);
+                if (!guestData || !guestData.claim_token) return;
+
+                fetch('{{ route("student.claim-guest-progress") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                    },
+                    body: JSON.stringify({ claim_token: guestData.claim_token })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    localStorage.removeItem('chinese_guest_progress');
+                    if (data && data.success && data.claimed_xp > 0 && !data.already_claimed) {
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Bảo lưu thành công tiến độ!',
+                                text: `Chúc mừng bạn đã cộng ${data.claimed_xp} XP từ phiên học thử vào tài khoản chính thức.`,
+                                confirmButtonColor: '#991b1b',
+                                confirmButtonText: 'Tuyệt vời'
+                            }).then(() => {
+                                if (window.location.pathname.includes('/dashboard')) {
+                                    window.location.reload();
+                                }
+                            });
+                        }
+                    }
+                })
+                .catch(() => {});
+            } catch (e) {}
+        });
+    </script>
+    @endauth
+
     <x-toast />
 </body>
 

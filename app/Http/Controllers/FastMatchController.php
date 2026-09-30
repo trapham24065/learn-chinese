@@ -84,6 +84,8 @@ class FastMatchController extends Controller
             'token' => 'required|string',
             'moves' => 'nullable|array',
             'duration_seconds' => 'required|integer|min:1|max:1200',
+            'guest_uuid' => 'nullable|string',
+            'claim_token' => 'nullable|string',
         ]);
 
         try {
@@ -91,7 +93,9 @@ class FastMatchController extends Controller
                 token: $validated['token'],
                 moves: $validated['moves'] ?? [],
                 durationSeconds: (int) $validated['duration_seconds'],
-                user: Auth::guard('web')->user()
+                user: Auth::guard('web')->user(),
+                guestUuid: $validated['guest_uuid'] ?? null,
+                claimToken: $validated['claim_token'] ?? null
             );
 
             return response()->json($result);

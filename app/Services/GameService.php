@@ -15,7 +15,8 @@ class GameService
     public function __construct(
         protected LearningActivityService $learningActivityService,
         protected XpService $xpService,
-        protected DailyGoalService $dailyGoalService
+        protected DailyGoalService $dailyGoalService,
+        protected GuestProgressService $guestProgressService
     ) {}
 
     /**
@@ -271,7 +272,9 @@ class GameService
         string $token,
         array $moves,
         int $durationSeconds,
-        ?User $user = null
+        ?User $user = null,
+        ?string $guestUuid = null,
+        ?string $claimToken = null
     ): array {
         try {
             $payload = json_decode(Crypt::decryptString($token), true);
@@ -364,6 +367,7 @@ class GameService
 
         $xpEarned = 0;
         $activityResult = null;
+        $guestProgressData = null;
 
         if ($user) {
             $idempotencyKey = 'fm_' . ($payload['session_id'] ?? Str::uuid());
@@ -383,8 +387,48 @@ class GameService
             ]);
             $xpEarned = $activityResult['xp']['earned'];
         } else {
-            // Guest baseline estimate
-            $xpEarned = 15;
+            // Guest progress tracking
+            $resolvedGuestUuid = null;
+            if ($claimToken) {
+                $tokenPayload = $this->guestProgressService->verifySignedToken($claimToken);
+                if ($tokenPayload && ! empty($tokenPayload['guest_uuid'])) {
+                    $resolvedGuestUuid = $tokenPayload['guest_uuid'];
+                }
+            }
+            if (! $resolvedGuestUuid && $guestUuid) {
+                $resolvedGuestUuid = $guestUuid;
+            }
+
+            $guestProgressRecord = $this->guestProgressService->resolveOrCreateProgress($resolvedGuestUuid);
+            $idempotencyKey = 'fm_' . ($payload['session_id'] ?? Str::uuid());
+
+            $guestResult = $this->guestProgressService->recordActivity(
+                guestUuid: $guestProgressRecord->guest_uuid,
+                activityType: 'fast_match_completed',
+                data: [
+                    'source_type' => 'game',
+                    'idempotency_key' => $idempotencyKey,
+                    'meta' => [
+                        'game_type' => 'fast_match',
+                        'difficulty' => $payload['difficulty'],
+                        'mode' => $payload['mode'],
+                        'score' => $score,
+                        'accuracy' => $accuracy,
+                        'max_combo' => $maxCombo,
+                        'duration_seconds' => $safeDuration,
+                        'missed_count' => count($missedWords),
+                    ],
+                ]
+            );
+
+            $xpEarned = $guestResult['xp_earned'];
+            $guestProgressData = [
+                'guest_uuid' => $guestResult['guest_uuid'],
+                'xp_earned' => $guestResult['xp_earned'],
+                'total_xp' => $guestResult['total_xp'],
+                'activities_count' => $guestResult['activities_count'],
+                'claim_token' => $guestResult['claim_token'],
+            ];
         }
 
         return [
@@ -397,9 +441,11 @@ class GameService
             'total_pairs' => $totalPairs,
             'medal' => $medal,
             'xp_earned' => $xpEarned,
-            'total_xp' => $activityResult['xp']['total'] ?? null,
+            'total_xp' => $user ? ($activityResult['xp']['total'] ?? null) : ($guestProgressData['total_xp'] ?? null),
             'streak' => $activityResult['streak']['current'] ?? null,
             'daily_goal' => $activityResult['daily_goal'] ?? null,
+            'claim_token' => $guestProgressData['claim_token'] ?? null,
+            'guest_progress' => $guestProgressData,
             'missed_words' => array_values($missedWords),
         ];
     }
@@ -585,7 +631,9 @@ class GameService
         string $token,
         array $answers,
         int $durationSeconds,
-        ?User $user = null
+        ?User $user = null,
+        ?string $guestUuid = null,
+        ?string $claimToken = null
     ): array {
         try {
             $payload = json_decode(Crypt::decryptString($token), true);
@@ -658,6 +706,7 @@ class GameService
 
         $xpEarned = 0;
         $activityResult = null;
+        $guestProgressData = null;
 
         if ($user) {
             $idempotencyKey = 'aq_' . ($payload['session_id'] ?? Str::uuid());
@@ -675,7 +724,46 @@ class GameService
             ]);
             $xpEarned = $activityResult['xp']['earned'];
         } else {
-            $xpEarned = 15;
+            // Guest progress tracking
+            $resolvedGuestUuid = null;
+            if ($claimToken) {
+                $tokenPayload = $this->guestProgressService->verifySignedToken($claimToken);
+                if ($tokenPayload && ! empty($tokenPayload['guest_uuid'])) {
+                    $resolvedGuestUuid = $tokenPayload['guest_uuid'];
+                }
+            }
+            if (! $resolvedGuestUuid && $guestUuid) {
+                $resolvedGuestUuid = $guestUuid;
+            }
+
+            $guestProgressRecord = $this->guestProgressService->resolveOrCreateProgress($resolvedGuestUuid);
+            $idempotencyKey = 'aq_' . ($payload['session_id'] ?? Str::uuid());
+
+            $guestResult = $this->guestProgressService->recordActivity(
+                guestUuid: $guestProgressRecord->guest_uuid,
+                activityType: 'audio_quiz_completed',
+                data: [
+                    'source_type' => 'game',
+                    'idempotency_key' => $idempotencyKey,
+                    'meta' => [
+                        'game_type' => 'audio_quiz',
+                        'mode' => $payload['mode'],
+                        'score' => $totalScore,
+                        'accuracy' => $accuracy,
+                        'duration_seconds' => $safeDuration,
+                        'missed_count' => count($missedItems),
+                    ],
+                ]
+            );
+
+            $xpEarned = $guestResult['xp_earned'];
+            $guestProgressData = [
+                'guest_uuid' => $guestResult['guest_uuid'],
+                'xp_earned' => $guestResult['xp_earned'],
+                'total_xp' => $guestResult['total_xp'],
+                'activities_count' => $guestResult['activities_count'],
+                'claim_token' => $guestResult['claim_token'],
+            ];
         }
 
         return [
@@ -687,9 +775,11 @@ class GameService
             'duration_seconds' => $safeDuration,
             'medal' => $medal,
             'xp_earned' => $xpEarned,
-            'total_xp' => $activityResult['xp']['total'] ?? null,
+            'total_xp' => $user ? ($activityResult['xp']['total'] ?? null) : ($guestProgressData['total_xp'] ?? null),
             'streak' => $activityResult['streak']['current'] ?? null,
             'daily_goal' => $activityResult['daily_goal'] ?? null,
+            'claim_token' => $guestProgressData['claim_token'] ?? null,
+            'guest_progress' => $guestProgressData,
             'missed_words' => $missedItems,
         ];
     }
