@@ -33,8 +33,7 @@
     </div>
 
     {{-- Vocabulary Companion Card (Chỉ hiện khi có từ đã đạt Mastery) --}}
-    <template x-if="pet && pet.random_word">
-        <div class="mb-3 rounded-xl border border-indigo-100 bg-indigo-50/70 p-2.5 space-y-1.5">
+    <div x-show="pet && pet.random_word" x-cloak class="mb-3 rounded-xl border border-indigo-100 bg-indigo-50/70 p-2.5 space-y-1.5">
             <div class="flex items-center justify-between">
                 <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-800 flex items-center gap-1">
                     <i data-lucide="book-open" class="h-3 w-3"></i>
@@ -66,7 +65,6 @@
                 </a>
             </div>
         </div>
-    </template>
 
     {{-- Pet Quick Actions Component --}}
     <x-pet.pet-actions />

@@ -1,31 +1,29 @@
 <div class="space-y-2 pt-2 border-t border-amber-100">
     {{-- Quick Feed Buttons (Server-Authoritative) --}}
-    <template x-if="pet && pet.is_active">
-        <div>
-            <div class="flex items-center justify-between text-[10px] font-bold text-slate-600 mb-1.5">
-                <span class="flex items-center gap-1">
-                    <i data-lucide="utensils" class="h-3 w-3 text-amber-600"></i>
-                    Cho ăn hôm nay:
-                </span>
-                <span>Còn <strong class="text-amber-700" x-text="pet.daily_remaining || 0"></strong>/100 XP</span>
-            </div>
-
-            <div class="grid grid-cols-2 gap-1.5">
-                <button type="button" @click="feed(5)"
-                        :disabled="feeding || !pet || pet.daily_remaining < 5"
-                        class="inline-flex items-center justify-center gap-1 rounded-xl bg-amber-500 py-1.5 text-[11px] font-bold text-white transition hover:bg-amber-600 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm">
-                    <span>🍖 Cho ăn +5 XP</span>
-                </button>
-                <button type="button" @click="feed(10)"
-                        :disabled="feeding || !pet || pet.daily_remaining < 10"
-                        class="inline-flex items-center justify-center gap-1 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 py-1.5 text-[11px] font-bold text-white transition hover:from-amber-600 hover:to-orange-600 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm">
-                    <span>🍖 Cho ăn +10 XP</span>
-                </button>
-            </div>
-
-            <p x-show="feedNotice" x-text="feedNotice" class="text-center text-[10px] font-bold text-emerald-600 mt-1"></p>
+    <div x-show="pet && pet.is_active" x-cloak>
+        <div class="flex items-center justify-between text-[10px] font-bold text-slate-600 mb-1.5">
+            <span class="flex items-center gap-1">
+                <i data-lucide="utensils" class="h-3 w-3 text-amber-600"></i>
+                Cho ăn hôm nay:
+            </span>
+            <span>Còn <strong class="text-amber-700" x-text="pet.daily_remaining || 0"></strong>/100 XP</span>
         </div>
-    </template>
+
+        <div class="grid grid-cols-2 gap-1.5">
+            <button type="button" @click="feed(5)"
+                    :disabled="feeding || !pet || pet.daily_remaining < 5"
+                    class="inline-flex items-center justify-center gap-1 rounded-xl bg-amber-500 py-1.5 text-[11px] font-bold text-white transition hover:bg-amber-600 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm">
+                <span>🍖 Cho ăn +5 XP</span>
+            </button>
+            <button type="button" @click="feed(10)"
+                    :disabled="feeding || !pet || pet.daily_remaining < 10"
+                    class="inline-flex items-center justify-center gap-1 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 py-1.5 text-[11px] font-bold text-white transition hover:from-amber-600 hover:to-orange-600 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm">
+                <span>🍖 Cho ăn +10 XP</span>
+            </button>
+        </div>
+
+        <p x-show="feedNotice" x-text="feedNotice" class="text-center text-[10px] font-bold text-emerald-600 mt-1"></p>
+    </div>
 
     {{-- Bottom Utility Bar --}}
     <div class="flex items-center justify-between pt-1 text-[11px]">

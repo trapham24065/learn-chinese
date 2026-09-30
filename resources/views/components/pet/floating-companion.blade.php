@@ -73,7 +73,8 @@ window.petFloatingCompanion = function petFloatingCompanion() {
         dialogueIndex: 0,
         feeding: false,
         feedNotice: '',
-        hearts: [],
+        showHearts: false,
+        heartTimer: null,
 
         async initCompanion() {
             try {
@@ -202,16 +203,10 @@ window.petFloatingCompanion = function petFloatingCompanion() {
         },
 
         spawnHeart() {
-            const id = Date.now() + Math.random();
-            const x = (Math.random() * 30) - 15;
-            const y = (Math.random() * 10) - 20;
-            const size = 16 + Math.floor(Math.random() * 8);
-            const icons = ['❤️', '✨', '💖', '⭐'];
-            const icon = icons[Math.floor(Math.random() * icons.length)];
-            this.hearts.push({ id, x, y, size, icon });
-
-            setTimeout(() => {
-                this.hearts = this.hearts.filter(h => h.id !== id);
+            this.showHearts = true;
+            clearTimeout(this.heartTimer);
+            this.heartTimer = setTimeout(() => {
+                this.showHearts = false;
             }, 1400);
         },
 
