@@ -50,10 +50,17 @@ class AppServiceProvider extends ServiceProvider
         View::composer('layouts.app', function ($view) {
             $user = Auth::guard('web')->user();
 
-            // C2: Cache per-user streak for 1 hour to avoid loading all study_sessions on every page
-            $streak = $user
-                ? Cache::remember("streak_{$user->id}", 3600, fn () => $user->calculateStreak())
-                : 0;
+            $streak = 0;
+            if ($user) {
+                $streak = Cache::remember("streak_{$user->id}", 60, function () use ($user) {
+                    $streakService = app(\App\Services\StreakService::class);
+                    $activeStreak = $streakService->getCurrentStreak($user);
+                    if ($activeStreak === 0) {
+                        $activeStreak = $user->calculateStreak();
+                    }
+                    return $activeStreak;
+                });
+            }
 
             $view->with([
                 'authUser'      => $user,

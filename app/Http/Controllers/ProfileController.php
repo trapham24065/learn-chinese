@@ -23,17 +23,27 @@ class ProfileController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
+        $streakService = app(\App\Services\StreakService::class);
+        $activeStreak = $streakService->getCurrentStreak($user);
+        if ($activeStreak === 0) {
+            $activeStreak = $user->calculateStreak();
+        }
+
+        $petService = app(\App\Services\Pet\PetService::class);
+        $userPet = $petService->getActivePet($user);
+
         $stats = [
             'flashcards' => \App\Models\Flashcard::count(),
             'lessons'    => \App\Models\Lesson::where('is_published', true)->count(),
             'completed'  => $user->lessonProgresses()->where('status', 'completed')->count(),
-            'streak'     => $user->calculateStreak(),
+            'streak'     => $activeStreak,
             'course_registrations' => $courseRegistrations->count(),
         ];
 
         return view('profile.edit', [
             'user'  => $user,
             'stats' => $stats,
+            'userPet' => $userPet,
             'courseRegistrations' => $courseRegistrations,
         ]);
     }

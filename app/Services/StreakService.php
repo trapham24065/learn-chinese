@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use App\Models\UserLearningStat;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 class StreakService
 {
@@ -68,6 +69,8 @@ class StreakService
             $stats->save();
             $isNewDay = true;
         }
+
+        Cache::forget("streak_{$user->id}");
 
         $isMilestone = $isNewDay && ($stats->current_streak % 5 === 0);
 

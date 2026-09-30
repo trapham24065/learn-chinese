@@ -285,15 +285,15 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
 
                 <div class="flex flex-col items-center text-center">
                     {{-- Pet Avatar --}}
-                    <div class="relative">
-                        <div class="grid h-40 w-40 sm:h-48 sm:w-48 place-items-center rounded-[2.5rem] bg-white shadow-2xl shadow-amber-900/10 border-4 transition-transform duration-300 hover:scale-105 select-none"
+                    <div class="relative pb-2">
+                        <div class="flex h-48 w-48 sm:h-56 sm:w-56 items-center justify-center rounded-[2.5rem] bg-white shadow-2xl shadow-amber-900/10 border-4 transition-transform duration-300 hover:scale-105 select-none p-3"
                              :class="getPetBorderClass()">
                             <x-pet-avatar :stage="$userPet->stage" :mood="$userPet->getHungerState()" size="xl" :interactive="true" />
                         </div>
 
                         {{-- Mood Indicator Badge --}}
-                        <div class="absolute -bottom-2 inset-x-0 flex justify-center">
-                            <span class="rounded-full px-3 py-1 text-xs font-black uppercase shadow-md border-2 border-white"
+                        <div class="absolute -bottom-1 sm:-bottom-1.5 inset-x-0 flex justify-center z-10">
+                            <span class="rounded-full px-3.5 py-1 text-xs font-black uppercase shadow-md border-2 border-white tracking-wide"
                                   :class="getMoodBadgeClass()"
                                   x-text="getMoodText()">
                             </span>

@@ -96,7 +96,7 @@
                     <div class="flex items-center gap-2">
                         <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-400/20 border border-amber-400/30 px-3 py-0.5 text-xs font-bold text-amber-300">
                             <i data-lucide="sparkles" class="h-3 w-3 fill-current"></i>
-                            <span>{{ $totalXp }} XP</span>
+                            <span>Tích lũy XP: {{ $totalXp }} XP</span>
                         </span>
                         @if($dailyGoal['completed'])
                             <span class="rounded-full bg-emerald-500/20 border border-emerald-500/30 px-2.5 py-0.5 text-[11px] font-bold text-emerald-300">
@@ -154,6 +154,26 @@
                         <span class="font-bold text-white text-[11px]">{{ $dailyGoal['practice']['current'] ?? 0 }}/{{ $dailyGoal['practice']['target'] ?? 3 }}</span>
                     </div>
                 </div>
+
+                {{-- Course Progress & Quiz Score Integration --}}
+                <div class="mt-2.5 grid grid-cols-2 gap-2 text-xs">
+                    <div class="rounded-xl border border-white/5 bg-white/5 px-2.5 py-1.5 flex items-center justify-between">
+                        <span class="text-slate-400 flex items-center gap-1.5">
+                            <i data-lucide="book-open" class="h-3.5 w-3.5 text-amber-300"></i>
+                            <span class="text-[11px]">Bài hoàn thành</span>
+                        </span>
+                        <span class="font-bold text-white text-[11px]">
+                            {{ $completedLessonsCount }}/{{ $totalLessonsCount }} <span class="text-slate-400 font-normal">({{ $completionRate }}%)</span>
+                        </span>
+                    </div>
+                    <div class="rounded-xl border border-white/5 bg-white/5 px-2.5 py-1.5 flex items-center justify-between">
+                        <span class="text-slate-400 flex items-center gap-1.5">
+                            <i data-lucide="target" class="h-3.5 w-3.5 text-emerald-400"></i>
+                            <span class="text-[11px]">Điểm TB Quiz</span>
+                        </span>
+                        <span class="font-bold text-emerald-300 text-[11px]">{{ $averageScore }}%</span>
+                    </div>
+                </div>
             </div>
 
             <div class="mt-4 flex items-center justify-between text-xs text-slate-300 border-t border-white/10 pt-3">
@@ -198,11 +218,22 @@
             <div class="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
                 {{-- Left: Pet Avatar & Speech Bubble --}}
                 <div class="flex items-start gap-4 sm:gap-5 min-w-0">
-                    {{-- Pet Avatar with Hunger Mood Ring --}}
-                    <div class="relative shrink-0">
-                        <div class="grid h-20 w-20 sm:h-24 sm:w-24 place-items-center rounded-3xl bg-white shadow-md shadow-amber-900/10 border-2 {{ $pHungerState === 'happy' ? 'border-emerald-300 ring-4 ring-emerald-500/10' : ($pHungerState === 'hungry' ? 'border-amber-300 ring-4 ring-amber-500/10' : 'border-rose-300 ring-4 ring-rose-500/10') }} transition-transform duration-300 hover:scale-105 select-none p-1">
-                            <x-pet-avatar :stage="$pPet->stage" :mood="$pHungerState" size="md" :interactive="true" />
+                    {{-- Pet Avatar with Hunger Mood Ring & Interactive Touch --}}
+                    <div class="relative shrink-0 select-none cursor-pointer"
+                         @click="pokeHeroPet($event)"
+                         title="Chạm vào Pet để tương tác!">
+                        <div class="grid h-20 w-20 sm:h-24 sm:w-24 place-items-center rounded-3xl bg-white shadow-md shadow-amber-900/10 border-2 {{ $pHungerState === 'happy' ? 'border-emerald-300 ring-4 ring-emerald-500/10' : ($pHungerState === 'hungry' ? 'border-amber-300 ring-4 ring-amber-500/10' : 'border-rose-300 ring-4 ring-rose-500/10') }} transition-all duration-300 hover:scale-105 active:scale-90 p-1"
+                             :class="poking ? 'scale-110 -rotate-3 ring-8 ring-amber-400/40 shadow-xl' : ''">
+                            <x-pet-avatar :stage="$pPet->stage" :mood="$pHungerState" size="md" :interactive="false" />
                         </div>
+
+                        {{-- Floating Reaction Particles --}}
+                        <template x-for="p in particles" :key="p.id">
+                            <span class="pointer-events-none absolute font-bold text-lg select-none transition-all duration-700 ease-out z-20"
+                                  :style="`left: ${p.x}px; top: ${p.y}px; opacity: ${p.opacity}; transform: translateY(-${p.rise}px) scale(${p.scale});`"
+                                  x-text="p.emoji"></span>
+                        </template>
+
                         {{-- Mood Indicator Badge --}}
                         <div class="absolute -bottom-1 -right-1 flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-black uppercase shadow-sm border border-white {{ $pHungerState === 'happy' ? 'bg-emerald-500 text-white' : ($pHungerState === 'hungry' ? 'bg-amber-400 text-amber-950' : ($pHungerState === 'dormant' ? 'bg-indigo-600 text-white' : 'bg-rose-500 text-white')) }}">
                             {{ match($pHungerState) { 'happy' => '😊 No', 'hungry' => '🙂 Hơi đói', 'very_hungry' => '😟 Rất đói', 'weak' => '😢 Yếu', 'dormant' => '💤 Ngủ đông', default => 'Pet' } }}
@@ -383,64 +414,6 @@
         </div>
     </section>
     @endif
-
-    {{-- Overview Stat Cards --}}
-    <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        <article class="rounded-[1.75rem] border border-white/80 bg-white/80 p-5 shadow-xl shadow-slate-900/5 backdrop-blur transition hover:-translate-y-0.5">
-            <div class="flex items-center justify-between">
-                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-[#991b1b]">Streak</p>
-                <i data-lucide="flame" class="h-5 w-5 text-amber-500"></i>
-            </div>
-            <p class="mt-3 text-3xl font-black tracking-tight text-slate-950">
-                <span x-text="streakDays">{{ $streakDays }}</span> ngày
-            </p>
-            <p class="mt-2 text-xs text-slate-500">Giữ nhịp học liên tục</p>
-        </article>
-
-        <article class="rounded-[1.75rem] border border-amber-200/80 bg-gradient-to-br from-amber-50/80 to-white/90 p-5 shadow-xl shadow-amber-500/5 backdrop-blur transition hover:-translate-y-0.5">
-            <div class="flex items-center justify-between">
-                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-amber-700">Tích lũy XP</p>
-                <i data-lucide="sparkles" class="h-5 w-5 text-amber-500 fill-current"></i>
-            </div>
-            <p class="mt-3 text-3xl font-black tracking-tight text-amber-950">
-                {{ number_format($totalXp) }} <span class="text-base font-bold text-amber-600">XP</span>
-            </p>
-            <p class="mt-2 text-xs text-amber-700/80">Điểm kinh nghiệm học</p>
-        </article>
-
-        <article class="rounded-[1.75rem] border border-white/80 bg-white/80 p-5 shadow-xl shadow-slate-900/5 backdrop-blur transition hover:-translate-y-0.5">
-            <div class="flex items-center justify-between">
-                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-[#991b1b]">Điểm trung bình</p>
-                <i data-lucide="target" class="h-5 w-5 text-[#991b1b]"></i>
-            </div>
-            <p class="mt-3 text-3xl font-black tracking-tight text-slate-950">
-                {{ $averageScore }}%
-            </p>
-            <p class="mt-2 text-xs text-slate-500">Dựa trên các bài Quiz</p>
-        </article>
-
-        <article class="rounded-[1.75rem] border border-white/80 bg-white/80 p-5 shadow-xl shadow-slate-900/5 backdrop-blur transition hover:-translate-y-0.5">
-            <div class="flex items-center justify-between">
-                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-[#991b1b]">Bài hoàn thành</p>
-                <i data-lucide="book-open" class="h-5 w-5 text-[#991b1b]"></i>
-            </div>
-            <p class="mt-3 text-3xl font-black tracking-tight text-slate-950">
-                <span x-text="completedLessonsCount">{{ $completedLessonsCount }}</span> / <span x-text="totalLessonsCount">{{ $totalLessonsCount }}</span>
-            </p>
-            <p class="mt-2 text-xs text-slate-500">Theo lộ trình bài học</p>
-        </article>
-
-        <article class="rounded-[1.75rem] border border-white/80 bg-white/80 p-5 shadow-xl shadow-slate-900/5 backdrop-blur transition hover:-translate-y-0.5 sm:col-span-2 lg:col-span-1">
-            <div class="flex items-center justify-between">
-                <p class="text-xs font-semibold uppercase tracking-[0.22em] text-[#991b1b]">Tỉ lệ hoàn thành</p>
-                <i data-lucide="trending-up" class="h-5 w-5 text-[#991b1b]"></i>
-            </div>
-            <p class="mt-3 text-3xl font-black tracking-tight text-slate-950">
-                <span x-text="completionRate">{{ $completionRate }}</span>%
-            </p>
-            <p class="mt-2 text-xs text-slate-500">Tiến độ khóa học tổng thể</p>
-        </article>
-    </section>
 
     {{-- Interactive 7-Day Chart & Streak Banner --}}
     <section class="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
@@ -1074,6 +1047,51 @@ function dashboardPetHero(config) {
         dialogueIndex: 0,
         feeding: false,
         feedNotice: '',
+        poking: false,
+        particles: [],
+        pokeReactions: [
+            'Hihi, nhột quá nè! Học tiếp thôi nào! 🥰',
+            'Cậu gọi tớ hả? Cùng cố gắng đạt mục tiêu hôm nay nhé! ✨',
+            'Tớ đang tràn đầy năng lượng! Cố lên bạn ơi! 🐉',
+            'Chạm nhẹ lấy may mắn học thuộc bài siêu nhanh nha! 🍀',
+            'Cố lên nha, tớ luôn đồng hành cùng cậu mỗi ngày! ❤️',
+            'Oa, bạn học chăm chỉ quá! Tớ tự hào về bạn lắm! ⭐'
+        ],
+
+        pokeHeroPet(event) {
+            this.poking = true;
+            setTimeout(() => { this.poking = false; }, 800);
+
+            // Change dialogue to playful reaction
+            const randReaction = this.pokeReactions[Math.floor(Math.random() * this.pokeReactions.length)];
+            this.currentDialogue = randReaction;
+
+            // Spawn cute floating particles
+            const emojis = ['❤️', '✨', '⭐', '💖', '🥰', '🐉'];
+            for (let i = 0; i < 3; i++) {
+                const id = Date.now() + Math.random();
+                const p = {
+                    id: id,
+                    emoji: emojis[Math.floor(Math.random() * emojis.length)],
+                    x: 15 + Math.random() * 45,
+                    y: 10 + Math.random() * 25,
+                    rise: 0,
+                    opacity: 1,
+                    scale: 1
+                };
+                this.particles.push(p);
+
+                setTimeout(() => {
+                    p.rise = 45 + Math.random() * 30;
+                    p.opacity = 0;
+                    p.scale = 1.35;
+                }, 30);
+
+                setTimeout(() => {
+                    this.particles = this.particles.filter(item => item.id !== id);
+                }, 750);
+            }
+        },
 
         nextDialogue() {
             if (!this.dialogues || this.dialogues.length === 0) return;

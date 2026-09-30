@@ -50,20 +50,6 @@
                     </span>
                 </a>
 
-                {{-- Bạn đồng hành Pet --}}
-                @auth
-                <a href="{{ route('pet.index') }}"
-                    class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('pet.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
-                    <span class="flex items-center gap-3">
-                        <span class="grid h-7 w-7 place-items-center rounded-lg {{ request()->routeIs('pet.*') ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
-                            <i data-lucide="sparkles" class="h-4 w-4"></i>
-                        </span>
-                        Bạn đồng hành Pet
-                    </span>
-                    <span class="rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-1.5 py-0.2 text-[9px] font-black uppercase text-white shadow-sm">Pet</span>
-                </a>
-                @endauth
-
                 {{-- Flashcard --}}
                 @if(!function_exists('setting_bool') || setting_bool('feature_flashcards', true))
                 <a href="{{ route('flashcards') }}"
@@ -218,7 +204,7 @@
                     <i data-lucide="flame" class="h-3.5 w-3.5 text-amber-400"></i>
                 </div>
                 <div class="mt-1.5 flex items-baseline justify-between">
-                    <p class="text-xl font-black">{{ str_pad($sidebarStreak ?? 0, 2, '0', STR_PAD_LEFT) }}</p>
+                    <p class="text-xl font-black">{{ $sidebarStreak ?? 0 }}</p>
                     <p class="text-[11px] text-slate-300">ngày liên tiếp</p>
                 </div>
                 <div class="mt-2 h-1.5 rounded-full bg-white/10">
@@ -241,13 +227,19 @@
                         <p class="truncate text-[10px] text-slate-500">{{ $authUser->isAdmin() ? 'Quản trị viên' : $authUser->email }}</p>
                     </div>
                 </a>
-                <form method="POST" action="{{ route('logout') }}" class="shrink-0">
-                    @csrf
-                    <button type="submit" title="Đăng xuất"
-                        class="grid h-8 w-8 place-items-center rounded-xl bg-white text-slate-600 hover:bg-red-50 hover:text-red-600 border border-slate-200 transition">
-                        <i data-lucide="log-out" class="h-3.5 w-3.5"></i>
-                    </button>
-                </form>
+                <div class="flex items-center gap-1 shrink-0">
+                    <a href="{{ route('pet.index') }}" title="Bạn đồng hành Pet"
+                        class="grid h-8 w-8 place-items-center rounded-xl bg-amber-50 text-amber-600 hover:bg-amber-100 hover:text-amber-800 border border-amber-200 transition">
+                        <i data-lucide="sparkles" class="h-3.5 w-3.5"></i>
+                    </a>
+                    <form method="POST" action="{{ route('logout') }}" class="shrink-0">
+                        @csrf
+                        <button type="submit" title="Đăng xuất"
+                            class="grid h-8 w-8 place-items-center rounded-xl bg-white text-slate-600 hover:bg-red-50 hover:text-red-600 border border-slate-200 transition">
+                            <i data-lucide="log-out" class="h-3.5 w-3.5"></i>
+                        </button>
+                    </form>
+                </div>
             </div>
             @else
             <div class="space-y-1.5" x-data="{ guestXp: 0 }" x-init="
@@ -383,19 +375,6 @@
                             Trang chủ
                         </a>
 
-                        {{-- Bạn đồng hành Pet Mobile --}}
-                        @auth
-                        <a href="{{ route('pet.index') }}"
-                           @click="mobileMenuOpen = false"
-                           class="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ request()->routeIs('pet.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
-                            <span class="flex items-center gap-3">
-                                <i data-lucide="sparkles" class="h-4 w-4 shrink-0 text-amber-500"></i>
-                                Bạn đồng hành Pet
-                            </span>
-                            <span class="shrink-0 rounded-full bg-amber-100 border border-amber-300 px-2 py-0.5 text-[9px] font-black text-amber-800">Pet</span>
-                        </a>
-                        @endauth
-
                         @if(!function_exists('setting_bool') || setting_bool('feature_flashcards', true))
                         <a href="{{ route('flashcards') }}"
                            @click="mobileMenuOpen = false"
@@ -526,7 +505,7 @@
                                 <p class="text-xs font-semibold text-slate-400">Streak học tập</p>
                             </div>
                             <p class="text-sm font-black text-amber-300">
-                                {{ str_pad($sidebarStreak ?? 0, 2, '0', STR_PAD_LEFT) }} ngày
+                                {{ $sidebarStreak ?? 0 }} ngày
                             </p>
                         </div>
 
@@ -542,13 +521,19 @@
                                         <p class="truncate text-[10px] text-slate-500">{{ $authUser->isAdmin() ? 'Quản trị viên' : $authUser->email }}</p>
                                     </div>
                                 </a>
-                                <form method="POST" action="{{ route('logout') }}" class="shrink-0">
-                                    @csrf
-                                    <button type="submit" title="Đăng xuất"
-                                            class="grid h-8 w-8 place-items-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:bg-red-50 hover:text-red-600">
-                                        <i data-lucide="log-out" class="h-3.5 w-3.5"></i>
-                                    </button>
-                                </form>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <a href="{{ route('pet.index') }}" @click="mobileMenuOpen = false" title="Bạn đồng hành Pet"
+                                       class="grid h-8 w-8 place-items-center rounded-lg border border-amber-200 bg-amber-50 text-amber-600 transition hover:bg-amber-100 hover:text-amber-800">
+                                        <i data-lucide="sparkles" class="h-3.5 w-3.5"></i>
+                                    </a>
+                                    <form method="POST" action="{{ route('logout') }}" class="shrink-0">
+                                        @csrf
+                                        <button type="submit" title="Đăng xuất"
+                                                class="grid h-8 w-8 place-items-center rounded-lg border border-slate-200 bg-white text-slate-500 transition hover:bg-red-50 hover:text-red-600">
+                                            <i data-lucide="log-out" class="h-3.5 w-3.5"></i>
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                         @else
                             <div x-data="{ guestXp: 0 }" x-init="

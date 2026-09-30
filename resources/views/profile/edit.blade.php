@@ -234,6 +234,53 @@ $initial       = mb_strtoupper(mb_substr($user->name, 0, 1));
 </div>
 
 {{-- ══════════════════════════════════════════════
+     ZONE 1.5 · PET COMPANION — Bạn đồng hành Pet
+══════════════════════════════════════════════ --}}
+<div class="mb-6 overflow-hidden rounded-[2rem] border border-amber-200/80 bg-gradient-to-br from-amber-50/90 via-orange-50/40 to-white p-6 shadow-xl shadow-amber-900/5">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+        <div class="flex items-center gap-4">
+            <div class="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-white shadow-md shadow-amber-900/10 border-2 border-amber-300 p-1">
+                @if(isset($userPet) && $userPet)
+                    <x-pet-avatar :stage="$userPet->stage" :mood="$userPet->getHungerState()" size="sm" :interactive="true" />
+                @else
+                    <span class="text-3xl">🥚</span>
+                @endif
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-amber-700 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full">
+                        Bạn đồng hành
+                    </span>
+                    @if(isset($userPet) && $userPet)
+                    <span class="text-xs font-semibold text-slate-500">
+                        Giai đoạn {{ $userPet->stage }}: {{ optional($userPet->pet->stages->where('stage', $userPet->stage)->first())->name ?? 'Trứng' }}
+                    </span>
+                    @endif
+                </div>
+                <h3 class="mt-1 text-lg font-black text-slate-900">
+                    {{ isset($userPet) && $userPet ? ($userPet->name ?? $userPet->pet->name) : 'Rồng Con' }}
+                </h3>
+                <p class="text-xs text-slate-600 mt-0.5">
+                    @if(isset($userPet) && $userPet)
+                        Độ no: <strong class="text-slate-900">{{ $userPet->hunger }}/100</strong> • Tích lũy nuôi: <strong class="text-amber-700">{{ $userPet->total_fed_xp }} XP</strong>
+                    @else
+                        Pet học tập đồng hành cùng bạn trên mọi chặng đường rèn luyện tiếng Trung.
+                    @endif
+                </p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="{{ route('pet.index') }}"
+               class="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-amber-500 to-[#991b1b] px-5 py-3 text-xs font-bold text-white shadow-lg shadow-red-950/15 transition hover:opacity-95 hover:shadow-xl active:scale-95">
+                <i data-lucide="sparkles" class="h-4 w-4"></i>
+                <span>{{ isset($userPet) && $userPet ? 'Vào phòng nuôi Pet' : 'Khám phá Pet ngay' }}</span>
+                <i data-lucide="arrow-right" class="h-3.5 w-3.5"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+{{-- ══════════════════════════════════════════════
      ZONE 2 · FORMS — Edit info + Change password
 ══════════════════════════════════════════════ --}}
 <div class="mb-6 grid gap-4 lg:grid-cols-2">
@@ -674,26 +721,6 @@ $initial       = mb_strtoupper(mb_substr($user->name, 0, 1));
 
     {{-- Danger zone --}}
     <div class="flex flex-col gap-4">
-        {{-- Study today reminder --}}
-        <div class="relative overflow-hidden rounded-[2rem] {{ $studiedToday ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200' }} border p-5">
-            <div class="flex items-center gap-3">
-                <span class="text-2xl">{{ $studiedToday ? '🎉' : '⏰' }}</span>
-                <div>
-                    <p class="text-sm font-black {{ $studiedToday ? 'text-emerald-800' : 'text-amber-800' }}">
-                        {{ $studiedToday ? 'Đã học hôm nay!' : 'Chưa học hôm nay' }}
-                    </p>
-                    <p class="text-xs {{ $studiedToday ? 'text-emerald-600' : 'text-amber-600' }}">
-                        {{ $studiedToday ? 'Streak ' . $streak . ' ngày đang duy trì tốt 🔥' : 'Học thêm để duy trì streak ' . $streak . ' ngày!' }}
-                    </p>
-                </div>
-            </div>
-            @if(!$studiedToday)
-            <a href="{{ route('flashcards') }}"
-                class="mt-3 inline-block rounded-full bg-amber-500 px-4 py-1.5 text-xs font-bold text-white transition hover:bg-amber-600">
-                Học ngay →
-            </a>
-            @endif
-        </div>
 
         {{-- Danger zone --}}
         <div class="relative flex-1 overflow-hidden rounded-[2rem] border border-red-100 bg-red-50/60 p-6">

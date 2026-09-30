@@ -142,6 +142,19 @@ class User extends Authenticatable implements FilamentUser
 
     public function hasStudiedToday(): bool
     {
+        $timezone = config('app.timezone', 'Asia/Ho_Chi_Minh');
+        $today = now($timezone)->toDateString();
+
+        $stats = $this->learningStats;
+        if ($stats && $stats->last_activity_date) {
+            $lastDate = is_string($stats->last_activity_date)
+                ? substr($stats->last_activity_date, 0, 10)
+                : $stats->last_activity_date->toDateString();
+            if ($lastDate === $today) {
+                return true;
+            }
+        }
+
         return $this->studySessions()
             ->get()
             ->contains(fn (StudySession $s) => ($s->completed_at ?? $s->started_at ?? $s->created_at)->isToday());

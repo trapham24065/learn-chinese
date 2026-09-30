@@ -10,9 +10,10 @@
     $sizeClasses = match($size) {
         'xs' => 'w-8 h-8',
         'sm' => 'w-12 h-12',
-        'md' => 'w-20 h-20',
-        'lg' => 'w-36 h-36',
-        'xl' => 'w-48 h-48 sm:w-56 sm:h-56',
+        'md' => 'w-20 h-20 sm:w-24 sm:h-24',
+        'lg' => 'w-32 h-32 sm:w-36 sm:h-36',
+        'xl' => 'w-40 h-40 sm:w-48 sm:h-48',
+        '2xl' => 'w-48 h-48 sm:w-56 sm:h-56',
         default => 'w-20 h-20',
     };
 

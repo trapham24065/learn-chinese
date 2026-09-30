@@ -704,30 +704,39 @@
                     <span class="hidden sm:inline">Trước</span>
                 </button>
 
-                <template x-if="!flipped">
-                    {{-- Flip card --}}
+                {{-- Flip card --}}
+                <div x-show="!flipped" x-cloak>
                     <button
                         @click="flip()"
-                        class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-8 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800">
-                        <i data-lucide="eye" class="h-4 w-4"></i>
-                        Xem đáp án
+                        class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-8 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 active:scale-95">
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        <span>Xem đáp án</span>
                     </button>
-                </template>
+                </div>
 
-                <template x-if="flipped">
-                    <div class="flex items-center gap-3">
-                        <button
-                            @click="submitReview('review')"
-                            class="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-5 py-2.5 text-sm font-bold text-orange-600 shadow-sm transition hover:bg-orange-100">
-                            <i data-lucide="rotate-ccw" class="h-4 w-4"></i> Cần ôn lại
-                        </button>
-                        <button
-                            @click="submitReview('known')"
-                            class="inline-flex items-center gap-2 rounded-full bg-emerald-500 px-6 py-2.5 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-emerald-600 shadow-emerald-500/20">
-                            Đã thuộc <i data-lucide="check" class="h-4 w-4"></i>
-                        </button>
-                    </div>
-                </template>
+                {{-- Review options when flipped --}}
+                <div x-show="flipped" x-cloak class="flex items-center gap-3">
+                    <button
+                        @click="submitReview('review')"
+                        class="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-5 py-2.5 text-sm font-bold text-orange-600 shadow-sm transition hover:bg-orange-100 active:scale-95">
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                            <path d="M3 3v5h5"/>
+                        </svg>
+                        <span>Cần ôn lại</span>
+                    </button>
+                    <button
+                        @click="submitReview('known')"
+                        class="inline-flex items-center gap-2 rounded-full bg-emerald-500 px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-emerald-500/20 transition hover:-translate-y-0.5 hover:bg-emerald-600 active:scale-95">
+                        <span>Đã thuộc</span>
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 6 9 17l-5-5"/>
+                        </svg>
+                    </button>
+                </div>
 
                 {{-- Next / Complete --}}
                 <button
