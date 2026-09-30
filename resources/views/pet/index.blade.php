@@ -98,11 +98,9 @@
                 <div class="flex flex-col items-center text-center">
                     {{-- Pet Avatar --}}
                     <div class="relative">
-                        <div class="grid h-36 w-36 sm:h-44 sm:w-44 place-items-center rounded-[2.5rem] bg-white shadow-2xl shadow-amber-900/10 border-4 transition-transform duration-300 hover:scale-105 select-none"
+                        <div class="grid h-40 w-40 sm:h-48 sm:w-48 place-items-center rounded-[2.5rem] bg-white shadow-2xl shadow-amber-900/10 border-4 transition-transform duration-300 hover:scale-105 select-none"
                              :class="getPetBorderClass()">
-                            <span class="text-7xl sm:text-8xl animate-bounce-short">
-                                {{ optional($userPet->pet->stages->where('stage', $userPet->stage)->first())->emoji ?? '🥚' }}
-                            </span>
+                            <x-pet-avatar :stage="$userPet->stage" :mood="$userPet->getHungerState()" size="xl" :interactive="true" />
                         </div>
 
                         {{-- Mood Indicator Badge --}}

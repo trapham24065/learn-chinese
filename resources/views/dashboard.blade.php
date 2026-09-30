@@ -200,8 +200,8 @@
                 <div class="flex items-start gap-4 sm:gap-5 min-w-0">
                     {{-- Pet Avatar with Hunger Mood Ring --}}
                     <div class="relative shrink-0">
-                        <div class="grid h-20 w-20 sm:h-24 sm:w-24 place-items-center rounded-3xl bg-white shadow-md shadow-amber-900/10 border-2 {{ $pHungerState === 'happy' ? 'border-emerald-300 ring-4 ring-emerald-500/10' : ($pHungerState === 'hungry' ? 'border-amber-300 ring-4 ring-amber-500/10' : 'border-rose-300 ring-4 ring-rose-500/10') }} transition-transform duration-300 hover:scale-105 select-none">
-                            <span class="text-4xl sm:text-5xl animate-bounce-short">{{ $pEmoji }}</span>
+                        <div class="grid h-20 w-20 sm:h-24 sm:w-24 place-items-center rounded-3xl bg-white shadow-md shadow-amber-900/10 border-2 {{ $pHungerState === 'happy' ? 'border-emerald-300 ring-4 ring-emerald-500/10' : ($pHungerState === 'hungry' ? 'border-amber-300 ring-4 ring-amber-500/10' : 'border-rose-300 ring-4 ring-rose-500/10') }} transition-transform duration-300 hover:scale-105 select-none p-1">
+                            <x-pet-avatar :stage="$pPet->stage" :mood="$pHungerState" size="md" :interactive="true" />
                         </div>
                         {{-- Mood Indicator Badge --}}
                         <div class="absolute -bottom-1 -right-1 flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-black uppercase shadow-sm border border-white {{ $pHungerState === 'happy' ? 'bg-emerald-500 text-white' : ($pHungerState === 'hungry' ? 'bg-amber-400 text-amber-950' : ($pHungerState === 'dormant' ? 'bg-indigo-600 text-white' : 'bg-rose-500 text-white')) }}">
