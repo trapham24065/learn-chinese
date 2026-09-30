@@ -174,7 +174,7 @@
 </div>
 
 <script>
-function floatingPetCompanion() {
+window.floatingPetCompanion = function floatingPetCompanion() {
     return {
         pet: null,
         isOpen: false,
@@ -336,6 +336,14 @@ function floatingPetCompanion() {
             return 'bg-rose-500';
         }
     };
+};
+
+if (typeof Alpine !== 'undefined' && Alpine.data) {
+    Alpine.data('floatingPetCompanion', () => window.floatingPetCompanion());
+} else {
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('floatingPetCompanion', () => window.floatingPetCompanion());
+    });
 }
 </script>
 @endif

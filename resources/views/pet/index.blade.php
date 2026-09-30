@@ -3,6 +3,194 @@
 @section('title', 'Phòng Nuôi Pet Học Tập | Chinese Deck')
 
 @section('content')
+<script>
+window.petRoom = function petRoom(config) {
+    return {
+        activeTab: 'overview',
+        dailyRemaining: config.dailyRemaining || 0,
+        hunger: config.userPet?.hunger || 100,
+        hungerState: config.userPet?.hunger_state || 'happy',
+        currentDialogue: config.currentDialogue || 'Cùng học tiếng Trung chăm chỉ nhé!',
+        dialogues: config.dialogues || [],
+        dialogueIndex: 0,
+        masteredWords: config.masteredWords || [],
+        vocabSearch: '',
+        feeding: false,
+        feedMessage: '',
+        isError: false,
+
+        // Rename modal
+        renameModalOpen: false,
+        renaming: false,
+        petNewName: config.userPet?.name || '',
+
+        // Stage up celebration
+        celebrationModalOpen: false,
+        celebrationTitle: '',
+        celebrationDesc: '',
+        celebrationEmoji: '🐉',
+
+        initRoom() {
+            setTimeout(() => window.refreshIcons?.(), 100);
+        },
+
+        setTab(tab) {
+            this.activeTab = tab;
+            setTimeout(() => window.refreshIcons?.(), 50);
+        },
+
+        nextDialogue() {
+            if (!this.dialogues || this.dialogues.length === 0) return;
+            this.dialogueIndex = (this.dialogueIndex + 1) % this.dialogues.length;
+            this.currentDialogue = this.dialogues[this.dialogueIndex];
+        },
+
+        filteredWords() {
+            if (!this.vocabSearch || !this.vocabSearch.trim()) return this.masteredWords || [];
+            const q = this.vocabSearch.toLowerCase().trim();
+            return (this.masteredWords || []).filter(w => 
+                (w.hanzi && w.hanzi.toLowerCase().includes(q)) ||
+                (w.pinyin && w.pinyin.toLowerCase().includes(q)) ||
+                (w.meaning && w.meaning.toLowerCase().includes(q))
+            );
+        },
+
+        speakWord(hanzi) {
+            if (!hanzi || !('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(hanzi);
+            utter.lang = 'zh-CN';
+            utter.rate = 0.85;
+            window.speechSynthesis.speak(utter);
+        },
+
+        async feed(amount) {
+            if (this.feeding || this.dailyRemaining < amount) return;
+            this.feeding = true;
+            this.feedMessage = '';
+            this.isError = false;
+
+            const key = 'room_feed_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9);
+            try {
+                const res = await fetch("{{ route('pet.feed') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ amount: amount, idempotency_key: key })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    this.hunger = data.hunger;
+                    this.dailyRemaining = data.daily_remaining;
+                    if (data.dialogue) this.currentDialogue = data.dialogue;
+                    if (data.dialogues) this.dialogues = data.dialogues;
+
+                    if (data.stage_up) {
+                        this.celebrationTitle = `Pet đã tiến hóa lên Giai đoạn ${data.new_stage}!`;
+                        this.celebrationDesc = `Pet của bạn đã trưởng thành hơn rất nhiều nhờ thành quả học tập chăm chỉ!`;
+                        this.celebrationEmoji = data.emoji || '🐉';
+                        this.celebrationModalOpen = true;
+                    } else {
+                        this.feedMessage = `+${data.xp_fed} EXP thành công cho Pet! 🍖`;
+                        setTimeout(() => { this.feedMessage = ''; }, 3500);
+                    }
+                } else {
+                    this.isError = true;
+                    this.feedMessage = data.error || 'Có lỗi xảy ra khi cho ăn';
+                }
+            } catch (e) {
+                this.isError = true;
+                this.feedMessage = 'Lỗi kết nối. Vui lòng thử lại!';
+            } finally {
+                this.feeding = false;
+                setTimeout(() => window.refreshIcons?.(), 50);
+            }
+        },
+
+        openRenameModal() {
+            this.renameModalOpen = true;
+        },
+
+        async submitRename() {
+            if (this.renaming || !this.petNewName.trim()) return;
+            this.renaming = true;
+            try {
+                const res = await fetch("{{ route('pet.rename') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ name: this.petNewName.trim() })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    this.renameModalOpen = false;
+                    window.location.reload();
+                }
+            } catch (e) {
+                alert('Không thể đổi tên lúc này');
+            } finally {
+                this.renaming = false;
+            }
+        },
+
+        closeCelebration() {
+            this.celebrationModalOpen = false;
+            window.location.reload();
+        },
+
+        getPetBorderClass() {
+            if (this.hunger >= 70) return 'border-emerald-300 ring-8 ring-emerald-500/10';
+            if (this.hunger >= 40) return 'border-amber-300 ring-8 ring-amber-500/10';
+            if (this.hunger >= 20) return 'border-orange-300 ring-8 ring-orange-500/10';
+            return 'border-rose-300 ring-8 ring-rose-500/10';
+        },
+
+        getMoodBadgeClass() {
+            if (this.hunger >= 70) return 'bg-emerald-500 text-white';
+            if (this.hunger >= 40) return 'bg-amber-400 text-amber-950';
+            if (this.hunger >= 20) return 'bg-orange-500 text-white';
+            return 'bg-rose-500 text-white';
+        },
+
+        getMoodText() {
+            if (this.hunger >= 70) return '😊 Rất vui & No';
+            if (this.hunger >= 40) return '🙂 Hơi đói';
+            if (this.hunger >= 20) return '😟 Đói nhiều';
+            if (this.hunger >= 1) return '😢 Rất yếu';
+            return '💤 Ngủ đông';
+        },
+
+        getHungerBarClass() {
+            if (this.hunger >= 70) return 'bg-emerald-500';
+            if (this.hunger >= 40) return 'bg-amber-400';
+            if (this.hunger >= 20) return 'bg-orange-500';
+            return 'bg-rose-500';
+        },
+
+        getHungerNote() {
+            if (this.hunger >= 70) return 'No bụng thoải mái';
+            if (this.hunger >= 40) return 'Nên cho ăn thêm một chút';
+            if (this.hunger >= 20) return 'Cần cho ăn sớm';
+            return 'Nguy cơ ngủ đông!';
+        }
+    };
+};
+
+if (typeof Alpine !== 'undefined' && Alpine.data) {
+    Alpine.data('petRoom', (config) => window.petRoom(config));
+} else {
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('petRoom', (config) => window.petRoom(config));
+    });
+}
+</script>
+
 <div class="max-w-5xl mx-auto px-4 py-6 sm:py-8 space-y-6"
      x-data="petRoom({
          activeTab: 'overview',
@@ -527,188 +715,5 @@
             </button>
         </div>
     </div>
-
 </div>
-
-@push('scripts')
-<script>
-function petRoom(config) {
-    return {
-        activeTab: 'overview',
-        dailyRemaining: config.dailyRemaining || 0,
-        hunger: config.userPet?.hunger || 100,
-        hungerState: config.userPet?.hunger_state || 'happy',
-        currentDialogue: config.currentDialogue || 'Cùng học tiếng Trung chăm chỉ nhé!',
-        dialogues: config.dialogues || [],
-        dialogueIndex: 0,
-        masteredWords: config.masteredWords || [],
-        vocabSearch: '',
-        feeding: false,
-        feedMessage: '',
-        isError: false,
-
-        // Rename modal
-        renameModalOpen: false,
-        renaming: false,
-        petNewName: config.userPet?.name || '',
-
-        // Stage up celebration
-        celebrationModalOpen: false,
-        celebrationTitle: '',
-        celebrationDesc: '',
-        celebrationEmoji: '🐉',
-
-        initRoom() {
-            setTimeout(() => window.refreshIcons?.(), 100);
-        },
-
-        setTab(tab) {
-            this.activeTab = tab;
-            setTimeout(() => window.refreshIcons?.(), 50);
-        },
-
-        nextDialogue() {
-            if (!this.dialogues || this.dialogues.length === 0) return;
-            this.dialogueIndex = (this.dialogueIndex + 1) % this.dialogues.length;
-            this.currentDialogue = this.dialogues[this.dialogueIndex];
-        },
-
-        filteredWords() {
-            if (!this.vocabSearch.trim()) return this.masteredWords;
-            const q = this.vocabSearch.toLowerCase().trim();
-            return this.masteredWords.filter(w => 
-                (w.hanzi && w.hanzi.toLowerCase().includes(q)) ||
-                (w.pinyin && w.pinyin.toLowerCase().includes(q)) ||
-                (w.meaning && w.meaning.toLowerCase().includes(q))
-            );
-        },
-
-        speakWord(hanzi) {
-            if (!hanzi || !('speechSynthesis' in window)) return;
-            window.speechSynthesis.cancel();
-            const utter = new SpeechSynthesisUtterance(hanzi);
-            utter.lang = 'zh-CN';
-            utter.rate = 0.85;
-            window.speechSynthesis.speak(utter);
-        },
-
-        async feed(amount) {
-            if (this.feeding || this.dailyRemaining < amount) return;
-            this.feeding = true;
-            this.feedMessage = '';
-            this.isError = false;
-
-            const key = 'room_feed_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9);
-            try {
-                const res = await fetch("{{ route('pet.feed') }}", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                        'Accept': 'application/json',
-                    },
-                    body: JSON.stringify({ amount: amount, idempotency_key: key })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    this.hunger = data.hunger;
-                    this.dailyRemaining = data.daily_remaining;
-                    if (data.dialogue) this.currentDialogue = data.dialogue;
-                    if (data.dialogues) this.dialogues = data.dialogues;
-
-                    if (data.stage_up) {
-                        this.celebrationTitle = `Pet đã tiến hóa lên Giai đoạn ${data.new_stage}!`;
-                        this.celebrationDesc = `Pet của bạn đã trưởng thành hơn rất nhiều nhờ thành quả học tập chăm chỉ!`;
-                        this.celebrationEmoji = data.emoji || '🐉';
-                        this.celebrationModalOpen = true;
-                    } else {
-                        this.feedMessage = `+${data.xp_fed} EXP thành công cho Pet! 🍖`;
-                        setTimeout(() => { this.feedMessage = ''; }, 3500);
-                    }
-                } else {
-                    this.isError = true;
-                    this.feedMessage = data.error || 'Có lỗi xảy ra khi cho ăn';
-                }
-            } catch (e) {
-                this.isError = true;
-                this.feedMessage = 'Lỗi kết nối. Vui lòng thử lại!';
-            } finally {
-                this.feeding = false;
-                setTimeout(() => window.refreshIcons?.(), 50);
-            }
-        },
-
-        openRenameModal() {
-            this.renameModalOpen = true;
-        },
-
-        async submitRename() {
-            if (this.renaming || !this.petNewName.trim()) return;
-            this.renaming = true;
-            try {
-                const res = await fetch("{{ route('pet.rename') }}", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                        'Accept': 'application/json',
-                    },
-                    body: JSON.stringify({ name: this.petNewName.trim() })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    this.renameModalOpen = false;
-                    window.location.reload();
-                }
-            } catch (e) {
-                alert('Không thể đổi tên lúc này');
-            } finally {
-                this.renaming = false;
-            }
-        },
-
-        closeCelebration() {
-            this.celebrationModalOpen = false;
-            window.location.reload();
-        },
-
-        getPetBorderClass() {
-            if (this.hunger >= 70) return 'border-emerald-300 ring-8 ring-emerald-500/10';
-            if (this.hunger >= 40) return 'border-amber-300 ring-8 ring-amber-500/10';
-            if (this.hunger >= 20) return 'border-orange-300 ring-8 ring-orange-500/10';
-            return 'border-rose-300 ring-8 ring-rose-500/10';
-        },
-
-        getMoodBadgeClass() {
-            if (this.hunger >= 70) return 'bg-emerald-500 text-white';
-            if (this.hunger >= 40) return 'bg-amber-400 text-amber-950';
-            if (this.hunger >= 20) return 'bg-orange-500 text-white';
-            return 'bg-rose-500 text-white';
-        },
-
-        getMoodText() {
-            if (this.hunger >= 70) return '😊 Rất vui & No';
-            if (this.hunger >= 40) return '🙂 Hơi đói';
-            if (this.hunger >= 20) return '😟 Đói nhiều';
-            if (this.hunger >= 1) return '😢 Rất yếu';
-            return '💤 Ngủ đông';
-        },
-
-        getHungerBarClass() {
-            if (this.hunger >= 70) return 'bg-emerald-500';
-            if (this.hunger >= 40) return 'bg-amber-400';
-            if (this.hunger >= 20) return 'bg-orange-500';
-            return 'bg-rose-500';
-        },
-
-        getHungerNote() {
-            if (this.hunger >= 70) return 'No bụng thoải mái';
-            if (this.hunger >= 40) return 'Nên cho ăn thêm một chút';
-            if (this.hunger >= 20) return 'Cần cho ăn sớm';
-            return 'Nguy cơ ngủ đông!';
-        }
-    };
-}
-</script>
-@endpush
 @endsection

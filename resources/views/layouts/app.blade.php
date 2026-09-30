@@ -828,6 +828,8 @@
     <x-pet-floating-companion />
 
     <x-toast />
+
+    @stack('scripts')
 </body>
 
 </html>
