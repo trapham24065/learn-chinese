@@ -172,6 +172,138 @@
         </div>
     </section>
 
+    {{-- Pet Learning Companion Hero Card --}}
+    @if(isset($petData) && $petData['userPet'])
+        @php
+            $pPet = $petData['userPet'];
+            $pProg = $petData['progress'];
+            $pStage = optional($pPet->pet->stages->where('stage', $pPet->stage)->first());
+            $pEmoji = $pStage->emoji ?? '🥚';
+            $pStageName = $pStage->name ?? 'Trứng';
+            $pHungerState = $pPet->getHungerState();
+            $pDialogue = $petData['randomDialogue'] ?? 'Hôm nay chúng ta cùng học tiếng Trung thật vui nhé!';
+            $pDailyRemaining = $petData['dailyRemaining'] ?? 0;
+        @endphp
+        <section class="relative overflow-hidden rounded-[2rem] border border-amber-200/80 bg-gradient-to-br from-amber-50/90 via-orange-50/50 to-white p-6 shadow-xl shadow-amber-900/5 transition"
+                 x-data="dashboardPetHero({
+                     dailyRemaining: {{ $pDailyRemaining }},
+                     currentHunger: {{ $pPet->hunger }},
+                     dialogue: {{ Js::from($pDialogue) }},
+                     dialogues: {{ Js::from($petData['dialogues'] ?? []) }}
+                 })">
+            {{-- Background decorative sparkle elements --}}
+            <div class="pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full bg-amber-300/20 blur-2xl"></div>
+            <div class="pointer-events-none absolute right-1/3 -bottom-8 h-32 w-32 rounded-full bg-orange-300/20 blur-xl"></div>
+
+            <div class="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                {{-- Left: Pet Avatar & Speech Bubble --}}
+                <div class="flex items-start gap-4 sm:gap-5 min-w-0">
+                    {{-- Pet Avatar with Hunger Mood Ring --}}
+                    <div class="relative shrink-0">
+                        <div class="grid h-20 w-20 sm:h-24 sm:w-24 place-items-center rounded-3xl bg-white shadow-md shadow-amber-900/10 border-2 {{ $pHungerState === 'happy' ? 'border-emerald-300 ring-4 ring-emerald-500/10' : ($pHungerState === 'hungry' ? 'border-amber-300 ring-4 ring-amber-500/10' : 'border-rose-300 ring-4 ring-rose-500/10') }} transition-transform duration-300 hover:scale-105 select-none">
+                            <span class="text-4xl sm:text-5xl animate-bounce-short">{{ $pEmoji }}</span>
+                        </div>
+                        {{-- Mood Indicator Badge --}}
+                        <div class="absolute -bottom-1 -right-1 flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-black uppercase shadow-sm border border-white {{ $pHungerState === 'happy' ? 'bg-emerald-500 text-white' : ($pHungerState === 'hungry' ? 'bg-amber-400 text-amber-950' : ($pHungerState === 'dormant' ? 'bg-indigo-600 text-white' : 'bg-rose-500 text-white')) }}">
+                            {{ match($pHungerState) { 'happy' => '😊 No', 'hungry' => '🙂 Hơi đói', 'very_hungry' => '😟 Rất đói', 'weak' => '😢 Yếu', 'dormant' => '💤 Ngủ đông', default => 'Pet' } }}
+                        </div>
+                    </div>
+
+                    {{-- Pet Speech Bubble & Identity --}}
+                    <div class="flex-1 min-w-0">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="rounded-full bg-amber-100 border border-amber-300 px-2.5 py-0.5 text-[11px] font-bold text-amber-900">
+                                Giai đoạn {{ $pPet->stage }}: {{ $pStageName }}
+                            </span>
+                            <h2 class="text-lg font-black text-slate-900">
+                                {{ $pPet->name ?? $pPet->pet->name }}
+                            </h2>
+                            <a href="{{ route('pet.index') }}" class="text-xs text-amber-700 hover:text-amber-900 font-semibold inline-flex items-center gap-1 transition">
+                                <span>Phòng nuôi Pet</span>
+                                <i data-lucide="chevron-right" class="h-3.5 w-3.5"></i>
+                            </a>
+                        </div>
+
+                        {{-- Dynamic Speech Bubble --}}
+                        <div class="mt-2.5 relative rounded-2xl bg-white/95 p-3.5 shadow-sm border border-amber-200/90 text-sm text-slate-800 backdrop-blur">
+                            <div class="flex items-start justify-between gap-2">
+                                <p class="text-xs sm:text-sm font-medium leading-relaxed italic" x-text="currentDialogue">
+                                    "{{ $pDialogue }}"
+                                </p>
+                                <button type="button" @click="nextDialogue()" title="Đổi câu nói"
+                                        class="shrink-0 rounded-lg p-1 text-slate-400 hover:bg-amber-50 hover:text-amber-700 transition">
+                                    <i data-lucide="refresh-cw" class="h-3.5 w-3.5"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        {{-- Progress bars (Hunger & EXP) --}}
+                        <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                            <div>
+                                <div class="flex justify-between text-[11px] text-slate-500 font-semibold mb-1">
+                                    <span>Độ no bụng: <strong class="text-slate-800" x-text="hunger"></strong>/100</span>
+                                </div>
+                                <div class="h-2 w-full overflow-hidden rounded-full bg-slate-200/80">
+                                    <div class="h-full rounded-full transition-all duration-500 {{ $pHungerState === 'happy' ? 'bg-emerald-500' : ($pHungerState === 'hungry' ? 'bg-amber-400' : 'bg-rose-500') }}"
+                                         :style="'width: ' + hunger + '%'"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-[11px] text-slate-500 font-semibold mb-1">
+                                    <span>Tiến hóa EXP: <strong class="text-slate-800">{{ $pProg['current_exp'] }}</strong>/{{ $pProg['required_exp'] ?? 'MAX' }}</span>
+                                    <span>{{ $pProg['percent'] }}%</span>
+                                </div>
+                                <div class="h-2 w-full overflow-hidden rounded-full bg-slate-200/80">
+                                    <div class="h-full rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-500"
+                                         style="width: {{ $pProg['percent'] }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Right: Quick Feeding Action --}}
+                <div class="shrink-0 rounded-2xl bg-white/80 p-3.5 border border-amber-200/70 shadow-sm flex flex-col justify-center min-w-[210px]">
+                    <div class="flex items-center justify-between text-xs mb-2">
+                        <span class="font-bold text-slate-800 flex items-center gap-1.5">
+                            <i data-lucide="utensils" class="h-3.5 w-3.5 text-amber-600"></i>
+                            Cho pet ăn nhanh
+                        </span>
+                        <span class="text-[11px] text-slate-500">
+                            Còn <strong class="text-amber-700" x-text="remaining"></strong> XP
+                        </span>
+                    </div>
+
+                    @if($pPet->isActive())
+                        <div class="grid grid-cols-3 gap-1.5">
+                            <button type="button" @click="quickFeed(5)" :disabled="feeding || remaining < 5"
+                                    class="rounded-xl py-2 px-2 text-xs font-bold transition active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed bg-amber-500 hover:bg-amber-600 text-white shadow-sm shadow-amber-500/20">
+                                +5 XP
+                            </button>
+                            <button type="button" @click="quickFeed(10)" :disabled="feeding || remaining < 10"
+                                    class="rounded-xl py-2 px-2 text-xs font-bold transition active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed bg-amber-500 hover:bg-amber-600 text-white shadow-sm shadow-amber-500/20">
+                                +10 XP
+                            </button>
+                            <button type="button" @click="quickFeed(20)" :disabled="feeding || remaining < 20"
+                                    class="rounded-xl py-2 px-2 text-xs font-bold transition active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-sm shadow-orange-500/20">
+                                +20 XP
+                            </button>
+                        </div>
+                        <p x-show="feedNotice" x-text="feedNotice" class="mt-2 text-center text-[11px] font-bold text-emerald-600 animate-pulse"></p>
+                    @elseif($pPet->isDormant())
+                        <p class="text-xs text-amber-800 font-medium text-center py-2">
+                            💤 Pet đang ngủ đông. Vào trang Pet để đánh thức dậy nhé!
+                        </p>
+                    @else
+                        <p class="text-xs text-rose-700 font-medium text-center py-2">
+                            🥚 Dạng trứng. Học đều đặn để pet nở lại nhé!
+                        </p>
+                    @endif
+                </div>
+            </div>
+        </section>
+    @endif
+
     @if(isset($dueFlashcardsCount) && $dueFlashcardsCount > 0)
     <section class="rounded-[1.75rem] border border-[#991b1b]/20 bg-white p-6 shadow-xl shadow-slate-900/5 transition hover:-translate-y-0.5"
              x-data="{ 
@@ -928,6 +1060,65 @@ function studentDashboard() {
                 console.error(e);
             } finally {
                 this.isUpdatingProgress = null;
+            }
+        }
+    };
+}
+
+function dashboardPetHero(config) {
+    return {
+        remaining: config.dailyRemaining || 0,
+        hunger: config.currentHunger || 0,
+        currentDialogue: config.dialogue || 'Cùng học tiếng Trung chăm chỉ nhé!',
+        dialogues: config.dialogues || [],
+        dialogueIndex: 0,
+        feeding: false,
+        feedNotice: '',
+
+        nextDialogue() {
+            if (!this.dialogues || this.dialogues.length === 0) return;
+            this.dialogueIndex = (this.dialogueIndex + 1) % this.dialogues.length;
+            this.currentDialogue = this.dialogues[this.dialogueIndex];
+        },
+
+        async quickFeed(amount) {
+            if (this.feeding || this.remaining < amount) return;
+            this.feeding = true;
+            this.feedNotice = '';
+
+            const key = 'dash_feed_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9);
+            try {
+                const res = await fetch("{{ route('pet.feed') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ amount: amount, idempotency_key: key })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    this.hunger = data.hunger;
+                    this.remaining = data.daily_remaining;
+                    if (data.dialogue) {
+                        this.currentDialogue = data.dialogue;
+                    }
+                    if (data.stage_up) {
+                        this.feedNotice = `🎉 Pet vừa tiến hóa lên Giai đoạn ${data.new_stage}!`;
+                        setTimeout(() => window.location.reload(), 2000);
+                    } else {
+                        this.feedNotice = `+${data.xp_fed} EXP cho pet! 🍖`;
+                        setTimeout(() => { this.feedNotice = ''; }, 3500);
+                    }
+                } else {
+                    this.feedNotice = data.error || 'Lỗi khi cho ăn';
+                }
+            } catch (e) {
+                this.feedNotice = 'Lỗi kết nối';
+            } finally {
+                this.feeding = false;
+                setTimeout(() => window.refreshIcons?.(), 50);
             }
         }
     };

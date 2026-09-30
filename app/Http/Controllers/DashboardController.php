@@ -109,6 +109,25 @@ class DashboardController extends Controller
         }
         $totalXp = $student->learningStats?->total_xp ?? 0;
 
+        // Pet Companion Data
+        $petService = app(\App\Services\Pet\PetService::class);
+        $userPet = $petService->getActivePet($student);
+        $petData = null;
+        if ($userPet) {
+            $petGrowthService = app(\App\Services\Pet\PetGrowthService::class);
+            $petFeedingService = app(\App\Services\Pet\PetFeedingService::class);
+            $petDialogueService = app(\App\Services\Pet\PetDialogueService::class);
+
+            $petData = [
+                'userPet'         => $userPet,
+                'progress'        => $petGrowthService->calculateExpProgress($userPet),
+                'dailyRemaining'  => $petFeedingService->getRemainingDailyCapacity($userPet),
+                'dailyFed'        => $petFeedingService->getDailyFedAmount($userPet),
+                'randomDialogue'  => $petDialogueService->getRandomDialogue($student, $userPet),
+                'dialogues'       => $petDialogueService->getDialogues($student, $userPet),
+            ];
+        }
+
         return view('dashboard', [
             'student' => $student,
             'lessons' => $lessons,
@@ -129,6 +148,7 @@ class DashboardController extends Controller
             'levelData' => $levelData,
             'dailyGoal' => $dailyGoal,
             'totalXp' => $totalXp,
+            'petData' => $petData,
         ]);
     }
 

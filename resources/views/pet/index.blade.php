@@ -1,218 +1,713 @@
 @extends('layouts.app')
 
-@section('title', 'Pet của tôi')
+@section('title', 'Phòng Nuôi Pet Học Tập | Chinese Deck')
 
 @section('content')
-<div class="max-w-2xl mx-auto px-4 py-8" x-data="petPage()">
+<div class="max-w-5xl mx-auto px-4 py-6 sm:py-8 space-y-6"
+     x-data="petRoom({
+         activeTab: 'overview',
+         dailyRemaining: {{ $dailyRemaining }},
+         userPet: {{ Js::from($userPet) }},
+         progress: {{ Js::from($progress) }},
+         dialogues: {{ Js::from($dialogues) }},
+         currentDialogue: {{ Js::from($randomDialogue) }},
+         masteredWords: {{ Js::from($masteredWords) }},
+     })"
+     x-init="initRoom()">
 
-    {{-- Pet Hero Card --}}
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 mb-6 text-center">
-        <div class="text-8xl mb-4 select-none" aria-label="Pet emoji">
-            {{ optional($userPet->pet->stages->where('stage', $userPet->stage)->first())->emoji ?? '🥚' }}
-        </div>
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-            {{ $userPet->name ?? $userPet->pet->name }}
-        </h1>
-        <p class="text-sm text-gray-500 dark:text-gray-400">
-            Giai đoạn {{ $userPet->stage }}:
-            {{ optional($userPet->pet->stages->where('stage', $userPet->stage)->first())->name ?? 'Trứng' }}
-        </p>
-
-        @if($userPet->status !== 'active')
-        <span class="inline-block mt-2 px-3 py-1 rounded-full text-xs font-semibold
-            {{ $userPet->isDormant() ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700' }}">
-            {{ $userPet->isDormant() ? '💤 Đang ngủ đông' : '🥚 Dạng trứng' }}
-        </span>
-        @endif
-
-        {{-- Hunger Bar --}}
-        <div class="mt-6">
-            <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
-                <span>No bụng: {{ $userPet->hunger }}/100</span>
-                <span>
-                    @switch($userPet->getHungerState())
-                        @case('happy') 😊 Vui vẻ @break
-                        @case('hungry') 🙂 Hơi đói @break
-                        @case('very_hungry') 😟 Rất đói @break
-                        @case('weak') 😢 Yếu ớt @break
-                        @default 💤 Ngủ đông
-                    @endswitch
-                </span>
+    {{-- 1. Page Header & Pet Quick Banner --}}
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-5">
+        <div>
+            <div class="inline-flex items-center gap-1.5 rounded-full bg-amber-100 border border-amber-200 px-3 py-1 text-xs font-bold uppercase tracking-wider text-amber-900">
+                <i data-lucide="sparkles" class="h-3.5 w-3.5 text-amber-600"></i>
+                Bạn đồng hành học tiếng Trung
             </div>
-            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-                <div class="h-3 rounded-full transition-all duration-500
-                    @if($userPet->hunger >= 70) bg-green-500
-                    @elseif($userPet->hunger >= 40) bg-yellow-400
-                    @elseif($userPet->hunger >= 20) bg-orange-500
-                    @else bg-red-500 @endif"
-                     style="width: {{ $userPet->hunger }}%"
-                     role="progressbar"
-                     aria-valuenow="{{ $userPet->hunger }}"
-                     aria-valuemin="0"
-                     aria-valuemax="100">
+            <h1 class="mt-2 text-3xl sm:text-4xl font-black text-slate-900 flex items-center gap-2">
+                <span>{{ $userPet->name ?? $userPet->pet->name }}</span>
+                <button type="button" @click="openRenameModal()" title="Đổi tên cho Pet"
+                        class="grid h-8 w-8 place-items-center rounded-xl bg-slate-100 text-slate-500 hover:bg-amber-100 hover:text-amber-800 transition text-sm">
+                    <i data-lucide="pencil" class="h-4 w-4"></i>
+                </button>
+            </h1>
+            <p class="text-sm text-slate-500 mt-0.5">
+                Pet lớn lên theo từng từ vựng và bài học bạn hoàn thành. Cùng nhau chinh phục tiếng Trung!
+            </p>
+        </div>
+
+        {{-- Top Quick Stats Pill --}}
+        <div class="flex items-center gap-2 sm:gap-3">
+            <div class="rounded-2xl border border-slate-200/90 bg-white px-3.5 py-2 shadow-sm text-center">
+                <p class="text-[10px] uppercase font-bold text-slate-400">Giai đoạn</p>
+                <p class="text-base font-black text-slate-900">{{ $userPet->stage }}/5</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200/90 bg-white px-3.5 py-2 shadow-sm text-center">
+                <p class="text-[10px] uppercase font-bold text-slate-400">Tổng EXP</p>
+                <p class="text-base font-black text-purple-600">{{ $userPet->exp }}</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200/90 bg-white px-3.5 py-2 shadow-sm text-center">
+                <p class="text-[10px] uppercase font-bold text-slate-400">Từ đã dạy</p>
+                <p class="text-base font-black text-emerald-600">{{ $masteredCount }}</p>
+            </div>
+        </div>
+    </div>
+
+    {{-- 2. Navigation Tabs --}}
+    <div class="flex items-center gap-2 border-b border-slate-200 overflow-x-auto pb-px custom-scrollbar">
+        <button type="button"
+                @click="setTab('overview')"
+                :class="activeTab === 'overview' ? 'border-[#991b1b] text-[#991b1b] bg-red-50/50' : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'"
+                class="flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold transition whitespace-nowrap rounded-t-xl">
+            <i data-lucide="layout-dashboard" class="h-4 w-4"></i>
+            <span>Tổng quan & Cho ăn</span>
+        </button>
+
+        <button type="button"
+                @click="setTab('growth')"
+                :class="activeTab === 'growth' ? 'border-[#991b1b] text-[#991b1b] bg-red-50/50' : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'"
+                class="flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold transition whitespace-nowrap rounded-t-xl">
+            <i data-lucide="git-fork" class="h-4 w-4"></i>
+            <span>Lộ trình tiến hóa (Giai đoạn)</span>
+        </button>
+
+        <button type="button"
+                @click="setTab('vocab')"
+                :class="activeTab === 'vocab' ? 'border-[#991b1b] text-[#991b1b] bg-red-50/50' : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'"
+                class="flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold transition whitespace-nowrap rounded-t-xl">
+            <i data-lucide="book-open" class="h-4 w-4"></i>
+            <span>Vốn từ vựng đã học</span>
+            <span class="rounded-full bg-slate-200 px-2 py-0.2 text-[10px] font-bold text-slate-700" x-text="masteredWords.length"></span>
+        </button>
+
+        <button type="button"
+                @click="setTab('memories')"
+                :class="activeTab === 'memories' ? 'border-[#991b1b] text-[#991b1b] bg-red-50/50' : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'"
+                class="flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold transition whitespace-nowrap rounded-t-xl">
+            <i data-lucide="history" class="h-4 w-4"></i>
+            <span>Ký ức & Cột mốc</span>
+        </button>
+    </div>
+
+    {{-- TAB 1: TỔNG QUAN & CHO ĂN --}}
+    <div x-show="activeTab === 'overview'" class="space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-6">
+            {{-- Left: Main Pet Avatar Stage & Speech Bubble --}}
+            <div class="relative overflow-hidden rounded-3xl border border-amber-200/80 bg-gradient-to-br from-amber-50/90 via-orange-50/40 to-white p-6 sm:p-8 shadow-xl shadow-amber-950/5">
+                {{-- Decorative light spot --}}
+                <div class="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full bg-amber-300/20 blur-3xl"></div>
+
+                <div class="flex flex-col items-center text-center">
+                    {{-- Pet Avatar --}}
+                    <div class="relative">
+                        <div class="grid h-36 w-36 sm:h-44 sm:w-44 place-items-center rounded-[2.5rem] bg-white shadow-2xl shadow-amber-900/10 border-4 transition-transform duration-300 hover:scale-105 select-none"
+                             :class="getPetBorderClass()">
+                            <span class="text-7xl sm:text-8xl animate-bounce-short">
+                                {{ optional($userPet->pet->stages->where('stage', $userPet->stage)->first())->emoji ?? '🥚' }}
+                            </span>
+                        </div>
+
+                        {{-- Mood Indicator Badge --}}
+                        <div class="absolute -bottom-2 inset-x-0 flex justify-center">
+                            <span class="rounded-full px-3 py-1 text-xs font-black uppercase shadow-md border-2 border-white"
+                                  :class="getMoodBadgeClass()"
+                                  x-text="getMoodText()">
+                            </span>
+                        </div>
+                    </div>
+
+                    {{-- Pet Stage Details --}}
+                    <div class="mt-6">
+                        <span class="rounded-full bg-amber-100 border border-amber-300 px-3 py-0.5 text-xs font-bold text-amber-900">
+                            Giai đoạn {{ $userPet->stage }}: {{ optional($userPet->pet->stages->where('stage', $userPet->stage)->first())->name ?? 'Trứng' }}
+                        </span>
+                        <h2 class="mt-2 text-2xl font-black text-slate-900">
+                            {{ $userPet->name ?? $userPet->pet->name }}
+                        </h2>
+                    </div>
+
+                    {{-- Interactive Speech Bubble --}}
+                    <div class="mt-4 w-full relative rounded-2xl bg-white/95 p-4 shadow-sm border border-amber-200/90 text-sm text-slate-800 backdrop-blur">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex items-start gap-2.5 text-left">
+                                <span class="text-xl">💬</span>
+                                <p class="text-sm font-medium leading-relaxed italic text-slate-800" x-text="currentDialogue">
+                                    "{{ $randomDialogue }}"
+                                </p>
+                            </div>
+                            <button type="button" @click="nextDialogue()" title="Đổi câu nói"
+                                    class="shrink-0 rounded-xl p-2 text-amber-700 hover:bg-amber-100 transition active:scale-95">
+                                <i data-lucide="refresh-cw" class="h-4 w-4"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- Hunger Status Bar --}}
+                    <div class="mt-6 w-full space-y-1.5 text-left">
+                        <div class="flex justify-between text-xs font-semibold text-slate-600">
+                            <span>Mức độ no bụng: <strong class="text-slate-900" x-text="hunger"></strong>/100</span>
+                            <span x-text="getHungerNote()"></span>
+                        </div>
+                        <div class="h-3 w-full overflow-hidden rounded-full bg-slate-200">
+                            <div class="h-full rounded-full transition-all duration-500"
+                                 :class="getHungerBarClass()"
+                                 :style="'width: ' + hunger + '%'"></div>
+                        </div>
+                        <p class="text-[11px] text-slate-500 italic">
+                            * Pet tiêu hao khoảng 20 độ no mỗi ngày. Nếu độ no về 0, pet sẽ vào trạng thái ngủ đông và sau 3 ngày sẽ trở về dạng trứng.
+                        </p>
+                    </div>
+
+                    {{-- EXP Progress Bar --}}
+                    <div class="mt-4 w-full space-y-1.5 text-left">
+                        <div class="flex justify-between text-xs font-semibold text-slate-600">
+                            <span>Tiến hóa EXP: <strong class="text-purple-700">{{ $progress['current_exp'] }}</strong>/{{ $progress['required_exp'] ?? 'Tối đa' }}</span>
+                            @if(!$progress['is_max'])
+                            <span>Cần thêm <strong>{{ $progress['exp_needed'] }}</strong> EXP</span>
+                            @else
+                            <span class="text-emerald-600 font-bold">🐉 Đã đạt cấp tối đa</span>
+                            @endif
+                        </div>
+                        <div class="h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
+                            <div class="h-full rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-500"
+                                 style="width: {{ $progress['percent'] }}%"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        {{-- EXP Progress --}}
-        <div class="mt-4">
-            <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
-                <span>EXP: {{ $progress['current_exp'] }}</span>
-                @if($progress['is_max'])
-                    <span>🐉 Đã đạt cấp độ tối đa!</span>
-                @else
-                    <span>Cần thêm {{ $progress['exp_needed'] }} EXP để tiến hóa</span>
-                @endif
-            </div>
-            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                <div class="h-2 rounded-full bg-purple-500 transition-all duration-500"
-                     style="width: {{ $progress['percent'] }}%">
-                </div>
-            </div>
-        </div>
-    </div>
+            {{-- Right: Feeding Action & Daily Cap --}}
+            <div class="space-y-6">
+                {{-- Feed Card --}}
+                <div class="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xl shadow-slate-900/5 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+                            <i data-lucide="utensils" class="h-4 w-4 text-amber-600"></i>
+                            <span>Cho Pet ăn hôm nay</span>
+                        </h3>
+                        <span class="rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-xs font-bold text-amber-900">
+                            Hạn mức: <strong x-text="dailyRemaining"></strong>/100 XP
+                        </span>
+                    </div>
 
-    {{-- Feed Buttons (active pets only) --}}
-    @if($userPet->isActive())
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-6">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="font-bold text-gray-900 dark:text-white">🍖 Cho ăn hôm nay</h2>
-            <span class="text-sm text-gray-500 dark:text-gray-400">
-                Còn <strong>{{ $dailyRemaining }}</strong> / 100 XP
-            </span>
-        </div>
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                        Bạn có thể dùng điểm XP kiếm được từ học tập để cho Pet ăn. Mỗi ngày Pet chỉ có thể nhận tối đa <strong>100 XP</strong> để tránh bội thực.
+                    </p>
 
-        @if($dailyRemaining <= 0)
-        <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-xl p-4 text-center">
-            <p class="text-green-700 dark:text-green-400 font-medium">✅ Pet đã được cho ăn đủ hôm nay!</p>
-            <p class="text-green-600 dark:text-green-500 text-sm mt-1">Quay lại ngày mai để tiếp tục.</p>
-        </div>
-        @else
-        <div class="grid grid-cols-4 gap-3">
-            @foreach([5, 10, 20, 50] as $amount)
-            <button @click="feed({{ $amount }})"
-                    :disabled="feeding || {{ $dailyRemaining }} < {{ $amount }}"
-                    :class="feeding || {{ $dailyRemaining }} < {{ $amount }}
-                        ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
-                        : 'bg-indigo-500 hover:bg-indigo-600 active:scale-95 text-white cursor-pointer'"
-                    class="py-3 rounded-xl font-bold transition-all duration-150">
-                +{{ $amount }}
-            </button>
-            @endforeach
-        </div>
-        @endif
+                    @if($userPet->isActive())
+                    <div class="grid grid-cols-2 gap-3 pt-2">
+                        @foreach([5, 10, 20, 50] as $amount)
+                        <button type="button"
+                                @click="feed({{ $amount }})"
+                                :disabled="feeding || dailyRemaining < {{ $amount }}"
+                                class="flex items-center justify-between rounded-2xl p-3.5 border transition active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed text-left
+                                       {{ $amount === 50 ? 'border-orange-300 bg-gradient-to-br from-amber-50 to-orange-100 hover:from-amber-100 hover:to-orange-200' : 'border-amber-200 bg-amber-50/60 hover:bg-amber-100/80' }}">
+                            <div>
+                                <p class="text-sm font-black text-slate-900">+{{ $amount }} EXP</p>
+                                <p class="text-[10px] text-slate-500">+{{ $amount }} độ no</p>
+                            </div>
+                            <span class="grid h-8 w-8 place-items-center rounded-xl bg-amber-500 text-white font-black text-xs shadow-sm">
+                                🍖
+                            </span>
+                        </button>
+                        @endforeach
+                    </div>
 
-        <p x-show="message"
-           x-text="message"
-           x-cloak
-           class="mt-3 text-center text-sm font-medium"
-           :class="isError ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'">
-        </p>
-    </div>
-    @elseif($userPet->isDormant())
-    <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-2xl p-6 mb-6 text-center">
-        <div class="text-4xl mb-2">💤</div>
-        <p class="text-amber-800 dark:text-amber-300 font-medium">Pet đang ngủ đông vì bị đói quá lâu.</p>
-        <p class="text-amber-700 dark:text-amber-400 text-sm mt-1">Hãy học bài để kiếm XP và cho ăn để đánh thức!</p>
-    </div>
-    @elseif($userPet->isEgg())
-    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-2xl p-6 mb-6 text-center">
-        <div class="text-4xl mb-2">🥚</div>
-        <p class="text-red-700 dark:text-red-400 font-medium">Pet đã quay về dạng trứng (lần {{ $userPet->reset_count }}).</p>
-        <p class="text-red-600 dark:text-red-500 text-sm mt-1">Hãy học đều đặn để pet không bị đói!</p>
-    </div>
-    @endif
+                    <div x-show="feedMessage" x-cloak
+                         class="rounded-xl p-3 text-center text-xs font-bold transition"
+                         :class="isError ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-emerald-50 text-emerald-800 border border-emerald-200'"
+                         x-text="feedMessage"></div>
 
-    {{-- Quick Stats --}}
-    <div class="grid grid-cols-3 gap-4 mb-6">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-4 text-center">
-            <p class="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{{ $userPet->exp }}</p>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Tổng EXP</p>
-        </div>
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-4 text-center">
-            <p class="text-2xl font-bold text-pink-600 dark:text-pink-400">{{ $userPet->total_fed_xp }}</p>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Tổng XP cho ăn</p>
-        </div>
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-4 text-center">
-            <p class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{{ $userPet->best_stage }}</p>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Giai đoạn cao nhất</p>
-        </div>
-    </div>
-
-    {{-- Memories --}}
-    @if($memories->count() > 0)
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
-        <h2 class="font-bold text-gray-900 dark:text-white mb-4">📖 Ký ức</h2>
-        <div class="space-y-3">
-            @foreach($memories as $memory)
-            <div class="flex gap-3 text-sm border-b border-gray-100 dark:border-gray-700 pb-3 last:border-0 last:pb-0">
-                <span class="text-gray-400 dark:text-gray-500 shrink-0 tabular-nums">
-                    {{ $memory->created_at->format('d/m') }}
-                </span>
-                <div>
-                    <p class="font-medium text-gray-900 dark:text-white">{{ $memory->title }}</p>
-                    @if($memory->description)
-                    <p class="text-gray-500 dark:text-gray-400 text-xs mt-0.5">{{ $memory->description }}</p>
+                    @elseif($userPet->isDormant())
+                    <div class="rounded-2xl bg-amber-50 border border-amber-200 p-4 text-center space-y-2">
+                        <span class="text-4xl">💤</span>
+                        <h4 class="text-sm font-bold text-amber-900">Pet đang ngủ đông vì quá đói!</h4>
+                        <p class="text-xs text-amber-700">Hãy học thêm bài học để kiếm XP và cho ăn để đánh thức pet dậy nhé.</p>
+                    </div>
+                    @elseif($userPet->isEgg())
+                    <div class="rounded-2xl bg-red-50 border border-red-200 p-4 text-center space-y-2">
+                        <span class="text-4xl">🥚</span>
+                        <h4 class="text-sm font-bold text-red-900">Pet đã quay về dạng trứng</h4>
+                        <p class="text-xs text-red-700">Đã quay về dạng trứng lần thứ {{ $userPet->reset_count }}. Hãy học bài đều đặn mỗi ngày để duy trì sự sống cho pet nhé!</p>
+                    </div>
                     @endif
+
+                    <div class="rounded-2xl bg-slate-50 p-3.5 border border-slate-100 text-xs text-slate-600 flex items-center justify-between">
+                        <span class="flex items-center gap-1.5">
+                            <i data-lucide="sparkles" class="h-3.5 w-3.5 text-amber-500"></i>
+                            Đã cho ăn hôm nay:
+                        </span>
+                        <strong class="text-slate-900">{{ $dailyFed }} XP</strong>
+                    </div>
+                </div>
+
+                {{-- Lifetime Pet Stats --}}
+                <div class="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xl shadow-slate-900/5">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Hồ sơ trọn đời</h3>
+                    <div class="grid grid-cols-2 gap-3 text-xs">
+                        <div class="rounded-2xl bg-slate-50 p-3 border border-slate-100">
+                            <p class="text-slate-500">Tổng XP đã nuôi:</p>
+                            <p class="text-lg font-black text-slate-900 mt-0.5">{{ $userPet->total_fed_xp }} XP</p>
+                        </div>
+                        <div class="rounded-2xl bg-slate-50 p-3 border border-slate-100">
+                            <p class="text-slate-500">Giai đoạn cao nhất:</p>
+                            <p class="text-lg font-black text-amber-600 mt-0.5">Giai đoạn {{ $userPet->best_stage }}</p>
+                        </div>
+                        <div class="rounded-2xl bg-slate-50 p-3 border border-slate-100">
+                            <p class="text-slate-500">Số lần về trứng:</p>
+                            <p class="text-lg font-black text-slate-700 mt-0.5">{{ $userPet->reset_count }} lần</p>
+                        </div>
+                        <div class="rounded-2xl bg-slate-50 p-3 border border-slate-100">
+                            <p class="text-slate-500">Ngày sinh:</p>
+                            <p class="text-sm font-bold text-slate-700 mt-1">{{ $userPet->created_at->format('d/m/Y') }}</p>
+                        </div>
+                    </div>
                 </div>
             </div>
-            @endforeach
         </div>
     </div>
-    @endif
+
+    {{-- TAB 2: LỘ TRÌNH TIẾN HÓA (GROWTH ROADMAP) --}}
+    <div x-show="activeTab === 'growth'" class="space-y-6">
+        <div class="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-xl shadow-slate-900/5 space-y-6">
+            <div>
+                <h3 class="text-xl font-black text-slate-900">Lộ trình tiến hóa sinh vật</h3>
+                <p class="text-sm text-slate-500 mt-1">
+                    Để pet tiến hóa lên giai đoạn cao hơn, bạn không chỉ cần nuôi EXP mà còn phải thực sự nâng cao năng lực tiếng Trung.
+                </p>
+            </div>
+
+            <div class="space-y-4">
+                @foreach($stages as $stage)
+                @php
+                    $isUnlocked = $userPet->stage >= $stage->stage;
+                    $isCurrent = $userPet->stage === $stage->stage;
+                    $isNext = $userPet->stage + 1 === $stage->stage;
+                @endphp
+                <div class="rounded-2xl border p-4 sm:p-5 transition-all
+                            {{ $isCurrent ? 'border-amber-400 bg-amber-50/40 ring-2 ring-amber-400/20 shadow-md' : ($isUnlocked ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200/80 bg-slate-50/50 opacity-90') }}">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="flex items-center gap-3.5">
+                            <div class="grid h-14 w-14 shrink-0 place-items-center rounded-2xl text-3xl shadow-sm border
+                                        {{ $isCurrent ? 'bg-amber-100 border-amber-300' : ($isUnlocked ? 'bg-emerald-100 border-emerald-300' : 'bg-slate-100 border-slate-200') }}">
+                                {{ $stage->emoji }}
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h4 class="text-base font-black text-slate-900">
+                                        Giai đoạn {{ $stage->stage }}: {{ $stage->name }}
+                                    </h4>
+                                    @if($isCurrent)
+                                    <span class="rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-black uppercase text-white">Đang ở đây</span>
+                                    @elseif($isUnlocked)
+                                    <span class="rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-black uppercase text-white">✓ Đã đạt</span>
+                                    @elseif($isNext)
+                                    <span class="rounded-full bg-purple-600 px-2 py-0.5 text-[10px] font-black uppercase text-white">Mục tiêu tiếp theo</span>
+                                    @endif
+                                </div>
+                                <p class="text-xs text-slate-500 mt-0.5">
+                                    Yêu cầu tối thiểu: <strong>{{ number_format($stage->required_exp) }} EXP</strong>
+                                </p>
+                            </div>
+                        </div>
+
+                        {{-- Requirement Badges --}}
+                        <div class="flex flex-wrap gap-2 text-xs">
+                            {{-- EXP --}}
+                            <span class="rounded-xl px-2.5 py-1 font-semibold flex items-center gap-1 border
+                                         {{ $userReqStats['exp'] >= $stage->required_exp ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-slate-100 border-slate-200 text-slate-600' }}">
+                                <i data-lucide="{{ $userReqStats['exp'] >= $stage->required_exp ? 'check' : 'circle' }}" class="h-3.5 w-3.5"></i>
+                                <span>EXP: {{ $userReqStats['exp'] }}/{{ $stage->required_exp }}</span>
+                            </span>
+
+                            {{-- Mastered Vocab --}}
+                            @if($stage->required_mastered_vocabulary > 0)
+                            <span class="rounded-xl px-2.5 py-1 font-semibold flex items-center gap-1 border
+                                         {{ $userReqStats['mastered_vocab'] >= $stage->required_mastered_vocabulary ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-slate-100 border-slate-200 text-slate-600' }}">
+                                <i data-lucide="{{ $userReqStats['mastered_vocab'] >= $stage->required_mastered_vocabulary ? 'check' : 'circle' }}" class="h-3.5 w-3.5"></i>
+                                <span>Từ thành thạo: {{ $userReqStats['mastered_vocab'] }}/{{ $stage->required_mastered_vocabulary }}</span>
+                            </span>
+                            @endif
+
+                            {{-- Used Vocab --}}
+                            @if($stage->required_used_vocabulary > 0)
+                            <span class="rounded-xl px-2.5 py-1 font-semibold flex items-center gap-1 border
+                                         {{ $userReqStats['used_vocab'] >= $stage->required_used_vocabulary ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-slate-100 border-slate-200 text-slate-600' }}">
+                                <i data-lucide="{{ $userReqStats['used_vocab'] >= $stage->required_used_vocabulary ? 'check' : 'circle' }}" class="h-3.5 w-3.5"></i>
+                                <span>Từ tích cực: {{ $userReqStats['used_vocab'] }}/{{ $stage->required_used_vocabulary }}</span>
+                            </span>
+                            @endif
+
+                            {{-- Reading Activities --}}
+                            @if($stage->required_reading_activities > 0)
+                            <span class="rounded-xl px-2.5 py-1 font-semibold flex items-center gap-1 border
+                                         {{ $userReqStats['reading_activity'] >= $stage->required_reading_activities ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-slate-100 border-slate-200 text-slate-600' }}">
+                                <i data-lucide="{{ $userReqStats['reading_activity'] >= $stage->required_reading_activities ? 'check' : 'circle' }}" class="h-3.5 w-3.5"></i>
+                                <span>Bài đọc: {{ $userReqStats['reading_activity'] }}/{{ $stage->required_reading_activities }}</span>
+                            </span>
+                            @endif
+
+                            {{-- Listening Activities --}}
+                            @if($stage->required_listening_activities > 0)
+                            <span class="rounded-xl px-2.5 py-1 font-semibold flex items-center gap-1 border
+                                         {{ $userReqStats['listening_activity'] >= $stage->required_listening_activities ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-slate-100 border-slate-200 text-slate-600' }}">
+                                <i data-lucide="{{ $userReqStats['listening_activity'] >= $stage->required_listening_activities ? 'check' : 'circle' }}" class="h-3.5 w-3.5"></i>
+                                <span>Bài nghe: {{ $userReqStats['listening_activity'] }}/{{ $stage->required_listening_activities }}</span>
+                            </span>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+
+    {{-- TAB 3: VỐN TỪ VỰNG ĐÃ HỌC (PET VOCABULARY) --}}
+    <div x-show="activeTab === 'vocab'" class="space-y-6">
+        <div class="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-xl shadow-slate-900/5 space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-4">
+                <div>
+                    <h3 class="text-xl font-black text-slate-900 flex items-center gap-2">
+                        <span>Vốn từ Pet đã học cùng bạn</span>
+                        <span class="rounded-full bg-emerald-100 border border-emerald-200 px-2.5 py-0.5 text-xs font-bold text-emerald-800" x-text="filteredWords().length"></span>
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-1">
+                        Từ vựng đạt độ ghi nhớ vững (đã ôn ít nhất 2 lần đúng) sẽ được truyền dạy lại cho Pet.
+                    </p>
+                </div>
+
+                {{-- Search filter --}}
+                <div class="w-full sm:w-64">
+                    <input type="text"
+                           x-model="vocabSearch"
+                           placeholder="Tìm từ Hán, Pinyin hoặc nghĩa..."
+                           class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium placeholder:text-slate-400 focus:border-[#991b1b] focus:outline-none">
+                </div>
+            </div>
+
+            {{-- Word Grid --}}
+            <template x-if="filteredWords().length > 0">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <template x-for="word in filteredWords()" :key="word.id">
+                        <div class="group relative rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 transition-all hover:bg-white hover:border-amber-300 hover:shadow-md">
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <p class="text-2xl font-black text-slate-900 group-hover:text-amber-700 transition" x-text="word.hanzi"></p>
+                                    <p class="text-xs font-semibold text-amber-600 mt-0.5" x-text="word.pinyin"></p>
+                                </div>
+                                <button type="button" @click="speakWord(word.hanzi)" title="Nghe phát âm chuẩn"
+                                        class="grid h-8 w-8 place-items-center rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-amber-50 hover:text-amber-700 transition">
+                                    <i data-lucide="volume-2" class="h-4 w-4"></i>
+                                </button>
+                            </div>
+                            <p class="text-xs text-slate-700 font-medium mt-2 leading-relaxed" x-text="word.meaning"></p>
+                            <div class="mt-2.5 flex items-center justify-between text-[10px] text-slate-400 pt-2 border-t border-slate-200/60">
+                                <span>Độ nhớ: <strong class="text-emerald-700" x-text="'Cấp ' + (word.repetition || 2)"></strong></span>
+                                <span class="text-amber-700 font-semibold">Pet đã nhớ ✓</span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            {{-- Empty State --}}
+            <template x-if="filteredWords().length === 0">
+                <div class="rounded-2xl border border-dashed border-slate-200 p-10 text-center space-y-3">
+                    <span class="text-4xl">📚</span>
+                    <h4 class="text-base font-bold text-slate-800">Chưa có từ vựng nào đạt độ nhớ</h4>
+                    <p class="text-xs text-slate-500 max-w-md mx-auto">
+                        Hãy vào Thẻ ghi nhớ (Flashcard) học bài và ôn tập ít nhất 2 lần để giúp Pet nạp thêm nhiều vốn từ nhé!
+                    </p>
+                    <a href="{{ route('flashcards') }}"
+                       class="inline-flex items-center gap-1.5 rounded-xl bg-[#991b1b] px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-red-950/15 hover:bg-red-800 transition">
+                        <i data-lucide="layers" class="h-3.5 w-3.5"></i>
+                        <span>Học Flashcard ngay</span>
+                    </a>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    {{-- TAB 4: KÝ ỨC & CỘT MỐC (MEMORIES) --}}
+    <div x-show="activeTab === 'memories'" class="space-y-6">
+        <div class="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-xl shadow-slate-900/5 space-y-6">
+            <div>
+                <h3 class="text-xl font-black text-slate-900">Ký ức & Cột mốc trưởng thành</h3>
+                <p class="text-sm text-slate-500 mt-1">
+                    Nhật ký ghi lại từng bước phát triển của Pet trong suốt hành trình học tập cùng bạn.
+                </p>
+            </div>
+
+            @if($memories->count() > 0)
+            <div class="relative pl-6 sm:pl-8 space-y-6 before:absolute before:left-2.5 sm:before:left-3.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-slate-200">
+                @foreach($memories as $memory)
+                <div class="relative flex items-start gap-4">
+                    {{-- Dot on timeline --}}
+                    <div class="absolute -left-6 sm:-left-8 top-1 grid h-5 w-5 sm:h-7 sm:w-7 place-items-center rounded-full bg-amber-500 text-white shadow-sm ring-4 ring-white text-[10px] sm:text-xs font-bold">
+                        @if($memory->type === 'hatched') 🥚
+                        @elseif($memory->type === 'stage_reached') 🎉
+                        @elseif($memory->type === 'renamed') ✏️
+                        @else 🌟
+                        @endif
+                    </div>
+
+                    <div class="flex-1 rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 transition hover:bg-white hover:shadow-sm">
+                        <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                            <span class="font-bold text-amber-800 uppercase tracking-wider text-[10px]">
+                                {{ $memory->type === 'stage_reached' ? 'Tiến hóa' : ($memory->type === 'hatched' ? 'Khai sinh' : 'Cột mốc') }}
+                            </span>
+                            <span class="tabular-nums">{{ $memory->created_at->format('H:i • d/m/Y') }}</span>
+                        </div>
+                        <h4 class="text-sm font-bold text-slate-900">{{ $memory->title }}</h4>
+                        @if($memory->description)
+                        <p class="text-xs text-slate-600 mt-1 leading-relaxed">{{ $memory->description }}</p>
+                        @endif
+                    </div>
+                </div>
+                @endforeach
+            </div>
+            @else
+            <div class="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-xs text-slate-400">
+                Chưa có ký ức nào được ghi nhận. Hãy cho Pet ăn để bắt đầu tạo nên những kỷ niệm đẹp!
+            </div>
+            @endif
+        </div>
+    </div>
+
+    {{-- MODAL 1: Đổi tên Pet --}}
+    <div x-show="renameModalOpen" x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0">
+        <div class="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl space-y-4"
+             @click.away="renameModalOpen = false">
+            <h3 class="text-lg font-black text-slate-900">Đặt tên cho Pet</h3>
+            <p class="text-xs text-slate-500">
+                Hãy chọn một cái tên thật ý nghĩa để gắn bó cùng Pet nhé!
+            </p>
+            <input type="text"
+                   x-model="petNewName"
+                   maxlength="30"
+                   placeholder="Nhập tên mới (VD: Tiểu Long, Bảo Bảo)..."
+                   class="w-full rounded-xl border border-slate-200 px-3.5 py-2.5 text-sm font-medium focus:border-amber-500 focus:outline-none">
+            
+            <div class="flex items-center justify-end gap-2 pt-2">
+                <button type="button" @click="renameModalOpen = false"
+                        class="rounded-xl px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 transition">
+                    Hủy
+                </button>
+                <button type="button" @click="submitRename()" :disabled="renaming || !petNewName.trim()"
+                        class="rounded-xl bg-[#991b1b] px-4 py-2 text-xs font-bold text-white transition hover:bg-red-800 disabled:opacity-50">
+                    Lưu tên mới
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {{-- MODAL 2: Chúc mừng tiến hóa (Stage Up Celebration) --}}
+    <div x-show="celebrationModalOpen" x-cloak
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 scale-90"
+         x-transition:enter-end="opacity-100 scale-100">
+        <div class="w-full max-w-md rounded-3xl bg-gradient-to-b from-amber-50 via-white to-orange-50 p-8 shadow-2xl text-center border-2 border-amber-300 space-y-4">
+            <div class="text-7xl animate-bounce">
+                <span x-text="celebrationEmoji">🐉</span>
+            </div>
+            <span class="inline-block rounded-full bg-amber-100 border border-amber-300 px-3 py-1 text-xs font-black uppercase text-amber-900">
+                🎉 TIẾN HÓA THÀNH CÔNG! 🎉
+            </span>
+            <h3 class="text-2xl font-black text-slate-900" x-text="celebrationTitle"></h3>
+            <p class="text-sm text-slate-600 leading-relaxed" x-text="celebrationDesc"></p>
+
+            <button type="button" @click="closeCelebration()"
+                    class="w-full rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 py-3 text-sm font-black text-white shadow-lg shadow-orange-500/30 hover:from-amber-600 hover:to-orange-600 transition active:scale-95">
+                Tiếp tục học cùng Pet! 🚀
+            </button>
+        </div>
+    </div>
 
 </div>
 
 @push('scripts')
 <script>
-function petPage() {
+function petRoom(config) {
     return {
+        activeTab: 'overview',
+        dailyRemaining: config.dailyRemaining || 0,
+        hunger: config.userPet?.hunger || 100,
+        hungerState: config.userPet?.hunger_state || 'happy',
+        currentDialogue: config.currentDialogue || 'Cùng học tiếng Trung chăm chỉ nhé!',
+        dialogues: config.dialogues || [],
+        dialogueIndex: 0,
+        masteredWords: config.masteredWords || [],
+        vocabSearch: '',
         feeding: false,
-        message: '',
+        feedMessage: '',
         isError: false,
 
-        feed(amount) {
-            if (this.feeding) return;
+        // Rename modal
+        renameModalOpen: false,
+        renaming: false,
+        petNewName: config.userPet?.name || '',
+
+        // Stage up celebration
+        celebrationModalOpen: false,
+        celebrationTitle: '',
+        celebrationDesc: '',
+        celebrationEmoji: '🐉',
+
+        initRoom() {
+            setTimeout(() => window.refreshIcons?.(), 100);
+        },
+
+        setTab(tab) {
+            this.activeTab = tab;
+            setTimeout(() => window.refreshIcons?.(), 50);
+        },
+
+        nextDialogue() {
+            if (!this.dialogues || this.dialogues.length === 0) return;
+            this.dialogueIndex = (this.dialogueIndex + 1) % this.dialogues.length;
+            this.currentDialogue = this.dialogues[this.dialogueIndex];
+        },
+
+        filteredWords() {
+            if (!this.vocabSearch.trim()) return this.masteredWords;
+            const q = this.vocabSearch.toLowerCase().trim();
+            return this.masteredWords.filter(w => 
+                (w.hanzi && w.hanzi.toLowerCase().includes(q)) ||
+                (w.pinyin && w.pinyin.toLowerCase().includes(q)) ||
+                (w.meaning && w.meaning.toLowerCase().includes(q))
+            );
+        },
+
+        speakWord(hanzi) {
+            if (!hanzi || !('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(hanzi);
+            utter.lang = 'zh-CN';
+            utter.rate = 0.85;
+            window.speechSynthesis.speak(utter);
+        },
+
+        async feed(amount) {
+            if (this.feeding || this.dailyRemaining < amount) return;
             this.feeding = true;
-            this.message = '';
+            this.feedMessage = '';
             this.isError = false;
 
-            const key = 'pet_feed_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
-
-            fetch('{{ route('pet.feed') }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({ amount: amount, idempotency_key: key }),
-            })
-            .then(r => r.json())
-            .then(data => {
+            const key = 'room_feed_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9);
+            try {
+                const res = await fetch("{{ route('pet.feed') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ amount: amount, idempotency_key: key })
+                });
+                const data = await res.json();
                 if (data.success) {
-                    if (data.is_duplicate) {
-                        this.message = 'Đã xử lý rồi!';
-                    } else if (data.stage_up) {
-                        this.message = `🎉 Pet tiến hóa! Giai đoạn ${data.new_stage}! +${data.xp_fed} EXP`;
-                        setTimeout(() => window.location.reload(), 1800);
-                        return;
+                    this.hunger = data.hunger;
+                    this.dailyRemaining = data.daily_remaining;
+                    if (data.dialogue) this.currentDialogue = data.dialogue;
+                    if (data.dialogues) this.dialogues = data.dialogues;
+
+                    if (data.stage_up) {
+                        this.celebrationTitle = `Pet đã tiến hóa lên Giai đoạn ${data.new_stage}!`;
+                        this.celebrationDesc = `Pet của bạn đã trưởng thành hơn rất nhiều nhờ thành quả học tập chăm chỉ!`;
+                        this.celebrationEmoji = data.emoji || '🐉';
+                        this.celebrationModalOpen = true;
                     } else {
-                        this.message = `+${data.xp_fed} EXP cho pet! 🍖`;
+                        this.feedMessage = `+${data.xp_fed} EXP thành công cho Pet! 🍖`;
+                        setTimeout(() => { this.feedMessage = ''; }, 3500);
                     }
-                    setTimeout(() => window.location.reload(), 1200);
                 } else {
                     this.isError = true;
-                    this.message = data.error ?? 'Có lỗi xảy ra';
+                    this.feedMessage = data.error || 'Có lỗi xảy ra khi cho ăn';
                 }
-            })
-            .catch(() => {
+            } catch (e) {
                 this.isError = true;
-                this.message = 'Lỗi kết nối. Vui lòng thử lại.';
-            })
-            .finally(() => {
+                this.feedMessage = 'Lỗi kết nối. Vui lòng thử lại!';
+            } finally {
                 this.feeding = false;
-            });
+                setTimeout(() => window.refreshIcons?.(), 50);
+            }
+        },
+
+        openRenameModal() {
+            this.renameModalOpen = true;
+        },
+
+        async submitRename() {
+            if (this.renaming || !this.petNewName.trim()) return;
+            this.renaming = true;
+            try {
+                const res = await fetch("{{ route('pet.rename') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ name: this.petNewName.trim() })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    this.renameModalOpen = false;
+                    window.location.reload();
+                }
+            } catch (e) {
+                alert('Không thể đổi tên lúc này');
+            } finally {
+                this.renaming = false;
+            }
+        },
+
+        closeCelebration() {
+            this.celebrationModalOpen = false;
+            window.location.reload();
+        },
+
+        getPetBorderClass() {
+            if (this.hunger >= 70) return 'border-emerald-300 ring-8 ring-emerald-500/10';
+            if (this.hunger >= 40) return 'border-amber-300 ring-8 ring-amber-500/10';
+            if (this.hunger >= 20) return 'border-orange-300 ring-8 ring-orange-500/10';
+            return 'border-rose-300 ring-8 ring-rose-500/10';
+        },
+
+        getMoodBadgeClass() {
+            if (this.hunger >= 70) return 'bg-emerald-500 text-white';
+            if (this.hunger >= 40) return 'bg-amber-400 text-amber-950';
+            if (this.hunger >= 20) return 'bg-orange-500 text-white';
+            return 'bg-rose-500 text-white';
+        },
+
+        getMoodText() {
+            if (this.hunger >= 70) return '😊 Rất vui & No';
+            if (this.hunger >= 40) return '🙂 Hơi đói';
+            if (this.hunger >= 20) return '😟 Đói nhiều';
+            if (this.hunger >= 1) return '😢 Rất yếu';
+            return '💤 Ngủ đông';
+        },
+
+        getHungerBarClass() {
+            if (this.hunger >= 70) return 'bg-emerald-500';
+            if (this.hunger >= 40) return 'bg-amber-400';
+            if (this.hunger >= 20) return 'bg-orange-500';
+            return 'bg-rose-500';
+        },
+
+        getHungerNote() {
+            if (this.hunger >= 70) return 'No bụng thoải mái';
+            if (this.hunger >= 40) return 'Nên cho ăn thêm một chút';
+            if (this.hunger >= 20) return 'Cần cho ăn sớm';
+            return 'Nguy cơ ngủ đông!';
         }
     };
 }

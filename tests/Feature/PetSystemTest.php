@@ -334,4 +334,126 @@ class PetSystemTest extends TestCase
         $stats = UserLearningStat::where('user_id', $this->user->id)->first();
         $this->assertEquals(500, $stats->total_xp);
     }
+
+    // =========================================================================
+    // Test 13: User can rename their pet
+    // =========================================================================
+
+    public function test_user_can_rename_pet(): void
+    {
+        $petService = app(PetService::class);
+        $userPet = $petService->createInitialPet($this->user);
+
+        $response = $this->actingAs($this->user)
+            ->postJson(route('pet.rename'), [
+                'name' => 'Tiểu Long',
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+                'name'    => 'Tiểu Long',
+            ]);
+
+        $this->assertEquals('Tiểu Long', $userPet->fresh()->name);
+
+        $memory = PetMemory::where('user_pet_id', $userPet->id)
+            ->where('type', 'renamed')
+            ->first();
+        $this->assertNotNull($memory);
+        $this->assertStringContainsString('Tiểu Long', $memory->title);
+    }
+
+    // =========================================================================
+    // Test 14: Pet status returns companion data for floating widget
+    // =========================================================================
+
+    public function test_pet_status_returns_companion_data(): void
+    {
+        $petService = app(PetService::class);
+        $petService->createInitialPet($this->user);
+
+        $response = $this->actingAs($this->user)
+            ->getJson(route('pet.status'));
+
+        $response->assertStatus(200)
+            ->assertJsonStructure([
+                'has_pet',
+                'id',
+                'name',
+                'stage',
+                'stage_name',
+                'emoji',
+                'hunger',
+                'hunger_state',
+                'status',
+                'exp',
+                'daily_fed',
+                'daily_remaining',
+                'progress',
+                'random_dialogue',
+                'dialogues',
+            ]);
+
+        $this->assertTrue($response->json('has_pet'));
+        $this->assertEquals('Trứng', $response->json('stage_name'));
+        $this->assertEquals('🥚', $response->json('emoji'));
+    }
+
+    // =========================================================================
+    // Test 15: Pet dialogue includes mastered vocabulary
+    // =========================================================================
+
+    public function test_pet_dialogue_includes_mastered_vocabulary(): void
+    {
+        $petService = app(PetService::class);
+        $userPet = $petService->createInitialPet($this->user);
+
+        // Create flashcard and mastered progress (repetition >= 2)
+        $flashcard = \App\Models\Flashcard::create([
+            'hanzi'   => '谢谢',
+            'pinyin'  => 'xièxie',
+            'meaning' => 'Cảm ơn',
+        ]);
+
+        \App\Models\FlashcardProgress::create([
+            'user_id'      => $this->user->id,
+            'flashcard_id' => $flashcard->id,
+            'repetition'   => 2,
+            'ease_factor'  => 2.5,
+            'interval'     => 1,
+            'next_review_at' => now()->addDay(),
+        ]);
+
+        $dialogueService = app(\App\Services\Pet\PetDialogueService::class);
+        $dialogues = $dialogueService->getDialogues($this->user, $userPet);
+
+        $foundVocab = false;
+        foreach ($dialogues as $d) {
+            if (str_contains($d, '谢谢') && str_contains($d, 'Cảm ơn')) {
+                $foundVocab = true;
+                break;
+            }
+        }
+
+        $this->assertTrue($foundVocab, 'Pet dialogue should include mastered word 谢谢.');
+    }
+
+    // =========================================================================
+    // Test 16: Dashboard displays pet hero card when pet exists
+    // =========================================================================
+
+    public function test_dashboard_displays_pet_companion(): void
+    {
+        $petService = app(PetService::class);
+        $petService->createInitialPet($this->user);
+
+        $response = $this->actingAs($this->user)
+            ->get(route('dashboard'));
+
+        $response->assertStatus(200);
+        $response->assertSee('Giai đoạn 0: Trứng');
+        $response->assertSee('Cho pet ăn nhanh');
+    }
 }
+
