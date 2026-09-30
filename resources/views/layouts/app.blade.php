@@ -825,7 +825,7 @@
     </script>
     @endauth
 
-    <x-pet-floating-companion />
+    <x-pet.floating-companion />
 
     <x-toast />
 
