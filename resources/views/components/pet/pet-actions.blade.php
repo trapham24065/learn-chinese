@@ -6,17 +6,17 @@
                 <i data-lucide="utensils" class="h-3 w-3 text-amber-600"></i>
                 Cho ăn hôm nay:
             </span>
-            <span>Còn <strong class="text-amber-700" x-text="pet.daily_remaining || 0"></strong>/100 XP</span>
+            <span>Còn <strong class="text-amber-700" x-text="pet?.daily_remaining ?? 0"></strong>/100 XP</span>
         </div>
 
         <div class="grid grid-cols-2 gap-1.5">
             <button type="button" @click="feed(5)"
-                    :disabled="feeding || !pet || pet.daily_remaining < 5"
+                    :disabled="feeding || !pet || (pet?.daily_remaining ?? 0) < 5"
                     class="inline-flex items-center justify-center gap-1 rounded-xl bg-amber-500 py-1.5 text-[11px] font-bold text-white transition hover:bg-amber-600 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm">
                 <span>🍖 Cho ăn +5 XP</span>
             </button>
             <button type="button" @click="feed(10)"
-                    :disabled="feeding || !pet || pet.daily_remaining < 10"
+                    :disabled="feeding || !pet || (pet?.daily_remaining ?? 0) < 10"
                     class="inline-flex items-center justify-center gap-1 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 py-1.5 text-[11px] font-bold text-white transition hover:from-amber-600 hover:to-orange-600 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm">
                 <span>🍖 Cho ăn +10 XP</span>
             </button>

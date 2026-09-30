@@ -60,7 +60,18 @@
 <script>
 window.petFloatingCompanion = function petFloatingCompanion() {
     return {
-        pet: null,
+        pet: {
+            has_pet: false,
+            name: '',
+            stage: 0,
+            emoji: '🥚',
+            hunger: 100,
+            hunger_state: 'happy',
+            is_active: false,
+            daily_remaining: 0,
+            random_word: null,
+            dialogues: []
+        },
         state: 'idle', // 'idle' | 'happy' | 'excited' | 'hungry' | 'sleeping' | 'speaking' | 'evolving'
         speechBubbleOpen: false,
         isMinimized: localStorage.getItem('pet_companion_minimized') === '1',
@@ -108,13 +119,13 @@ window.petFloatingCompanion = function petFloatingCompanion() {
         },
 
         determineInitialState() {
-            if (!this.pet) return;
+            if (!this.pet || !this.pet.has_pet) return;
             const hour = new Date().getHours();
             if (hour >= 22 || hour < 6) {
                 this.state = 'sleeping';
                 return;
             }
-            if (this.pet.hunger < 25) {
+            if ((this.pet?.hunger ?? 100) < 25) {
                 this.state = 'hungry';
                 return;
             }
@@ -355,8 +366,8 @@ window.petFloatingCompanion = function petFloatingCompanion() {
         },
 
         getMoodDotClass() {
-            if (!this.pet) return 'bg-amber-400';
-            switch (this.pet.hunger_state) {
+            if (!this.pet || !this.pet.has_pet) return 'bg-amber-400';
+            switch (this.pet?.hunger_state) {
                 case 'happy': return 'bg-emerald-500';
                 case 'hungry': return 'bg-amber-400';
                 case 'very_hungry': return 'bg-orange-500';
@@ -366,8 +377,8 @@ window.petFloatingCompanion = function petFloatingCompanion() {
         },
 
         getMoodBadgeClass() {
-            if (!this.pet) return 'bg-slate-500';
-            switch (this.pet.hunger_state) {
+            if (!this.pet || !this.pet.has_pet) return 'bg-slate-500';
+            switch (this.pet?.hunger_state) {
                 case 'happy': return 'bg-emerald-500';
                 case 'hungry': return 'bg-amber-500';
                 case 'very_hungry': return 'bg-orange-500';
@@ -377,15 +388,14 @@ window.petFloatingCompanion = function petFloatingCompanion() {
         },
 
         getMoodText() {
-            if (!this.pet) return '';
-            switch (this.pet.hunger_state) {
+            if (!this.pet || !this.pet.has_pet) return '';
+            switch (this.pet?.hunger_state) {
                 case 'happy': return '😊 Vui vẻ';
                 case 'hungry': return '🙂 Hơi đói';
                 case 'very_hungry': return '😟 Rất đói';
                 case 'weak': return '😢 Yếu';
                 case 'dormant': return '💤 Ngủ đông';
                 default: return 'Bình thường';
-            }
         }
     };
 };

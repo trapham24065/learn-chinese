@@ -44,15 +44,15 @@
             
             <div class="flex items-baseline justify-between gap-2">
                 <div class="flex items-baseline gap-1.5 min-w-0">
-                    <span class="text-base font-black text-slate-900" x-text="pet.random_word.hanzi"></span>
-                    <span class="text-xs text-indigo-600 font-semibold" x-text="'[' + pet.random_word.pinyin + ']'"></span>
+                    <span class="text-base font-black text-slate-900" x-text="pet?.random_word?.hanzi || ''"></span>
+                    <span class="text-xs text-indigo-600 font-semibold" x-text="pet?.random_word?.pinyin ? '[' + pet.random_word.pinyin + ']' : ''"></span>
                 </div>
-                <span class="text-xs text-slate-600 truncate max-w-[120px]" x-text="pet.random_word.meaning"></span>
+                <span class="text-xs text-slate-600 truncate max-w-[120px]" x-text="pet?.random_word?.meaning || ''"></span>
             </div>
 
             {{-- Vocab Actions: Nghe & Ôn lại --}}
             <div class="flex items-center gap-2 pt-1 border-t border-indigo-100/80">
-                <button type="button" @click="speakWord(pet.random_word.hanzi)"
+                <button type="button" @click="speakWord(pet?.random_word?.hanzi)"
                         class="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-2 py-1 text-[11px] font-bold text-white transition hover:bg-indigo-700 active:scale-95 shadow-sm">
                     <i data-lucide="volume-2" class="h-3 w-3"></i>
                     <span>Nghe</span>
