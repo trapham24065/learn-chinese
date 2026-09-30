@@ -396,6 +396,7 @@ window.petFloatingCompanion = function petFloatingCompanion() {
                 case 'weak': return '😢 Yếu';
                 case 'dormant': return '💤 Ngủ đông';
                 default: return 'Bình thường';
+            }
         }
     };
 };
