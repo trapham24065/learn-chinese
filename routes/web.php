@@ -57,6 +57,11 @@ Route::prefix('student')->group(function () {
         Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
         Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+        // Pet System
+        Route::get('/pet', [\App\Http\Controllers\PetController::class, 'index'])->name('pet.index');
+        Route::post('/pet/feed', [\App\Http\Controllers\PetController::class, 'feed'])->name('pet.feed');
+        Route::get('/pet/status', [\App\Http\Controllers\PetController::class, 'status'])->name('pet.status');
     });
 });
 
