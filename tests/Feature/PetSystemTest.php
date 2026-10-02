@@ -589,5 +589,117 @@ class PetSystemTest extends TestCase
         $shyDialogue = $memoryService->formatMemoryDialogue($memory, 'shy');
         $this->assertStringContainsString('ấm áp ghê', $shyDialogue);
     }
+
+    // =========================================================================
+    // Test 22: Pet DNA computation and dominant trait detection
+    // =========================================================================
+
+    public function test_pet_dna_computation_and_display(): void
+    {
+        $petService = app(PetService::class);
+        $userPet = $petService->createInitialPet($this->user);
+
+        // Create mastered flashcard
+        $flashcard = \App\Models\Flashcard::create([
+            'hanzi'   => '猫',
+            'pinyin'  => 'māo',
+            'meaning' => 'Con mèo',
+        ]);
+
+        \App\Models\FlashcardProgress::create([
+            'user_id'      => $this->user->id,
+            'flashcard_id' => $flashcard->id,
+            'repetition'   => 2,
+            'ease_factor'  => 2.5,
+            'interval'     => 1,
+            'next_review_at' => now()->addDay(),
+        ]);
+
+        $dnaService = app(\App\Services\Pet\PetDnaService::class);
+        $dna = $dnaService->compute($this->user, $userPet);
+
+        $this->assertIsArray($dna);
+        $this->assertArrayHasKey('vocabulary', $dna);
+        $this->assertArrayHasKey('dominant_trait', $dna);
+        $this->assertGreaterThan(0, $dna['vocabulary']);
+
+        $displayDna = $dnaService->getDisplayDna($userPet->fresh());
+        $this->assertNotEmpty($displayDna);
+        $this->assertEquals('Từ vựng', $displayDna[0]['label']);
+    }
+
+    // =========================================================================
+    // Test 23: Mastered flashcard review adds object to Pet Memory World
+    // =========================================================================
+
+    public function test_mastering_word_adds_object_to_pet_world(): void
+    {
+        $petService = app(PetService::class);
+        $userPet = $petService->createInitialPet($this->user);
+
+        $flashcard = \App\Models\Flashcard::create([
+            'hanzi'   => '山',
+            'pinyin'  => 'shān',
+            'meaning' => 'Ngọn núi',
+        ]);
+
+        // First review (repetition 0 -> 1)
+        $this->actingAs($this->user)->postJson(route('flashcards.review'), [
+            'flashcard_id' => $flashcard->id,
+            'quality'      => 'known',
+        ])->assertStatus(200);
+
+        $this->assertEquals(0, \App\Models\PetWorldObject::where('user_pet_id', $userPet->id)->count());
+
+        // Second review (repetition 1 -> 2: Mastered)
+        $this->actingAs($this->user)->postJson(route('flashcards.review'), [
+            'flashcard_id' => $flashcard->id,
+            'quality'      => 'known',
+        ])->assertStatus(200);
+
+        $worldObject = \App\Models\PetWorldObject::where('user_pet_id', $userPet->id)->first();
+        $this->assertNotNull($worldObject);
+        $this->assertEquals('山', $worldObject->hanzi);
+        $this->assertEquals('⛰️', $worldObject->emoji);
+        $this->assertEquals('nature', $worldObject->object_type);
+    }
+
+    // =========================================================================
+    // Test 24: Dream sentence generation from world objects
+    // =========================================================================
+
+    public function test_dream_sentence_generation_and_api_endpoints(): void
+    {
+        $petService = app(PetService::class);
+        $userPet = $petService->createInitialPet($this->user);
+        $worldService = app(\App\Services\Pet\PetWorldService::class);
+
+        $words = [
+            ['hanzi' => '猫', 'pinyin' => 'māo', 'meaning' => 'Mèo'],
+            ['hanzi' => '鱼', 'pinyin' => 'yú', 'meaning' => 'Cá'],
+            ['hanzi' => '月', 'pinyin' => 'yuè', 'meaning' => 'Mặt trăng'],
+        ];
+
+        foreach ($words as $w) {
+            $fc = \App\Models\Flashcard::create($w);
+            $worldService->addWordToWorld($userPet, $fc);
+        }
+
+        $dream = $worldService->generateDreamSentence($userPet);
+        $this->assertNotNull($dream);
+        $this->assertStringContainsString('梦', $dream);
+
+        // Test DNA API
+        $responseDna = $this->actingAs($this->user)->getJson(route('pet.dna'));
+        $responseDna->assertStatus(200)
+            ->assertJsonStructure(['dna', 'personality']);
+
+        // Test World API
+        $responseWorld = $this->actingAs($this->user)->getJson(route('pet.world'));
+        $responseWorld->assertStatus(200)
+            ->assertJsonStructure(['objects', 'dream']);
+        $this->assertCount(3, $responseWorld->json('objects'));
+    }
 }
+
 

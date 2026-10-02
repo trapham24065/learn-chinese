@@ -485,13 +485,13 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                         </div>
                     </div>
 
-                    {{-- Pet Learning DNA section (shown in Profile tab) --}}
+                    {{-- Pet Learning DNA section --}}
                     @if(count($dna) > 0)
                     <div class="mt-6 rounded-2xl bg-slate-950 p-5 text-white">
                         <div class="flex items-center justify-between mb-4">
                             <div>
                                 <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Learning DNA 🧬</p>
-                                <p class="text-sm font-bold text-white mt-0.5">Pet cá»§a báº¡n Ä‘ang hÃ¬nh thÃ nh tÃ­nh cÃ¡ch</p>
+                                <p class="text-sm font-bold text-white mt-0.5">Pet của bạn đang hình thành tính cách</p>
                             </div>
                             <span class="text-xs bg-white/10 px-3 py-1 rounded-full text-slate-300">
                                 {{ $userPet->getPersonalityEmoji() }} {{ $userPet->getPersonalityLabel() }}
@@ -510,7 +510,7 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                             @endforeach
                         </div>
                         <p class="mt-3 text-[11px] text-slate-500 italic">
-                            DNA Ä‘Æ°á»£c tÃ­nh toÃ¡n tá»« hÃ nh vi há» c táº­p thá»±c táº¿ vÃ  cáº­p nháº­t tá»± Ä‘á»™ng.
+                            DNA được tính toán từ hành vi học tập thực tế và cập nhật tự động.
                         </p>
                     </div>
                     @endif
@@ -519,7 +519,7 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                     @if(count($worldObjs) > 0)
                     <div class="mt-6 rounded-2xl border border-white/10 bg-gradient-to-br from-indigo-950/50 to-slate-900 p-4 relative overflow-hidden" style="min-height: 260px;">
                         <p class="text-[10px] font-bold uppercase tracking-widest text-indigo-300/70 mb-1">Pet Memory World 🌏</p>
-                        <p class="text-xs text-slate-400">Nhá»¯ng tá»« báº¡n Ä‘Ã£ há» c Ä‘ang sá»‘ng trong tháº¿ giá»›i cá»§a Pet</p>
+                        <p class="text-xs text-slate-400">Những từ bạn đã học đang sống trong thế giới của Pet</p>
                         
                         <div id="pet-world" class="relative mt-3" style="height: 200px;">
                             @foreach($worldObjs as $obj)
@@ -535,7 +535,7 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                             @endforeach
                         </div>
                         <p class="text-[11px] text-slate-500 mt-2">
-                            {{ count($worldObjs) }} tá»« Ä‘Ã£ há» c · Hover Ä‘á»ƒ xem nghÄ©a
+                            {{ count($worldObjs) }} từ đã học · Rê chuột để xem nghĩa
                         </p>
                     </div>
                     @endif
@@ -543,9 +543,9 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                     {{-- Dream sentence --}}
                     @if($dreamSent)
                     <div class="mt-4 rounded-2xl bg-slate-900/60 border border-indigo-500/20 p-4">
-                        <p class="text-[10px] uppercase tracking-widest text-indigo-400/70 mb-1">💤 Pet Ä‘ang mÆ¡...</p>
+                        <p class="text-[10px] uppercase tracking-widest text-indigo-400/70 mb-1">💤 Pet đang mơ...</p>
                         <p class="text-base font-medium text-white">{{ $dreamSent }}</p>
-                        <p class="text-[11px] text-slate-500 mt-1">Tá»« nhá»¯ng tá»« báº¡n Ä‘Ã£ há» c Ä‘Æ°á»£c</p>
+                        <p class="text-[11px] text-slate-500 mt-1">Từ những từ bạn đã học được</p>
                     </div>
                     @endif
                 </div>

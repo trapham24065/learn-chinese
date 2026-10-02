@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 namespace App\Services\Pet;
 
 use App\Models\FlashcardProgress;
@@ -107,12 +107,12 @@ class PetDnaService
         }
 
         return [
-            ['key' => 'vocabulary',  'label' => 'T? v?ng',    'score' => $dna['vocabulary']  ?? 0, 'color' => '#6366f1'],
+            ['key' => 'vocabulary',  'label' => 'Từ vựng',    'score' => $dna['vocabulary']  ?? 0, 'color' => '#6366f1'],
             ['key' => 'flashcard',   'label' => 'Flashcard',  'score' => $dna['flashcard']   ?? 0, 'color' => '#ec4899'],
             ['key' => 'quiz',        'label' => 'Quiz',       'score' => $dna['quiz']        ?? 0, 'color' => '#f59e0b'],
             ['key' => 'listening',   'label' => 'Listening',  'score' => $dna['listening']   ?? 0, 'color' => '#10b981'],
             ['key' => 'consistency', 'label' => 'Kiên trì',   'score' => $dna['consistency'] ?? 0, 'color' => '#3b82f6'],
-            ['key' => 'resilience',  'label' => 'Kiên c??ng', 'score' => $dna['resilience']  ?? 0, 'color' => '#ef4444'],
+            ['key' => 'resilience',  'label' => 'Kiên cường', 'score' => $dna['resilience']  ?? 0, 'color' => '#ef4444'],
         ];
     }
 }
