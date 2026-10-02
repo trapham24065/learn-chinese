@@ -54,15 +54,21 @@ class PetDialogueService
         // 4. Time of day greeting tailored to personality & affinity
         $dialogues[] = $this->getTimeGreeting($userPet, $personality, $userName);
 
-        // 5. Vocabulary recall from mastered words
+        // 5. Vocabulary recall from recent word or mastered words
+        if (!empty($context['recent_word'])) {
+            $recentCard = \App\Models\Flashcard::where('hanzi', $context['recent_word'])->first();
+            if ($recentCard) {
+                $dialogues[] = $this->formatVocabDialogue($recentCard, $personality);
+            }
+        }
+
         $words = $this->masteryService->getRandomMastered($user, 3);
         if ($words->isNotEmpty()) {
-            $word = $words->first();
-            $dialogues[] = $this->formatVocabDialogue($word, $personality);
-
-            if ($words->count() >= 2) {
-                $word2 = $words->get(1);
-                $dialogues[] = $this->formatSecondVocabDialogue($word2, $personality);
+            foreach ($words as $w) {
+                if (empty($context['recent_word']) || $w->hanzi !== $context['recent_word']) {
+                    $dialogues[] = $this->formatVocabDialogue($w, $personality);
+                    break;
+                }
             }
         }
 

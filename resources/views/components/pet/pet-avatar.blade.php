@@ -19,11 +19,58 @@
         <span class="pet-sleep-particle text-[15px] font-black text-indigo-700" style="animation-delay: 1.2s;">Z</span>
     </div>
 
-    {{-- Main SVG Container --}}
-    <div class="w-16 h-16 sm:w-20 sm:h-20 transition-all duration-300 transform"
+    {{-- Personality Characteristic Particle Aura (Luôn bay bổng nhẹ nhàng quanh Pet theo tính cách) --}}
+    <div x-show="state !== 'sleeping'" x-cloak class="absolute inset-0 pointer-events-none z-20 overflow-visible">
+        {{-- Playful: Sao lấp lánh & Tia chớp vui nhộn --}}
+        <template x-if="!pet.personality || pet.personality === 'playful'">
+            <div class="w-full h-full relative">
+                <span class="aura-playful-particle absolute -top-1.5 -left-1 text-[11px] select-none">⭐</span>
+                <span class="aura-playful-particle absolute top-3 -right-2 text-[10px] select-none" style="animation-delay: 0.8s;">✨</span>
+            </div>
+        </template>
+
+        {{-- Curious: Kính lúp & Bóng đèn ý tưởng --}}
+        <template x-if="pet.personality === 'curious'">
+            <div class="w-full h-full relative">
+                <span class="aura-curious-particle absolute -top-2 right-0 text-[11px] select-none">💡</span>
+                <span class="aura-curious-particle absolute bottom-2 -left-2 text-[10px] select-none" style="animation-delay: 1.1s;">🔍</span>
+            </div>
+        </template>
+
+        {{-- Shy: Cánh hoa anh đào & Trái tim phấn hồng --}}
+        <template x-if="pet.personality === 'shy'">
+            <div class="w-full h-full relative">
+                <span class="aura-shy-particle absolute -top-1.5 -left-1 text-[11px] select-none">🌸</span>
+                <span class="aura-shy-particle absolute top-4 -right-2 text-[10px] select-none" style="animation-delay: 1.2s;">💕</span>
+            </div>
+        </template>
+
+        {{-- Cheerful: Ánh mặt trời vàng & Đốm sáng rực rỡ --}}
+        <template x-if="pet.personality === 'cheerful'">
+            <div class="w-full h-full relative">
+                <span class="aura-cheerful-particle absolute -top-2 left-1/2 -translate-x-1/2 text-[12px] select-none">☀️</span>
+                <span class="aura-playful-particle absolute top-5 -right-2 text-[10px] select-none" style="animation-delay: 0.5s;">🌟</span>
+            </div>
+        </template>
+
+        {{-- Calm: Lá trà xanh & Làn sương thanh tịnh --}}
+        <template x-if="pet.personality === 'calm'">
+            <div class="w-full h-full relative">
+                <span class="aura-calm-particle absolute -top-1 -right-1 text-[11px] select-none">🍃</span>
+                <span class="aura-calm-particle absolute bottom-1 -left-2 text-[10px] select-none" style="animation-delay: 1.6s;">🍵</span>
+            </div>
+        </template>
+    </div>
+
+    {{-- Main SVG Container with Personality-specific Idle Animations --}}
+    <div class="w-16 h-16 sm:w-20 sm:h-20 transition-all duration-300 transform relative"
          :class="{
              'animate-[eggWobble_4s_ease-in-out_infinite]': pet && pet.stage === 0 && state === 'idle',
-             'animate-[floatBreathing_3.6s_ease-in-out_infinite]': pet && pet.stage > 0 && (state === 'idle' || state === 'speaking'),
+             'pet-anim-idle-playful': pet && pet.stage > 0 && (state === 'idle' || state === 'speaking') && (!pet.personality || pet.personality === 'playful'),
+             'pet-anim-idle-curious': pet && pet.stage > 0 && (state === 'idle' || state === 'speaking') && pet.personality === 'curious',
+             'pet-anim-idle-shy': pet && pet.stage > 0 && (state === 'idle' || state === 'speaking') && pet.personality === 'shy',
+             'pet-anim-idle-cheerful': pet && pet.stage > 0 && (state === 'idle' || state === 'speaking') && pet.personality === 'cheerful',
+             'pet-anim-idle-calm': pet && pet.stage > 0 && (state === 'idle' || state === 'speaking') && pet.personality === 'calm',
              'translate-y-1.5 opacity-90': state === 'hungry',
              'opacity-80 scale-95': state === 'sleeping',
              'scale-110': state === 'excited'
@@ -46,10 +93,26 @@
             <path d="M 60,135 Q 80,155 100,135" fill="none" stroke="#fff" stroke-width="3.5" opacity="0.6" stroke-linecap="round"/>
             <path d="M 80,75 L 88,90 L 78,105 L 92,125" fill="none" stroke="#fef08a" stroke-width="3" stroke-linecap="round"/>
             <ellipse cx="50" cy="50" rx="14" ry="24" fill="#ffffff" opacity="0.45" transform="rotate(-25 50 50)"/>
+
+            {{-- Personality hint on Egg --}}
+            <g x-show="pet && pet.personality === 'shy'">
+                <circle cx="80" cy="115" r="8" fill="#f472b6" opacity="0.7"/>
+            </g>
+            <g x-show="pet && pet.personality === 'curious'">
+                <text x="80" y="125" font-size="22" font-weight="bold" fill="#78350f" text-anchor="middle" opacity="0.6">?</text>
+            </g>
+            <g x-show="pet && pet.personality === 'calm'">
+                <path d="M 75,115 Q 80,105 85,115 Z" fill="#22c55e" opacity="0.75"/>
+            </g>
         </svg>
 
         {{-- Stage 1: Rồng sơ sinh trong vỏ trứng --}}
         <svg x-show="pet && pet.stage === 1" x-cloak class="w-full h-full drop-shadow-md" viewBox="0 0 180 200">
+            {{-- Cheerful Sunny Halo Background --}}
+            <g x-show="pet && pet.personality === 'cheerful'">
+                <circle cx="90" cy="85" r="54" fill="none" stroke="#fde047" stroke-width="3" stroke-dasharray="8 6" opacity="0.85" class="aura-cheerful-particle"/>
+            </g>
+
             <path d="M 130,150 Q 165,160 160,140" fill="none" stroke="#f59e0b" stroke-width="10" stroke-linecap="round"/>
             <ellipse cx="90" cy="115" rx="50" ry="45" fill="#f59e0b" stroke="#b45309" stroke-width="3.5"/>
             <ellipse cx="90" cy="125" rx="32" ry="28" fill="#fef3c7"/>
@@ -57,9 +120,9 @@
             <path d="M 118,55 Q 125,35 112,38 Z" fill="#ef4444" stroke="#b91c1c" stroke-width="2"/>
             <circle cx="90" cy="85" r="48" fill="#f59e0b" stroke="#b45309" stroke-width="3.5"/>
             
-            {{-- Má hồng --}}
-            <circle cx="62" cy="98" r="8" fill="#f87171" :opacity="state === 'happy' || state === 'excited' ? '0.9' : '0.5'"/>
-            <circle cx="118" cy="98" r="8" fill="#f87171" :opacity="state === 'happy' || state === 'excited' ? '0.9' : '0.5'"/>
+            {{-- Má hồng (Thích ứng theo tính cách: shy thì má hồng đậm hơn) --}}
+            <circle cx="62" cy="98" :r="pet && pet.personality === 'shy' ? 10 : 8" :fill="pet && pet.personality === 'shy' ? '#fb7185' : '#f87171'" :opacity="pet && pet.personality === 'shy' ? '0.95' : (state === 'happy' || state === 'excited' ? '0.9' : '0.5')"/>
+            <circle cx="118" cy="98" :r="pet && pet.personality === 'shy' ? 10 : 8" :fill="pet && pet.personality === 'shy' ? '#fb7185' : '#f87171'" :opacity="pet && pet.personality === 'shy' ? '0.95' : (state === 'happy' || state === 'excited' ? '0.9' : '0.5')"/>
 
             {{-- Happy: mắt cười tít trăng khuyết --}}
             <g x-show="state === 'happy' || state === 'excited'">
@@ -92,6 +155,34 @@
             <ellipse cx="90" cy="96" rx="14" ry="9" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
             <ellipse x-show="state === 'speaking'" cx="90" cy="98" rx="4" ry="3" fill="#dc2626"/>
             <path x-show="state !== 'speaking'" d="M 87,96 Q 90,99 93,96" fill="none" stroke="#78350f" stroke-width="2" stroke-linecap="round"/>
+
+            {{-- Stage 1 Personality Accessories --}}
+            {{-- Curious: Kính tròn tri thức --}}
+            <g x-show="pet && pet.personality === 'curious'">
+                <circle cx="72" cy="80" r="13" fill="none" stroke="#b45309" stroke-width="2.5" opacity="0.9"/>
+                <circle cx="108" cy="80" r="13" fill="none" stroke="#b45309" stroke-width="2.5" opacity="0.9"/>
+                <path d="M 85,80 L 95,80" fill="none" stroke="#b45309" stroke-width="2.5"/>
+                <path d="M 66,74 L 71,71" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+                <path d="M 102,74 L 107,71" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+            </g>
+            {{-- Shy: Bông hoa cài đầu trên sừng --}}
+            <g x-show="pet && pet.personality === 'shy'">
+                <circle cx="56" cy="46" r="5" fill="#f472b6" opacity="0.95"/>
+                <circle cx="51" cy="48" r="4.5" fill="#fbcfe8" opacity="0.9"/>
+                <circle cx="61" cy="48" r="4.5" fill="#fbcfe8" opacity="0.9"/>
+                <circle cx="53" cy="53" r="4.5" fill="#fbcfe8" opacity="0.9"/>
+                <circle cx="59" cy="53" r="4.5" fill="#fbcfe8" opacity="0.9"/>
+                <circle cx="56" cy="49" r="2.5" fill="#fef08a"/>
+            </g>
+            {{-- Playful: Ngôi sao may mắn trên trán --}}
+            <g x-show="!pet.personality || pet.personality === 'playful'">
+                <path d="M 90,60 L 92,65 L 97,65 L 93,68 L 95,73 L 90,70 L 85,73 L 87,68 L 83,65 L 88,65 Z" fill="#fbbf24" stroke="#d97706" stroke-width="1"/>
+            </g>
+            {{-- Calm: Mầm lá trà xanh thanh tịnh trên đầu --}}
+            <g x-show="pet && pet.personality === 'calm'">
+                <path d="M 90,44 Q 82,34 92,30 Q 98,38 90,44 Z" fill="#22c55e" stroke="#15803d" stroke-width="1.5"/>
+                <path d="M 90,44 Q 98,36 104,33 Q 102,44 90,44 Z" fill="#4ade80" stroke="#15803d" stroke-width="1.5"/>
+            </g>
 
             {{-- Vỏ trứng vỡ --}}
             <path d="M 38,135 Q 35,185 90,185 Q 145,185 142,135 L 125,145 L 110,132 L 90,148 L 70,132 L 55,145 Z"
@@ -133,6 +224,41 @@
 
             <ellipse cx="100" cy="98" rx="16" ry="10" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
             <path d="M 94,98 Q 100,103 106,98" fill="none" stroke="#78350f" stroke-width="2" stroke-linecap="round"/>
+
+            {{-- Stage 2 Personality Accessories --}}
+            {{-- Cheerful: Radiant Sunny Halo --}}
+            <g x-show="pet && pet.personality === 'cheerful'">
+                <circle cx="100" cy="85" r="54" fill="none" stroke="#fde047" stroke-width="3" stroke-dasharray="8 6" opacity="0.85" class="aura-cheerful-particle"/>
+            </g>
+            {{-- Curious: Kính tròn tri thức --}}
+            <g x-show="pet && pet.personality === 'curious'">
+                <circle cx="82" cy="82" r="13" fill="none" stroke="#b45309" stroke-width="2.5" opacity="0.9"/>
+                <circle cx="118" cy="82" r="13" fill="none" stroke="#b45309" stroke-width="2.5" opacity="0.9"/>
+                <path d="M 95,82 L 105,82" fill="none" stroke="#b45309" stroke-width="2.5"/>
+                <path d="M 76,76 L 81,73" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+                <path d="M 112,76 L 117,73" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+            </g>
+            {{-- Shy: Bông hoa anh đào cài đầu trên sừng & Má hồng đậm --}}
+            <g x-show="pet && pet.personality === 'shy'">
+                <circle cx="66" cy="48" r="5.5" fill="#f472b6" opacity="0.95"/>
+                <circle cx="61" cy="50" r="4.5" fill="#fbcfe8" opacity="0.9"/>
+                <circle cx="71" cy="50" r="4.5" fill="#fbcfe8" opacity="0.9"/>
+                <circle cx="63" cy="55" r="4.5" fill="#fbcfe8" opacity="0.9"/>
+                <circle cx="69" cy="55" r="4.5" fill="#fbcfe8" opacity="0.9"/>
+                <circle cx="66" cy="51" r="2.5" fill="#fef08a"/>
+                <circle cx="72" cy="98" r="10" fill="#fb7185" opacity="0.95"/>
+                <circle cx="128" cy="98" r="10" fill="#fb7185" opacity="0.95"/>
+            </g>
+            {{-- Playful: Ngôi sao may mắn trên trán --}}
+            <g x-show="!pet.personality || pet.personality === 'playful'">
+                <path d="M 100,60 L 102,65 L 107,65 L 103,68 L 105,73 L 100,70 L 95,73 L 97,68 L 93,65 L 98,65 Z" fill="#fbbf24" stroke="#d97706" stroke-width="1"/>
+            </g>
+            {{-- Calm: Mầm lá trà xanh thanh tịnh trên đầu & Làn sương dưới chân --}}
+            <g x-show="pet && pet.personality === 'calm'">
+                <path d="M 100,44 Q 92,34 102,30 Q 108,38 100,44 Z" fill="#22c55e" stroke="#15803d" stroke-width="1.5"/>
+                <path d="M 100,44 Q 108,36 114,33 Q 112,44 100,44 Z" fill="#4ade80" stroke="#15803d" stroke-width="1.5"/>
+                <path d="M 68,175 Q 84,168 100,175 Q 116,168 132,175" fill="none" stroke="#6ee7b7" stroke-width="3" stroke-linecap="round" opacity="0.75"/>
+            </g>
         </svg>
 
         {{-- Stage 3: Rồng thiếu niên --}}

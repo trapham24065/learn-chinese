@@ -144,6 +144,104 @@
     animation: petSleepZ 2.2s ease-out infinite;
 }
 
+/* Personality-driven Living Mascot Idle Animations */
+@keyframes petIdlePlayful {
+    0%, 100% { transform: translateY(0) rotate(0deg) scale(1, 1); }
+    20% { transform: translateY(-7px) rotate(-3.5deg) scale(1.04, 0.96); }
+    45% { transform: translateY(-1px) rotate(1deg) scale(0.98, 1.02); }
+    70% { transform: translateY(-8px) rotate(3.5deg) scale(1.03, 0.97); }
+    85% { transform: translateY(-2px) rotate(-1deg) scale(0.99, 1.01); }
+}
+
+@keyframes petIdleCurious {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    18% { transform: translateY(-3px) rotate(-10deg) scale(1.01); }
+    38% { transform: translateY(-1px) rotate(-7deg); }
+    55% { transform: translateY(-5px) rotate(0deg) scale(1.03, 0.98); }
+    72% { transform: translateY(-3px) rotate(10deg) scale(1.01); }
+    90% { transform: translateY(-1px) rotate(6deg); }
+}
+
+@keyframes petIdleShy {
+    0%, 100% { transform: translateY(1.5px) rotate(0deg) scale(0.97, 1.02); }
+    30% { transform: translateY(-3px) rotate(-2.5deg) scale(0.99, 0.99); }
+    50% { transform: translateY(0px) rotate(-1deg) scale(0.98, 1.01); }
+    75% { transform: translateY(-3px) rotate(2.5deg) scale(0.99, 0.99); }
+}
+
+@keyframes petIdleCheerful {
+    0%, 100% { transform: translateY(0) scale(1, 1); }
+    15% { transform: translateY(-10px) scale(1.06, 0.94); }
+    30% { transform: translateY(-2px) scale(0.97, 1.02); }
+    45% { transform: translateY(-12px) scale(1.07, 0.93); }
+    60% { transform: translateY(-2px) scale(0.98, 1.01); }
+    80% { transform: translateY(-4px) scale(1.01, 0.99); }
+}
+
+@keyframes petIdleCalm {
+    0%, 100% { transform: translateY(0px) scale(1, 1); filter: drop-shadow(0 4px 6px rgba(16, 185, 129, 0.25)); }
+    50% { transform: translateY(-7px) scale(1.02, 0.99); filter: drop-shadow(0 12px 16px rgba(16, 185, 129, 0.45)); }
+}
+
+/* Personality Aura Floating Keyframes */
+@keyframes auraDriftTwinkle {
+    0%, 100% { transform: translateY(0) scale(0.85); opacity: 0.4; }
+    50% { transform: translateY(-8px) scale(1.15); opacity: 0.95; }
+}
+
+@keyframes auraDriftPulse {
+    0%, 100% { transform: translateY(0) scale(0.9) rotate(-5deg); opacity: 0.5; }
+    50% { transform: translateY(-6px) scale(1.1) rotate(5deg); opacity: 1; }
+}
+
+@keyframes auraBlossomSway {
+    0%, 100% { transform: translateY(0) rotate(-8deg); opacity: 0.5; }
+    50% { transform: translateY(-7px) rotate(12deg); opacity: 0.95; }
+}
+
+@keyframes auraSunbeamSpin {
+    0% { transform: rotate(0deg) scale(0.95); opacity: 0.6; }
+    50% { transform: rotate(180deg) scale(1.1); opacity: 1; }
+    100% { transform: rotate(360deg) scale(0.95); opacity: 0.6; }
+}
+
+@keyframes auraZenMistFloat {
+    0%, 100% { transform: translateY(0) scale(0.95); opacity: 0.5; }
+    50% { transform: translateY(-5px) scale(1.08); opacity: 0.9; }
+}
+
+.pet-anim-idle-playful {
+    animation: petIdlePlayful 2.4s ease-in-out infinite;
+}
+.pet-anim-idle-curious {
+    animation: petIdleCurious 3.4s ease-in-out infinite;
+}
+.pet-anim-idle-shy {
+    animation: petIdleShy 3.6s ease-in-out infinite;
+}
+.pet-anim-idle-cheerful {
+    animation: petIdleCheerful 2.1s ease-in-out infinite;
+}
+.pet-anim-idle-calm {
+    animation: petIdleCalm 4.8s ease-in-out infinite;
+}
+
+.aura-playful-particle {
+    animation: auraDriftTwinkle 2s ease-in-out infinite;
+}
+.aura-curious-particle {
+    animation: auraDriftPulse 2.4s ease-in-out infinite;
+}
+.aura-shy-particle {
+    animation: auraBlossomSway 2.8s ease-in-out infinite;
+}
+.aura-cheerful-particle {
+    animation: auraSunbeamSpin 6s linear infinite;
+}
+.aura-calm-particle {
+    animation: auraZenMistFloat 3.8s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .pet-mascot-anim,
     .pet-mascot-anim * {

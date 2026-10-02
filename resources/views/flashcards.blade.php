@@ -420,6 +420,13 @@
     async submitReview(quality) {
         if (!this.card) return;
 
+        // Synchronously capture active card state before any async calls or step transitions
+        const currentCard = this.card;
+        const currentCardId = currentCard.id;
+        const currentHanzi = currentCard.hanzi || currentCard.word || '';
+        const currentPinyin = currentCard.pinyin || '';
+        const currentMeaning = currentCard.meaning || '';
+
         const isKnown = (quality === 'known' || quality >= 4);
         if (isKnown) {
             this.streakCount = (this.streakCount || 0) + 1;
@@ -441,7 +448,7 @@
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
                 body: JSON.stringify({
-                    flashcard_id: this.card.id,
+                    flashcard_id: currentCardId,
                     quality: quality
                 })
             });
@@ -449,7 +456,7 @@
 
         @auth
         try {
-            const idempotencyKey = `fc_${this.card.id}_${quality}_${Math.floor(Date.now() / 60000)}`;
+            const idempotencyKey = `fc_${currentCardId}_${quality}_${Math.floor(Date.now() / 60000)}`;
             const res = await fetch('{{ route('student.activity.log') }}', {
                 method: 'POST',
                 headers: {
@@ -460,7 +467,7 @@
                 body: JSON.stringify({
                     activity_type: isKnown ? 'flashcard_known' : 'flashcard_review',
                     source_type: 'flashcard',
-                    source_id: this.card.id,
+                    source_id: currentCardId,
                     idempotency_key: idempotencyKey,
                     meta: { quality: quality, streak_count: this.streakCount }
                 })
@@ -471,11 +478,13 @@
             }
             if (data?.daily_goal?.just_completed) {
                 window.PetEventBus?.emit('pet:daily-goal-completed', { xp: data?.xp?.earned });
-            } else if (isKnown) {
+            }
+            if (isKnown) {
                 window.PetEventBus?.emit('pet:word-mastered', {
-                    word: this.card?.word || this.card?.hanzi,
-                    hanzi: this.card?.word || this.card?.hanzi,
-                    pinyin: this.card?.pinyin,
+                    word: currentHanzi,
+                    hanzi: currentHanzi,
+                    pinyin: currentPinyin,
+                    meaning: currentMeaning,
                     xp: data?.xp?.earned
                 });
             }

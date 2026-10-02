@@ -398,7 +398,7 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                     <div class="relative pb-2">
                         <div class="flex h-48 w-48 sm:h-56 sm:w-56 items-center justify-center rounded-[2.5rem] bg-white shadow-2xl shadow-amber-900/10 border-4 transition-transform duration-300 hover:scale-105 select-none p-3"
                              :class="getPetBorderClass()">
-                            <x-pet-avatar :stage="$userPet->stage" :mood="$userPet->getHungerState()" size="xl" :interactive="true" />
+                            <x-pet-avatar :stage="$userPet->stage" :mood="$userPet->getHungerState()" :personality="$userPet->personality ?? 'playful'" size="xl" :interactive="true" />
                         </div>
 
                         {{-- Mood Indicator Badge --}}

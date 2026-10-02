@@ -1,6 +1,7 @@
 @props([
     'stage' => 0,
     'mood' => 'happy',
+    'personality' => 'playful',
     'size' => 'md', // 'xs', 'sm', 'md', 'lg', 'xl'
     'interactive' => false,
 ])
@@ -19,7 +20,7 @@
 
     $isDormant = ($mood === 'dormant');
     $isHungry = in_array($mood, ['hungry', 'very_hungry', 'weak']);
-    $animClass = $isDormant ? 'animate-pulse opacity-75' : ($stage === 0 ? 'animate-[eggWobble_4s_ease-in-out_infinite]' : 'animate-[floatBreathing_3.6s_ease-in-out_infinite]');
+    $animClass = $isDormant ? 'animate-pulse opacity-75' : ($stage === 0 ? 'animate-[eggWobble_4s_ease-in-out_infinite]' : 'pet-anim-idle-' . ($personality ?? 'playful'));
 @endphp
 
 <div {{ $attributes->merge(['class' => "relative inline-flex items-center justify-center select-none {$sizeClasses}"]) }}
@@ -29,6 +30,37 @@
      :class="clicking ? 'scale-110 -translate-y-2' : ''"
      style="cursor: pointer; transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);"
      @endif>
+
+    {{-- Personality Characteristic Particle Aura --}}
+    @if(!$isDormant)
+    <div x-cloak class="absolute inset-0 pointer-events-none z-20 overflow-visible">
+        {{-- Playful: Sao lấp lánh --}}
+        <div x-show="typeof personality !== 'undefined' ? (!personality || personality === 'playful') : ('{{ $personality }}' === 'playful')" class="w-full h-full relative">
+            <span class="aura-playful-particle absolute -top-1.5 -left-1 text-[13px] select-none">⭐</span>
+            <span class="aura-playful-particle absolute top-3 -right-2 text-[11px] select-none" style="animation-delay: 0.8s;">✨</span>
+        </div>
+        {{-- Curious: Kính lúp & Bóng đèn --}}
+        <div x-show="typeof personality !== 'undefined' ? (personality === 'curious') : ('{{ $personality }}' === 'curious')" class="w-full h-full relative">
+            <span class="aura-curious-particle absolute -top-2 right-0 text-[13px] select-none">💡</span>
+            <span class="aura-curious-particle absolute bottom-2 -left-2 text-[11px] select-none" style="animation-delay: 1.1s;">🔍</span>
+        </div>
+        {{-- Shy: Hoa anh đào & Trái tim --}}
+        <div x-show="typeof personality !== 'undefined' ? (personality === 'shy') : ('{{ $personality }}' === 'shy')" class="w-full h-full relative">
+            <span class="aura-shy-particle absolute -top-1.5 -left-1 text-[13px] select-none">🌸</span>
+            <span class="aura-shy-particle absolute top-4 -right-2 text-[11px] select-none" style="animation-delay: 1.2s;">💕</span>
+        </div>
+        {{-- Cheerful: Mặt trời & Đốm sáng --}}
+        <div x-show="typeof personality !== 'undefined' ? (personality === 'cheerful') : ('{{ $personality }}' === 'cheerful')" class="w-full h-full relative">
+            <span class="aura-cheerful-particle absolute -top-2 left-1/2 -translate-x-1/2 text-[14px] select-none">☀️</span>
+            <span class="aura-playful-particle absolute top-5 -right-2 text-[11px] select-none" style="animation-delay: 0.5s;">🌟</span>
+        </div>
+        {{-- Calm: Lá trà & Sương thanh tịnh --}}
+        <div x-show="typeof personality !== 'undefined' ? (personality === 'calm') : ('{{ $personality }}' === 'calm')" class="w-full h-full relative">
+            <span class="aura-calm-particle absolute -top-1 -right-1 text-[13px] select-none">🍃</span>
+            <span class="aura-calm-particle absolute bottom-1 -left-2 text-[11px] select-none" style="animation-delay: 1.6s;">🍵</span>
+        </div>
+    </div>
+    @endif
 
     {{-- Giai đoạn 0: Quả trứng rồng ma thuật --}}
     @if($stage === 0)

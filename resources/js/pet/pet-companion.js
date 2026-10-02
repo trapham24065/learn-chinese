@@ -402,17 +402,100 @@ export function petFloatingCompanion(config = {}) {
         handleWordMasteredReaction(payload = {}) {
             this.onUserActivity();
             this.state = 'excited';
+            const personality = this.pet?.personality || 'playful';
+
             if (this.canPlayAudio()) {
-                PetAudioEngine.chirp();
+                const pitch = personality === 'playful' ? 1.25
+                            : personality === 'shy' ? 0.95
+                            : personality === 'cheerful' ? 1.2
+                            : 1.05;
+                PetAudioEngine.chirp(pitch);
             }
             this.spawnHeart();
 
-            const word = payload.word || payload.hanzi || '';
-            this.currentDialogue = `Tuyệt quá! Cậu đã làm chủ từ vựng ${word ? '[' + word + ']' : ''}! 🎉`;
+            const hanzi = payload.hanzi || payload.word || '';
+            const pinyin = payload.pinyin ? `[${payload.pinyin}]` : '';
+            const meaning = payload.meaning ? ` ("${payload.meaning}")` : '';
+
+            // 1. Immediately update random_word in pet state so the vocabulary companion card updates
+            if (hanzi) {
+                this.pet.random_word = {
+                    hanzi: hanzi,
+                    pinyin: payload.pinyin || '',
+                    meaning: payload.meaning || ''
+                };
+            }
+
+            // 2. Generate lively personality-specific congratulations for this specific word
+            let congrats = '';
+            switch (personality) {
+                case 'playful':
+                    congrats = `Yatta! Cậu vừa chinh phục từ 「${hanzi}」${meaning} siêu đỉnh luôn! Tớ tặng cậu 10 điểm tinh nghịch nè! 🎮✨`;
+                    break;
+                case 'curious':
+                    congrats = `Oa! Từ 「${hanzi}」${pinyin}${meaning} là một từ rất thú vị đó! Để tớ ghi nhớ thật kỹ cùng cậu nhé! 🔍💡`;
+                    break;
+                case 'shy':
+                    congrats = `Giỏi quá đi mất... Cậu nhớ được từ 「${hanzi}」${meaning} rồi kìa! Nhìn cậu học tớ vui lắm 🌸💕`;
+                    break;
+                case 'cheerful':
+                    congrats = `Tuyệt vời ông mặt trời! Đã làm chủ từ 「${hanzi}」${meaning} rồi! Cứ đà này HSK trong tầm tay nhé! ☀️🌟`;
+                    break;
+                case 'calm':
+                default:
+                    congrats = `Tâm an trí sáng. Bạn đã thấu suốt từ 「${hanzi}」${meaning}. Từng bước tiến bộ rất vững vàng 🍵🍃`;
+                    break;
+            }
+
+            this.currentDialogue = congrats;
+
+            // 3. Prepend into dialogues array so nextDialogue() cycles smoothly without old word loops
+            if (!Array.isArray(this.pet.dialogues)) {
+                this.pet.dialogues = [];
+            }
+            this.pet.dialogues = this.pet.dialogues.filter(d => !d.includes('vừa chinh phục') && !d.includes('làm chủ từ') && !d.includes('nhớ được từ'));
+            this.pet.dialogues.unshift(congrats);
+            this.dialogueIndex = 0;
+
             this.speechBubbleOpen = true;
             this.scheduleBubbleAutoDismiss();
-            setTimeout(() => this.determineInitialState(), 4500);
+
+            // 4. Silently refresh pet status with recent_word in the background
+            this.refreshPetStatsSilently(hanzi);
+
+            setTimeout(() => {
+                if (this.state === 'excited') {
+                    this.determineInitialState();
+                }
+            }, 4500);
             setTimeout(() => window.refreshIcons?.(), 50);
+        },
+
+        async refreshPetStatsSilently(recentWord = '') {
+            try {
+                let statusEndpoint = config.statusUrl || '/student/pet/status';
+                if (recentWord) {
+                    const separator = statusEndpoint.includes('?') ? '&' : '?';
+                    statusEndpoint += `${separator}recent_word=${encodeURIComponent(recentWord)}`;
+                }
+                const res = await fetch(statusEndpoint, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.has_pet) {
+                        this.pet.hunger = data.hunger;
+                        this.pet.hunger_state = data.hunger_state;
+                        this.pet.exp = data.exp;
+                        this.pet.daily_remaining = data.daily_remaining;
+                        this.pet.affinity = data.affinity;
+                        this.pet.affinity_tier = data.affinity_tier;
+                        if (data.dialogues && data.dialogues.length > 0) {
+                            this.pet.dialogues = [this.currentDialogue, ...data.dialogues.filter(d => d !== this.currentDialogue)];
+                        }
+                    }
+                }
+            } catch (e) {}
         },
 
         handleDailyGoalReaction(payload = {}) {

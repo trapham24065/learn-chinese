@@ -222,13 +222,29 @@ class PetController extends Controller
         }
 
         $currentStage = $userPet->pet->stages->where('stage', $userPet->stage)->first();
-        $randomWord = $this->masteryService->getRandomMastered($user, 1)->first();
+        
+        $recentWordParam = $request->query('recent_word');
+        $randomWord = null;
+        if ($recentWordParam) {
+            $matchedCard = \App\Models\Flashcard::where('hanzi', $recentWordParam)->first();
+            if ($matchedCard) {
+                $randomWord = (object) [
+                    'hanzi'   => $matchedCard->hanzi,
+                    'pinyin'  => $matchedCard->pinyin,
+                    'meaning' => $matchedCard->meaning,
+                ];
+            }
+        }
+        if (!$randomWord) {
+            $randomWord = $this->masteryService->getRandomMastered($user, 1)->first();
+        }
 
-        // Optional activity/struggle/streak context from client
+        // Optional activity/struggle/streak/recent_word context from client
         $context = array_filter([
-            'activity'   => $request->query('activity'),
-            'struggling' => $request->boolean('struggling'),
-            'streak'     => $request->query('streak') ? (int) $request->query('streak') : null,
+            'activity'    => $request->query('activity'),
+            'struggling'  => $request->boolean('struggling'),
+            'streak'      => $request->query('streak') ? (int) $request->query('streak') : null,
+            'recent_word' => $recentWordParam,
         ]);
 
         return response()->json([
