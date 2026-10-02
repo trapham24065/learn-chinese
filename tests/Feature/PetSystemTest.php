@@ -455,5 +455,139 @@ class PetSystemTest extends TestCase
         $response->assertSee('Giai đoạn 0: Trứng');
         $response->assertSee('Cho pet ăn nhanh');
     }
+
+    // =========================================================================
+    // Test 17: User can update pet personality
+    // =========================================================================
+
+    public function test_user_can_update_pet_personality(): void
+    {
+        $petService = app(PetService::class);
+        $userPet = $petService->createInitialPet($this->user);
+
+        $response = $this->actingAs($this->user)
+            ->postJson(route('pet.personality'), [
+                'personality' => 'curious',
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'success'     => true,
+                'personality' => 'curious',
+                'label'       => 'Tò mò & Khám phá',
+                'emoji'       => '🔍',
+            ]);
+
+        $userPet->refresh();
+        $this->assertEquals('curious', $userPet->personality);
+
+        $memory = PetMemory::where('user_pet_id', $userPet->id)
+            ->where('type', 'personality_changed')
+            ->first();
+        $this->assertNotNull($memory);
+        $this->assertStringContainsString('Tò mò', $memory->title);
+    }
+
+    // =========================================================================
+    // Test 18: Pet status returns affinity, personality, and contextual dialogues
+    // =========================================================================
+
+    public function test_pet_status_returns_affinity_and_personality(): void
+    {
+        $petService = app(PetService::class);
+        $userPet = $petService->createInitialPet($this->user);
+        $userPet->update(['personality' => 'shy', 'affinity' => 45]);
+
+        $response = $this->actingAs($this->user)
+            ->getJson(route('pet.status'));
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'has_pet'           => true,
+                'personality'       => 'shy',
+                'personality_label' => 'E thẹn & Dịu dàng',
+                'personality_emoji' => '🌸',
+                'affinity'          => 45,
+            ]);
+
+        $this->assertEquals('familiar', $response->json('affinity_tier.tier'));
+        $this->assertEquals('Thân quen', $response->json('affinity_tier.name'));
+    }
+
+    // =========================================================================
+    // Test 19: Pet affinity progression and tier-up memory
+    // =========================================================================
+
+    public function test_pet_affinity_progression_and_tier_up(): void
+    {
+        $petService = app(PetService::class);
+        $userPet = $petService->createInitialPet($this->user);
+        $userPet->update(['affinity' => 19]); // Just below 'met' tier (20)
+
+        $affinityService = app(\App\Services\Pet\PetAffinityService::class);
+        $result = $affinityService->addAffinity($userPet, 5, 'evolution'); // Evolution gives uncapped
+
+        $this->assertTrue($result['tier_up']);
+        $this->assertEquals('met', $result['tier']['tier']);
+        $this->assertEquals(24, $result['affinity']);
+
+        $memory = PetMemory::where('user_pet_id', $userPet->id)
+            ->where('type', 'affinity_tier_up')
+            ->first();
+        $this->assertNotNull($memory);
+        $this->assertStringContainsString('Làm quen', $memory->title);
+    }
+
+    // =========================================================================
+    // Test 20: Pet affinity respects daily caps
+    // =========================================================================
+
+    public function test_pet_affinity_respects_daily_caps(): void
+    {
+        $petService = app(PetService::class);
+        $userPet = $petService->createInitialPet($this->user);
+        $affinityService = app(\App\Services\Pet\PetAffinityService::class);
+
+        // Daily cap for study_session is 4
+        $res1 = $affinityService->addAffinity($userPet, 3, 'study_session');
+        $this->assertEquals(3, $res1['added']);
+
+        $res2 = $affinityService->addAffinity($userPet, 3, 'study_session');
+        $this->assertEquals(1, $res2['added']); // Only 1 remaining of cap 4
+
+        $res3 = $affinityService->addAffinity($userPet, 2, 'study_session');
+        $this->assertEquals(0, $res3['added']);
+        $this->assertTrue($res3['daily_capped']);
+    }
+
+    // =========================================================================
+    // Test 21: Pet memory recall and dialogue formatting tailored by personality
+    // =========================================================================
+
+    public function test_pet_memory_recall_and_dialogue_formatting(): void
+    {
+        $petService = app(PetService::class);
+        $userPet = $petService->createInitialPet($this->user);
+        $userPet->update(['personality' => 'playful']);
+
+        $flashcard = \App\Models\Flashcard::create([
+            'hanzi'   => '朋友',
+            'pinyin'  => 'péngyou',
+            'meaning' => 'Bạn bè',
+        ]);
+
+        $memoryService = app(\App\Services\Pet\PetMemoryService::class);
+        $memory = $memoryService->rememberFirstMastered($userPet, $flashcard);
+
+        $this->assertNotNull($memory);
+        $this->assertEquals('first_mastered', $memory->type);
+
+        $dialogue = $memoryService->formatMemoryDialogue($memory, 'playful');
+        $this->assertStringContainsString('朋友', $dialogue);
+        $this->assertStringContainsString('đố bạn đọc lại được nè', $dialogue);
+
+        $shyDialogue = $memoryService->formatMemoryDialogue($memory, 'shy');
+        $this->assertStringContainsString('ấm áp ghê', $shyDialogue);
+    }
 }
 

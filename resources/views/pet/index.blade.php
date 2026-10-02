@@ -35,6 +35,53 @@ window.petRoom = function petRoom(config) {
         celebrationDesc: '',
         celebrationEmoji: '🐉',
 
+        // Personality & Affinity
+        personality: config.userPet?.personality || 'playful',
+        personalityLabel: config.affinitySummary?.personality?.label || 'Tinh nghịch & Vui nhộn',
+        personalityEmoji: config.affinitySummary?.personality?.emoji || '✨',
+        personalityDesc: config.affinitySummary?.personality?.description || '',
+        affinity: config.userPet?.affinity || 0,
+        affinityTier: config.affinityTier || {},
+        affinitySummary: config.affinitySummary || {},
+        savingPersonality: false,
+        personalityMessage: '',
+
+        async selectPersonality(type) {
+            if (this.savingPersonality || this.personality === type) return;
+            this.savingPersonality = true;
+            this.personalityMessage = '';
+            try {
+                const res = await fetch("{{ route('pet.personality') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ personality: type })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    this.personality = data.personality;
+                    this.personalityLabel = data.label;
+                    this.personalityEmoji = data.emoji;
+                    this.personalityDesc = data.description;
+                    if (data.random_dialogue) this.currentDialogue = data.random_dialogue;
+                    if (data.dialogues) this.dialogues = data.dialogues;
+                    this.personalityMessage = data.message;
+                    if (window.PetAudioEngine) {
+                        window.PetAudioEngine.pop();
+                    }
+                    setTimeout(() => { this.personalityMessage = ''; }, 3500);
+                }
+            } catch (e) {
+                this.personalityMessage = 'Lỗi kết nối khi cập nhật tính cách';
+            } finally {
+                this.savingPersonality = false;
+                setTimeout(() => window.refreshIcons?.(), 50);
+            }
+        },
+
         initRoom() {
             setTimeout(() => window.refreshIcons?.(), 100);
         },
@@ -245,6 +292,8 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
          dialogues: {{ Js::from($dialogues) }},
          currentDialogue: {{ Js::from($randomDialogue) }},
          masteredWords: {{ Js::from($masteredWords) }},
+         affinitySummary: {{ Js::from($affinitySummary) }},
+         affinityTier: {{ Js::from($affinityTier) }},
      })"
      x-init="initRoom()">
 
@@ -281,6 +330,13 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                 <p class="text-[10px] uppercase font-bold text-slate-400">Từ đã dạy</p>
                 <p class="text-base font-black text-emerald-600">{{ $masteredCount }}</p>
             </div>
+            <div @click="setTab('affinity')" role="button" class="cursor-pointer rounded-2xl border border-rose-200 bg-rose-50/70 hover:bg-rose-100/80 px-3.5 py-2 shadow-sm text-center transition">
+                <p class="text-[10px] uppercase font-bold text-rose-500">Thân thiết</p>
+                <p class="text-base font-black text-rose-700 flex items-center justify-center gap-1">
+                    <span x-text="affinityTier?.emoji || '🌱'"></span>
+                    <span x-text="affinity + '/100'"></span>
+                </p>
+            </div>
         </div>
     </div>
 
@@ -309,6 +365,15 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
             <i data-lucide="book-open" class="h-4 w-4"></i>
             <span>Vốn từ vựng đã học</span>
             <span class="rounded-full bg-slate-200 px-2 py-0.2 text-[10px] font-bold text-slate-700" x-text="masteredWords.length"></span>
+        </button>
+
+        <button type="button"
+                @click="setTab('affinity')"
+                :class="activeTab === 'affinity' ? 'border-[#991b1b] text-[#991b1b] bg-red-50/50' : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'"
+                class="flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold transition whitespace-nowrap rounded-t-xl">
+            <i data-lucide="heart-handshake" class="h-4 w-4 text-rose-500"></i>
+            <span>Tri kỷ & Tính cách</span>
+            <span class="rounded-full bg-rose-100 text-rose-700 px-2 py-0.2 text-[10px] font-bold" x-text="(affinityTier?.name || 'Bỡ ngỡ') + ' • ' + affinity + '/100'"></span>
         </button>
 
         <button type="button"
@@ -353,6 +418,23 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                         <h2 class="mt-2 text-2xl font-black text-slate-900">
                             {{ $userPet->name ?? $userPet->pet->name }}
                         </h2>
+                    </div>
+
+                    {{-- Personality & Affinity Badges --}}
+                    <div class="mt-3 flex flex-wrap items-center justify-center gap-2">
+                        <div @click="setTab('affinity')" role="button" title="Nhấn để xem lộ trình mối quan hệ"
+                             class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold shadow-sm border transition hover:scale-105 active:scale-95 cursor-pointer bg-rose-50 text-rose-700 border-rose-200">
+                            <span x-text="affinityTier?.emoji || '🌱'"></span>
+                            <span>Mối quan hệ: <strong x-text="affinityTier?.name || 'Bỡ ngỡ'"></strong></span>
+                            <span class="text-rose-500 text-[10px] font-semibold" x-text="'(' + affinity + '/100)'"></span>
+                        </div>
+
+                        <div @click="setTab('affinity')" role="button" title="Nhấn để thay đổi tính cách Pet"
+                             class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold shadow-sm border transition hover:scale-105 active:scale-95 cursor-pointer bg-amber-50 text-amber-800 border-amber-200">
+                            <span x-text="personalityEmoji"></span>
+                            <span>Tính cách: <strong x-text="personalityLabel ? personalityLabel.split('&')[0].trim() : 'Tinh nghịch'"></strong></span>
+                            <i data-lucide="sliders-horizontal" class="h-3 w-3 text-amber-600"></i>
+                        </div>
                     </div>
 
                     {{-- Interactive Speech Bubble --}}
@@ -722,6 +804,13 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                     <div class="absolute -left-6 sm:-left-8 top-1 grid h-5 w-5 sm:h-7 sm:w-7 place-items-center rounded-full bg-amber-500 text-white shadow-sm ring-4 ring-white text-[10px] sm:text-xs font-bold">
                         @if($memory->type === 'hatched') 🥚
                         @elseif($memory->type === 'stage_reached') 🎉
+                        @elseif($memory->type === 'first_mastered') 🏆
+                        @elseif($memory->type === 'first_word') 📖
+                        @elseif($memory->type === 'streak_milestone') 🔥
+                        @elseif($memory->type === 'daily_goal') 🎯
+                        @elseif($memory->type === 'absence_return') 🐲
+                        @elseif($memory->type === 'affinity_tier_up') 💖
+                        @elseif($memory->type === 'personality_changed') 🎭
                         @elseif($memory->type === 'renamed') ✏️
                         @else 🌟
                         @endif
@@ -730,7 +819,18 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                     <div class="flex-1 rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 transition hover:bg-white hover:shadow-sm">
                         <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
                             <span class="font-bold text-amber-800 uppercase tracking-wider text-[10px]">
-                                {{ $memory->type === 'stage_reached' ? 'Tiến hóa' : ($memory->type === 'hatched' ? 'Khai sinh' : 'Cột mốc') }}
+                                @if($memory->type === 'stage_reached') Tiến hóa
+                                @elseif($memory->type === 'hatched') Khai sinh
+                                @elseif($memory->type === 'first_mastered') Từ đầu tiên
+                                @elseif($memory->type === 'first_word') Học chữ
+                                @elseif($memory->type === 'streak_milestone') Chuỗi ngày
+                                @elseif($memory->type === 'daily_goal') Mục tiêu ngày
+                                @elseif($memory->type === 'absence_return') Chào mừng về
+                                @elseif($memory->type === 'affinity_tier_up') Mối quan hệ
+                                @elseif($memory->type === 'personality_changed') Đổi tính cách
+                                @elseif($memory->type === 'renamed') Đổi tên
+                                @else Cột mốc
+                                @endif
                             </span>
                             <span class="tabular-nums">{{ $memory->created_at->format('H:i • d/m/Y') }}</span>
                         </div>
@@ -747,6 +847,240 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                 Chưa có ký ức nào được ghi nhận. Hãy cho Pet ăn để bắt đầu tạo nên những kỷ niệm đẹp!
             </div>
             @endif
+        </div>
+    </div>
+
+    {{-- TAB 5: TRI KỶ & TÍNH CÁCH (AFFINITY & PERSONALITY) --}}
+    <div x-show="activeTab === 'affinity'" class="space-y-6">
+        {{-- Hero Intro Card --}}
+        <div class="rounded-3xl border border-rose-200/90 bg-gradient-to-br from-rose-50/80 via-white to-amber-50/40 p-6 sm:p-8 shadow-xl shadow-rose-950/5">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div class="space-y-2">
+                    <div class="inline-flex items-center gap-1.5 rounded-full bg-rose-100 border border-rose-200 px-3 py-0.5 text-xs font-bold text-rose-800">
+                        <i data-lucide="heart" class="h-3.5 w-3.5 fill-rose-500 text-rose-500"></i>
+                        <span>Tâm hồn & Chiều sâu cảm xúc</span>
+                    </div>
+                    <h3 class="text-2xl font-black text-slate-900">
+                        Tri kỷ đồng hành — Không áp lực, chỉ có thấu hiểu
+                    </h3>
+                    <p class="text-sm text-slate-600 max-w-2xl leading-relaxed">
+                        Pet không phải là một chuỗi thanh chỉ số để bạn phải quản lý áp lực, mà là một sinh linh có tính cách riêng biệt, có ký ức về từng chữ bạn học và ngày càng gắn bó sâu sắc theo thời gian.
+                    </p>
+                </div>
+
+                {{-- Current Affinity Ring/Pill --}}
+                <div class="shrink-0 rounded-2xl border-2 border-rose-200 bg-white p-4 shadow-md text-center min-w-[200px]">
+                    <div class="text-3xl mb-1" x-text="affinityTier?.emoji || '🌱'"></div>
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Cấp độ quan hệ</p>
+                    <p class="text-lg font-black text-rose-700" x-text="affinityTier?.title || 'Người lạ mới gặp'"></p>
+                    <p class="text-xs font-semibold text-slate-500 mt-0.5" x-text="affinity + ' / 100 điểm Thân thiết'"></p>
+                    <div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                        <div class="h-full rounded-full bg-gradient-to-r from-rose-400 to-pink-500 transition-all duration-500"
+                             :style="'width: ' + affinity + '%'"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Section 1: Personality Archetypes Picker --}}
+        <div class="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-xl shadow-slate-900/5 space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
+                <div>
+                    <h4 class="text-lg font-black text-slate-900 flex items-center gap-2">
+                        <i data-lucide="sparkles" class="h-5 w-5 text-amber-500"></i>
+                        <span>1. Định hình Tính cách Pet (Personality Archetype)</span>
+                    </h4>
+                    <p class="text-xs text-slate-500 mt-0.5">
+                        Chọn một phong cách tính cách phù hợp với tâm trạng và sở thích của bạn. Mỗi tính cách sẽ thay đổi biểu cảm, âm thanh và lời thoại.
+                    </p>
+                </div>
+                <div x-show="personalityMessage" x-cloak
+                     class="rounded-xl px-3 py-1.5 text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"
+                     x-text="personalityMessage"></div>
+            </div>
+
+            {{-- 5 Archetype Cards Grid --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {{-- Archetype 1: Playful --}}
+                <div @click="selectPersonality('playful')"
+                     role="button"
+                     :class="personality === 'playful' ? 'border-amber-500 ring-2 ring-amber-500/30 bg-amber-50/40' : 'border-slate-200 hover:border-amber-300 hover:bg-slate-50/70'"
+                     class="relative rounded-2xl border p-5 transition text-left cursor-pointer space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-3xl">✨</span>
+                        <span x-show="personality === 'playful'" class="rounded-full bg-amber-500 text-white px-2.5 py-0.5 text-[10px] font-black uppercase">Đang chọn</span>
+                    </div>
+                    <div>
+                        <h5 class="text-base font-black text-slate-900">Tinh nghịch & Vui nhộn</h5>
+                        <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+                            Hiếu động, thích nhún nhảy, luôn bày trò đố vui ôn bài và rủ bạn quẩy tiếp sau mỗi bài học.
+                        </p>
+                    </div>
+                    <div class="rounded-xl bg-white/80 p-2.5 border border-amber-200/60 text-[11px] italic text-amber-900">
+                        "Nè nè! Đố bạn nhớ chữ này nghĩa là gì đó, giỏi thì đọc lại xem nào~ ✨"
+                    </div>
+                </div>
+
+                {{-- Archetype 2: Curious --}}
+                <div @click="selectPersonality('curious')"
+                     role="button"
+                     :class="personality === 'curious' ? 'border-blue-500 ring-2 ring-blue-500/30 bg-blue-50/40' : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50/70'"
+                     class="relative rounded-2xl border p-5 transition text-left cursor-pointer space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-3xl">🔍</span>
+                        <span x-show="personality === 'curious'" class="rounded-full bg-blue-600 text-white px-2.5 py-0.5 text-[10px] font-black uppercase">Đang chọn</span>
+                    </div>
+                    <div>
+                        <h5 class="text-base font-black text-slate-900">Tò mò & Khám phá</h5>
+                        <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+                            Ham học hỏi, thích giải mã các bộ thủ và đặt câu hỏi gợi mở để kích thích trí nhớ dài hạn của bạn.
+                        </p>
+                    </div>
+                    <div class="rounded-xl bg-white/80 p-2.5 border border-blue-200/60 text-[11px] italic text-blue-900">
+                        "Bộ thủ của chữ này thú vị ghê! Chúng mình cùng tìm hiểu xem vì sao nó ghép lại nhé? 🔍"
+                    </div>
+                </div>
+
+                {{-- Archetype 3: Shy --}}
+                <div @click="selectPersonality('shy')"
+                     role="button"
+                     :class="personality === 'shy' ? 'border-pink-500 ring-2 ring-pink-500/30 bg-pink-50/40' : 'border-slate-200 hover:border-pink-300 hover:bg-slate-50/70'"
+                     class="relative rounded-2xl border p-5 transition text-left cursor-pointer space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-3xl">🌸</span>
+                        <span x-show="personality === 'shy'" class="rounded-full bg-pink-500 text-white px-2.5 py-0.5 text-[10px] font-black uppercase">Đang chọn</span>
+                    </div>
+                    <div>
+                        <h5 class="text-base font-black text-slate-900">E thẹn & Dịu dàng</h5>
+                        <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+                            Bẽn lẽn, đáng yêu, luôn dùng lời an ủi ngọt ngào và ở cạnh bên bạn mỗi khi gặp từ vựng khó.
+                        </p>
+                    </div>
+                    <div class="rounded-xl bg-white/80 p-2.5 border border-pink-200/60 text-[11px] italic text-pink-900">
+                        "Bạn đừng buồn nhé... Chữ này khó thật mà, tớ luôn ở đây cùng bạn nè 🌸"
+                    </div>
+                </div>
+
+                {{-- Archetype 4: Cheerful --}}
+                <div @click="selectPersonality('cheerful')"
+                     role="button"
+                     :class="personality === 'cheerful' ? 'border-orange-500 ring-2 ring-orange-500/30 bg-orange-50/40' : 'border-slate-200 hover:border-orange-300 hover:bg-slate-50/70'"
+                     class="relative rounded-2xl border p-5 transition text-left cursor-pointer space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-3xl">☀️</span>
+                        <span x-show="personality === 'cheerful'" class="rounded-full bg-orange-500 text-white px-2.5 py-0.5 text-[10px] font-black uppercase">Đang chọn</span>
+                    </div>
+                    <div>
+                        <h5 class="text-base font-black text-slate-900">Lạc quan & Ánh nắng</h5>
+                        <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+                            Tràn trề năng lượng như hoạt náo viên, luôn nhiệt huyết tiếp thêm sức mạnh cho bạn vươn xa.
+                        </p>
+                    </div>
+                    <div class="rounded-xl bg-white/80 p-2.5 border border-orange-200/60 text-[11px] italic text-orange-900">
+                        "Tuyệt đỉnh luôn! Bạn đã cố gắng hết mình rồi, hôm nay hãy cùng tỏa sáng rực rỡ nhé! ☀️"
+                    </div>
+                </div>
+
+                {{-- Archetype 5: Calm --}}
+                <div @click="selectPersonality('calm')"
+                     role="button"
+                     :class="personality === 'calm' ? 'border-emerald-600 ring-2 ring-emerald-600/30 bg-emerald-50/40' : 'border-slate-200 hover:border-emerald-300 hover:bg-slate-50/70'"
+                     class="relative rounded-2xl border p-5 transition text-left cursor-pointer space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-3xl">🍵</span>
+                        <span x-show="personality === 'calm'" class="rounded-full bg-emerald-600 text-white px-2.5 py-0.5 text-[10px] font-black uppercase">Đang chọn</span>
+                    </div>
+                    <div>
+                        <h5 class="text-base font-black text-slate-900">Điềm tĩnh & Uyên bác</h5>
+                        <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+                            Trầm tĩnh, sâu sắc, nhắc nhở bạn học hành như thưởng trà, tích tiểu thành đại từng ngày.
+                        </p>
+                    </div>
+                    <div class="rounded-xl bg-white/80 p-2.5 border border-emerald-200/60 text-[11px] italic text-emerald-900">
+                        "Học tập như ngâm trà ngon, cần thời gian và kiên nhẫn. Từng bước vững vàng mỗi ngày 🍵"
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Section 2: Relationship Progression Roadmap --}}
+        <div class="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-xl shadow-slate-900/5 space-y-6">
+            <div class="border-b border-slate-100 pb-4">
+                <h4 class="text-lg font-black text-slate-900 flex items-center gap-2">
+                    <i data-lucide="compass" class="h-5 w-5 text-rose-500"></i>
+                    <span>2. Lộ trình Mối quan hệ (Affinity Progression Roadmap)</span>
+                </h4>
+                <p class="text-xs text-slate-500 mt-0.5">
+                    Độ thân thiết (0 - 100) tăng lên tự nhiên khi bạn học tập và chăm sóc Pet đều đặn. Mỗi cấp độ mở ra chiều sâu trò chuyện mới.
+                </p>
+            </div>
+
+            {{-- 6 Tiers Roadmap Grid --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                @php
+                    $tiersList = [
+                        ['tier' => 'stranger', 'name' => 'Bỡ ngỡ', 'title' => 'Người lạ mới gặp', 'emoji' => '🌱', 'range' => '0 - 19 điểm', 'desc' => 'Pet còn bẽn lẽn, giao tiếp lễ phép lịch sự và bắt đầu làm quen với bạn qua các bài học đầu tiên.'],
+                        ['tier' => 'met', 'name' => 'Làm quen', 'title' => 'Bạn mới quen', 'emoji' => '🌿', 'range' => '20 - 39 điểm', 'desc' => 'Pet đã nhớ mặt bạn, bắt đầu gọi tên thân mật và hào hứng khi thấy bạn mở bài học.'],
+                        ['tier' => 'familiar', 'name' => 'Thân quen', 'title' => 'Bạn bè quen thuộc', 'emoji' => '🌸', 'range' => '40 - 59 điểm', 'desc' => 'Pet ghi nhớ các từ vựng bạn đã từng học và thường xuyên nhắc lại những kỷ niệm xưa cũ.'],
+                        ['tier' => 'companion', 'name' => 'Đồng hành', 'title' => 'Bạn đồng hành', 'emoji' => '⭐', 'range' => '60 - 79 điểm', 'desc' => 'Pet luôn chủ động tiếp sức khi bạn gặp câu khó, không để bạn nản lòng hay cô đơn.'],
+                        ['tier' => 'close_friend', 'name' => 'Thân thiết', 'title' => 'Bạn thân thiết', 'emoji' => '💖', 'range' => '80 - 94 điểm', 'desc' => 'Gắn kết bền chặt, Pet chia sẻ nhiều tâm sự riêng và cùng bạn ăn mừng mọi thành tựu.'],
+                        ['tier' => 'partner', 'name' => 'Tri kỷ', 'title' => 'Tri kỷ học tập', 'emoji' => '🐉', 'range' => '95 - 100 điểm', 'desc' => 'Đỉnh cao của sự gắn kết. Pet xem bạn là tri kỷ trọn đời trên con đường chinh phục tiếng Trung.'],
+                    ];
+                @endphp
+
+                @foreach($tiersList as $t)
+                <div class="rounded-2xl border p-4.5 space-y-2.5 transition
+                            {{ ($userPet->getAffinityTier()['tier'] === $t['tier']) ? 'border-rose-400 bg-rose-50/60 ring-2 ring-rose-400/30 shadow-sm' : 'border-slate-200 bg-slate-50/40 opacity-80' }}">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl">{{ $t['emoji'] }}</span>
+                            <div>
+                                <h6 class="text-sm font-black text-slate-900">{{ $t['name'] }}</h6>
+                                <span class="text-[10px] font-bold text-rose-600">{{ $t['range'] }}</span>
+                            </div>
+                        </div>
+                        @if($userPet->getAffinityTier()['tier'] === $t['tier'])
+                        <span class="rounded-full bg-rose-600 text-white px-2.5 py-0.5 text-[9px] font-black uppercase">Hiện tại</span>
+                        @endif
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed">{{ $t['desc'] }}</p>
+                </div>
+                @endforeach
+            </div>
+
+            {{-- How to earn affinity naturally --}}
+            <div class="rounded-2xl border border-amber-200/80 bg-amber-50/50 p-4.5 space-y-2 text-xs text-slate-700">
+                <h6 class="font-bold text-amber-900 flex items-center gap-1.5">
+                    <i data-lucide="lightbulb" class="h-4 w-4 text-amber-600"></i>
+                    <span>Cách tích lũy Độ thân thiết tự nhiên mỗi ngày (Không cày cuốc áp lực):</span>
+                </h6>
+                <ul class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 pt-1 text-slate-600">
+                    <li class="flex items-center gap-1.5">
+                        <span class="text-emerald-500 font-bold">✓</span>
+                        <span>Làm chủ từ vựng Flashcard: <strong>+1 điểm</strong> (tối đa 5/ngày)</span>
+                    </li>
+                    <li class="flex items-center gap-1.5">
+                        <span class="text-emerald-500 font-bold">✓</span>
+                        <span>Hoàn thành phiên học: <strong>+2 điểm</strong> (tối đa 4/ngày)</span>
+                    </li>
+                    <li class="flex items-center gap-1.5">
+                        <span class="text-emerald-500 font-bold">✓</span>
+                        <span>Đạt Mục tiêu ngày (Daily Goal): <strong>+3 điểm</strong> / ngày</span>
+                    </li>
+                    <li class="flex items-center gap-1.5">
+                        <span class="text-emerald-500 font-bold">✓</span>
+                        <span>Đạt mốc chuỗi học (Streak): <strong>+2 điểm</strong> / mốc</span>
+                    </li>
+                    <li class="flex items-center gap-1.5">
+                        <span class="text-emerald-500 font-bold">✓</span>
+                        <span>Chăm sóc cho ăn mỗi ngày: <strong>+1 điểm</strong> (tối đa 2/ngày)</span>
+                    </li>
+                    <li class="flex items-center gap-1.5">
+                        <span class="text-emerald-500 font-bold">✓</span>
+                        <span>Pet tiến hóa cấp mới: <strong>+10 điểm</strong> thưởng</span>
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
 

@@ -21,6 +21,8 @@ class PetController extends Controller
         protected PetGrowthService $growthService,
         protected PetDialogueService $dialogueService,
         protected VocabularyMasteryService $masteryService,
+        protected \App\Services\Pet\PetAffinityService $affinityService,
+        protected \App\Services\Pet\PetMemoryService $memoryService,
     ) {}
 
     /**
@@ -66,6 +68,10 @@ class PetController extends Controller
         // Mastered words for the Pet Vocabulary tab
         $masteredWords = $this->masteryService->getAllMastered($user, 100);
 
+        // Affinity & Personality Summary
+        $affinitySummary = $this->affinityService->getAffinitySummary($userPet);
+        $affinityTier    = $userPet->getAffinityTier();
+
         return view('pet.index', compact(
             'userPet',
             'progress',
@@ -77,7 +83,9 @@ class PetController extends Controller
             'stages',
             'userReqStats',
             'masteredCount',
-            'masteredWords'
+            'masteredWords',
+            'affinitySummary',
+            'affinityTier'
         ));
     }
 
@@ -157,6 +165,51 @@ class PetController extends Controller
     }
 
     /**
+     * POST /student/pet/personality — Update pet personality archetype.
+     */
+    public function updatePersonality(Request $request): JsonResponse
+    {
+        $request->validate([
+            'personality' => ['required', 'string', 'in:playful,curious,shy,cheerful,calm'],
+        ]);
+
+        $user    = $request->user();
+        $userPet = $this->petService->getActivePet($user);
+
+        if (!$userPet) {
+            return response()->json(['error' => 'No pet found.'], 404);
+        }
+
+        $oldPersonality = $userPet->personality ?? 'playful';
+        $newPersonality = $request->input('personality');
+
+        $userPet->update(['personality' => $newPersonality]);
+        $userPet->refresh();
+
+        if ($oldPersonality !== $newPersonality) {
+            PetMemory::create([
+                'user_pet_id' => $userPet->id,
+                'type'        => 'personality_changed',
+                'title'       => "Tính cách mới: " . $userPet->getPersonalityLabel(),
+                'description' => "Pet đã chuyển sang phong cách '{$userPet->getPersonalityLabel()}'. " . $userPet->getPersonalityDescription(),
+                'metadata'    => ['old' => $oldPersonality, 'new' => $newPersonality],
+                'created_at'  => now(),
+            ]);
+        }
+
+        return response()->json([
+            'success'          => true,
+            'personality'      => $newPersonality,
+            'label'            => $userPet->getPersonalityLabel(),
+            'emoji'            => $userPet->getPersonalityEmoji(),
+            'description'      => $userPet->getPersonalityDescription(),
+            'random_dialogue'  => $this->dialogueService->getRandomDialogue($user, $userPet),
+            'dialogues'        => $this->dialogueService->getDialogues($user, $userPet),
+            'message'          => "Đã cập nhật tính cách thành '{$userPet->getPersonalityLabel()}'!",
+        ]);
+    }
+
+    /**
      * GET /student/pet/status — JSON status for AJAX polling (floating companion / dashboard card).
      */
     public function status(Request $request): JsonResponse
@@ -171,26 +224,40 @@ class PetController extends Controller
         $currentStage = $userPet->pet->stages->where('stage', $userPet->stage)->first();
         $randomWord = $this->masteryService->getRandomMastered($user, 1)->first();
 
+        // Optional activity/struggle/streak context from client
+        $context = array_filter([
+            'activity'   => $request->query('activity'),
+            'struggling' => $request->boolean('struggling'),
+            'streak'     => $request->query('streak') ? (int) $request->query('streak') : null,
+        ]);
+
         return response()->json([
-            'has_pet'         => true,
-            'id'              => $userPet->id,
-            'name'            => $userPet->name ?? $userPet->pet->name,
-            'stage'           => $userPet->stage,
-            'stage_name'      => $currentStage?->name ?? 'Trứng',
-            'emoji'           => $currentStage?->emoji ?? '🥚',
-            'hunger'          => $userPet->hunger,
-            'hunger_state'    => $userPet->getHungerState(),
-            'status'          => $userPet->status,
-            'is_active'       => $userPet->isActive(),
-            'is_dormant'      => $userPet->isDormant(),
-            'is_egg'          => $userPet->isEgg(),
-            'exp'             => $userPet->exp,
-            'daily_fed'       => $this->feedingService->getDailyFedAmount($userPet),
-            'daily_remaining' => $this->feedingService->getRemainingDailyCapacity($userPet),
-            'progress'        => $this->growthService->calculateExpProgress($userPet),
-            'random_dialogue' => $this->dialogueService->getRandomDialogue($user, $userPet),
-            'dialogues'       => $this->dialogueService->getDialogues($user, $userPet),
-            'random_word'     => $randomWord ? [
+            'has_pet'             => true,
+            'id'                  => $userPet->id,
+            'name'                => $userPet->name ?? $userPet->pet->name,
+            'stage'               => $userPet->stage,
+            'stage_name'          => $currentStage?->name ?? 'Trứng',
+            'emoji'               => $currentStage?->emoji ?? '🥚',
+            'hunger'              => $userPet->hunger,
+            'hunger_state'        => $userPet->getHungerState(),
+            'status'              => $userPet->status,
+            'personality'         => $userPet->personality ?? 'playful',
+            'personality_label'   => $userPet->getPersonalityLabel(),
+            'personality_emoji'   => $userPet->getPersonalityEmoji(),
+            'personality_desc'    => $userPet->getPersonalityDescription(),
+            'affinity'            => (int) ($userPet->affinity ?? 0),
+            'affinity_tier'       => $userPet->getAffinityTier(),
+            'affinity_summary'    => $this->affinityService->getAffinitySummary($userPet),
+            'is_active'           => $userPet->isActive(),
+            'is_dormant'          => $userPet->isDormant(),
+            'is_egg'              => $userPet->isEgg(),
+            'exp'                 => $userPet->exp,
+            'daily_fed'           => $this->feedingService->getDailyFedAmount($userPet),
+            'daily_remaining'     => $this->feedingService->getRemainingDailyCapacity($userPet),
+            'progress'            => $this->growthService->calculateExpProgress($userPet),
+            'random_dialogue'     => $this->dialogueService->getRandomDialogue($user, $userPet, $context),
+            'dialogues'           => $this->dialogueService->getDialogues($user, $userPet, $context),
+            'random_word'         => $randomWord ? [
                 'hanzi'   => $randomWord->hanzi,
                 'pinyin'  => $randomWord->pinyin,
                 'meaning' => $randomWord->meaning,

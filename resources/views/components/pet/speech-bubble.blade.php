@@ -13,13 +13,25 @@
 
     {{-- Header --}}
     <div class="flex items-center justify-between pb-2 border-b border-amber-100 mb-2.5">
-        <div class="flex items-center gap-1.5 min-w-0">
+        <div class="flex items-center gap-1.5 min-w-0 flex-wrap">
             <span class="inline-flex items-center gap-1 font-bold text-slate-900 truncate">
                 <span x-text="pet ? (pet.name || 'Tiểu Long') : 'Tiểu Long'"></span>
             </span>
-            <span class="rounded-full px-2 py-0.5 text-[9px] font-bold text-white shrink-0"
-                  :class="getMoodBadgeClass()"
-                  x-text="getMoodText()"></span>
+
+            {{-- Affinity Relationship Pill --}}
+            <span x-show="pet && pet.affinity_tier"
+                  class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold border shrink-0"
+                  :class="getAffinityPillClass()"
+                  :title="'Độ thân thiết: ' + (pet?.affinity || 0) + '/100 (' + (pet?.affinity_tier?.title || '') + ')'">
+                <span x-text="pet?.affinity_tier?.emoji || '🌱'"></span>
+                <span x-text="pet?.affinity_tier?.name || 'Bỡ ngỡ'"></span>
+            </span>
+
+            {{-- Personality Emoji Indicator --}}
+            <span x-show="pet && pet.personality_emoji"
+                  class="rounded-full bg-amber-100/80 px-1.5 py-0.5 text-[9px] font-bold text-amber-900 shrink-0"
+                  :title="'Tính cách: ' + (pet?.personality_label || '')"
+                  x-text="pet?.personality_emoji + ' ' + (pet?.personality_label ? pet.personality_label.split('&')[0].trim() : '')"></span>
         </div>
         <div class="flex items-center gap-1">
             {{-- Audio Settings Toggle --}}

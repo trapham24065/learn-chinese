@@ -277,6 +277,17 @@ class FlashcardController extends Controller
             'completed_at'     => now(),
         ]);
 
+        try {
+            $userPet = \App\Models\UserPet::where('user_id', $student->id)->first();
+            if ($userPet && $userPet->isActive()) {
+                $userPet->update(['last_studied_at' => now()]);
+                $userPet->increment('study_session_count');
+                app(\App\Services\Pet\PetAffinityService::class)->addAffinity($userPet, 2, 'study_session');
+            }
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Ghi nhận phiên Flashcard thành công! (+' . $validated['duration_minutes'] . ' phút)',
@@ -311,6 +322,23 @@ class FlashcardController extends Controller
                 $progress->interval = (int) round($progress->interval * $progress->ease_factor);
             }
             $progress->next_review_at = now()->addDays($progress->interval);
+
+            try {
+                $userPet = \App\Models\UserPet::where('user_id', $user->id)->first();
+                if ($userPet && $userPet->isActive()) {
+                    $card = Flashcard::find($validated['flashcard_id']);
+                    if ($card) {
+                        if ($progress->repetition === 1) {
+                            app(\App\Services\Pet\PetMemoryService::class)->rememberFirstWord($userPet, $card);
+                        } elseif ($progress->repetition === 2) {
+                            app(\App\Services\Pet\PetMemoryService::class)->rememberFirstMastered($userPet, $card);
+                            app(\App\Services\Pet\PetAffinityService::class)->addAffinity($userPet, 1, 'vocab_mastered');
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                report($e);
+            }
         } else {
             $progress->repetition = 0;
             $progress->interval = 0;

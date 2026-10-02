@@ -15,6 +15,7 @@ class PetFeedingService
 
     public function __construct(
         protected PetGrowthService $growthService,
+        protected PetAffinityService $affinityService,
     ) {}
 
     /**
@@ -105,6 +106,9 @@ class PetFeedingService
             // 9. Add EXP and check for stage-up
             $growthResult = $this->growthService->feedExp($user, $userPet, $actualAmount);
 
+            // 10. Award affinity for caretaking (capped daily)
+            $affinityResult = $this->affinityService->addAffinity($userPet, 1, 'feeding');
+
             return [
                 'success'         => true,
                 'is_duplicate'    => false,
@@ -118,6 +122,9 @@ class PetFeedingService
                 'stage_up'        => $growthResult['stage_up'],
                 'new_stage'       => $growthResult['new_stage'] ?? null,
                 'pet_exp'         => $growthResult['exp'],
+                'affinity'        => $affinityResult['affinity'],
+                'tier_up'         => $affinityResult['tier_up'],
+                'tier'            => $affinityResult['tier'],
             ];
         });
     }

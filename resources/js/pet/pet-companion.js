@@ -82,6 +82,8 @@ export function petFloatingCompanion(config = {}) {
             PetEventBus.on('pet:evolved', (payload) => this.handleEvolvedReaction(payload));
             PetEventBus.on('pet:xp-earned', (payload) => this.handleXpEarnedReaction(payload));
             PetEventBus.on('pet:quiz-completed', (payload) => this.handleQuizCompletedReaction(payload));
+            PetEventBus.on('pet:struggle', (payload) => this.handleStruggleReaction(payload));
+            PetEventBus.on('pet:affinity-up', (payload) => this.handleAffinityUpReaction(payload));
 
             // Backward compatibility listener for legacy pet-event CustomEvent
             if (typeof window !== 'undefined') {
@@ -194,9 +196,18 @@ export function petFloatingCompanion(config = {}) {
             const wasSleeping = (this.state === 'sleeping');
             this.onUserActivity();
 
-            // Audio & Animation reaction
+            // Audio & Animation reaction adapted to personality
             if (!wasSleeping && this.canPlayAudio()) {
-                PetAudioEngine.chirp();
+                const personality = this.pet?.personality || 'playful';
+                if (personality === 'calm') {
+                    PetAudioEngine.purr();
+                } else {
+                    const pitch = personality === 'playful' ? 1.2
+                                : personality === 'shy' ? 0.9
+                                : personality === 'cheerful' ? 1.15
+                                : 1.0;
+                    PetAudioEngine.chirp(pitch);
+                }
             }
 
             this.state = 'happy';
@@ -495,6 +506,49 @@ export function petFloatingCompanion(config = {}) {
                 case 'dormant': return '💤 Ngủ đông';
                 default: return 'Bình thường';
             }
+        },
+
+        getAffinityPillClass() {
+            if (!this.pet || !this.pet.affinity_tier) return 'bg-slate-50 text-slate-600 border-slate-200';
+            const tier = this.pet.affinity_tier.tier;
+            switch (tier) {
+                case 'partner': return 'bg-rose-50 text-rose-700 border-rose-300';
+                case 'close_friend': return 'bg-purple-50 text-purple-700 border-purple-300';
+                case 'companion': return 'bg-amber-50 text-amber-700 border-amber-300';
+                case 'familiar': return 'bg-emerald-50 text-emerald-700 border-emerald-300';
+                case 'met': return 'bg-blue-50 text-blue-700 border-blue-300';
+                default: return 'bg-slate-50 text-slate-600 border-slate-200';
+            }
+        },
+
+        handleStruggleReaction(payload = {}) {
+            this.onUserActivity();
+            if (this.canPlayAudio()) {
+                PetAudioEngine.purr();
+            }
+            const personality = this.pet?.personality || 'playful';
+            const comfortMessages = {
+                playful: 'Không sao đâu nè! Sai một chút thôi, thử lại lần nữa là nhớ ngay thôi! 🎮',
+                curious: 'Chữ này hơi lắt léo đúng không? Để ý bộ thủ một chút là giải mã được ngay! 🔍',
+                shy: 'Đừng buồn nhé... Tớ biết chữ này khó, tớ luôn ở đây cùng bạn mà 🌸',
+                cheerful: 'Không bỏ cuộc là bạn đã chiến thắng rồi! Lần tới chắc chắn bạn sẽ làm đúng! ☀️',
+                calm: 'Vạn sự khởi đầu nan. Người học giỏi là người kiên nhẫn vượt qua thử thách 🍵'
+            };
+            this.currentDialogue = payload.message || comfortMessages[personality] || 'Cố lên bạn nhé! Từng bước một bạn sẽ nhớ được! ✨';
+            this.speechBubbleOpen = true;
+            this.scheduleBubbleAutoDismiss();
+            setTimeout(() => window.refreshIcons?.(), 50);
+        },
+
+        handleAffinityUpReaction(payload = {}) {
+            this.onUserActivity();
+            if (this.canPlayAudio()) {
+                PetAudioEngine.levelUp();
+            }
+            this.currentDialogue = `Mối quan hệ giữa hai chúng mình đã nâng lên mức ${payload.tier_name || 'mới'}! 💖 Cảm ơn bạn đã luôn chăm chỉ!`;
+            this.speechBubbleOpen = true;
+            this.scheduleBubbleAutoDismiss();
+            setTimeout(() => window.refreshIcons?.(), 50);
         }
     };
 }

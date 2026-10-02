@@ -62,6 +62,7 @@ Route::prefix('student')->group(function () {
         Route::get('/pet', [\App\Http\Controllers\PetController::class, 'index'])->name('pet.index');
         Route::post('/pet/feed', [\App\Http\Controllers\PetController::class, 'feed'])->name('pet.feed');
         Route::post('/pet/rename', [\App\Http\Controllers\PetController::class, 'rename'])->name('pet.rename');
+        Route::post('/pet/personality', [\App\Http\Controllers\PetController::class, 'updatePersonality'])->name('pet.personality');
         Route::get('/pet/status', [\App\Http\Controllers\PetController::class, 'status'])->name('pet.status');
     });
 });

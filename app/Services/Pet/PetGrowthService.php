@@ -11,6 +11,11 @@ use App\Models\UserPet;
 
 class PetGrowthService
 {
+    public function __construct(
+        protected PetMemoryService $memoryService,
+        protected PetAffinityService $affinityService,
+    ) {}
+
     /**
      * Add EXP to pet from feeding and check for stage-up.
      * NOTE: total_xp on user_learning_stats is NOT modified here.
@@ -49,13 +54,12 @@ class PetGrowthService
         ]);
 
         // Record memory milestone
-        PetMemory::create([
-            'user_pet_id' => $userPet->id,
-            'type'        => 'stage_reached',
-            'title'       => "Tiến hóa lên giai đoạn {$nextStageNumber}!",
-            'description' => "Pet của bạn đã tiến hóa thành {$nextStage->name} {$nextStage->emoji}",
-            'metadata'    => ['from_stage' => $oldStage, 'to_stage' => $nextStageNumber, 'exp' => $userPet->exp],
-            'created_at'  => now(),
+        $this->memoryService->rememberEvolution($userPet, $nextStageNumber, $nextStage->name, $nextStage->emoji);
+
+        // Award bonus affinity for evolution milestone
+        $this->affinityService->addAffinity($userPet, 10, 'evolution', [
+            'stage' => $nextStageNumber,
+            'name'  => $nextStage->name,
         ]);
 
         return [

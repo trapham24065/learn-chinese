@@ -103,6 +103,34 @@ class LearningActivityService
             'meta' => $meta,
         ]);
 
+        // 5b. Sync Pet Companion Activity & Milestones if user has an active pet
+        try {
+            $userPet = \App\Models\UserPet::where('user_id', $user->id)->first();
+            if ($userPet && $userPet->isActive()) {
+                if ($userPet->last_studied_at && $userPet->last_studied_at->diffInDays(now()) >= 2) {
+                    $daysAbsent = (int) $userPet->last_studied_at->diffInDays(now());
+                    app(\App\Services\Pet\PetMemoryService::class)->rememberAbsenceReturn($userPet, $daysAbsent);
+                }
+
+                $userPet->update(['last_studied_at' => now()]);
+                $userPet->increment('study_session_count');
+
+                app(\App\Services\Pet\PetAffinityService::class)->addAffinity($userPet, 2, 'study_session');
+
+                if ($dailyGoalResult['just_completed']) {
+                    app(\App\Services\Pet\PetMemoryService::class)->rememberDailyGoal($userPet);
+                    app(\App\Services\Pet\PetAffinityService::class)->addAffinity($userPet, 3, 'daily_goal');
+                }
+
+                if ($streakResult['is_milestone'] && $streakResult['current'] >= 3) {
+                    app(\App\Services\Pet\PetMemoryService::class)->rememberStreakMilestone($userPet, (int) $streakResult['current']);
+                    app(\App\Services\Pet\PetAffinityService::class)->addAffinity($userPet, 2, 'streak_milestone');
+                }
+            }
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
         // 6. Refresh user stats to get latest total
         $stats = UserLearningStat::firstOrCreate(
             ['user_id' => $user->id],

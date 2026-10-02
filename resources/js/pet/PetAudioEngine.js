@@ -137,19 +137,20 @@ class PetAudioEngineClass {
     /**
      * Cute high chirp / squeak when poked or happy
      */
-    chirp() {
+    chirp(pitchFactor = 1.0) {
         if (!this.canPlay('chirp')) return;
         const ctx = this.getContext();
         if (!ctx) return;
 
         try {
+            const factor = Math.max(0.6, Math.min(1.8, Number(pitchFactor) || 1.0));
             const now = ctx.currentTime;
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
 
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(650, now);
-            osc.frequency.exponentialRampToValueAtTime(1250, now + 0.12);
+            osc.frequency.setValueAtTime(650 * factor, now);
+            osc.frequency.exponentialRampToValueAtTime(1250 * factor, now + 0.12);
 
             gain.gain.setValueAtTime(0.22, now);
             gain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);

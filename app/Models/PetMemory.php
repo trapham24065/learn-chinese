@@ -7,24 +7,40 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PetMemory extends Model
 {
-    public $timestamps = false;
+    public $timestamps = true;
 
-    public $fillable = [
+    protected $fillable = [
         'user_pet_id',
         'type',
+        'memory_key',
         'title',
         'description',
+        'importance',
+        'related_word_id',
         'metadata',
+        'last_recalled_at',
+        'recall_count',
         'created_at',
+        'updated_at',
     ];
 
     protected $casts = [
-        'metadata'   => 'array',
-        'created_at' => 'datetime',
+        'importance'       => 'integer',
+        'recall_count'     => 'integer',
+        'related_word_id'  => 'integer',
+        'metadata'         => 'array',
+        'last_recalled_at' => 'datetime',
+        'created_at'       => 'datetime',
+        'updated_at'       => 'datetime',
     ];
 
     public function userPet(): BelongsTo
     {
         return $this->belongsTo(UserPet::class);
+    }
+
+    public function relatedWord(): BelongsTo
+    {
+        return $this->belongsTo(Flashcard::class, 'related_word_id');
     }
 }
