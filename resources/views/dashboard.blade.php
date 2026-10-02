@@ -1062,6 +1062,13 @@ function dashboardPetHero(config) {
             this.poking = true;
             setTimeout(() => { this.poking = false; }, 800);
 
+            if (window.PetAudioEngine) {
+                window.PetAudioEngine.chirp();
+            }
+            if (window.PetEventBus) {
+                window.PetEventBus.emit('pet:poked');
+            }
+
             // Change dialogue to playful reaction
             const randReaction = this.pokeReactions[Math.floor(Math.random() * this.pokeReactions.length)];
             this.currentDialogue = randReaction;
@@ -1097,6 +1104,9 @@ function dashboardPetHero(config) {
             if (!this.dialogues || this.dialogues.length === 0) return;
             this.dialogueIndex = (this.dialogueIndex + 1) % this.dialogues.length;
             this.currentDialogue = this.dialogues[this.dialogueIndex];
+            if (window.PetAudioEngine) {
+                window.PetAudioEngine.pop();
+            }
         },
 
         async quickFeed(amount) {
@@ -1122,7 +1132,21 @@ function dashboardPetHero(config) {
                     if (data.dialogue) {
                         this.currentDialogue = data.dialogue;
                     }
+
+                    if (window.PetAudioEngine) {
+                        window.PetAudioEngine.munch();
+                    }
+                    if (window.PetEventBus) {
+                        window.PetEventBus.emit('pet:fed', { amount: data.xp_fed });
+                    }
+
                     if (data.stage_up) {
+                        if (window.PetAudioEngine) {
+                            window.PetAudioEngine.levelUp();
+                        }
+                        if (window.PetEventBus) {
+                            window.PetEventBus.emit('pet:evolved', { new_stage: data.new_stage });
+                        }
                         this.feedNotice = `🎉 Pet vừa tiến hóa lên Giai đoạn ${data.new_stage}!`;
                         setTimeout(() => window.location.reload(), 2000);
                     } else {

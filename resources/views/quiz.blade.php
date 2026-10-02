@@ -692,7 +692,7 @@ function quizApp() {
                 @auth
                 try {
                     const idempotencyKey = `quiz_${Date.now()}_${data.score}`;
-                    await fetch('{{ route('student.activity.log') }}', {
+                    const actRes = await fetch('{{ route('student.activity.log') }}', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -711,6 +711,12 @@ function quizApp() {
                             }
                         })
                     });
+                    const actData = await actRes.json();
+                    if (actData?.daily_goal?.just_completed) {
+                        window.PetEventBus?.emit('pet:daily-goal-completed', { score: data.score, xp: actData?.xp?.earned });
+                    } else {
+                        window.PetEventBus?.emit('pet:quiz-completed', { score: data.score, correct: data.correct_count, xp: actData?.xp?.earned });
+                    }
                 } catch(e) {}
                 @endauth
 

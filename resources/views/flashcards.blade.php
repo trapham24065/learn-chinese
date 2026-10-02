@@ -469,6 +469,16 @@
             if (data?.xp?.earned > 0) {
                 this.showFloatingXp(data.xp.earned);
             }
+            if (data?.daily_goal?.just_completed) {
+                window.PetEventBus?.emit('pet:daily-goal-completed', { xp: data?.xp?.earned });
+            } else if (isKnown) {
+                window.PetEventBus?.emit('pet:word-mastered', {
+                    word: this.card?.word || this.card?.hanzi,
+                    hanzi: this.card?.word || this.card?.hanzi,
+                    pinyin: this.card?.pinyin,
+                    xp: data?.xp?.earned
+                });
+            }
         } catch(e) {}
         @endauth
 

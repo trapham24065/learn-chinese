@@ -4,9 +4,19 @@ import HanziWriter from 'hanzi-writer';
 import './notifications';
 import './sound-engine';
 import './tone-pinyin';
+import { PetEventBus } from './pet/PetEventBus';
+import { PetAudioEngine } from './pet/PetAudioEngine';
+import { PetVoiceManager } from './pet/PetVoiceManager';
+import { petFloatingCompanion } from './pet/pet-companion';
 
 window.Alpine = Alpine;
 window.HanziWriter = HanziWriter;
+window.PetEventBus = PetEventBus;
+window.PetAudioEngine = PetAudioEngine;
+window.PetVoiceManager = PetVoiceManager;
+window.petFloatingCompanion = petFloatingCompanion;
+
+Alpine.data('petFloatingCompanion', (cfg) => petFloatingCompanion(cfg));
 
 // Safe wrapper for createIcons that automatically provides all icons if not explicitly passed
 const safeCreateIcons = (options = {}) => {

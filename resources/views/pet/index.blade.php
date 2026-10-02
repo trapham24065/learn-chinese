@@ -19,6 +19,11 @@ window.petRoom = function petRoom(config) {
         feedMessage: '',
         isError: false,
 
+        // Audio reactivity
+        sfxEnabled: (window.PetAudioEngine ? window.PetAudioEngine.isSfxEnabled() : true),
+        voiceEnabled: (window.PetVoiceManager ? window.PetVoiceManager.isVoiceEnabled() : true),
+        audioVolume: Math.round((window.PetAudioEngine ? window.PetAudioEngine.getVolume() : 0.8) * 100),
+
         // Rename modal
         renameModalOpen: false,
         renaming: false,
@@ -34,6 +39,29 @@ window.petRoom = function petRoom(config) {
             setTimeout(() => window.refreshIcons?.(), 100);
         },
 
+        toggleSfx() {
+            if (window.PetAudioEngine) {
+                this.sfxEnabled = window.PetAudioEngine.toggleSfx();
+            } else {
+                this.sfxEnabled = !this.sfxEnabled;
+            }
+        },
+
+        toggleVoice() {
+            if (window.PetVoiceManager) {
+                this.voiceEnabled = window.PetVoiceManager.toggleVoice();
+            } else {
+                this.voiceEnabled = !this.voiceEnabled;
+            }
+        },
+
+        updateVolume(vol) {
+            this.audioVolume = parseInt(vol, 10);
+            if (window.PetAudioEngine) {
+                window.PetAudioEngine.setVolume(this.audioVolume / 100);
+            }
+        },
+
         setTab(tab) {
             this.activeTab = tab;
             setTimeout(() => window.refreshIcons?.(), 50);
@@ -43,6 +71,9 @@ window.petRoom = function petRoom(config) {
             if (!this.dialogues || this.dialogues.length === 0) return;
             this.dialogueIndex = (this.dialogueIndex + 1) % this.dialogues.length;
             this.currentDialogue = this.dialogues[this.dialogueIndex];
+            if (window.PetAudioEngine) {
+                window.PetAudioEngine.pop();
+            }
         },
 
         filteredWords() {
@@ -56,12 +87,16 @@ window.petRoom = function petRoom(config) {
         },
 
         speakWord(hanzi) {
-            if (!hanzi || !('speechSynthesis' in window)) return;
-            window.speechSynthesis.cancel();
-            const utter = new SpeechSynthesisUtterance(hanzi);
-            utter.lang = 'zh-CN';
-            utter.rate = 0.85;
-            window.speechSynthesis.speak(utter);
+            if (!hanzi) return;
+            if (window.PetVoiceManager) {
+                window.PetVoiceManager.speak(hanzi);
+            } else if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utter = new SpeechSynthesisUtterance(hanzi);
+                utter.lang = 'zh-CN';
+                utter.rate = 0.85;
+                window.speechSynthesis.speak(utter);
+            }
         },
 
         async feed(amount) {
@@ -88,7 +123,17 @@ window.petRoom = function petRoom(config) {
                     if (data.dialogue) this.currentDialogue = data.dialogue;
                     if (data.dialogues) this.dialogues = data.dialogues;
 
+                    if (window.PetAudioEngine) {
+                        window.PetAudioEngine.munch();
+                    }
+
                     if (data.stage_up) {
+                        if (window.PetAudioEngine) {
+                            window.PetAudioEngine.levelUp();
+                        }
+                        if (window.PetEventBus) {
+                            window.PetEventBus.emit('pet:evolved', { new_stage: data.new_stage });
+                        }
                         this.celebrationTitle = `Pet đã tiến hóa lên Giai đoạn ${data.new_stage}!`;
                         this.celebrationDesc = `Pet của bạn đã trưởng thành hơn rất nhiều nhờ thành quả học tập chăm chỉ!`;
                         this.celebrationEmoji = data.emoji || '🐉';
@@ -444,6 +489,52 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                         <div class="rounded-2xl bg-slate-50 p-3 border border-slate-100">
                             <p class="text-slate-500">Ngày sinh:</p>
                             <p class="text-sm font-bold text-slate-700 mt-1">{{ $userPet->created_at->format('d/m/Y') }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Pet Audio & Voice Controls --}}
+                <div class="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xl shadow-slate-900/5 space-y-4">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                        <span>Cài đặt âm thanh & giọng đọc</span>
+                        <i data-lucide="volume-2" class="h-3.5 w-3.5 text-amber-600"></i>
+                    </h3>
+                    <div class="space-y-3 text-xs">
+                        <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                            <div>
+                                <p class="font-bold text-slate-800">Hiệu ứng âm thanh (SFX)</p>
+                                <p class="text-[11px] text-slate-500">Tiếng kêu vui vẻ, nhai thức ăn, thăng cấp</p>
+                            </div>
+                            <button type="button" @click="toggleSfx()"
+                                    class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+                                    :class="sfxEnabled ? 'bg-amber-500' : 'bg-slate-300'">
+                                <span class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                      :class="sfxEnabled ? 'translate-x-4' : 'translate-x-0'"></span>
+                            </button>
+                        </div>
+
+                        <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                            <div>
+                                <p class="font-bold text-slate-800">Giọng đọc tiếng Trung (TTS)</p>
+                                <p class="text-[11px] text-slate-500">Phát âm từ vựng chuẩn phổ thông Trung Quốc</p>
+                            </div>
+                            <button type="button" @click="toggleVoice()"
+                                    class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+                                    :class="voiceEnabled ? 'bg-indigo-600' : 'bg-slate-300'">
+                                <span class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                      :class="voiceEnabled ? 'translate-x-4' : 'translate-x-0'"></span>
+                            </button>
+                        </div>
+
+                        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
+                            <div class="flex items-center justify-between text-slate-600">
+                                <span class="font-bold">Âm lượng</span>
+                                <span class="font-mono font-bold" x-text="audioVolume + '%'"></span>
+                            </div>
+                            <input type="range" min="0" max="100" step="5"
+                                   x-model="audioVolume"
+                                   @input="updateVolume($event.target.value)"
+                                   class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-600">
                         </div>
                     </div>
                 </div>
