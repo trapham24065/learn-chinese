@@ -337,29 +337,7 @@
 
     @if(isset($dueFlashcardsCount) && $dueFlashcardsCount > 0)
     <section class="rounded-[1.75rem] border border-[#991b1b]/20 bg-white p-6 shadow-xl shadow-slate-900/5 transition hover:-translate-y-0.5"
-             x-data="{ 
-                 cards: {{ Js::from($dueFlashcards) }},
-                 submitting: false,
-                 async submitReview(cardId, quality, index) {
-                     if (this.submitting) return;
-                     this.submitting = true;
-                     try {
-                         await fetch('{{ route('flashcards.review') }}', {
-                             method: 'POST',
-                             headers: {
-                                 'Content-Type': 'application/json',
-                                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                             },
-                             body: JSON.stringify({ flashcard_id: cardId, quality: quality })
-                         });
-                         this.cards.splice(index, 1);
-                     } catch(e) { console.error(e); }
-                     this.submitting = false;
-                 },
-                 speak(text) {
-                     window.playChineseVoice(text);
-                 }
-             }"
+             x-data="dueFlashcardsWidget({ cards: {{ Js::from($dueFlashcards) }} })"
              x-show="cards.length > 0">
         
         <div class="flex items-center gap-4 mb-6 pb-4 border-b border-slate-100">
@@ -1034,6 +1012,32 @@ function studentDashboard() {
             } finally {
                 this.isUpdatingProgress = null;
             }
+        }
+    };
+}
+
+function dueFlashcardsWidget(config) {
+    return {
+        cards: (config && config.cards) ? config.cards : [],
+        submitting: false,
+        async submitReview(cardId, quality, index) {
+            if (this.submitting) return;
+            this.submitting = true;
+            try {
+                await fetch('{{ route('flashcards.review') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ flashcard_id: cardId, quality: quality })
+                });
+                this.cards.splice(index, 1);
+            } catch(e) { console.error(e); }
+            this.submitting = false;
+        },
+        speak(text) {
+            window.playChineseVoice(text);
         }
     };
 }

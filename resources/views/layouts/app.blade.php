@@ -242,15 +242,14 @@
                 </div>
             </div>
             @else
-            <div class="space-y-1.5" x-data="{ guestXp: 0 }" x-init="
-                try {
-                    const raw = localStorage.getItem('chinese_guest_progress');
-                    if (raw) {
-                        const parsed = JSON.parse(raw);
-                        guestXp = parsed.xp || 0;
-                    }
-                } catch(e) {}
-            ">
+            <div class="space-y-1.5" x-data="{
+                guestXp: (() => {
+                    try {
+                        const raw = localStorage.getItem('chinese_guest_progress');
+                        return raw ? (JSON.parse(raw).xp || 0) : 0;
+                    } catch(e) { return 0; }
+                })()
+            }">
                 <template x-if="guestXp > 0">
                     <div class="mb-2 rounded-xl bg-amber-50 border border-amber-200/90 p-2.5 text-xs text-amber-900">
                         <div class="flex items-start gap-2">
@@ -536,15 +535,14 @@
                                 </div>
                             </div>
                         @else
-                            <div x-data="{ guestXp: 0 }" x-init="
-                                try {
-                                    const raw = localStorage.getItem('chinese_guest_progress');
-                                    if (raw) {
-                                        const parsed = JSON.parse(raw);
-                                        guestXp = parsed.xp || 0;
-                                    }
-                                } catch(e) {}
-                            ">
+                            <div x-data="{
+                                guestXp: (() => {
+                                    try {
+                                        const raw = localStorage.getItem('chinese_guest_progress');
+                                        return raw ? (JSON.parse(raw).xp || 0) : 0;
+                                    } catch(e) { return 0; }
+                                })()
+                            }">
                                 <template x-if="guestXp > 0">
                                     <div class="mb-2 rounded-xl bg-amber-50 border border-amber-200/90 p-2.5 text-xs text-amber-900">
                                         <div class="flex items-start gap-2">
