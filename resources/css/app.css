@@ -242,6 +242,34 @@
     animation: auraZenMistFloat 3.8s ease-in-out infinite;
 }
 
+/* Precision SVG Sub-part Animations (Joint-anchored to prevent detachment) */
+@keyframes wingFlapLeft {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(13deg) scale(0.96, 1.04); }
+}
+@keyframes wingFlapRight {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(-13deg) scale(0.96, 1.04); }
+}
+@keyframes tailWagJoint {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(9deg); }
+}
+@keyframes whiskerSwayLeft {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(-6deg); }
+}
+@keyframes whiskerSwayRight {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(6deg); }
+}
+
+.anim-wing-left { transform-box: fill-box; transform-origin: 95% 75%; animation: wingFlapLeft 1.2s ease-in-out infinite; }
+.anim-wing-right { transform-box: fill-box; transform-origin: 5% 75%; animation: wingFlapRight 1.2s ease-in-out infinite; }
+.anim-tail-joint { transform-box: fill-box; transform-origin: 5% 75%; animation: tailWagJoint 1.8s ease-in-out infinite; }
+.anim-whisker-left { transform-box: fill-box; transform-origin: 100% 10%; animation: whiskerSwayLeft 2.4s ease-in-out infinite; }
+.anim-whisker-right { transform-box: fill-box; transform-origin: 0% 10%; animation: whiskerSwayRight 2.4s ease-in-out infinite; }
+
 @media (prefers-reduced-motion: reduce) {
     .pet-mascot-anim,
     .pet-mascot-anim * {

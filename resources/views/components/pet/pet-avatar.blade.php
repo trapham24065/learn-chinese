@@ -113,7 +113,7 @@
                 <circle cx="90" cy="85" r="54" fill="none" stroke="#fde047" stroke-width="3" stroke-dasharray="8 6" opacity="0.85" class="aura-cheerful-particle"/>
             </g>
 
-            <path d="M 130,150 Q 165,160 160,140" fill="none" stroke="#f59e0b" stroke-width="10" stroke-linecap="round"/>
+            <path class="anim-tail-joint" d="M 130,150 Q 165,160 160,140" fill="none" stroke="#f59e0b" stroke-width="10" stroke-linecap="round"/>
             <ellipse cx="90" cy="115" rx="50" ry="45" fill="#f59e0b" stroke="#b45309" stroke-width="3.5"/>
             <ellipse cx="90" cy="125" rx="32" ry="28" fill="#fef3c7"/>
             <path d="M 62,55 Q 55,35 68,38 Z" fill="#ef4444" stroke="#b91c1c" stroke-width="2"/>
@@ -191,10 +191,16 @@
 
         {{-- Stage 2: Rồng bé có cánh --}}
         <svg x-show="pet && pet.stage === 2" x-cloak class="w-full h-full drop-shadow-md" viewBox="0 0 200 200">
-            <path d="M 125,145 Q 170,155 165,125" fill="none" stroke="#f59e0b" stroke-width="12" stroke-linecap="round"/>
-            <circle cx="168" cy="120" r="7" fill="#ef4444"/>
-            <g>
+            <!-- Tail with flame tip (Joint-anchored group) -->
+            <g class="anim-tail-joint">
+                <path d="M 125,145 Q 170,155 165,125" fill="none" stroke="#f59e0b" stroke-width="12" stroke-linecap="round"/>
+                <circle cx="168" cy="120" r="7" fill="#ef4444"/>
+            </g>
+            <!-- Wings (Left & Right - Joint Anchored) -->
+            <g class="anim-wing-left">
                 <path d="M 55,115 Q 15,85 30,125 Q 45,130 60,122 Z" fill="#ef4444" stroke="#991b1b" stroke-width="2.5"/>
+            </g>
+            <g class="anim-wing-right">
                 <path d="M 145,115 Q 185,85 170,125 Q 155,130 140,122 Z" fill="#ef4444" stroke="#991b1b" stroke-width="2.5"/>
             </g>
             <ellipse cx="100" cy="130" rx="46" ry="42" fill="#f59e0b" stroke="#b45309" stroke-width="3.5"/>
@@ -263,10 +269,19 @@
 
         {{-- Stage 3: Rồng thiếu niên --}}
         <svg x-show="pet && pet.stage === 3" x-cloak class="w-full h-full drop-shadow-md" viewBox="0 0 220 220">
-            <path d="M 130,160 Q 195,175 190,120" fill="none" stroke="#ea580c" stroke-width="14" stroke-linecap="round"/>
-            <path d="M 185,120 Q 210,100 195,85 Q 180,105 175,115 Z" fill="#ef4444"/>
-            <path d="M 60,115 Q 10,65 25,125 Q 45,145 65,128 Z" fill="#dc2626" stroke="#991b1b" stroke-width="3"/>
-            <path d="M 160,115 Q 210,65 195,125 Q 175,145 155,128 Z" fill="#dc2626" stroke="#991b1b" stroke-width="3"/>
+            <!-- Tail with flaming plume (Joint-anchored group) -->
+            <g class="anim-tail-joint">
+                <path d="M 130,160 Q 195,175 190,120" fill="none" stroke="#ea580c" stroke-width="14" stroke-linecap="round"/>
+                <path d="M 185,120 Q 210,100 195,85 Q 180,105 175,115 Z" fill="#ef4444"/>
+                <path d="M 188,115 Q 200,100 192,92 Z" fill="#fef08a"/>
+            </g>
+            <!-- Large Dragon Wings (Left & Right - Joint Anchored) -->
+            <g class="anim-wing-left">
+                <path d="M 60,115 Q 10,65 25,125 Q 45,145 65,128 Z" fill="#dc2626" stroke="#991b1b" stroke-width="3"/>
+            </g>
+            <g class="anim-wing-right">
+                <path d="M 160,115 Q 210,65 195,125 Q 175,145 155,128 Z" fill="#dc2626" stroke="#991b1b" stroke-width="3"/>
+            </g>
             <ellipse cx="110" cy="140" rx="46" ry="46" fill="#ea580c" stroke="#9a3412" stroke-width="3.5"/>
             <path d="M 90,115 Q 110,135 110,175 Q 85,160 85,125 Z" fill="#fef3c7" opacity="0.9"/>
             <path d="M 80,60 Q 55,20 85,38 Z" fill="#991b1b" stroke="#7f1d1d" stroke-width="2.5"/>
@@ -281,9 +296,20 @@
 
         {{-- Stage 4: Rồng trưởng thành --}}
         <svg x-show="pet && pet.stage === 4" x-cloak class="w-full h-full drop-shadow-md" viewBox="0 0 240 240">
-            <path d="M 65,115 Q -10,40 15,135 Q 45,160 70,135 Z" fill="#b91c1c" stroke="#7f1d1d" stroke-width="3.5"/>
-            <path d="M 175,115 Q 250,40 225,135 Q 195,160 170,135 Z" fill="#b91c1c" stroke="#7f1d1d" stroke-width="3.5"/>
-            <path d="M 140,175 Q 220,195 210,125" fill="none" stroke="#dc2626" stroke-width="18" stroke-linecap="round"/>
+            <!-- Grand Wings Background (Left & Right - Joint Anchored) -->
+            <g class="anim-wing-left">
+                <path d="M 65,115 Q -10,40 15,135 Q 45,160 70,135 Z" fill="#b91c1c" stroke="#7f1d1d" stroke-width="3.5"/>
+                <path d="M 15,135 Q 40,90 65,115" stroke="#f87171" stroke-width="2"/>
+            </g>
+            <g class="anim-wing-right">
+                <path d="M 175,115 Q 250,40 225,135 Q 195,160 170,135 Z" fill="#b91c1c" stroke="#7f1d1d" stroke-width="3.5"/>
+                <path d="M 225,135 Q 200,90 175,115" stroke="#f87171" stroke-width="2"/>
+            </g>
+            <!-- Powerful Tail with Golden Crest (Joint-anchored group) -->
+            <g class="anim-tail-joint">
+                <path d="M 140,175 Q 220,195 210,125" fill="none" stroke="#dc2626" stroke-width="18" stroke-linecap="round"/>
+                <polygon points="210,125 235,100 215,95 200,115" fill="#f59e0b"/>
+            </g>
             <ellipse cx="120" cy="150" rx="52" ry="50" fill="#dc2626" stroke="#991b1b" stroke-width="4"/>
             <path d="M 98,125 L 142,125 L 135,180 L 105,180 Z" fill="#fbbf24" stroke="#d97706" stroke-width="2.5"/>
             <path d="M 85,65 Q 45,5 92,30 Q 82,45 88,60 Z" fill="#f59e0b" stroke="#b45309" stroke-width="2.5"/>
@@ -305,6 +331,9 @@
             <path d="M 105,75 Q 75,30 95,40 Q 80,15 105,32 Q 110,50 115,70 Z" fill="#38bdf8" stroke="#0284c7" stroke-width="2"/>
             <path d="M 155,75 Q 185,30 165,40 Q 180,15 155,32 Q 150,50 145,70 Z" fill="#38bdf8" stroke="#0284c7" stroke-width="2"/>
             <ellipse cx="130" cy="95" rx="38" ry="32" fill="#f59e0b" stroke="#b45309" stroke-width="3.5"/>
+            <!-- Golden Whiskers flowing (Anchored to snout joints) -->
+            <path class="anim-whisker-left" d="M 105,108 Q 65,120 40,105 Q 25,120 50,135" fill="none" stroke="#fef08a" stroke-width="3" stroke-linecap="round"/>
+            <path class="anim-whisker-right" d="M 155,108 Q 195,120 220,105 Q 235,120 210,135" fill="none" stroke="#fef08a" stroke-width="3" stroke-linecap="round"/>
             <circle cx="112" cy="92" r="7" fill="#262626"/>
             <circle cx="148" cy="92" r="7" fill="#262626"/>
             <circle cx="110" cy="90" r="2.5" fill="#ffffff"/>
