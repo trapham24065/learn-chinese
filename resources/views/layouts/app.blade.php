@@ -679,6 +679,9 @@
     <script>
         window.playChineseVoice = async function(text) {
             if (!text) return;
+            if (window.PetVoiceManager) {
+                return window.PetVoiceManager.speak(text);
+            }
             
             try {
                 const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');

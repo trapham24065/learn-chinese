@@ -20,7 +20,11 @@ class TTSController extends Controller
         $key = config('services.azure_tts.key', env('AZURE_TTS_KEY'));
 
         if (!$key) {
-            return response()->json(['error' => 'Azure key not configured'], 500);
+            return response()->json([
+                'audio' => null,
+                'fallback' => true,
+                'message' => 'Azure key not configured'
+            ], 200);
         }
 
         // Cache the audio file based on text hash to save quota!
@@ -60,6 +64,10 @@ class TTSController extends Controller
         // Remove failed cache
         Cache::forget($cacheKey);
         
-        return response()->json(['error' => 'TTS generation failed'], 500);
+        return response()->json([
+            'audio' => null,
+            'fallback' => true,
+            'error' => 'TTS generation failed'
+        ], 200);
     }
 }

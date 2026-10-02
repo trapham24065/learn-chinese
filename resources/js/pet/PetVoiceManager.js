@@ -18,6 +18,7 @@ class PetVoiceManagerClass {
         this.abortController = null;
         this.isPlaying = false;
         this.voiceEnabled = this.loadPreference('pet_voice_enabled', true);
+        this.serverTtsDisabled = false;
     }
 
     loadPreference(key, defaultValue) {
@@ -134,6 +135,11 @@ class PetVoiceManagerClass {
             }
         };
 
+        // If server-side TTS was previously determined unavailable, go directly to Web Speech API
+        if (this.serverTtsDisabled) {
+            return this.speakFallback(cleanText, notifyStart, notifyEnd, onError);
+        }
+
         // Attempt Tier 1: Azure Neural TTS via existing /tts endpoint
         try {
             const csrfToken = this.getCsrfToken();
@@ -186,13 +192,20 @@ class PetVoiceManagerClass {
                                 .then(resolve);
                         });
                     });
+                } else {
+                    // Server returned fallback or no audio (e.g. Azure key not configured)
+                    this.serverTtsDisabled = true;
+                    return this.speakFallback(cleanText, notifyStart, notifyEnd, onError);
                 }
+            } else {
+                this.serverTtsDisabled = true;
+                return this.speakFallback(cleanText, notifyStart, notifyEnd, onError);
             }
-            throw new Error(`TTS server responded with ${response.status}`);
         } catch (err) {
             if (signal.aborted) {
                 return false;
             }
+            this.serverTtsDisabled = true;
             // Fallback Tier 2: Web Speech API (window.speechSynthesis)
             return this.speakFallback(cleanText, notifyStart, notifyEnd, onError);
         }
