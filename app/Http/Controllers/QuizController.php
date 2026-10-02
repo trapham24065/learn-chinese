@@ -175,6 +175,11 @@ class QuizController extends Controller
                 'started_at' => now()->subSeconds($durationSeconds),
                 'completed_at' => now(),
             ]);
+
+            $userPet = \App\Models\UserPet::where('user_id', $user->id)->first();
+            if ($userPet && $userPet->isActive()) {
+                app(\App\Services\Pet\PetDnaService::class)->compute($user, $userPet);
+            }
         }
 
         $message = match (true) {

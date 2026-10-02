@@ -26,6 +26,7 @@ class UserPet extends Model
         'dormant_at',
         'reset_count',
         'best_stage',
+        'learning_dna',
     ];
 
     protected $casts = [
@@ -39,6 +40,7 @@ class UserPet extends Model
         'last_fed_at'               => 'datetime',
         'last_hunger_calculated_at' => 'datetime',
         'dormant_at'                => 'datetime',
+        'learning_dna'              => 'array',
     ];
 
     public function user(): BelongsTo
@@ -195,5 +197,10 @@ class UserPet extends Model
             'calm'     => 'Điềm đạm, kiên nhẫn, luôn nhắc nhở bạn chậm mà chắc từng ngày.',
             default    => 'Hiếu động, thích nhún nhảy vui vẻ và chúc mừng mỗi khi bạn tiến bộ.',
         };
+    }
+
+    public function worldObjects(): HasMany
+    {
+        return $this->hasMany(PetWorldObject::class);
     }
 }

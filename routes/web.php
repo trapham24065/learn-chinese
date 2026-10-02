@@ -64,6 +64,8 @@ Route::prefix('student')->group(function () {
         Route::post('/pet/rename', [\App\Http\Controllers\PetController::class, 'rename'])->name('pet.rename');
         Route::post('/pet/personality', [\App\Http\Controllers\PetController::class, 'updatePersonality'])->name('pet.personality');
         Route::get('/pet/status', [\App\Http\Controllers\PetController::class, 'status'])->name('pet.status');
+        Route::get('/pet/world', [\App\Http\Controllers\PetController::class, 'world'])->name('pet.world');
+        Route::get('/pet/dna', [\App\Http\Controllers\PetController::class, 'dna'])->name('pet.dna');
     });
 });
 

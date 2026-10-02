@@ -484,6 +484,70 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                                  style="width: {{ $progress['percent'] }}%"></div>
                         </div>
                     </div>
+
+                    {{-- Pet Learning DNA section (shown in Profile tab) --}}
+                    @if(count($dna) > 0)
+                    <div class="mt-6 rounded-2xl bg-slate-950 p-5 text-white">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Learning DNA 🧬</p>
+                                <p class="text-sm font-bold text-white mt-0.5">Pet cá»§a báº¡n Ä‘ang hÃ¬nh thÃ nh tÃ­nh cÃ¡ch</p>
+                            </div>
+                            <span class="text-xs bg-white/10 px-3 py-1 rounded-full text-slate-300">
+                                {{ $userPet->getPersonalityEmoji() }} {{ $userPet->getPersonalityLabel() }}
+                            </span>
+                        </div>
+                        <div class="space-y-2.5">
+                            @foreach($dna as $trait)
+                            <div class="flex items-center gap-3">
+                                <span class="w-20 text-right text-[11px] text-slate-400 shrink-0">{{ $trait['label'] }}</span>
+                                <div class="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                                    <div class="h-full rounded-full transition-all duration-700"
+                                         style="width: {{ $trait['score'] }}%; background: {{ $trait['color'] }}"></div>
+                                </div>
+                                <span class="w-8 text-[11px] font-bold text-slate-300 shrink-0">{{ $trait['score'] }}</span>
+                            </div>
+                            @endforeach
+                        </div>
+                        <p class="mt-3 text-[11px] text-slate-500 italic">
+                            DNA Ä‘Æ°á»£c tÃ­nh toÃ¡n tá»« hÃ nh vi há» c táº­p thá»±c táº¿ vÃ  cáº­p nháº­t tá»± Ä‘á»™ng.
+                        </p>
+                    </div>
+                    @endif
+
+                    {{-- Pet Memory World --}}
+                    @if(count($worldObjs) > 0)
+                    <div class="mt-6 rounded-2xl border border-white/10 bg-gradient-to-br from-indigo-950/50 to-slate-900 p-4 relative overflow-hidden" style="min-height: 260px;">
+                        <p class="text-[10px] font-bold uppercase tracking-widest text-indigo-300/70 mb-1">Pet Memory World 🌏</p>
+                        <p class="text-xs text-slate-400">Nhá»¯ng tá»« báº¡n Ä‘Ã£ há» c Ä‘ang sá»‘ng trong tháº¿ giá»›i cá»§a Pet</p>
+                        
+                        <div id="pet-world" class="relative mt-3" style="height: 200px;">
+                            @foreach($worldObjs as $obj)
+                            <div class="absolute group cursor-pointer transition-all hover:scale-125"
+                                 style="left: {{ $obj['pos_x'] }}%; top: {{ $obj['pos_y'] }}%; transform: translate(-50%, -50%); font-size: {{ 10 + $obj['size'] * 3 }}px;"
+                                 title="{{ $obj['hanzi'] }} ({{ $obj['pinyin'] }}) - {{ $obj['meaning'] }}">
+                                <span class="select-none">{{ $obj['emoji'] }}</span>
+                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block bg-black/80 text-white text-[10px] px-2 py-1 rounded-lg whitespace-nowrap z-10">
+                                    {{ $obj['hanzi'] }} · {{ $obj['pinyin'] }}<br>
+                                    <span class="text-slate-300">{{ $obj['meaning'] }}</span>
+                                </div>
+                            </div>
+                            @endforeach
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-2">
+                            {{ count($worldObjs) }} tá»« Ä‘Ã£ há» c · Hover Ä‘á»ƒ xem nghÄ©a
+                        </p>
+                    </div>
+                    @endif
+
+                    {{-- Dream sentence --}}
+                    @if($dreamSent)
+                    <div class="mt-4 rounded-2xl bg-slate-900/60 border border-indigo-500/20 p-4">
+                        <p class="text-[10px] uppercase tracking-widest text-indigo-400/70 mb-1">💤 Pet Ä‘ang mÆ¡...</p>
+                        <p class="text-base font-medium text-white">{{ $dreamSent }}</p>
+                        <p class="text-[11px] text-slate-500 mt-1">Tá»« nhá»¯ng tá»« báº¡n Ä‘Ã£ há» c Ä‘Æ°á»£c</p>
+                    </div>
+                    @endif
                 </div>
             </div>
 

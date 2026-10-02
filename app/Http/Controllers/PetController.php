@@ -23,6 +23,8 @@ class PetController extends Controller
         protected VocabularyMasteryService $masteryService,
         protected \App\Services\Pet\PetAffinityService $affinityService,
         protected \App\Services\Pet\PetMemoryService $memoryService,
+        protected \App\Services\Pet\PetDnaService $dnaService,
+        protected \App\Services\Pet\PetWorldService $worldService,
     ) {}
 
     /**
@@ -72,6 +74,10 @@ class PetController extends Controller
         $affinitySummary = $this->affinityService->getAffinitySummary($userPet);
         $affinityTier    = $userPet->getAffinityTier();
 
+        $dna        = $this->dnaService->getDisplayDna($userPet);
+        $worldObjs  = $this->worldService->getWorldObjects($userPet);
+        $dreamSent  = $this->worldService->generateDreamSentence($userPet);
+
         return view('pet.index', compact(
             'userPet',
             'progress',
@@ -85,7 +91,10 @@ class PetController extends Controller
             'masteredCount',
             'masteredWords',
             'affinitySummary',
-            'affinityTier'
+            'affinityTier',
+            'dna',
+            'worldObjs',
+            'dreamSent'
         ));
     }
 
@@ -278,6 +287,48 @@ class PetController extends Controller
                 'pinyin'  => $randomWord->pinyin,
                 'meaning' => $randomWord->meaning,
             ] : null,
+        ]);
+    }
+
+    public function dna(Request $request): JsonResponse
+    {
+        $user   = $request->user();
+        $userPet = $this->petService->getActivePet($user);
+        if (!$userPet) {
+            return response()->json(['dna' => [], 'personality' => null]);
+        }
+
+        $dna = $userPet->learning_dna ?? [];
+        $age = isset($dna['computed_at'])
+            ? now()->diffInMinutes($dna['computed_at'])
+            : 999;
+
+        if ($age > 60) {
+            $dna = $this->dnaService->compute($user, $userPet);
+        }
+
+        return response()->json([
+            'dna'         => $this->dnaService->getDisplayDna($userPet),
+            'personality' => [
+                'type'    => $userPet->personality,
+                'label'   => $userPet->getPersonalityLabel(),
+                'emoji'   => $userPet->getPersonalityEmoji(),
+                'trait'   => $dna['dominant_trait'] ?? 'explorer',
+            ],
+        ]);
+    }
+
+    public function world(Request $request): JsonResponse
+    {
+        $user   = $request->user();
+        $userPet = $this->petService->getActivePet($user);
+        if (!$userPet) {
+            return response()->json(['objects' => [], 'dream' => null]);
+        }
+
+        return response()->json([
+            'objects' => $this->worldService->getWorldObjects($userPet),
+            'dream'   => $this->worldService->generateDreamSentence($userPet),
         ]);
     }
 }

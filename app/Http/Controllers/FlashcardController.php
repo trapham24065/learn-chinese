@@ -333,6 +333,8 @@ class FlashcardController extends Controller
                         } elseif ($progress->repetition === 2) {
                             app(\App\Services\Pet\PetMemoryService::class)->rememberFirstMastered($userPet, $card);
                             app(\App\Services\Pet\PetAffinityService::class)->addAffinity($userPet, 1, 'vocab_mastered');
+                            app(\App\Services\Pet\PetWorldService::class)->addWordToWorld($userPet, $card);
+                            app(\App\Services\Pet\PetDnaService::class)->compute($user, $userPet);
                         }
                     }
                 }
