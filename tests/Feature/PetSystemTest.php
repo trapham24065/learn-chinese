@@ -700,6 +700,70 @@ class PetSystemTest extends TestCase
             ->assertJsonStructure(['objects', 'dream']);
         $this->assertCount(3, $responseWorld->json('objects'));
     }
+
+    // =========================================================================
+    // Step 2 Tests: Sensory Feeding Ritual & Absence Recall
+    // =========================================================================
+
+    public function test_sensory_feeding_returns_food_payload_and_reaction(): void
+    {
+        $petService  = app(PetService::class);
+        $feedService = app(PetFeedingService::class);
+
+        $userPet = $petService->createInitialPet($this->user);
+        $userPet->update(['hunger' => 50]);
+
+        // Direct service test
+        $result = $feedService->feed($this->user, $userPet, 10, 'key-sensory-10');
+        $this->assertTrue($result['success']);
+        $this->assertNotNull($result['food']);
+        $this->assertEquals('饺子', $result['food']['hanzi']);
+        $this->assertEquals('🥟', $result['food']['emoji']);
+        $this->assertStringContainsString('好吃', $result['food_reaction']);
+        $this->assertStringContainsString('好吃', $result['chinese_say']);
+
+        // Controller API test with apple (amount 5)
+        $response = $this->actingAs($this->user)->postJson(route('pet.feed'), [
+            'amount'          => 5,
+            'idempotency_key' => 'key-sensory-api-5',
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('food.hanzi', '苹果')
+            ->assertJsonPath('food.emoji', '🍎')
+            ->assertJsonStructure([
+                'success',
+                'food',
+                'food_reaction',
+                'chinese_say',
+                'hunger',
+                'daily_fed',
+            ]);
+    }
+
+    public function test_absence_recall_greetings_scale_with_days_absent(): void
+    {
+        $petService      = app(PetService::class);
+        $dialogueService = app(\App\Services\Pet\PetDialogueService::class);
+
+        $userPet = $petService->createInitialPet($this->user);
+
+        // Case A: Absent 1 day -> "今天你很忙吗？"
+        $userPet->update(['last_studied_at' => now()->subDays(1)->subHours(1)]);
+        $dialogues1 = $dialogueService->getDialogues($this->user, $userPet);
+        $this->assertStringContainsString('今天你很忙吗？', $dialogues1[0]);
+
+        // Case B: Absent 3 days -> "好久不见……"
+        $userPet->update(['last_studied_at' => now()->subDays(3)->subHours(2)]);
+        $dialogues3 = $dialogueService->getDialogues($this->user, $userPet);
+        $this->assertStringContainsString('好久不见……', $dialogues3[0]);
+
+        // Case C: Absent 8 days -> "❤️ 你回来了！"
+        $userPet->update(['last_studied_at' => now()->subDays(8)]);
+        $dialogues8 = $dialogueService->getDialogues($this->user, $userPet);
+        $this->assertStringContainsString('❤️ 你回来了！', $dialogues8[0]);
+    }
 }
 
 

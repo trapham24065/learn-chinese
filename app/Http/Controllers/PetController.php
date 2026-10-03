@@ -77,6 +77,7 @@ class PetController extends Controller
         $dna        = $this->dnaService->getDisplayDna($userPet);
         $worldObjs  = $this->worldService->getWorldObjects($userPet);
         $dreamSent  = $this->worldService->generateDreamSentence($userPet);
+        $foodMenu   = PetFeedingService::getFoodMenu();
 
         return view('pet.index', compact(
             'userPet',
@@ -94,7 +95,8 @@ class PetController extends Controller
             'affinityTier',
             'dna',
             'worldObjs',
-            'dreamSent'
+            'dreamSent',
+            'foodMenu'
         ));
     }
 
@@ -282,6 +284,7 @@ class PetController extends Controller
             'progress'            => $this->growthService->calculateExpProgress($userPet),
             'random_dialogue'     => $this->dialogueService->getRandomDialogue($user, $userPet, $context),
             'dialogues'           => $this->dialogueService->getDialogues($user, $userPet, $context),
+            'food_menu'           => PetFeedingService::getFoodMenu(),
             'random_word'         => $randomWord ? [
                 'hanzi'   => $randomWord->hanzi,
                 'pinyin'  => $randomWord->pinyin,

@@ -13,6 +13,62 @@ class PetFeedingService
     public const DAILY_FEED_CAPACITY = 100;
     public const ALLOWED_AMOUNTS     = [5, 10, 20, 50];
 
+    public const FOOD_ITEMS = [
+        5 => [
+            'amount'      => 5,
+            'key'         => 'apple',
+            'hanzi'       => '苹果',
+            'pinyin'      => 'píngguǒ',
+            'name'        => 'Quả táo tươi',
+            'emoji'       => '🍎',
+            'xp'          => 5,
+            'description' => 'Táo đỏ giòn ngọt, ăn nhẹ thanh đạm.',
+            'reaction'    => '咔嚓！脆脆的，真甜！(Giòn tan, ngọt lịm!)',
+            'chinese_say' => '好吃！谢谢你！',
+        ],
+        10 => [
+            'amount'      => 10,
+            'key'         => 'dumpling',
+            'hanzi'       => '饺子',
+            'pinyin'      => 'jiǎozi',
+            'name'        => 'Há cảo nóng hổi',
+            'emoji'       => '🥟',
+            'xp'          => 10,
+            'description' => 'Bánh chẻo hấp nhân thịt thơm phức.',
+            'reaction'    => '哇！香喷喷的饺子！好吃！(Oa! Há cảo thơm phức, ngon tuyệt!)',
+            'chinese_say' => '哇！饺子真香！好吃！',
+        ],
+        20 => [
+            'amount'      => 20,
+            'key'         => 'rice',
+            'hanzi'       => '米饭',
+            'pinyin'      => 'mǐfàn',
+            'name'        => 'Bát cơm dẻo',
+            'emoji'       => '🍚',
+            'xp'          => 20,
+            'description' => 'Cơm trắng dẻo thơm no bụng chắc dạ.',
+            'reaction'    => '肚子饱饱的，充满力气了！(No bụng rồi, tràn đầy sức lực!)',
+            'chinese_say' => '吃饱了，力气满满！',
+        ],
+        50 => [
+            'amount'      => 50,
+            'key'         => 'peach',
+            'hanzi'       => '桃子',
+            'pinyin'      => 'táozi',
+            'name'        => 'Đào tiên ngọt lịm',
+            'emoji'       => '🍑',
+            'xp'          => 50,
+            'description' => 'Trái đào tiên mọng nước bồi bổ sinh lực.',
+            'reaction'    => '太美味了！谢谢你带来这么棒的仙桃！(Ngon xuất sắc! Cảm ơn cậu đã mang quả đào tiên này!)',
+            'chinese_say' => '太美味了！真是极品仙桃！',
+        ],
+    ];
+
+    public static function getFoodMenu(): array
+    {
+        return array_values(self::FOOD_ITEMS);
+    }
+
     public function __construct(
         protected PetGrowthService $growthService,
         protected PetAffinityService $affinityService,
@@ -115,6 +171,9 @@ class PetFeedingService
                 'xp_fed'          => $actualAmount,
                 'xp_requested'    => $amount,
                 'was_capped'      => $actualAmount < $amount,
+                'food'            => self::FOOD_ITEMS[$actualAmount] ?? null,
+                'food_reaction'   => self::FOOD_ITEMS[$actualAmount]['reaction'] ?? '好吃！',
+                'chinese_say'     => self::FOOD_ITEMS[$actualAmount]['chinese_say'] ?? '好吃！',
                 'hunger'          => $userPet->fresh()->hunger,
                 'hunger_state'    => $userPet->fresh()->getHungerState(),
                 'daily_fed'       => $dailyFed + $actualAmount,

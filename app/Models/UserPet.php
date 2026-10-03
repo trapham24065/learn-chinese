@@ -90,6 +90,19 @@ class UserPet extends Model
     }
 
     /**
+     * Get number of days elapsed since user's last interaction with the pet or learning.
+     */
+    public function getDaysAbsent(): int
+    {
+        $lastSeen = $this->last_studied_at ?? $this->last_fed_at ?? $this->updated_at;
+        if (!$lastSeen) {
+            return 0;
+        }
+
+        return (int) $lastSeen->diffInDays(now());
+    }
+
+    /**
      * Get relationship tier details based on affinity (0 - 100).
      */
     public function getAffinityTier(): array

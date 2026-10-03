@@ -39,10 +39,10 @@ class PetDialogueService
             $dialogues[] = $this->getActivityReaction($context['activity'], $personality);
         }
 
-        // 2. Absence return greeting (if user returned after >= 2 days)
-        if ($userPet->last_studied_at && $userPet->last_studied_at->diffInDays(now()) >= 2) {
-            $daysAbsent = (int) $userPet->last_studied_at->diffInDays(now());
-            $dialogues[] = $this->getAbsenceWelcome($personality, $daysAbsent, $userName);
+        // 2. Absence return greeting (warm, gentle, no guilt-trip)
+        $daysAbsent = $userPet->getDaysAbsent();
+        if ($daysAbsent >= 1) {
+            array_unshift($dialogues, $this->getAbsenceWelcome($personality, $daysAbsent, $userName));
         }
 
         // 3. Memory recall (remembering first word, milestones, streaks)
@@ -238,12 +238,38 @@ class PetDialogueService
 
     protected function getAbsenceWelcome(string $personality, int $daysAbsent, string $userName): string
     {
+        if ($daysAbsent >= 7) {
+            // Vắng 7 ngày trở lên: Mắt sáng rực, đón chào nồng ấm, không phán xét
+            return match ($personality) {
+                'playful'  => "❤️ 你回来了！({$userName} về rồi!) Mình chờ cậu mãi đấy, chúng mình lại cùng chơi và học nhé! 🐉✨",
+                'shy'      => "❤️ {$userName} đã về rồi... Mấy ngày qua mình luôn ngóng ra cửa. Thật may vì cậu đã quay lại 🌸",
+                'curious'  => "❤️ 你回来了！({$userName} về rồi!) Cậu có khỏe không? Mình đã giữ gìn các trang sách thật cẩn thận chờ cậu đấy! 🔍",
+                'cheerful' => "❤️ Hoan hô! {$userName} đã trở về rồi! Cuộc phiêu lưu của hai chúng ta lại tiếp tục rồi! ☀️🐉",
+                'calm'     => "❤️ 你回来了。(Bạn đã về rồi.) Chặng đường dài luôn có những khoảng lặng, chỉ cần quay lại là đáng quý 🍵",
+                default    => "❤️ 你回来了！(Cậu về rồi!) Thật vui vì lại được đồng hành cùng bạn bên bàn học! ✨",
+            };
+        }
+
+        if ($daysAbsent >= 2) {
+            // Vắng 2-3 ngày: Thở dài nhẹ, nhớ nhung dịu dàng
+            return match ($personality) {
+                'playful'  => "好久不见……(Lâu rồi mới gặp lại cậu……) Cậu có nhớ chú rồng nhỏ này không nè? 🐲",
+                'shy'      => "好久不见……(Lâu rồi mới gặp lại cậu……) Cậu vắng bóng mấy hôm, mình thấy hơi trống trải... 🌸",
+                'curious'  => "好久不见……(Lâu rồi mới gặp lại cậu……) Mình đã chuẩn bị sẵn vài chữ Hán thú vị chờ cậu rồi đấy! 🔍",
+                'cheerful' => "好久不见……(Lâu rồi mới gặp lại cậu……) Chào mừng cậu đã trở lại với nguồn năng lượng mới! ☀️",
+                'calm'     => "好久不见。(Lâu rồi mới gặp lại bạn.) Tĩnh tâm lại một chút rồi chúng mình cùng tiếp tục nhé 🍵",
+                default    => "好久不见……(Lâu rồi mới gặp lại cậu……) Mình vẫn luôn ở đây đồng hành cùng bạn 📚",
+            };
+        }
+
+        // Vắng 1 ngày: Hỏi han ấm áp
         return match ($personality) {
-            'playful'  => "Oa {$userName} đã quay lại! Tớ mong bạn muốn xỉu luôn á, mau học cùng tớ đi! 🐲",
-            'curious'  => "Chào mừng {$userName} trở lại! Mấy ngày qua bạn có khỏe không? Chúng mình lại tiếp tục khám phá nào! 🔍",
-            'shy'      => "Bạn về rồi... Mấy ngày không thấy bạn tớ nhớ lắm. Thật vui vì lại được gặp bạn 🌸",
-            'cheerful' => "Hoan hô {$userName} đã trở lại! Chuyến hành trình của chúng mình lại bắt đầu rồi! ☀️",
-            default    => "Mừng bạn quay trở lại bàn học. Nghỉ ngơi lấy lại tinh thần rồi cùng bước tiếp nhé 🍵",
+            'playful'  => "今天你很忙吗？(Hôm nay cậu bận rộn nhiều à?) Dành vài phút cùng mình thư giãn nhé! 🎮",
+            'shy'      => "今天你很忙吗？(Hôm nay cậu bận lắm phải không?) Nhớ giữ gìn sức khỏe và nghỉ ngơi đủ nhé 🌸",
+            'curious'  => "今天你很忙吗？(Hôm nay cậu bận à?) Dù bận nhưng cậu vẫn ghé qua thăm mình, vui quá! 🔍",
+            'cheerful' => "今天你很忙吗？(Hôm nay cậu bận à?) Một nụ cười xua tan mệt mỏi, chúng mình lại bên nhau rồi! ☀️",
+            'calm'     => "今天你很忙吗？(Hôm nay cậu bận à?) Ngày bận rộn cũng cần những phút giây tĩnh lặng 🍵",
+            default    => "今天你很忙吗？(Hôm nay cậu bận à?) Dành chút thời gian lật vài thẻ bài cùng tớ nhé! 📚",
         };
     }
 

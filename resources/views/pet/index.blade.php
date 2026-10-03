@@ -18,6 +18,11 @@ window.petRoom = function petRoom(config) {
         feeding: false,
         feedMessage: '',
         isError: false,
+        foodMenu: config.foodMenu || [],
+        eatingFood: null,
+        eatingPhase: null, // 'eating' | 'satisfied'
+        foodReactionText: '',
+        foodChineseSay: '',
 
         // Audio reactivity
         sfxEnabled: (window.PetAudioEngine ? window.PetAudioEngine.isSfxEnabled() : true),
@@ -146,11 +151,21 @@ window.petRoom = function petRoom(config) {
             }
         },
 
-        async feed(amount) {
+        async feed(amount, foodObj = null) {
             if (this.feeding || this.dailyRemaining < amount) return;
             this.feeding = true;
             this.feedMessage = '';
             this.isError = false;
+
+            if (!foodObj && this.foodMenu) {
+                foodObj = this.foodMenu.find(f => f.amount === amount);
+            }
+            this.eatingFood = foodObj;
+            this.eatingPhase = 'eating';
+
+            if (window.PetAudioEngine) {
+                window.PetAudioEngine.munch();
+            }
 
             const key = 'room_feed_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9);
             try {
@@ -167,11 +182,24 @@ window.petRoom = function petRoom(config) {
                 if (data.success) {
                     this.hunger = data.hunger;
                     this.dailyRemaining = data.daily_remaining;
+                    if (data.affinity !== undefined) this.affinity = data.affinity;
+                    if (data.tier) this.affinityTier = data.tier;
                     if (data.dialogue) this.currentDialogue = data.dialogue;
                     if (data.dialogues) this.dialogues = data.dialogues;
 
-                    if (window.PetAudioEngine) {
-                        window.PetAudioEngine.munch();
+                    this.eatingPhase = 'satisfied';
+                    this.foodReactionText = data.food_reaction || '好吃！(Ngon tuyệt!)';
+                    this.foodChineseSay = data.chinese_say || '好吃！';
+
+                    // Pet Voice: Phát âm chuẩn tiếng Trung lời cảm ơn / khen ngon
+                    if (window.PetVoiceManager) {
+                        setTimeout(() => {
+                            window.PetVoiceManager.speak(data.chinese_say || '好吃！');
+                        }, 400);
+                    }
+
+                    if (data.hunger >= 95 && window.PetAudioEngine) {
+                        setTimeout(() => window.PetAudioEngine.purr(), 600);
                     }
 
                     if (data.stage_up) {
@@ -185,16 +213,27 @@ window.petRoom = function petRoom(config) {
                         this.celebrationDesc = `Pet của bạn đã trưởng thành hơn rất nhiều nhờ thành quả học tập chăm chỉ!`;
                         this.celebrationEmoji = data.emoji || '🐉';
                         this.celebrationModalOpen = true;
+                        this.eatingFood = null;
+                        this.eatingPhase = null;
                     } else {
-                        this.feedMessage = `+${data.xp_fed} EXP thành công cho Pet! 🍖`;
-                        setTimeout(() => { this.feedMessage = ''; }, 3500);
+                        const foodLabel = data.food ? (data.food.emoji + ' ' + data.food.hanzi) : 'Món ăn';
+                        this.feedMessage = `Đã cho Pet ăn ${foodLabel}! +${data.xp_fed} EXP`;
+                        setTimeout(() => {
+                            this.eatingPhase = null;
+                            this.eatingFood = null;
+                            this.feedMessage = '';
+                        }, 5000);
                     }
                 } else {
                     this.isError = true;
+                    this.eatingPhase = null;
+                    this.eatingFood = null;
                     this.feedMessage = data.error || 'Có lỗi xảy ra khi cho ăn';
                 }
             } catch (e) {
                 this.isError = true;
+                this.eatingPhase = null;
+                this.eatingFood = null;
                 this.feedMessage = 'Lỗi kết nối. Vui lòng thử lại!';
             } finally {
                 this.feeding = false;
@@ -294,6 +333,7 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
          masteredWords: {{ Js::from($masteredWords) }},
          affinitySummary: {{ Js::from($affinitySummary) }},
          affinityTier: {{ Js::from($affinityTier) }},
+         foodMenu: {{ Js::from($foodMenu) }},
      })"
      x-init="initRoom()">
 
@@ -570,25 +610,80 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                     </p>
 
                     @if($userPet->isActive())
-                    <div class="grid grid-cols-2 gap-3 pt-2">
-                        @foreach([5, 10, 20, 50] as $amount)
-                        <button type="button"
-                                @click="feed({{ $amount }})"
-                                :disabled="feeding || dailyRemaining < {{ $amount }}"
-                                class="flex items-center justify-between rounded-2xl p-3.5 border transition active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed text-left
-                                       {{ $amount === 50 ? 'border-orange-300 bg-gradient-to-br from-amber-50 to-orange-100 hover:from-amber-100 hover:to-orange-200' : 'border-amber-200 bg-amber-50/60 hover:bg-amber-100/80' }}">
-                            <div>
-                                <p class="text-sm font-black text-slate-900">+{{ $amount }} EXP</p>
-                                <p class="text-[10px] text-slate-500">+{{ $amount }} độ no</p>
+                    {{-- Sensory Eating Ritual Feedback (Dynamic) --}}
+                    <div x-show="eatingFood" x-cloak
+                         class="rounded-2xl p-4 transition-all duration-300 border shadow-md space-y-2"
+                         :class="eatingPhase === 'satisfied' ? 'bg-gradient-to-r from-amber-50 via-emerald-50 to-amber-50 border-emerald-300 ring-2 ring-emerald-400/20' : 'bg-gradient-to-r from-amber-100/90 to-orange-100/90 border-amber-300 animate-pulse'">
+                        <div class="flex items-center gap-3">
+                            <span class="text-4xl transition-transform"
+                                  :class="eatingPhase === 'eating' ? 'animate-bounce scale-110' : 'scale-100'"
+                                  x-text="eatingFood?.emoji || '🍎'"></span>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-base font-black text-slate-900" x-text="eatingFood?.hanzi"></span>
+                                    <span class="text-xs font-bold text-amber-700 font-mono" x-text="eatingFood?.pinyin"></span>
+                                    <span class="text-xs text-slate-500 font-medium" x-text="'• ' + (eatingFood?.name ?? '')"></span>
+                                </div>
+                                <p class="text-xs font-bold mt-0.5 leading-snug"
+                                   :class="eatingPhase === 'satisfied' ? 'text-emerald-800' : 'text-amber-900'"
+                                   x-text="eatingPhase === 'eating' ? '😋 Pet đang ngửi rồi chóp chép nhai ngon lành...' : foodReactionText">
+                                </p>
                             </div>
-                            <span class="grid h-8 w-8 place-items-center rounded-xl bg-amber-500 text-white font-black text-xs shadow-sm">
-                                🍖
-                            </span>
+                            <button type="button"
+                                    x-show="eatingPhase === 'satisfied'"
+                                    @click="speakWord(foodChineseSay || '好吃！')"
+                                    title="Nghe Pet phát âm tiếng Trung"
+                                    class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white shadow-sm border border-amber-200 text-amber-800 hover:bg-amber-50 transition active:scale-95 text-xs">
+                                <i data-lucide="volume-2" class="h-4 w-4"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- 4 Authentic Chinese Dishes Menu --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                        @foreach($foodMenu as $food)
+                        <button type="button"
+                                @click="feed({{ $food['amount'] }}, {{ Js::from($food) }})"
+                                :disabled="feeding || dailyRemaining < {{ $food['amount'] }}"
+                                class="group relative flex flex-col justify-between rounded-2xl p-3.5 border transition-all duration-200 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed text-left
+                                       {{ $food['amount'] === 50
+                                            ? 'border-orange-300/90 bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50/60 hover:border-orange-400 hover:shadow-md hover:shadow-orange-500/10'
+                                            : 'border-amber-200/90 bg-white hover:bg-amber-50/50 hover:border-amber-300 hover:shadow-sm' }}">
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="flex items-center gap-2.5">
+                                    <span class="text-3xl sm:text-4xl select-none transition-transform duration-200 group-hover:scale-110">
+                                        {{ $food['emoji'] }}
+                                    </span>
+                                    <div>
+                                        <div class="flex items-baseline gap-1.5">
+                                            <span class="text-base font-black text-slate-900">{{ $food['hanzi'] }}</span>
+                                            <span class="text-xs font-bold text-amber-700 font-mono">{{ $food['pinyin'] }}</span>
+                                        </div>
+                                        <p class="text-xs font-bold text-slate-700">{{ $food['name'] }}</p>
+                                    </div>
+                                </div>
+                                <span class="rounded-full px-2 py-0.5 text-[10px] font-black shrink-0 shadow-sm
+                                             {{ $food['amount'] === 50 ? 'bg-orange-500 text-white' : 'bg-amber-100 text-amber-900' }}">
+                                    +{{ $food['amount'] }} XP
+                                </span>
+                            </div>
+
+                            <p class="text-[11px] text-slate-500 italic mt-2 line-clamp-1">
+                                {{ $food['description'] }}
+                            </p>
+
+                            <div class="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px]">
+                                <span class="text-slate-400">+{{ $food['amount'] }} độ no</span>
+                                <span class="font-bold text-amber-700 group-hover:text-amber-900 transition flex items-center gap-0.5">
+                                    <span>Mời Pet ăn</span>
+                                    <i data-lucide="chevron-right" class="h-3 w-3 inline"></i>
+                                </span>
+                            </div>
                         </button>
                         @endforeach
                     </div>
 
-                    <div x-show="feedMessage" x-cloak
+                    <div x-show="feedMessage && !eatingFood" x-cloak
                          class="rounded-xl p-3 text-center text-xs font-bold transition"
                          :class="isError ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-emerald-50 text-emerald-800 border border-emerald-200'"
                          x-text="feedMessage"></div>

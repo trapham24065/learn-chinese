@@ -12,13 +12,17 @@
         <div class="grid grid-cols-2 gap-1.5">
             <button type="button" @click="feed(5)"
                     :disabled="feeding || !pet || (pet?.daily_remaining ?? 0) < 5"
-                    class="inline-flex items-center justify-center gap-1 rounded-xl bg-amber-500 py-1.5 text-[11px] font-bold text-white transition hover:bg-amber-600 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm">
-                <span>🍖 Cho ăn +5 XP</span>
+                    title="Mời Pet ăn Táo tươi (苹果 píngguǒ)"
+                    class="inline-flex items-center justify-center gap-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 py-1.5 px-2 text-[11px] font-bold text-white transition active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm">
+                <span class="text-sm">🍎</span>
+                <span>苹果 (+5)</span>
             </button>
             <button type="button" @click="feed(10)"
                     :disabled="feeding || !pet || (pet?.daily_remaining ?? 0) < 10"
-                    class="inline-flex items-center justify-center gap-1 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 py-1.5 text-[11px] font-bold text-white transition hover:from-amber-600 hover:to-orange-600 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm">
-                <span>🍖 Cho ăn +10 XP</span>
+                    title="Mời Pet ăn Há cảo nóng (饺子 jiǎozi)"
+                    class="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 py-1.5 px-2 text-[11px] font-bold text-white transition active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm">
+                <span class="text-sm">🥟</span>
+                <span>饺子 (+10)</span>
             </button>
         </div>
 

@@ -332,11 +332,16 @@ export function petFloatingCompanion(config = {}) {
                     this.pet.daily_remaining = data.daily_remaining;
                     if (data.dialogue) this.currentDialogue = data.dialogue;
 
-                    // Play Munch SFX
+                    // Play Munch SFX & Voice Reaction
                     if (this.canPlayAudio()) {
                         PetAudioEngine.munch();
+                        if (data.chinese_say) {
+                            setTimeout(() => {
+                                PetVoiceManager.speak(data.chinese_say);
+                            }, 500);
+                        }
                         if (data.hunger >= 95) {
-                            setTimeout(() => PetAudioEngine.purr(), 300);
+                            setTimeout(() => PetAudioEngine.purr(), 900);
                         }
                     }
 
@@ -353,13 +358,15 @@ export function petFloatingCompanion(config = {}) {
                         setTimeout(() => { this.state = 'happy'; }, 3200);
                     } else {
                         this.state = 'happy';
-                        this.feedNotice = `+${data.xp_fed} EXP thành công cho Pet! 🍖`;
+                        const foodLabel = data.food ? `${data.food.emoji} ${data.food.hanzi}: ` : '';
+                        const reaction = data.food_reaction || `+${data.xp_fed} EXP thành công!`;
+                        this.feedNotice = `${foodLabel}${reaction}`;
                         setTimeout(() => {
                             if (this.speechBubbleOpen) this.state = 'speaking';
                             else this.determineInitialState();
-                        }, 1800);
+                        }, 2500);
                     }
-                    setTimeout(() => { this.feedNotice = ''; }, 3500);
+                    setTimeout(() => { this.feedNotice = ''; }, 4500);
                     this.scheduleBubbleAutoDismiss();
                 } else {
                     this.feedNotice = data.error || 'Không thể cho ăn';
