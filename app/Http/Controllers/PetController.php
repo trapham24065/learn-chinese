@@ -79,12 +79,29 @@ class PetController extends Controller
         $dreamSent  = $this->worldService->generateDreamSentence($userPet);
         $foodMenu   = PetFeedingService::getFoodMenu();
 
+        // Enriched timeline memories and cozy room environment stats
+        $timelineMemories = $this->memoryService->getTimelineMemories($userPet);
+        $recentFeedLog    = $userPet->feedingLogs()->latest('fed_at')->first();
+        $recentFood       = ($recentFeedLog && isset(PetFeedingService::FOOD_ITEMS[$recentFeedLog->xp_amount]))
+            ? PetFeedingService::FOOD_ITEMS[$recentFeedLog->xp_amount]
+            : null;
+
+        $roomStats = [
+            'days_together'  => max(1, (int) ($userPet->created_at ? $userPet->created_at->diffInDays(now()) : 1)),
+            'mastered_words' => $masteredCount,
+            'streak'         => (int) ($user->learningStats->current_streak ?? 0),
+            'recent_food'    => $recentFood,
+            'memories_count' => count($timelineMemories),
+        ];
+
         return view('pet.index', compact(
             'userPet',
             'progress',
             'dailyFed',
             'dailyRemaining',
             'memories',
+            'timelineMemories',
+            'roomStats',
             'dialogues',
             'randomDialogue',
             'stages',

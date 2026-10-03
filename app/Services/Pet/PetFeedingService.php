@@ -165,6 +165,11 @@ class PetFeedingService
             // 10. Award affinity for caretaking (capped daily)
             $affinityResult = $this->affinityService->addAffinity($userPet, 1, 'feeding');
 
+            // 11. Record first feeding memory if this is the pet's first meal
+            if (isset(self::FOOD_ITEMS[$actualAmount]) && PetFeedingLog::where('user_pet_id', $userPet->id)->count() === 1) {
+                app(PetMemoryService::class)->rememberFirstFeeding($userPet, self::FOOD_ITEMS[$actualAmount]);
+            }
+
             return [
                 'success'         => true,
                 'is_duplicate'    => false,

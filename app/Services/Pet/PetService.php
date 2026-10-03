@@ -66,9 +66,10 @@ class PetService
         PetMemory::create([
             'user_pet_id' => $userPet->id,
             'type'        => 'hatched',
+            'memory_key'  => 'hatched',
             'title'       => 'Trứng nở!',
             'description' => 'Pet của bạn vừa được tạo ra. Hãy bắt đầu học để nuôi lớn nhé!',
-            'metadata'    => null,
+            'metadata'    => ['met_at' => now()->toDateString()],
             'created_at'  => now(),
         ]);
 

@@ -764,6 +764,66 @@ class PetSystemTest extends TestCase
         $dialogues8 = $dialogueService->getDialogues($this->user, $userPet);
         $this->assertStringContainsString('❤️ 你回来了！', $dialogues8[0]);
     }
+
+    // =========================================================================
+    // Step 3 Tests: Cozy Pet Room & Mutual Memory Timeline
+    // =========================================================================
+
+    public function test_pet_memory_timeline_and_new_milestones(): void
+    {
+        $petService    = app(PetService::class);
+        $memoryService = app(\App\Services\Pet\PetMemoryService::class);
+
+        $userPet = $petService->createInitialPet($this->user);
+
+        // 1. Test rememberFirstMeeting
+        $memoryService->rememberFirstMeeting($userPet);
+        $this->assertEquals(1, PetMemory::where('user_pet_id', $userPet->id)->where('type', 'first_meeting')->count());
+        // Idempotent
+        $memoryService->rememberFirstMeeting($userPet);
+        $this->assertEquals(1, PetMemory::where('user_pet_id', $userPet->id)->where('type', 'first_meeting')->count());
+
+        // 2. Test rememberFirstFeeding
+        $memoryService->rememberFirstFeeding($userPet, PetFeedingService::FOOD_ITEMS[5]);
+        $this->assertEquals(1, PetMemory::where('user_pet_id', $userPet->id)->where('type', 'first_feeding')->count());
+
+        // 3. Test rememberFirstLesson
+        $memoryService->rememberFirstLesson($userPet, 'Bài 1: Chào hỏi');
+        $this->assertEquals(1, PetMemory::where('user_pet_id', $userPet->id)->where('type', 'first_lesson')->count());
+
+        // 4. Test rememberFirstPerfectQuiz
+        $memoryService->rememberFirstPerfectQuiz($userPet, 'Quiz HSK 1 - Điểm tuyệt đối');
+        $this->assertEquals(1, PetMemory::where('user_pet_id', $userPet->id)->where('type', 'first_perfect_quiz')->count());
+
+        // 5. Test getTimelineMemories
+        $timeline = $memoryService->getTimelineMemories($userPet);
+        $this->assertNotEmpty($timeline);
+
+        $firstMeetingMem = collect($timeline)->firstWhere('type', 'first_meeting');
+        $this->assertNotNull($firstMeetingMem);
+        $this->assertEquals('growth', $firstMeetingMem['category']);
+        $this->assertNotEmpty($firstMeetingMem['pet_reflection']);
+        $this->assertArrayHasKey('days_ago_badge', $firstMeetingMem);
+
+        $firstFeedMem = collect($timeline)->firstWhere('type', 'first_feeding');
+        $this->assertNotNull($firstFeedMem);
+        $this->assertEquals('care', $firstFeedMem['category']);
+        $this->assertStringContainsString('苹果', $firstFeedMem['pet_reflection']);
+
+        $firstQuizMem = collect($timeline)->firstWhere('type', 'first_perfect_quiz');
+        $this->assertNotNull($firstQuizMem);
+        $this->assertEquals('learning', $firstQuizMem['category']);
+
+        // 6. Test GET /student/pet route returns timelineMemories and roomStats
+        $response = $this->actingAs($this->user)->get(route('pet.index'));
+        $response->assertStatus(200);
+        $response->assertViewHas('timelineMemories');
+        $response->assertViewHas('roomStats');
+        $roomStats = $response->viewData('roomStats');
+        $this->assertArrayHasKey('days_together', $roomStats);
+        $this->assertArrayHasKey('mastered_words', $roomStats);
+        $this->assertArrayHasKey('streak', $roomStats);
+    }
 }
 
 

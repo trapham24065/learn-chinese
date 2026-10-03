@@ -333,5 +333,31 @@
     }
 }
 
+/* Cozy Room Ambient Effects */
+@keyframes cozySteam {
+    0% { transform: translateY(0) scale(0.9); opacity: 0.6; }
+    50% { transform: translateY(-6px) scale(1.1); opacity: 0.3; }
+    100% { transform: translateY(-12px) scale(1.2); opacity: 0; }
+}
+.cozy-steam {
+    animation: cozySteam 2.5s ease-out infinite;
+}
+
+@keyframes cozyLampGlow {
+    0%, 100% { filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.45)); }
+    50% { filter: drop-shadow(0 0 16px rgba(251, 191, 36, 0.7)); }
+}
+.cozy-lamp-glow {
+    animation: cozyLampGlow 3.5s ease-in-out infinite;
+}
+
+@keyframes cozyWindowSky {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(4px); }
+}
+.cozy-sky-drift {
+    animation: cozyWindowSky 6s ease-in-out infinite;
+}
+
 
 

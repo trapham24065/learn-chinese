@@ -126,6 +126,22 @@ class LearningActivityService
                     app(\App\Services\Pet\PetMemoryService::class)->rememberStreakMilestone($userPet, (int) $streakResult['current']);
                     app(\App\Services\Pet\PetAffinityService::class)->addAffinity($userPet, 2, 'streak_milestone');
                 }
+
+                // First lesson milestone
+                if (in_array($activityType, ['lesson_completed', 'reading_completed'])) {
+                    app(\App\Services\Pet\PetMemoryService::class)->rememberFirstLesson(
+                        $userPet,
+                        $meta['lesson_title'] ?? $meta['title'] ?? null
+                    );
+                }
+
+                // First perfect quiz milestone
+                if ($activityType === 'quiz_completed' && (($meta['score'] ?? 0) >= 100 || ($meta['accuracy'] ?? 0) >= 100)) {
+                    app(\App\Services\Pet\PetMemoryService::class)->rememberFirstPerfectQuiz(
+                        $userPet,
+                        $meta['quiz_title'] ?? null
+                    );
+                }
             }
         } catch (\Throwable $e) {
             report($e);

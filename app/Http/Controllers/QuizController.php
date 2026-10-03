@@ -179,6 +179,10 @@ class QuizController extends Controller
             $userPet = \App\Models\UserPet::where('user_id', $user->id)->first();
             if ($userPet && $userPet->isActive()) {
                 app(\App\Services\Pet\PetDnaService::class)->compute($user, $userPet);
+                if ($scorePercent === 100) {
+                    $lessonTitle = isset($lesson) && $lesson ? $lesson->title : 'Tổng hợp';
+                    app(\App\Services\Pet\PetMemoryService::class)->rememberFirstPerfectQuiz($userPet, $lessonTitle);
+                }
             }
         }
 

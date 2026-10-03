@@ -113,6 +113,169 @@ class PetMemoryService
     }
 
     /**
+     * Remember the first time the pet and user met (initial egg / pet creation).
+     */
+    public function rememberFirstMeeting(UserPet $userPet): ?PetMemory
+    {
+        return $this->createUniqueMemory($userPet, 'first_meeting', 'first_meeting', [
+            'title'       => 'Lần đầu gặp gỡ 🌱',
+            'description' => 'Khoảnh khắc thiêng liêng khi bạn ấp nở và đón Pet về làm bạn đồng hành học tiếng Trung.',
+            'importance'  => 100,
+            'metadata'    => ['met_at' => now()->toDateString()],
+        ]);
+    }
+
+    /**
+     * Remember the very first time user fed the pet with food.
+     */
+    public function rememberFirstFeeding(UserPet $userPet, array $foodItem): ?PetMemory
+    {
+        $foodName = $foodItem['name'] ?? 'Món ăn';
+        $emoji = $foodItem['emoji'] ?? '🍎';
+        $hanzi = $foodItem['hanzi'] ?? '';
+        $pinyin = $foodItem['pinyin'] ?? '';
+
+        return $this->createUniqueMemory($userPet, 'first_feeding', 'first_feeding', [
+            'title'       => "Bữa ăn đầu tiên: {$foodName} {$emoji}",
+            'description' => "Lần đầu tiên bạn mang cho Pet món {$foodName} ({$hanzi} - {$pinyin}) thơm ngon. Kỷ niệm ấm lòng khó phai!",
+            'importance'  => 90,
+            'metadata'    => ['food' => $foodItem],
+        ]);
+    }
+
+    /**
+     * Remember the first lesson completed together.
+     */
+    public function rememberFirstLesson(UserPet $userPet, ?string $lessonTitle = null): ?PetMemory
+    {
+        return $this->createUniqueMemory($userPet, 'first_lesson', 'first_lesson', [
+            'title'       => 'Tiết học đầu tiên bên nhau 📚',
+            'description' => 'Lần đầu tiên bạn và Pet cùng nhau hoàn thành một bài học' . ($lessonTitle ? " ('{$lessonTitle}')" : '') . '. Khởi đầu một chặng đường tuyệt đẹp!',
+            'importance'  => 85,
+            'metadata'    => ['lesson_title' => $lessonTitle],
+        ]);
+    }
+
+    /**
+     * Remember the first perfect quiz score (100%).
+     */
+    public function rememberFirstPerfectQuiz(UserPet $userPet, ?string $quizTitle = null): ?PetMemory
+    {
+        return $this->createUniqueMemory($userPet, 'first_perfect_quiz', 'first_perfect_quiz', [
+            'title'       => 'Bài Quiz đạt điểm tuyệt đối 100% đầu tiên 🎉',
+            'description' => 'Bạn đã xuất sắc trả lời đúng 100% câu hỏi' . ($quizTitle ? " trong '{$quizTitle}'" : '') . '. Pet đã nhảy cẫng lên ăn mừng cùng bạn!',
+            'importance'  => 95,
+            'metadata'    => ['quiz_title' => $quizTitle],
+        ]);
+    }
+
+    /**
+     * Get enriched memory timeline / scrapbook for the user pet.
+     */
+    public function getTimelineMemories(UserPet $userPet): array
+    {
+        $memories = PetMemory::where('user_pet_id', $userPet->id)
+            ->with('relatedWord')
+            ->orderBy('created_at', 'desc')
+            ->limit(50)
+            ->get();
+
+        return $memories->map(function (PetMemory $m) {
+            $meta = $m->metadata ?? [];
+            $createdAt = $m->created_at ?? now();
+            $daysAgo = (int) $createdAt->diffInDays(now());
+
+            $relativeTime = match (true) {
+                $daysAgo === 0 => 'Hôm nay',
+                $daysAgo === 1 => 'Hôm qua',
+                $daysAgo < 7   => "{$daysAgo} ngày trước",
+                $daysAgo < 30  => (int) ceil($daysAgo / 7) . ' tuần trước',
+                default        => (int) ceil($daysAgo / 30) . ' tháng trước',
+            };
+
+            $category = match ($m->type) {
+                'hatched', 'first_meeting', 'stage_reached' => 'growth',
+                'first_word', 'first_mastered', 'first_lesson', 'first_perfect_quiz', 'daily_goal' => 'learning',
+                'first_feeding', 'streak_milestone', 'absence_return' => 'care',
+                default => 'special',
+            };
+
+            $badgeEmoji = match ($m->type) {
+                'hatched', 'first_meeting' => '🌱',
+                'stage_reached'            => '🎉',
+                'first_feeding'            => '❤️',
+                'first_lesson'             => '📚',
+                'first_perfect_quiz'       => '🏆',
+                'first_word'               => '📖',
+                'first_mastered'           => '⭐',
+                'streak_milestone'         => '🔥',
+                'daily_goal'               => '🎯',
+                'absence_return'           => '🐲',
+                'affinity_tier_up'         => '💖',
+                'personality_changed'      => '🎭',
+                'renamed'                  => '✏️',
+                default                    => '✨',
+            };
+
+            $typeLabel = match ($m->type) {
+                'hatched', 'first_meeting' => 'Gặp gỡ',
+                'stage_reached'            => 'Tiến hóa',
+                'first_feeding'            => 'Bữa ăn đầu',
+                'first_lesson'             => 'Tiết học đầu',
+                'first_perfect_quiz'       => 'Điểm tuyệt đối',
+                'first_word'               => 'Từ vựng đầu',
+                'first_mastered'           => 'Thuộc lòng',
+                'streak_milestone'         => 'Chuỗi học',
+                'daily_goal'               => 'Mục tiêu ngày',
+                'absence_return'           => 'Đón trở về',
+                'affinity_tier_up'         => 'Mối quan hệ',
+                'personality_changed'      => 'Tính cách',
+                'renamed'                  => 'Đổi tên',
+                default                    => 'Kỷ niệm',
+            };
+
+            $petReflection = match ($m->type) {
+                'hatched', 'first_meeting' => 'Khoảnh khắc mở ra một tình bạn đẹp đẽ!',
+                'stage_reached'            => 'Nhờ công sức của cậu, mình đã lớn thêm một bước!',
+                'first_feeding'            => isset($meta['food']['hanzi'])
+                    ? "Món {$meta['food']['hanzi']} đầu tiên cậu mang cho mình thơm ngon và ấm áp không bao giờ quên."
+                    : 'Món ăn đầu tiên ấm áp không bao giờ quên.',
+                'first_lesson'             => 'Hai đứa cùng chăm chú mở trang sách đầu tiên.',
+                'first_perfect_quiz'       => 'Cậu làm đúng 100%, mình nhảy cẫng lên reo hò!',
+                'first_word'               => 'Chữ Hán đầu tiên được hai đứa mình cùng đánh vần.',
+                'first_mastered'           => 'Cậu đã nhớ sâu sắc chữ này, thật đáng nể phục!',
+                'streak_milestone'         => 'Mỗi ngày có cậu bên cạnh đều là ngày hạnh phúc.',
+                'daily_goal'               => 'Một ngày nỗ lực trọn vẹn và tự hào.',
+                'absence_return'           => 'Chỉ cần cậu quay lại là lòng mình lại rộn ràng.',
+                default                    => 'Một cột mốc ý nghĩa trên chặng đường chúng ta đi cùng nhau.',
+            };
+
+            return [
+                'id'             => $m->id,
+                'type'           => $m->type,
+                'type_label'     => $typeLabel,
+                'title'          => $m->title,
+                'description'    => $m->description,
+                'created_at'     => $createdAt->toIso8601String(),
+                'formatted_date' => $createdAt->format('H:i • d/m/Y'),
+                'relative_time'  => $relativeTime,
+                'days_ago'       => $daysAgo,
+                'days_ago_badge' => $relativeTime,
+                'category'       => $category,
+                'badge_emoji'    => $badgeEmoji,
+                'pet_reflection' => $petReflection,
+                'metadata'       => $meta,
+                'related_word'   => $m->relatedWord ? [
+                    'id'      => $m->relatedWord->id,
+                    'hanzi'   => $m->relatedWord->hanzi,
+                    'pinyin'  => $m->relatedWord->pinyin,
+                    'meaning' => $m->relatedWord->meaning,
+                ] : null,
+            ];
+        })->values()->toArray();
+    }
+
+    /**
      * Recall a relevant memory to bring up in conversation.
      * Prioritizes high importance and memories not recalled recently.
      */
@@ -146,6 +309,52 @@ class PetMemoryService
     {
         $type = $memory->type;
         $meta = $memory->metadata ?? [];
+        $createdAt = $memory->created_at ?? now();
+        $daysPassed = max(1, (int) $createdAt->diffInDays(now()));
+
+        if ($type === 'first_meeting' || $type === 'hatched') {
+            return match ($personality) {
+                'playful'  => "Cậu nhớ không? Đã {$daysPassed} ngày kể từ ngày chúng mình lần đầu gặp nhau rồi đấy! Nhanh ghê, chơi với cậu vui lắm luôn! 🌱",
+                'shy'      => "Đã {$daysPassed} ngày kể từ lần đầu gặp nhau... Cảm ơn cậu đã luôn dịu dàng chăm sóc mình suốt thời gian qua 🌸",
+                'curious'  => "Tính ra chúng mình đã đồng hành được {$daysPassed} ngày rồi đó! Cậu có thấy vốn tiếng Trung của mình ngày càng phong phú không? 🔍",
+                'cheerful' => "Kỷ niệm {$daysPassed} ngày chúng mình gặp nhau! Mỗi ngày học cùng cậu đều tràn đầy ánh nắng và niềm vui! ☀️",
+                'calm'     => "Đã {$daysPassed} ngày từ buổi đầu tao ngộ. Tích lũy từng ngày một, sự gắn kết này thật đáng trân quý 🍵",
+                default    => "Đã {$daysPassed} ngày kể từ lần đầu chúng mình gặp nhau. Thật vui vì có bạn đồng hành! 🌱",
+            };
+        }
+
+        if ($type === 'first_feeding') {
+            $foodName = $meta['food']['hanzi'] ?? ($meta['food']['name'] ?? 'món ăn');
+            return match ($personality) {
+                'playful'  => "Mình vẫn nhớ như in bữa ăn đầu tiên cậu cho mình ăn món {$foodName}! Đến giờ nhớ lại vẫn thấy ngon bá cháy luôn á! 😋",
+                'shy'      => "Bữa ăn đầu tiên với món {$foodName} mà cậu mang đến... lúc đó mình đã biết cậu là người rất ấm áp 🌸",
+                'curious'  => "Cậu còn nhớ món {$foodName} đầu tiên cậu cho mình ăn không? Hương vị thơm ngon đó làm mình nhớ mãi! 🥟",
+                'cheerful' => "Bữa ăn đầu tiên cùng món {$foodName} ngon tuyệt cú mèo! Cảm ơn cậu đã chăm sóc mình từ những ngày đầu! ☀️",
+                'calm'     => "Hương vị bữa ăn đầu tiên với {$foodName} vẫn vẹn nguyên. Sự chăm chút của bạn làm lòng mình thấy ấm áp 🍵",
+                default    => "Mình vẫn nhớ bữa ăn đầu tiên cậu cho mình ăn {$foodName}. Cảm ơn bạn rất nhiều! ❤️",
+            };
+        }
+
+        if ($type === 'first_lesson') {
+            $lessonTitle = $meta['lesson_title'] ?? 'bài học đầu tiên';
+            return match ($personality) {
+                'playful'  => "Nhớ tiết học đầu tiên hai đứa mở sách cùng nhau ghê! Lúc đó còn bỡ ngỡ, giờ cậu tiến bộ siêu nhanh rồi! 📚",
+                'curious'  => "Tiết học đầu tiên chúng mình cùng hoàn thành là một cột mốc đặc biệt. Từ lúc đó hành trình đã mở ra! 🔍",
+                'cheerful' => "Tiết học đầu tiên bên nhau! Cậu nhớ lúc hai đứa cùng hoàn thành nó không? Tuyệt vời lắm luôn! ☀️",
+                'calm'     => "Vạn dặm bắt đầu từ một bước chân. Bài học đầu tiên ấy đã mở ra cả một chân trời mới 🍵",
+                default    => "Tiết học đầu tiên hai đứa cùng mở sách học là kỷ niệm mình nhớ mãi! 📚",
+            };
+        }
+
+        if ($type === 'first_perfect_quiz') {
+            return match ($personality) {
+                'playful'  => "Ủa nhớ bài Quiz được 100% điểm tuyệt đối không ta? Lúc đó mình nhảy cẫng lên ăn mừng mém đụng trần nhà! 🎉",
+                'curious'  => "Lần cậu đạt 100% trọn vẹn điểm Quiz làm mình ấn tượng mãi! Độ chính xác đỉnh thật sự! 🔍",
+                'cheerful' => "Bài Quiz 100% điểm tròn trĩnh! Cậu làm bài xuất sắc làm mình tự hào muốn khoe với cả thế giới! ☀️",
+                'calm'     => "Điểm tuyệt đối của bài Quiz ấy là minh chứng cho sự tập trung và thấu hiểu sâu sắc của bạn 🍵",
+                default    => "Lần bạn đạt 100% điểm tuyệt đối trong bài Quiz, mình tự hào về bạn lắm! 🏆",
+            };
+        }
 
         if ($type === 'first_mastered' || $type === 'first_word') {
             $hanzi = $meta['hanzi'] ?? 'từ đầu tiên';
@@ -183,6 +392,16 @@ class PetMemoryService
                 'calm'     => "Mừng bạn quay lại. Học tập là chặng đường dài, nghỉ ngơi lấy lại sức rồi tiếp tục tiến bước nhé. 🍵",
                 default    => "Chào mừng bạn đã trở lại! Hôm nay chúng mình cùng học tiếng Trung thật vui nhé! ✨",
             };
+        }
+
+        if ($type === 'stage_reached') {
+            $stageName = $meta['stage_name'] ?? 'Giai đoạn mới';
+            $stageEmoji = $meta['emoji'] ?? '🐉';
+            return "Nhìn lại lúc mình tiến hóa thành {$stageName} {$stageEmoji}, mỗi bước trưởng thành đều có dấu ấn công sức của cậu! 💖";
+        }
+
+        if ($type === 'daily_goal') {
+            return "Mỗi lần thấy cậu hoàn thành Mục tiêu ngày là mình lại thấy có thêm động lực đồng hành cùng cậu! ⭐";
         }
 
         return "Tớ luôn ghi nhớ từng bước trưởng thành của bạn: {$memory->title} 💖";

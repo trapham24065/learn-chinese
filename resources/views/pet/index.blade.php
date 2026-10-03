@@ -23,6 +23,10 @@ window.petRoom = function petRoom(config) {
         eatingPhase: null, // 'eating' | 'satisfied'
         foodReactionText: '',
         foodChineseSay: '',
+        timelineMemories: config.timelineMemories || [],
+        roomStats: config.roomStats || {},
+        selectedMemoryFilter: 'all',
+        roomTimeMode: (new Date().getHours() >= 18 || new Date().getHours() < 6) ? 'night' : 'day',
 
         // Audio reactivity
         sfxEnabled: (window.PetAudioEngine ? window.PetAudioEngine.isSfxEnabled() : true),
@@ -126,6 +130,56 @@ window.petRoom = function petRoom(config) {
             if (window.PetAudioEngine) {
                 window.PetAudioEngine.pop();
             }
+        },
+
+        toggleRoomLighting() {
+            this.roomTimeMode = this.roomTimeMode === 'day' ? 'night' : 'day';
+            if (window.PetAudioEngine) window.PetAudioEngine.pop();
+            setTimeout(() => window.refreshIcons?.(), 50);
+        },
+
+        interactRoomItem(type) {
+            if (window.PetAudioEngine) window.PetAudioEngine.pop();
+            const streak = this.roomStats?.streak || 0;
+            const words = this.roomStats?.mastered_words || 0;
+            const days = this.roomStats?.days_together || 1;
+
+            switch(type) {
+                case 'window':
+                    this.currentDialogue = this.roomTimeMode === 'night'
+                        ? 'Bầu trời đêm đầy trăng sao thật tĩnh lặng... Cậu học khuya nhớ giữ gìn sức khỏe nhé 🌙'
+                        : 'Bầu trời ban ngày quang đãng trong xanh! Cùng mở sách học chữ mới thật hứng khởi nào 🌤️';
+                    break;
+                case 'bookshelf':
+                    this.currentDialogue = words > 0
+                        ? `Giá sách này đã lưu giữ ${words} từ vựng cậu dạy mình rồi đó! Càng học kệ sách càng dày thêm 📚✨`
+                        : 'Kệ sách đang chờ cậu nạp những chữ Hán đầu tiên vào! Cùng học Flashcard nhé 📖';
+                    break;
+                case 'plant':
+                    this.currentDialogue = streak > 0
+                        ? `Chậu cây may mắn đang lớn nhanh nhờ chuỗi học ${streak} ngày bền bỉ của cậu đó! 🌱💚`
+                        : 'Chậu mầm cây nhỏ này sẽ lớn dần theo mỗi ngày cậu chăm chỉ học tập! 🌱';
+                    break;
+                case 'teatable':
+                    this.currentDialogue = 'Mời cậu một tách trà thơm ấm áp 🍵 Học tiếng Trung cũng như thưởng trà, cần kiên nhẫn từng ngụm một.';
+                    break;
+                case 'frame':
+                    this.currentDialogue = `Khung ảnh ghi dấu kỷ niệm ${days} ngày chúng mình đồng hành cùng nhau! Xem lại Sổ kỷ niệm nhé 🖼️`;
+                    break;
+                case 'foodbowl':
+                    this.currentDialogue = this.roomStats?.recent_food
+                        ? `Đĩa món ăn ${this.roomStats.recent_food.emoji} ${this.roomStats.recent_food.hanzi} cậu cho mình vẫn thơm ngon ấm áp! ❤️`
+                        : 'Bát thức ăn sạch bóng nè, cậu có muốn mời mình một món ngon Trung Hoa không? 🥟';
+                    break;
+            }
+        },
+
+        filteredTimelineMemories() {
+            if (!this.timelineMemories || this.timelineMemories.length === 0) return [];
+            if (this.selectedMemoryFilter === 'all') {
+                return this.timelineMemories;
+            }
+            return this.timelineMemories.filter(m => m.category === this.selectedMemoryFilter);
         },
 
         filteredWords() {
@@ -334,6 +388,8 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
          affinitySummary: {{ Js::from($affinitySummary) }},
          affinityTier: {{ Js::from($affinityTier) }},
          foodMenu: {{ Js::from($foodMenu) }},
+         timelineMemories: {{ Js::from($timelineMemories) }},
+         roomStats: {{ Js::from($roomStats) }},
      })"
      x-init="initRoom()">
 
@@ -420,42 +476,156 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                 @click="setTab('memories')"
                 :class="activeTab === 'memories' ? 'border-[#991b1b] text-[#991b1b] bg-red-50/50' : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'"
                 class="flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold transition whitespace-nowrap rounded-t-xl">
-            <i data-lucide="history" class="h-4 w-4"></i>
-            <span>Ký ức & Cột mốc</span>
+            <i data-lucide="book-heart" class="h-4 w-4 text-amber-600"></i>
+            <span>Sổ Kỷ niệm & Cột mốc</span>
+            <span class="rounded-full bg-amber-100 text-amber-800 px-2 py-0.2 text-[10px] font-bold" x-text="timelineMemories.length"></span>
         </button>
     </div>
 
     {{-- TAB 1: TỔNG QUAN & CHO ĂN --}}
     <div x-show="activeTab === 'overview'" class="space-y-6">
         <div class="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-6">
-            {{-- Left: Main Pet Avatar Stage & Speech Bubble --}}
-            <div class="relative overflow-hidden rounded-3xl border border-amber-200/80 bg-gradient-to-br from-amber-50/90 via-orange-50/40 to-white p-6 sm:p-8 shadow-xl shadow-amber-950/5">
-                {{-- Decorative light spot --}}
-                <div class="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full bg-amber-300/20 blur-3xl"></div>
+            {{-- Left: Cozy Pet Room Scene & Status Stage --}}
+            <div class="relative overflow-hidden rounded-3xl border transition-all duration-700 shadow-xl p-5 sm:p-7"
+                 :class="roomTimeMode === 'night'
+                    ? 'border-indigo-900/80 bg-gradient-to-b from-slate-900 via-indigo-950/90 to-slate-900 text-slate-100 shadow-indigo-950/30'
+                    : 'border-amber-200/90 bg-gradient-to-b from-amber-50 via-orange-50/60 to-amber-100/80 text-slate-800 shadow-amber-950/10'">
+                
+                {{-- Ambient room lighting glows --}}
+                <div class="pointer-events-none absolute -top-12 -right-12 h-64 w-64 rounded-full blur-3xl transition-all duration-700"
+                     :class="roomTimeMode === 'night' ? 'bg-indigo-500/15' : 'bg-amber-300/30'"></div>
+                <div class="pointer-events-none absolute -bottom-12 -left-12 h-64 w-64 rounded-full blur-3xl transition-all duration-700"
+                     :class="roomTimeMode === 'night' ? 'bg-purple-900/20' : 'bg-orange-200/40'"></div>
 
-                <div class="flex flex-col items-center text-center">
-                    {{-- Pet Avatar --}}
-                    <div class="relative pb-2">
-                        <div class="flex h-48 w-48 sm:h-56 sm:w-56 items-center justify-center rounded-[2.5rem] bg-white shadow-2xl shadow-amber-900/10 border-4 transition-transform duration-300 hover:scale-105 select-none p-3"
-                             :class="getPetBorderClass()">
-                            <x-pet-avatar :stage="$userPet->stage" :mood="$userPet->getHungerState()" :personality="$userPet->personality ?? 'playful'" size="xl" :interactive="true" />
+                {{-- Room Header Bar: Room title, stage tag & Day/Night lighting switch --}}
+                <div class="relative z-10 flex flex-wrap items-center justify-between gap-2 border-b pb-3 mb-5 transition-colors duration-500"
+                     :class="roomTimeMode === 'night' ? 'border-white/10' : 'border-amber-200/70'">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl">🏡</span>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-base font-black tracking-tight"
+                                    :class="roomTimeMode === 'night' ? 'text-white' : 'text-slate-900'">
+                                    Căn phòng ấm cúng của {{ $userPet->name ?? $userPet->pet->name }}
+                                </h3>
+                                <span class="rounded-full px-2 py-0.5 text-[10px] font-bold"
+                                      :class="roomTimeMode === 'night' ? 'bg-indigo-900/80 text-indigo-200 border border-indigo-700/60' : 'bg-amber-100 text-amber-900 border border-amber-300'">
+                                    Cấp {{ $userPet->stage }}: {{ optional($userPet->pet->stages->where('stage', $userPet->stage)->first())->name ?? 'Trứng' }}
+                                </span>
+                            </div>
+                            <p class="text-[11px]" :class="roomTimeMode === 'night' ? 'text-slate-400' : 'text-slate-500'">
+                                Căn phòng biến chuyển theo tiến độ học và thời gian trong ngày
+                            </p>
+                        </div>
+                    </div>
+
+                    {{-- Day/Night Ambient Switch --}}
+                    <button type="button"
+                            @click="toggleRoomLighting()"
+                            title="Bấm để đổi ánh sáng ngày/đêm cho căn phòng"
+                            class="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition shadow-sm border active:scale-95"
+                            :class="roomTimeMode === 'night'
+                                ? 'bg-slate-800/90 text-amber-300 border-indigo-700/60 hover:bg-slate-700'
+                                : 'bg-white/90 text-amber-800 border-amber-200 hover:bg-amber-100/70'">
+                        <span x-text="roomTimeMode === 'night' ? '🌙' : '☀️'"></span>
+                        <span x-text="roomTimeMode === 'night' ? 'Bầu trời Đêm' : 'Bầu trời Ngày'"></span>
+                    </button>
+                </div>
+
+                {{-- The Room Living Space (Upper Wall & Fixtures) --}}
+                <div class="relative z-10 grid grid-cols-3 gap-2 sm:gap-3 mb-4">
+                    {{-- 1. Wall Window (Hotspot) --}}
+                    <div @click="interactRoomItem('window')"
+                         role="button"
+                         title="Cửa sổ phòng nhìn ra ngoài trời (bấm để xem phản ứng)"
+                         class="group relative flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl border transition-all cursor-pointer hover:scale-105 active:scale-95 text-center overflow-hidden"
+                         :class="roomTimeMode === 'night'
+                            ? 'bg-slate-800/70 border-indigo-800/60 hover:border-indigo-400'
+                            : 'bg-white/80 border-amber-200 hover:border-amber-400 hover:bg-white'">
+                        <div class="h-10 w-12 sm:h-12 sm:w-16 rounded-xl border flex items-center justify-center relative overflow-hidden transition"
+                             :class="roomTimeMode === 'night' ? 'bg-slate-950 border-indigo-700' : 'bg-sky-100 border-sky-300'">
+                            <span class="text-xl cozy-sky-drift select-none"
+                                  x-text="roomTimeMode === 'night' ? '🌙' : '⛅'"></span>
+                        </div>
+                        <span class="mt-1.5 text-[11px] font-bold group-hover:text-amber-500 transition"
+                              :class="roomTimeMode === 'night' ? 'text-slate-300' : 'text-slate-700'">Cửa sổ</span>
+                        <span class="text-[9px]" :class="roomTimeMode === 'night' ? 'text-slate-400' : 'text-slate-500'"
+                              x-text="roomTimeMode === 'night' ? 'Trăng sao' : 'Trời xanh'"></span>
+                    </div>
+
+                    {{-- 2. Photo Frame of Memories (Hotspot) --}}
+                    <div @click="interactRoomItem('frame')"
+                         role="button"
+                         title="Khung ảnh kỷ niệm (bấm để Pet chia sẻ)"
+                         class="group relative flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl border transition-all cursor-pointer hover:scale-105 active:scale-95 text-center overflow-hidden"
+                         :class="roomTimeMode === 'night'
+                            ? 'bg-slate-800/70 border-indigo-800/60 hover:border-indigo-400'
+                            : 'bg-white/80 border-amber-200 hover:border-amber-400 hover:bg-white'">
+                        <div class="h-10 w-12 sm:h-12 sm:w-16 rounded-xl border-2 flex items-center justify-center shadow-inner relative"
+                             :class="roomTimeMode === 'night' ? 'bg-indigo-950/70 border-amber-600/60' : 'bg-amber-100/60 border-amber-700/60'">
+                            <span class="text-lg select-none">🖼️</span>
+                            <span class="absolute -top-1 -right-1 rounded-full bg-rose-500 text-white text-[9px] px-1 font-bold">
+                                {{ $roomStats['days_together'] }}d
+                            </span>
+                        </div>
+                        <span class="mt-1.5 text-[11px] font-bold group-hover:text-amber-500 transition"
+                              :class="roomTimeMode === 'night' ? 'text-slate-300' : 'text-slate-700'">Khung ảnh</span>
+                        <span class="text-[9px]" :class="roomTimeMode === 'night' ? 'text-slate-400' : 'text-slate-500'">
+                            {{ $roomStats['days_together'] }} ngày quen
+                        </span>
+                    </div>
+
+                    {{-- 3. Warm Lantern / Cozy Lamp (Hotspot) --}}
+                    <div @click="toggleRoomLighting()"
+                         role="button"
+                         title="Đèn phòng ấm cúng (bấm để bật/tắt đèn)"
+                         class="group relative flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl border transition-all cursor-pointer hover:scale-105 active:scale-95 text-center overflow-hidden"
+                         :class="roomTimeMode === 'night'
+                            ? 'bg-slate-800/70 border-indigo-800/60 hover:border-indigo-400'
+                            : 'bg-white/80 border-amber-200 hover:border-amber-400 hover:bg-white'">
+                        <div class="h-10 w-12 sm:h-12 sm:w-16 rounded-xl border flex items-center justify-center relative cozy-lamp-glow"
+                             :class="roomTimeMode === 'night' ? 'bg-amber-950/60 border-amber-500/80' : 'bg-amber-100 border-amber-300'">
+                            <span class="text-xl select-none"
+                                  x-text="roomTimeMode === 'night' ? '🏮' : '💡'"></span>
+                        </div>
+                        <span class="mt-1.5 text-[11px] font-bold group-hover:text-amber-500 transition"
+                              :class="roomTimeMode === 'night' ? 'text-slate-300' : 'text-slate-700'">Đèn phòng</span>
+                        <span class="text-[9px]" :class="roomTimeMode === 'night' ? 'text-amber-400 font-semibold' : 'text-slate-500'"
+                              x-text="roomTimeMode === 'night' ? 'Đang thắp sáng' : 'Ánh ban ngày'"></span>
+                    </div>
+                </div>
+
+                {{-- Center Stage: Cozy Rug & Living Pet Avatar --}}
+                <div class="relative z-10 flex flex-col items-center text-center my-2">
+                    <div class="relative flex flex-col items-center justify-center">
+                        {{-- Cozy Oriental Carpet / Rug under Pet --}}
+                        <div class="absolute -bottom-3 h-28 sm:h-32 w-64 sm:w-80 rounded-[50%] transition-all duration-500 pointer-events-none"
+                             :class="roomTimeMode === 'night'
+                                ? 'bg-gradient-to-r from-indigo-900/40 via-purple-900/50 to-indigo-900/40 border border-indigo-700/40 shadow-lg shadow-indigo-950/50'
+                                : 'bg-gradient-to-r from-amber-200/70 via-orange-200/80 to-amber-200/70 border-2 border-dashed border-amber-400/60 shadow-inner'">
                         </div>
 
-                        {{-- Mood Indicator Badge --}}
-                        <div class="absolute -bottom-1 sm:-bottom-1.5 inset-x-0 flex justify-center z-10">
-                            <span class="rounded-full px-3.5 py-1 text-xs font-black uppercase shadow-md border-2 border-white tracking-wide"
-                                  :class="getMoodBadgeClass()"
-                                  x-text="getMoodText()">
-                            </span>
+                        {{-- Pet Avatar Box --}}
+                        <div class="relative z-10 pb-2">
+                            <div class="flex h-48 w-48 sm:h-56 sm:w-56 items-center justify-center rounded-[2.5rem] shadow-2xl border-4 transition-all duration-300 hover:scale-105 select-none p-3"
+                                 :class="[getPetBorderClass(), roomTimeMode === 'night' ? 'bg-slate-900/90 shadow-indigo-900/40' : 'bg-white shadow-amber-900/10']">
+                                <x-pet-avatar :stage="$userPet->stage" :mood="$userPet->getHungerState()" :personality="$userPet->personality ?? 'playful'" size="xl" :interactive="true" />
+                            </div>
+
+                            {{-- Mood Indicator Badge --}}
+                            <div class="absolute -bottom-1 sm:-bottom-1.5 inset-x-0 flex justify-center z-20">
+                                <span class="rounded-full px-3.5 py-1 text-xs font-black uppercase shadow-md border-2 border-white tracking-wide"
+                                      :class="getMoodBadgeClass()"
+                                      x-text="getMoodText()">
+                                </span>
+                            </div>
                         </div>
                     </div>
 
                     {{-- Pet Stage Details --}}
-                    <div class="mt-6">
-                        <span class="rounded-full bg-amber-100 border border-amber-300 px-3 py-0.5 text-xs font-bold text-amber-900">
-                            Giai đoạn {{ $userPet->stage }}: {{ optional($userPet->pet->stages->where('stage', $userPet->stage)->first())->name ?? 'Trứng' }}
-                        </span>
-                        <h2 class="mt-2 text-2xl font-black text-slate-900">
+                    <div class="mt-4">
+                        <h2 class="text-2xl font-black"
+                            :class="roomTimeMode === 'night' ? 'text-white' : 'text-slate-900'">
                             {{ $userPet->name ?? $userPet->pet->name }}
                         </h2>
                     </div>
@@ -463,67 +633,152 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                     {{-- Personality & Affinity Badges --}}
                     <div class="mt-3 flex flex-wrap items-center justify-center gap-2">
                         <div @click="setTab('affinity')" role="button" title="Nhấn để xem lộ trình mối quan hệ"
-                             class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold shadow-sm border transition hover:scale-105 active:scale-95 cursor-pointer bg-rose-50 text-rose-700 border-rose-200">
+                             class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold shadow-sm border transition hover:scale-105 active:scale-95 cursor-pointer"
+                             :class="roomTimeMode === 'night' ? 'bg-rose-950/60 text-rose-300 border-rose-800' : 'bg-rose-50 text-rose-700 border-rose-200'">
                             <span x-text="affinityTier?.emoji || '🌱'"></span>
                             <span>Mối quan hệ: <strong x-text="affinityTier?.name || 'Bỡ ngỡ'"></strong></span>
-                            <span class="text-rose-500 text-[10px] font-semibold" x-text="'(' + affinity + '/100)'"></span>
+                            <span class="text-rose-400 text-[10px] font-semibold" x-text="'(' + affinity + '/100)'"></span>
                         </div>
 
                         <div @click="setTab('affinity')" role="button" title="Nhấn để thay đổi tính cách Pet"
-                             class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold shadow-sm border transition hover:scale-105 active:scale-95 cursor-pointer bg-amber-50 text-amber-800 border-amber-200">
+                             class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold shadow-sm border transition hover:scale-105 active:scale-95 cursor-pointer"
+                             :class="roomTimeMode === 'night' ? 'bg-indigo-900/60 text-amber-300 border-indigo-700' : 'bg-amber-50 text-amber-800 border-amber-200'">
                             <span x-text="personalityEmoji"></span>
                             <span>Tính cách: <strong x-text="personalityLabel ? personalityLabel.split('&')[0].trim() : 'Tinh nghịch'"></strong></span>
-                            <i data-lucide="sliders-horizontal" class="h-3 w-3 text-amber-600"></i>
+                            <i data-lucide="sliders-horizontal" class="h-3 w-3 text-amber-500"></i>
                         </div>
                     </div>
 
                     {{-- Interactive Speech Bubble --}}
-                    <div class="mt-4 w-full relative rounded-2xl bg-white/95 p-4 shadow-sm border border-amber-200/90 text-sm text-slate-800 backdrop-blur">
+                    <div class="mt-4 w-full relative rounded-2xl p-4 shadow-sm border text-sm backdrop-blur transition-colors duration-500"
+                         :class="roomTimeMode === 'night' ? 'bg-slate-800/95 border-indigo-700/80 text-white' : 'bg-white/95 border-amber-200/90 text-slate-800'">
                         <div class="flex items-start justify-between gap-3">
                             <div class="flex items-start gap-2.5 text-left">
                                 <span class="text-xl">💬</span>
-                                <p class="text-sm font-medium leading-relaxed italic text-slate-800" x-text="currentDialogue">
+                                <p class="text-sm font-medium leading-relaxed italic"
+                                   :class="roomTimeMode === 'night' ? 'text-slate-100' : 'text-slate-800'"
+                                   x-text="currentDialogue">
                                     "{{ $randomDialogue }}"
                                 </p>
                             </div>
                             <button type="button" @click="nextDialogue()" title="Đổi câu nói"
-                                    class="shrink-0 rounded-xl p-2 text-amber-700 hover:bg-amber-100 transition active:scale-95">
+                                    class="shrink-0 rounded-xl p-2 transition active:scale-95"
+                                    :class="roomTimeMode === 'night' ? 'text-amber-400 hover:bg-slate-700' : 'text-amber-700 hover:bg-amber-100'">
                                 <i data-lucide="refresh-cw" class="h-4 w-4"></i>
                             </button>
                         </div>
                     </div>
+                </div>
 
-                    {{-- Hunger Status Bar --}}
-                    <div class="mt-6 w-full space-y-1.5 text-left">
-                        <div class="flex justify-between text-xs font-semibold text-slate-600">
-                            <span>Mức độ no bụng: <strong class="text-slate-900" x-text="hunger"></strong>/100</span>
-                            <span x-text="getHungerNote()"></span>
-                        </div>
-                        <div class="h-3 w-full overflow-hidden rounded-full bg-slate-200">
-                            <div class="h-full rounded-full transition-all duration-500"
-                                 :class="getHungerBarClass()"
-                                 :style="'width: ' + hunger + '%'"></div>
-                        </div>
-                        <p class="text-[11px] text-slate-500 italic">
-                            * Pet tiêu hao khoảng 20 độ no mỗi ngày. Nếu độ no về 0, pet sẽ vào trạng thái ngủ đông và sau 3 ngày sẽ trở về dạng trứng.
-                        </p>
+                {{-- Lower Room Furnishings (Hotspots around Pet) --}}
+                <div class="relative z-10 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mt-4 pt-3 border-t transition-colors duration-500"
+                     :class="roomTimeMode === 'night' ? 'border-white/10' : 'border-amber-200/70'">
+                    {{-- 1. Chinese Bookshelf --}}
+                    <div @click="interactRoomItem('bookshelf')"
+                         role="button"
+                         title="Kệ sách từ vựng đã dạy cho Pet (bấm để xem phản ứng)"
+                         class="group relative flex flex-col items-center justify-center p-2.5 rounded-2xl border transition-all cursor-pointer hover:scale-105 active:scale-95 text-center"
+                         :class="roomTimeMode === 'night'
+                            ? 'bg-slate-800/70 border-indigo-800/60 hover:border-amber-400'
+                            : 'bg-white/80 border-amber-200 hover:border-amber-400 hover:bg-white'">
+                        <div class="text-2xl select-none mb-1">📚</div>
+                        <span class="text-[11px] font-bold group-hover:text-amber-500 transition"
+                              :class="roomTimeMode === 'night' ? 'text-slate-200' : 'text-slate-700'">Kệ sách Hán tự</span>
+                        <span class="text-[10px] font-semibold text-emerald-600">
+                            {{ $roomStats['mastered_words'] }} từ đã học
+                        </span>
                     </div>
 
-                    {{-- EXP Progress Bar --}}
-                    <div class="mt-4 w-full space-y-1.5 text-left">
-                        <div class="flex justify-between text-xs font-semibold text-slate-600">
-                            <span>Tiến hóa EXP: <strong class="text-purple-700">{{ $progress['current_exp'] }}</strong>/{{ $progress['required_exp'] ?? 'Tối đa' }}</span>
-                            @if(!$progress['is_max'])
-                            <span>Cần thêm <strong>{{ $progress['exp_needed'] }}</strong> EXP</span>
-                            @else
-                            <span class="text-emerald-600 font-bold">🐉 Đã đạt cấp tối đa</span>
-                            @endif
+                    {{-- 2. Tea Table with Steam --}}
+                    <div @click="interactRoomItem('teatable')"
+                         role="button"
+                         title="Bàn trà ấm áp (bấm để thưởng trà cùng Pet)"
+                         class="group relative flex flex-col items-center justify-center p-2.5 rounded-2xl border transition-all cursor-pointer hover:scale-105 active:scale-95 text-center"
+                         :class="roomTimeMode === 'night'
+                            ? 'bg-slate-800/70 border-indigo-800/60 hover:border-amber-400'
+                            : 'bg-white/80 border-amber-200 hover:border-amber-400 hover:bg-white'">
+                        <div class="relative flex items-center justify-center text-2xl select-none mb-1">
+                            <span class="cozy-steam absolute -top-2.5 text-xs">♨️</span>
+                            <span>🍵</span>
                         </div>
-                        <div class="h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
-                            <div class="h-full rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-500"
-                                 style="width: {{ $progress['percent'] }}%"></div>
-                        </div>
+                        <span class="text-[11px] font-bold group-hover:text-amber-500 transition"
+                              :class="roomTimeMode === 'night' ? 'text-slate-200' : 'text-slate-700'">Bàn trà Ô Long</span>
+                        <span class="text-[10px]" :class="roomTimeMode === 'night' ? 'text-slate-400' : 'text-slate-500'">Hơi ấm dịu nhẹ</span>
                     </div>
+
+                    {{-- 3. Streak Bonsai Plant --}}
+                    <div @click="interactRoomItem('plant')"
+                         role="button"
+                         title="Chậu mầm cây may mắn theo chuỗi Streak (bấm để xem phản ứng)"
+                         class="group relative flex flex-col items-center justify-center p-2.5 rounded-2xl border transition-all cursor-pointer hover:scale-105 active:scale-95 text-center"
+                         :class="roomTimeMode === 'night'
+                            ? 'bg-slate-800/70 border-indigo-800/60 hover:border-amber-400'
+                            : 'bg-white/80 border-amber-200 hover:border-amber-400 hover:bg-white'">
+                        <div class="text-2xl select-none mb-1">
+                            {{ ($roomStats['streak'] ?? 0) >= 7 ? '🌳' : (($roomStats['streak'] ?? 0) >= 3 ? '🌿' : '🌱') }}
+                        </div>
+                        <span class="text-[11px] font-bold group-hover:text-amber-500 transition"
+                              :class="roomTimeMode === 'night' ? 'text-slate-200' : 'text-slate-700'">Cây may mắn</span>
+                        <span class="text-[10px] font-semibold text-amber-500">
+                            Chuỗi {{ $roomStats['streak'] }} ngày 🔥
+                        </span>
+                    </div>
+
+                    {{-- 4. Food Bowl / Recent Dish --}}
+                    <div @click="interactRoomItem('foodbowl')"
+                         role="button"
+                         title="Đĩa thức ăn gần nhất (bấm để Pet nhắc lại)"
+                         class="group relative flex flex-col items-center justify-center p-2.5 rounded-2xl border transition-all cursor-pointer hover:scale-105 active:scale-95 text-center"
+                         :class="roomTimeMode === 'night'
+                            ? 'bg-slate-800/70 border-indigo-800/60 hover:border-amber-400'
+                            : 'bg-white/80 border-amber-200 hover:border-amber-400 hover:bg-white'">
+                        <div class="text-2xl select-none mb-1">
+                            {{ $roomStats['recent_food']['emoji'] ?? '🥣' }}
+                        </div>
+                        <span class="text-[11px] font-bold group-hover:text-amber-500 transition"
+                              :class="roomTimeMode === 'night' ? 'text-slate-200' : 'text-slate-700'">Khay ẩm thực</span>
+                        <span class="text-[10px] truncate max-w-[80px]" :class="roomTimeMode === 'night' ? 'text-slate-400' : 'text-slate-500'">
+                            {{ $roomStats['recent_food']['hanzi'] ?? 'Chưa ăn gì' }}
+                        </span>
+                    </div>
+                </div>
+
+                {{-- Hunger Status Bar --}}
+                <div class="relative z-10 mt-6 w-full space-y-1.5 text-left">
+                    <div class="flex justify-between text-xs font-semibold"
+                         :class="roomTimeMode === 'night' ? 'text-slate-300' : 'text-slate-600'">
+                        <span>Mức độ no bụng: <strong :class="roomTimeMode === 'night' ? 'text-white' : 'text-slate-900'" x-text="hunger"></strong>/100</span>
+                        <span x-text="getHungerNote()"></span>
+                    </div>
+                    <div class="h-3 w-full overflow-hidden rounded-full"
+                         :class="roomTimeMode === 'night' ? 'bg-slate-800' : 'bg-slate-200'">
+                        <div class="h-full rounded-full transition-all duration-500"
+                             :class="getHungerBarClass()"
+                             :style="'width: ' + hunger + '%'"></div>
+                    </div>
+                    <p class="text-[11px] italic"
+                       :class="roomTimeMode === 'night' ? 'text-slate-400' : 'text-slate-500'">
+                        * Pet tiêu hao khoảng 20 độ no mỗi ngày. Nếu độ no về 0, pet sẽ vào trạng thái ngủ đông và sau 3 ngày sẽ trở về dạng trứng.
+                    </p>
+                </div>
+
+                {{-- EXP Progress Bar --}}
+                <div class="relative z-10 mt-4 w-full space-y-1.5 text-left">
+                    <div class="flex justify-between text-xs font-semibold"
+                         :class="roomTimeMode === 'night' ? 'text-slate-300' : 'text-slate-600'">
+                        <span>Tiến hóa EXP: <strong class="text-purple-400">{{ $progress['current_exp'] }}</strong>/{{ $progress['required_exp'] ?? 'Tối đa' }}</span>
+                        @if(!$progress['is_max'])
+                        <span>Cần thêm <strong>{{ $progress['exp_needed'] }}</strong> EXP</span>
+                        @else
+                        <span class="text-emerald-400 font-bold">🐉 Đã đạt cấp tối đa</span>
+                        @endif
+                    </div>
+                    <div class="h-2.5 w-full overflow-hidden rounded-full"
+                         :class="roomTimeMode === 'night' ? 'bg-slate-800' : 'bg-slate-200'">
+                        <div class="h-full rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-500"
+                             style="width: {{ $progress['percent'] }}%"></div>
+                    </div>
+                </div>
 
                     {{-- Pet Learning DNA section --}}
                     @if(count($dna) > 0)
@@ -945,67 +1200,197 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
         </div>
     </div>
 
-    {{-- TAB 4: KÝ ỨC & CỘT MỐC (MEMORIES) --}}
+    {{-- TAB 4: SỔ KỶ NIỆM SỐNG ĐỘNG & CỘT MỐC TRI KỶ (SCRAPBOOK TIMELINE) --}}
     <div x-show="activeTab === 'memories'" class="space-y-6">
-        <div class="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-xl shadow-slate-900/5 space-y-6">
-            <div>
-                <h3 class="text-xl font-black text-slate-900">Ký ức & Cột mốc trưởng thành</h3>
-                <p class="text-sm text-slate-500 mt-1">
-                    Nhật ký ghi lại từng bước phát triển của Pet trong suốt hành trình học tập cùng bạn.
-                </p>
-            </div>
+        {{-- Scrapbook Milestone Header Card --}}
+        <div class="rounded-3xl border border-amber-200/90 bg-gradient-to-br from-amber-50/80 via-white to-orange-50/50 p-6 sm:p-8 shadow-xl shadow-amber-950/5">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div class="space-y-2">
+                    <div class="inline-flex items-center gap-1.5 rounded-full bg-amber-100 border border-amber-300 px-3 py-0.5 text-xs font-bold text-amber-900">
+                        <i data-lucide="book-heart" class="h-3.5 w-3.5 text-amber-700"></i>
+                        <span>Cuốn sổ Kỷ niệm của Pet & Bạn</span>
+                    </div>
+                    <h3 class="text-2xl font-black text-slate-900">
+                        Ký ức & Dấu mốc Đồng hành
+                    </h3>
+                    <p class="text-sm text-slate-600 max-w-2xl leading-relaxed">
+                        Mỗi bước tiến bộ học tập, từng bữa ăn ngon và những cột mốc kiên trì của bạn đều được Pet trân trọng khắc ghi thành những trang nhật ký sống động.
+                    </p>
+                </div>
 
-            @if($memories->count() > 0)
-            <div class="relative pl-6 sm:pl-8 space-y-6 before:absolute before:left-2.5 sm:before:left-3.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-slate-200">
-                @foreach($memories as $memory)
-                <div class="relative flex items-start gap-4">
-                    {{-- Dot on timeline --}}
-                    <div class="absolute -left-6 sm:-left-8 top-1 grid h-5 w-5 sm:h-7 sm:w-7 place-items-center rounded-full bg-amber-500 text-white shadow-sm ring-4 ring-white text-[10px] sm:text-xs font-bold">
-                        @if($memory->type === 'hatched') 🥚
-                        @elseif($memory->type === 'stage_reached') 🎉
-                        @elseif($memory->type === 'first_mastered') 🏆
-                        @elseif($memory->type === 'first_word') 📖
-                        @elseif($memory->type === 'streak_milestone') 🔥
-                        @elseif($memory->type === 'daily_goal') 🎯
-                        @elseif($memory->type === 'absence_return') 🐲
-                        @elseif($memory->type === 'affinity_tier_up') 💖
-                        @elseif($memory->type === 'personality_changed') 🎭
-                        @elseif($memory->type === 'renamed') ✏️
-                        @else 🌟
-                        @endif
+                {{-- 3 Milestone Summary Badges --}}
+                <div class="grid grid-cols-3 gap-2 sm:gap-3 shrink-0">
+                    <div class="rounded-2xl border border-amber-200 bg-white/90 p-3 text-center shadow-sm">
+                        <span class="text-xl">🌱</span>
+                        <p class="text-[10px] font-bold uppercase text-slate-400 mt-1">Gặp nhau</p>
+                        <p class="text-sm font-black text-slate-800">
+                            {{ ($roomStats['days_together'] ?? 0) > 0 ? $roomStats['days_together'] . ' ngày' : 'Hôm nay' }}
+                        </p>
                     </div>
 
-                    <div class="flex-1 rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 transition hover:bg-white hover:shadow-sm">
-                        <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
-                            <span class="font-bold text-amber-800 uppercase tracking-wider text-[10px]">
-                                @if($memory->type === 'stage_reached') Tiến hóa
-                                @elseif($memory->type === 'hatched') Khai sinh
-                                @elseif($memory->type === 'first_mastered') Từ đầu tiên
-                                @elseif($memory->type === 'first_word') Học chữ
-                                @elseif($memory->type === 'streak_milestone') Chuỗi ngày
-                                @elseif($memory->type === 'daily_goal') Mục tiêu ngày
-                                @elseif($memory->type === 'absence_return') Chào mừng về
-                                @elseif($memory->type === 'affinity_tier_up') Mối quan hệ
-                                @elseif($memory->type === 'personality_changed') Đổi tính cách
-                                @elseif($memory->type === 'renamed') Đổi tên
-                                @else Cột mốc
-                                @endif
-                            </span>
-                            <span class="tabular-nums">{{ $memory->created_at->format('H:i • d/m/Y') }}</span>
-                        </div>
-                        <h4 class="text-sm font-bold text-slate-900">{{ $memory->title }}</h4>
-                        @if($memory->description)
-                        <p class="text-xs text-slate-600 mt-1 leading-relaxed">{{ $memory->description }}</p>
-                        @endif
+                    <div class="rounded-2xl border border-amber-200 bg-white/90 p-3 text-center shadow-sm">
+                        <span class="text-xl">📸</span>
+                        <p class="text-[10px] font-bold uppercase text-slate-400 mt-1">Kỷ niệm</p>
+                        <p class="text-sm font-black text-amber-700" x-text="timelineMemories.length + ' mốc'"></p>
+                    </div>
+
+                    <div class="rounded-2xl border border-rose-200 bg-rose-50/70 p-3 text-center shadow-sm">
+                        <span class="text-xl" x-text="affinityTier?.emoji || '❤️'"></span>
+                        <p class="text-[10px] font-bold uppercase text-rose-400 mt-1">Gắn kết</p>
+                        <p class="text-xs font-black text-rose-700 truncate" x-text="affinityTier?.name || 'Bỡ ngỡ'"></p>
                     </div>
                 </div>
-                @endforeach
             </div>
-            @else
-            <div class="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-xs text-slate-400">
-                Chưa có ký ức nào được ghi nhận. Hãy cho Pet ăn để bắt đầu tạo nên những kỷ niệm đẹp!
+        </div>
+
+        {{-- Main Scrapbook Container --}}
+        <div class="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-xl shadow-slate-900/5 space-y-6">
+            {{-- Category Filter Chips --}}
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                    <button type="button"
+                            @click="selectedMemoryFilter = 'all'; setTimeout(() => window.refreshIcons?.(), 50)"
+                            :class="selectedMemoryFilter === 'all'
+                                ? 'bg-[#991b1b] text-white shadow-sm'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                            class="rounded-xl px-3.5 py-1.5 text-xs font-bold transition">
+                        Tất cả (<span x-text="timelineMemories.length"></span>)
+                    </button>
+
+                    <button type="button"
+                            @click="selectedMemoryFilter = 'growth'; setTimeout(() => window.refreshIcons?.(), 50)"
+                            :class="selectedMemoryFilter === 'growth'
+                                ? 'bg-emerald-600 text-white shadow-sm'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                            class="rounded-xl px-3.5 py-1.5 text-xs font-bold transition flex items-center gap-1">
+                        <span>🌱</span>
+                        <span>Trưởng thành</span>
+                    </button>
+
+                    <button type="button"
+                            @click="selectedMemoryFilter = 'learning'; setTimeout(() => window.refreshIcons?.(), 50)"
+                            :class="selectedMemoryFilter === 'learning'
+                                ? 'bg-blue-600 text-white shadow-sm'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                            class="rounded-xl px-3.5 py-1.5 text-xs font-bold transition flex items-center gap-1">
+                        <span>📚</span>
+                        <span>Học tập</span>
+                    </button>
+
+                    <button type="button"
+                            @click="selectedMemoryFilter = 'care'; setTimeout(() => window.refreshIcons?.(), 50)"
+                            :class="selectedMemoryFilter === 'care'
+                                ? 'bg-rose-600 text-white shadow-sm'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                            class="rounded-xl px-3.5 py-1.5 text-xs font-bold transition flex items-center gap-1">
+                        <span>❤️</span>
+                        <span>Chăm sóc</span>
+                    </button>
+
+                    <button type="button"
+                            @click="selectedMemoryFilter = 'special'; setTimeout(() => window.refreshIcons?.(), 50)"
+                            :class="selectedMemoryFilter === 'special'
+                                ? 'bg-purple-600 text-white shadow-sm'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                            class="rounded-xl px-3.5 py-1.5 text-xs font-bold transition flex items-center gap-1">
+                        <span>🌟</span>
+                        <span>Đặc biệt</span>
+                    </button>
+                </div>
+
+                <div class="text-xs text-slate-400 font-medium">
+                    Đang hiển thị <strong class="text-slate-700" x-text="filteredTimelineMemories().length"></strong> mốc kỷ niệm
+                </div>
             </div>
-            @endif
+
+            {{-- Timeline / Scrapbook Grid --}}
+            <template x-if="filteredTimelineMemories().length > 0">
+                <div class="space-y-4">
+                    <template x-for="memory in filteredTimelineMemories()" :key="memory.id">
+                        <div class="group relative rounded-2xl border border-slate-200/80 bg-slate-50/60 p-5 transition-all hover:bg-white hover:border-amber-300 hover:shadow-md space-y-3">
+                            {{-- Top Header Row: Category Badge, Days Ago & Timestamp --}}
+                            <div class="flex items-center justify-between flex-wrap gap-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="grid h-8 w-8 place-items-center rounded-xl bg-white shadow-xs border text-base select-none"
+                                          :class="memory.category === 'growth' ? 'border-emerald-200 bg-emerald-50/50' : (memory.category === 'learning' ? 'border-blue-200 bg-blue-50/50' : (memory.category === 'care' ? 'border-rose-200 bg-rose-50/50' : 'border-amber-200 bg-amber-50/50'))"
+                                          x-text="memory.badge_emoji || '🌟'"></span>
+                                    <div>
+                                        <span class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border"
+                                              :class="memory.category === 'growth' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : (memory.category === 'learning' ? 'bg-blue-50 text-blue-800 border-blue-200' : (memory.category === 'care' ? 'bg-rose-50 text-rose-800 border-rose-200' : 'bg-purple-50 text-purple-800 border-purple-200'))"
+                                              x-text="memory.category === 'growth' ? 'Tiến hóa' : (memory.category === 'learning' ? 'Học tập' : (memory.category === 'care' ? 'Chăm sóc' : 'Cột mốc'))"></span>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center gap-2 text-xs">
+                                    <span class="rounded-full bg-slate-200/80 text-slate-700 px-2.5 py-0.5 text-[10px] font-bold"
+                                          x-text="memory.days_ago_badge || 'Gần đây'"></span>
+                                    <span class="text-slate-400 tabular-nums text-[11px]" x-text="memory.formatted_date"></span>
+                                </div>
+                            </div>
+
+                            {{-- Memory Title & Description --}}
+                            <div>
+                                <h4 class="text-base font-black text-slate-900 group-hover:text-amber-800 transition" x-text="memory.title"></h4>
+                                <p class="text-xs text-slate-600 mt-1 leading-relaxed" x-text="memory.description"></p>
+                            </div>
+
+                            {{-- Pet Reflection Speech Bubble (Touching companion dialogue) --}}
+                            <template x-if="memory.pet_reflection">
+                                <div class="rounded-2xl bg-amber-50/80 border border-amber-200/70 p-3.5 flex items-start gap-3">
+                                    <span class="text-xl select-none shrink-0 mt-0.5">🐉</span>
+                                    <div class="space-y-0.5">
+                                        <p class="text-[10px] font-bold uppercase tracking-wider text-amber-800">
+                                            Pet thỏ thẻ nhớ lại:
+                                        </p>
+                                        <p class="text-xs italic text-amber-950 font-medium leading-relaxed"
+                                           x-text="'“' + memory.pet_reflection + '”'"></p>
+                                    </div>
+                                </div>
+                            </template>
+
+                            {{-- Related Word Audio Button (If milestone is connected to Chinese word) --}}
+                            <template x-if="memory.metadata && memory.metadata.related_word">
+                                <div class="flex items-center justify-between pt-2 border-t border-slate-200/60 text-xs">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-slate-500 text-[11px]">Chữ Hán ghi dấu:</span>
+                                        <span class="font-bold text-slate-900 text-sm" x-text="memory.metadata.related_word"></span>
+                                        <template x-if="memory.metadata.pinyin">
+                                            <span class="text-amber-600 text-[11px] font-semibold" x-text="'(' + memory.metadata.pinyin + ')'"></span>
+                                        </template>
+                                    </div>
+
+                                    <button type="button"
+                                            @click="speakWord(memory.metadata.related_word)"
+                                            title="Nghe Pet phát âm lại chữ này"
+                                            class="inline-flex items-center gap-1 rounded-xl bg-white border border-slate-200 px-2.5 py-1 text-[11px] font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-800 hover:border-amber-300 transition active:scale-95 shadow-2xs">
+                                        <i data-lucide="volume-2" class="h-3.5 w-3.5 text-amber-600"></i>
+                                        <span>Phát âm lại</span>
+                                    </button>
+                                </div>
+                            </template>
+
+                            {{-- Related Food Item (If milestone is first feeding) --}}
+                            <template x-if="memory.metadata && memory.metadata.food_item">
+                                <div class="flex items-center gap-2 pt-2 border-t border-slate-200/60 text-xs text-slate-600">
+                                    <span class="text-slate-500 text-[11px]">Món ăn đầu tiên:</span>
+                                    <span class="font-bold text-slate-900" x-text="(memory.metadata.food_emoji || '🍎') + ' ' + memory.metadata.food_item"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            {{-- Empty State --}}
+            <template x-if="filteredTimelineMemories().length === 0">
+                <div class="rounded-2xl border border-dashed border-slate-200 p-10 text-center space-y-3">
+                    <span class="text-4xl">📖</span>
+                    <h4 class="text-base font-bold text-slate-800">Chưa có kỷ niệm nào trong mục này</h4>
+                    <p class="text-xs text-slate-500 max-w-md mx-auto">
+                        Hãy tiếp tục học bài, cho Pet ăn và cùng nhau ôn tập từ vựng để tạo nên thêm thật nhiều cột mốc ý nghĩa nhé!
+                    </p>
+                </div>
+            </template>
         </div>
     </div>
 
