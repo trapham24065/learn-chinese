@@ -3,13 +3,35 @@
          'pet-anim-bounce': state === 'happy',
          'pet-anim-wiggle': state === 'speaking',
          'pet-anim-glow': state === 'evolving',
+         'pet-anim-poked': state === 'poked',
+         'pet-anim-petting': state === 'petting',
+         'pet-anim-observing': state === 'observing',
+         'pet-anim-reading': state === 'reading',
+         'pet-anim-dozing': state === 'dozing',
+         'pet-anim-waking': state === 'waking_up',
+         'pet-anim-waving': state === 'waving',
          'animate-[bounce_0.6s_ease-in-out_infinite]': state === 'excited'
      }">
 
-    {{-- Floating hearts / particles effect when happy or excited --}}
-    <div x-show="showHearts" x-cloak class="absolute -top-3 left-1/2 -translate-x-1/2 pointer-events-none z-20 flex gap-1">
+    {{-- Floating hearts / particles effect when happy or excited or petting --}}
+    <div x-show="showHearts || state === 'petting'" x-cloak class="absolute -top-3 left-1/2 -translate-x-1/2 pointer-events-none z-20 flex gap-1">
         <span class="pet-heart-particle text-rose-500 font-bold text-base inline-block">❤️</span>
         <span class="pet-heart-particle text-amber-400 font-bold text-xs inline-block" style="animation-delay: 0.2s;">✨</span>
+    </div>
+
+    {{-- Reading partner accessory (studying quietly beside user) --}}
+    <div x-show="state === 'reading'" x-cloak class="absolute -top-2.5 -right-1 pointer-events-none z-20">
+        <span class="text-xs inline-block select-none filter drop-shadow">📖</span>
+    </div>
+
+    {{-- Dozing / sleepy thought particle --}}
+    <div x-show="state === 'dozing'" x-cloak class="absolute -top-2.5 -right-1 pointer-events-none z-20">
+        <span class="text-xs inline-block select-none opacity-80 animate-pulse">💤</span>
+    </div>
+
+    {{-- Poked startled blush --}}
+    <div x-show="state === 'poked'" x-cloak class="absolute -top-3 left-1/2 -translate-x-1/2 pointer-events-none z-20">
+        <span class="text-xs font-black text-amber-600 inline-block animate-bounce">😳</span>
     </div>
 
     {{-- Sleeping ZZZ particles --}}
@@ -62,8 +84,8 @@
         </template>
     </div>
 
-    {{-- Main SVG Container with Personality-specific Idle Animations --}}
-    <div class="w-16 h-16 sm:w-20 sm:h-20 transition-all duration-300 transform relative"
+    {{-- Main SVG Container with Personality-specific Idle Animations & Head Tilt --}}
+    <div class="w-16 h-16 sm:w-20 sm:h-20 transition-all duration-300 transform relative pet-head-tilt"
          :class="{
              'animate-[eggWobble_4s_ease-in-out_infinite]': pet && pet.stage === 0 && state === 'idle',
              'pet-anim-idle-playful': pet && pet.stage > 0 && (state === 'idle' || state === 'speaking') && (!pet.personality || pet.personality === 'playful'),
@@ -120,12 +142,13 @@
             <path d="M 118,55 Q 125,35 112,38 Z" fill="#ef4444" stroke="#b91c1c" stroke-width="2"/>
             <circle cx="90" cy="85" r="48" fill="#f59e0b" stroke="#b45309" stroke-width="3.5"/>
             
-            {{-- Má hồng (Thích ứng theo tính cách: shy thì má hồng đậm hơn) --}}
-            <circle cx="62" cy="98" :r="pet && pet.personality === 'shy' ? 10 : 8" :fill="pet && pet.personality === 'shy' ? '#fb7185' : '#f87171'" :opacity="pet && pet.personality === 'shy' ? '0.95' : (state === 'happy' || state === 'excited' ? '0.9' : '0.5')"/>
-            <circle cx="118" cy="98" :r="pet && pet.personality === 'shy' ? 10 : 8" :fill="pet && pet.personality === 'shy' ? '#fb7185' : '#f87171'" :opacity="pet && pet.personality === 'shy' ? '0.95' : (state === 'happy' || state === 'excited' ? '0.9' : '0.5')"/>
+            {{-- Má hồng (Thích ứng theo state & tính cách) --}}
+            <circle cx="62" cy="98" :r="state === 'poked' || state === 'petting' || (pet && pet.personality === 'shy') ? 10 : 8" :fill="state === 'poked' || state === 'petting' || (pet && pet.personality === 'shy') ? '#fb7185' : '#f87171'" :opacity="state === 'poked' || state === 'petting' || (pet && pet.personality === 'shy') ? '0.98' : (state === 'happy' || state === 'excited' ? '0.9' : '0.5')"/>
+            <circle cx="118" cy="98" :r="state === 'poked' || state === 'petting' || (pet && pet.personality === 'shy') ? 10 : 8" :fill="state === 'poked' || state === 'petting' || (pet && pet.personality === 'shy') ? '#fb7185' : '#f87171'" :opacity="state === 'poked' || state === 'petting' || (pet && pet.personality === 'shy') ? '0.98' : (state === 'happy' || state === 'excited' ? '0.9' : '0.5')"/>
 
-            {{-- Happy: mắt cười tít trăng khuyết --}}
-            <g x-show="state === 'happy' || state === 'excited'">
+            {{-- Đôi mắt linh hoạt theo State --}}
+            {{-- Happy / Excited / Petting: mắt cười tít trăng khuyết --}}
+            <g x-show="state === 'happy' || state === 'excited' || state === 'petting'">
                 <path d="M 64,80 Q 72,72 80,80" fill="none" stroke="#78350f" stroke-width="3.5" stroke-linecap="round"/>
                 <path d="M 100,80 Q 108,72 116,80" fill="none" stroke="#78350f" stroke-width="3.5" stroke-linecap="round"/>
             </g>
@@ -133,6 +156,18 @@
             <g x-show="state === 'sleeping'">
                 <path d="M 64,82 L 80,82" stroke="#78350f" stroke-width="3.5" stroke-linecap="round"/>
                 <path d="M 100,82 L 116,82" stroke="#78350f" stroke-width="3.5" stroke-linecap="round"/>
+            </g>
+            {{-- Dozing: mắt lim dim nửa nhắm --}}
+            <g x-show="state === 'dozing'">
+                <path d="M 64,81 Q 72,85 80,81" fill="none" stroke="#78350f" stroke-width="3" stroke-linecap="round"/>
+                <path d="M 100,81 Q 108,85 116,81" fill="none" stroke="#78350f" stroke-width="3" stroke-linecap="round"/>
+            </g>
+            {{-- Poked: mắt tròn xoe ngơ ngác giật mình --}}
+            <g x-show="state === 'poked'">
+                <circle cx="72" cy="80" r="10.5" fill="#262626"/>
+                <circle cx="108" cy="80" r="10.5" fill="#262626"/>
+                <circle cx="70" cy="77" r="4.5" fill="#ffffff"/>
+                <circle cx="106" cy="77" r="4.5" fill="#ffffff"/>
             </g>
             {{-- Hungry: mắt buồn long lanh --}}
             <g x-show="state === 'hungry'">
@@ -143,12 +178,14 @@
                 <circle cx="75" cy="84" r="2" fill="#93c5fd"/>
                 <circle cx="111" cy="84" r="2" fill="#93c5fd"/>
             </g>
-            {{-- Idle & Speaking: mắt to tròn sáng --}}
-            <g x-show="state !== 'happy' && state !== 'excited' && state !== 'sleeping' && state !== 'hungry'">
+            {{-- Idle, Observing, Reading, Curious, Waking: mắt to tròn với pupil tracker --}}
+            <g x-show="state !== 'happy' && state !== 'excited' && state !== 'petting' && state !== 'sleeping' && state !== 'dozing' && state !== 'poked' && state !== 'hungry'">
                 <circle cx="72" cy="80" r="8.5" fill="#262626"/>
                 <circle cx="108" cy="80" r="8.5" fill="#262626"/>
-                <circle cx="70" cy="78" r="3" fill="#ffffff"/>
-                <circle cx="106" cy="78" r="3" fill="#ffffff"/>
+                <g class="pet-pupil-tracker">
+                    <circle cx="70" cy="78" r="3" fill="#ffffff"/>
+                    <circle cx="106" cy="78" r="3" fill="#ffffff"/>
+                </g>
             </g>
 
             {{-- Mũi & Miệng --}}
@@ -213,7 +250,7 @@
             <circle cx="72" cy="98" r="8" fill="#f87171" :opacity="state === 'happy' || state === 'excited' ? '0.9' : '0.5'"/>
             <circle cx="128" cy="98" r="8" fill="#f87171" :opacity="state === 'happy' || state === 'excited' ? '0.9' : '0.5'"/>
             
-            <g x-show="state === 'happy' || state === 'excited'">
+            <g x-show="state === 'happy' || state === 'excited' || state === 'petting'">
                 <path d="M 74,80 Q 82,72 90,80" fill="none" stroke="#78350f" stroke-width="3.5" stroke-linecap="round"/>
                 <path d="M 110,80 Q 118,72 126,80" fill="none" stroke="#78350f" stroke-width="3.5" stroke-linecap="round"/>
             </g>
@@ -221,11 +258,23 @@
                 <path d="M 74,82 L 90,82" stroke="#78350f" stroke-width="3.5" stroke-linecap="round"/>
                 <path d="M 110,82 L 126,82" stroke="#78350f" stroke-width="3.5" stroke-linecap="round"/>
             </g>
-            <g x-show="state !== 'happy' && state !== 'excited' && state !== 'sleeping'">
+            <g x-show="state === 'dozing'">
+                <path d="M 74,81 Q 82,85 90,81" fill="none" stroke="#78350f" stroke-width="3" stroke-linecap="round"/>
+                <path d="M 110,81 Q 118,85 126,81" fill="none" stroke="#78350f" stroke-width="3" stroke-linecap="round"/>
+            </g>
+            <g x-show="state === 'poked'">
+                <circle cx="82" cy="82" r="10.5" fill="#262626"/>
+                <circle cx="118" cy="82" r="10.5" fill="#262626"/>
+                <circle cx="79" cy="79" r="4.5" fill="#ffffff"/>
+                <circle cx="115" cy="79" r="4.5" fill="#ffffff"/>
+            </g>
+            <g x-show="state !== 'happy' && state !== 'excited' && state !== 'petting' && state !== 'sleeping' && state !== 'dozing' && state !== 'poked'">
                 <circle cx="82" cy="82" r="8.5" fill="#262626"/>
                 <circle cx="118" cy="82" r="8.5" fill="#262626"/>
-                <circle cx="79.5" cy="79.5" r="3.2" fill="#ffffff"/>
-                <circle cx="115.5" cy="79.5" r="3.2" fill="#ffffff"/>
+                <g class="pet-pupil-tracker">
+                    <circle cx="79.5" cy="79.5" r="3.2" fill="#ffffff"/>
+                    <circle cx="115.5" cy="79.5" r="3.2" fill="#ffffff"/>
+                </g>
             </g>
 
             <ellipse cx="100" cy="98" rx="16" ry="10" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
@@ -289,8 +338,10 @@
             <circle cx="110" cy="88" r="42" fill="#ea580c" stroke="#9a3412" stroke-width="3.5"/>
             <circle cx="92" cy="86" r="8" fill="#262626"/>
             <circle cx="128" cy="86" r="8" fill="#262626"/>
-            <circle cx="90" cy="84" r="3" fill="#ffffff"/>
-            <circle cx="126" cy="84" r="3" fill="#ffffff"/>
+            <g class="pet-pupil-tracker">
+                <circle cx="90" cy="84" r="3" fill="#ffffff"/>
+                <circle cx="126" cy="84" r="3" fill="#ffffff"/>
+            </g>
             <ellipse cx="110" cy="100" rx="17" ry="11" fill="#fef3c7" stroke="#c2410c" stroke-width="1.5"/>
         </svg>
 
@@ -317,8 +368,10 @@
             <path d="M 75,70 Q 120,40 165,70 Q 175,115 120,120 Q 65,115 75,70 Z" fill="#dc2626" stroke="#991b1b" stroke-width="4"/>
             <circle cx="98" cy="88" r="7" fill="#262626"/>
             <circle cx="142" cy="88" r="7" fill="#262626"/>
-            <circle cx="96" cy="86" r="2.5" fill="#ffffff"/>
-            <circle cx="140" cy="86" r="2.5" fill="#ffffff"/>
+            <g class="pet-pupil-tracker">
+                <circle cx="96" cy="86" r="2.5" fill="#ffffff"/>
+                <circle cx="140" cy="86" r="2.5" fill="#ffffff"/>
+            </g>
         </svg>
 
         {{-- Stage 5: Thần Long Hoàng Kim --}}
@@ -336,8 +389,10 @@
             <path class="anim-whisker-right" d="M 155,108 Q 195,120 220,105 Q 235,120 210,135" fill="none" stroke="#fef08a" stroke-width="3" stroke-linecap="round"/>
             <circle cx="112" cy="92" r="7" fill="#262626"/>
             <circle cx="148" cy="92" r="7" fill="#262626"/>
-            <circle cx="110" cy="90" r="2.5" fill="#ffffff"/>
-            <circle cx="146" cy="90" r="2.5" fill="#ffffff"/>
+            <g class="pet-pupil-tracker">
+                <circle cx="110" cy="90" r="2.5" fill="#ffffff"/>
+                <circle cx="146" cy="90" r="2.5" fill="#ffffff"/>
+            </g>
             <circle cx="130" cy="165" r="16" fill="#38bdf8" stroke="#e0f2fe" stroke-width="3"/>
         </svg>
     </div>

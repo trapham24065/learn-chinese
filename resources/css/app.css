@@ -226,6 +226,60 @@
     animation: petIdleCalm 4.8s ease-in-out infinite;
 }
 
+/* Organic Behavioral FSM Animations */
+@keyframes petObserving {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-2px) scale(1.01); }
+}
+@keyframes petReading {
+    0%, 100% { transform: translateY(1px) rotate(-2deg); }
+    50% { transform: translateY(3px) rotate(-1deg); }
+}
+@keyframes petPoked {
+    0% { transform: scale(1) translateY(0); }
+    25% { transform: scale(0.88) translateY(5px) rotate(-5deg); }
+    60% { transform: scale(1.06) translateY(-3px) rotate(2deg); }
+    100% { transform: scale(1) translateY(0); }
+}
+@keyframes petPetting {
+    0%, 100% { transform: translateY(-1px) rotate(2.5deg) scale(1.03); }
+    50% { transform: translateY(1.5px) rotate(-2deg) scale(0.99); }
+}
+@keyframes petDozing {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    55% { transform: translateY(6px) rotate(4deg) scale(0.96, 0.94); }
+    72% { transform: translateY(1px) rotate(-1deg); }
+}
+@keyframes petWaking {
+    0% { transform: scale(0.94) translateY(4px); }
+    40% { transform: scale(1.08, 0.95) translateY(-5px); }
+    70% { transform: scale(0.98, 1.02) translateY(0); }
+    100% { transform: scale(1) translateY(0); }
+}
+@keyframes petWaving {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(9deg) translateY(-2px); }
+    75% { transform: rotate(-7deg) translateY(-1px); }
+}
+
+.pet-anim-observing { animation: petObserving 3s ease-in-out infinite; }
+.pet-anim-reading { animation: petReading 3.6s ease-in-out infinite; }
+.pet-anim-poked { animation: petPoked 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.pet-anim-petting { animation: petPetting 1.4s ease-in-out infinite; }
+.pet-anim-dozing { animation: petDozing 4.2s ease-in-out infinite; }
+.pet-anim-waking { animation: petWaking 1.8s ease-out forwards; }
+.pet-anim-waving { animation: petWaving 0.9s ease-in-out 3; }
+
+/* Tactile Eye & Head Perception */
+.pet-pupil-tracker {
+    transform: translate(calc(var(--pet-look-x, 0) * 3.5px), calc(var(--pet-look-y, 0) * 2.8px));
+    transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.pet-head-tilt {
+    transform: rotate(calc(var(--pet-look-x, 0) * 3.5deg));
+    transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
 .aura-playful-particle {
     animation: auraDriftTwinkle 2s ease-in-out infinite;
 }

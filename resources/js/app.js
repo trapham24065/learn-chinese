@@ -7,6 +7,7 @@ import './tone-pinyin';
 import { PetEventBus } from './pet/PetEventBus';
 import { PetAudioEngine } from './pet/PetAudioEngine';
 import { PetVoiceManager } from './pet/PetVoiceManager';
+import { PetLifeEngine } from './pet/PetLifeEngine';
 import { petFloatingCompanion } from './pet/pet-companion';
 
 window.Alpine = Alpine;
@@ -14,6 +15,7 @@ window.HanziWriter = HanziWriter;
 window.PetEventBus = PetEventBus;
 window.PetAudioEngine = PetAudioEngine;
 window.PetVoiceManager = PetVoiceManager;
+window.PetLifeEngine = PetLifeEngine;
 window.petFloatingCompanion = petFloatingCompanion;
 
 Alpine.data('petFloatingCompanion', (cfg) => petFloatingCompanion(cfg));

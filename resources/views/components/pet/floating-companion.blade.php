@@ -1,8 +1,19 @@
 @auth
 @if(!request()->routeIs('pet.*'))
+@php
+    $pageContext = match(true) {
+        request()->routeIs('dashboard') => 'dashboard',
+        request()->routeIs('flashcards.*') => 'flashcard',
+        request()->routeIs('quiz.*') || request()->routeIs('hsk.mock-exam.*') => 'quiz',
+        request()->routeIs('lessons.*') || request()->routeIs('hsk.show') => 'lesson',
+        request()->routeIs('pet.*') => 'pet_room',
+        default => 'other',
+    };
+@endphp
 <div x-data="petFloatingCompanion({
     statusUrl: '{{ route('pet.status') }}',
-    feedUrl: '{{ route('pet.feed') }}'
+    feedUrl: '{{ route('pet.feed') }}',
+    pageContext: '{{ $pageContext }}'
 })" x-init="initCompanion()" x-cloak
      class="fixed bottom-6 right-4 sm:bottom-6 sm:right-6 z-40 select-none">
 
@@ -24,7 +35,7 @@
     {{-- B. Full Living Mascot Container --}}
     <div x-show="!isMinimized && pet && pet.has_pet" class="relative group">
 
-        {{-- 1. Subtle Hover Hint ("Psst... 👀") --}}
+        {{-- 1. Subtle Hover Hint --}}
         <div x-show="hoverHint && !speechBubbleOpen"
              x-transition:enter="transition ease-out duration-200"
              x-transition:enter-start="opacity-0 translate-y-1 scale-90"
@@ -40,14 +51,23 @@
         <x-pet.speech-bubble />
 
         {{-- 3. Living Pet Mascot Model --}}
-        <div class="relative cursor-pointer"
+        <div x-ref="petWrapper"
+             class="relative cursor-pointer transition-transform duration-150 active:scale-95"
              @mouseenter="onHoverPet()"
              @mouseleave="hoverHint = false"
              @click="pokePet()"
-             title="Chạm để nói chuyện cùng Pet!">
+             @dblclick="toggleSpeechBubble()"
+             title="Chạm nhẹ để tương tác cùng Pet (Nhấp đúp để trò chuyện)">
 
             {{-- Living SVG Avatar --}}
             <x-pet.pet-avatar />
+
+            {{-- Thought / Speech Toggle Button on Hover --}}
+            <button type="button" @click.stop="toggleSpeechBubble()"
+                    title="Trò chuyện cùng Pet"
+                    class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute -top-1 -left-1 grid h-5 w-5 place-items-center rounded-full bg-amber-500/90 text-white hover:bg-amber-600 text-[10px] shadow-sm z-30">
+                <i data-lucide="message-circle" class="h-3 w-3"></i>
+            </button>
 
             {{-- Minimize Button on Hover (Subtle, non-intrusive) --}}
             <button type="button" @click.stop="minimizePet()"

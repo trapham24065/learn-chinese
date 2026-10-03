@@ -7,9 +7,11 @@
 import { PetEventBus } from './PetEventBus.js';
 import { PetAudioEngine } from './PetAudioEngine.js';
 import { PetVoiceManager } from './PetVoiceManager.js';
+import { PetLifeEngine } from './PetLifeEngine.js';
 
 export function petFloatingCompanion(config = {}) {
     return {
+        lifeEngine: null,
         pet: {
             has_pet: false,
             name: '',
@@ -44,6 +46,8 @@ export function petFloatingCompanion(config = {}) {
         audioVolume: Math.round(PetAudioEngine.getVolume() * 100),
 
         async initCompanion() {
+            this.initLifeEngine();
+
             try {
                 const statusEndpoint = config.statusUrl || '/student/pet/status';
                 const res = await fetch(statusEndpoint, {
@@ -56,21 +60,61 @@ export function petFloatingCompanion(config = {}) {
                         if (data.random_dialogue) {
                             this.currentDialogue = data.random_dialogue;
                         }
-                        this.determineInitialState();
+                        if (this.lifeEngine) {
+                            this.lifeEngine.setPersonality(data.personality);
+                            this.lifeEngine.setHunger(data.hunger);
+                            this.lifeEngine.evaluateNextState(true);
+                        }
                     }
                 }
             } catch (e) {}
 
+            // Attach element to lifeEngine for cursor tracking
+            setTimeout(() => {
+                if (this.$refs && this.$refs.petWrapper && this.lifeEngine) {
+                    this.lifeEngine.setPetElement(this.$refs.petWrapper);
+                }
+            }, 100);
+
             // Bind unified event bus listeners
             this.bindEventBusListeners();
 
-            // Setup sleep detection and idle watchers
-            this.resetSleepTimer();
-            ['mousemove', 'keydown', 'touchstart'].forEach(evt => {
-                window.addEventListener(evt, () => this.onUserActivity(), { passive: true });
-            });
-
             setTimeout(() => window.refreshIcons?.(), 100);
+        },
+
+        initLifeEngine() {
+            this.lifeEngine = new PetLifeEngine({
+                pageContext: config.pageContext || 'other',
+                personality: this.pet?.personality || 'playful',
+                hunger: this.pet?.hunger ?? 100,
+                onStateChange: (newState) => {
+                    this.state = newState;
+                },
+                onPetting: () => {
+                    this.showHearts = true;
+                    clearTimeout(this.heartTimer);
+                    this.heartTimer = setTimeout(() => { this.showHearts = false; }, 2200);
+                    if (this.canPlayAudio()) {
+                        PetAudioEngine.purr();
+                    }
+                },
+                onPoked: () => {
+                    if (this.canPlayAudio()) {
+                        const personality = this.pet?.personality || 'playful';
+                        const pitch = personality === 'shy' ? 0.85 : (personality === 'playful' ? 1.25 : 1.0);
+                        PetAudioEngine.pop();
+                        PetAudioEngine.chirp(pitch);
+                    }
+                },
+                onWakeUp: () => {
+                    if (this.canPlayAudio()) {
+                        PetAudioEngine.chirp(1.1);
+                    }
+                },
+                onWave: () => {
+                    this.state = 'waving';
+                }
+            });
         },
 
         bindEventBusListeners() {
@@ -186,57 +230,33 @@ export function petFloatingCompanion(config = {}) {
 
         getHoverHint() {
             if (this.state === 'sleeping') return 'Khò khò... 💤';
-            if (this.state === 'hungry') return 'Tớ đói quá... 🥺';
-            const hints = ['Psst... 👀', 'Chạm tớ nè! ✨', 'Cùng học nào! 📚', 'Hehe! 🐲'];
-            return hints[Math.floor(Math.random() * hints.length)];
+            if (this.state === 'dozing') return 'Gật gù buồn ngủ... 😴';
+            if (this.state === 'reading') return 'Đang cùng học bài 📖';
+            if (this.state === 'observing') return 'Đang chăm chú theo dõi 👀';
+            if (this.state === 'hungry') return 'Tớ hơi đói... 🥺';
+            if (this.state === 'petting') return 'Thích quá... ❤️';
+            if (this.state === 'poked') return 'Ủa! 😳';
+            return this.pet?.name || 'Pet đồng hành';
         },
 
         pokePet() {
             this.hoverHint = false;
-            const wasSleeping = (this.state === 'sleeping');
-            this.onUserActivity();
-
-            // Audio & Animation reaction adapted to personality
-            if (!wasSleeping && this.canPlayAudio()) {
-                const personality = this.pet?.personality || 'playful';
-                if (personality === 'calm') {
-                    PetAudioEngine.purr();
-                } else {
-                    const pitch = personality === 'playful' ? 1.2
-                                : personality === 'shy' ? 0.9
-                                : personality === 'cheerful' ? 1.15
-                                : 1.0;
-                    PetAudioEngine.chirp(pitch);
-                }
+            if (this.lifeEngine) {
+                this.lifeEngine.handlePoke();
             }
+        },
 
-            this.state = 'happy';
-            this.spawnHeart();
-
-            // Open or toggle speech bubble
-            if (!this.speechBubbleOpen) {
-                this.speechBubbleOpen = true;
+        toggleSpeechBubble() {
+            this.speechBubbleOpen = !this.speechBubbleOpen;
+            if (this.speechBubbleOpen) {
                 if (this.canPlayAudio()) {
                     PetAudioEngine.pop();
                 }
-                setTimeout(() => {
-                    if (this.speechBubbleOpen && this.state === 'happy') {
-                        this.state = 'speaking';
-                    }
-                }, 700);
+                this.scheduleBubbleAutoDismiss();
             } else {
-                this.nextDialogue();
+                PetVoiceManager.stop();
             }
-
-            // Return to idle after 2.5s if bubble is closed
-            setTimeout(() => {
-                if (!this.speechBubbleOpen && this.state === 'happy') {
-                    this.determineInitialState();
-                }
-            }, 2500);
-
-            this.scheduleBubbleAutoDismiss();
-            setTimeout(() => window.refreshIcons?.(), 60);
+            setTimeout(() => window.refreshIcons?.(), 50);
         },
 
         handlePokeReaction() {
