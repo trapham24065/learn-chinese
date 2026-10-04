@@ -226,7 +226,13 @@ class HskMockTestController extends Controller
                 'question'       => $q->question,
                 'pinyin'         => $q->pinyin,
                 'audio_text'     => $q->audio_text,
-                'options'        => is_array($q->options) ? $q->options : json_decode($q->options ?? '[]', true),
+                'options'        => (function () use ($q) {
+                    $opts = is_array($q->options) ? $q->options : json_decode($q->options ?? '[]', true);
+                    if (is_array($opts) && count($opts) > 2) {
+                        shuffle($opts);
+                    }
+                    return $opts;
+                })(),
                 'difficulty'     => $q->difficulty,
             ];
         });

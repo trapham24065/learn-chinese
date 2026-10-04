@@ -4415,7 +4415,13 @@ class HskMockExamQuestionSeeder extends Seeder
                     'image_set'      => $q['image_set'] ?? null,
                     'difficulty'     => $q['difficulty'],
                     'audio_text'     => $q['audio_text'],
-                    'options'        => $q['options'],
+                    'options'        => (function () use ($q) {
+                        $opts = $q['options'];
+                        if (is_array($opts) && count($opts) > 2) {
+                            shuffle($opts);
+                        }
+                        return $opts;
+                    })(),
                     'correct_answer' => $q['correct_answer'],
                     'explanation'    => $q['explanation'],
                     'sort_order'     => $q['sort_order'],

@@ -74,6 +74,10 @@ class HskCurriculumSeeder extends Seeder
                 // Seed Questions for this lesson
                 if (!empty($item['questions'])) {
                     foreach ($item['questions'] as $qOrder => $q) {
+                        $options = $q['options'];
+                        if (is_array($options) && count($options) > 2) {
+                            shuffle($options);
+                        }
                         Question::query()->updateOrCreate(
                             [
                                 'lesson_id' => $lesson->id,
@@ -82,7 +86,7 @@ class HskCurriculumSeeder extends Seeder
                             [
                                 'pinyin'         => $q['pinyin'] ?? null,
                                 'audio_text'     => $q['audio_text'] ?? null,
-                                'options'        => $q['options'],
+                                'options'        => $options,
                                 'correct_answer' => $q['correct_answer'],
                                 'explanation'    => $q['explanation'] ?? null,
                                 'difficulty'     => $q['difficulty'] ?? 'starter',

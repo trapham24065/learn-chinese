@@ -71,6 +71,23 @@ class QuizController extends Controller
         $questions = Question::whereIn('id', $selectedIds)->get()
             ->sortBy(fn ($q) => array_search($q->id, $selectedIds))->values();
 
+        // Xáo trộn ngẫu nhiên thứ tự các options cho từng câu hỏi (tránh đáp án luôn là A)
+        $questions->transform(function ($q) {
+            $opts = is_array($q->options) ? $q->options : json_decode($q->options ?? '[]', true);
+            if (is_array($opts) && count($opts) > 1) {
+                // Giữ nguyên câu Đúng / Sai định dạng cố định
+                $isTrueFalse = count($opts) === 2 && (
+                    (in_array('对', $opts) && in_array('错', $opts)) ||
+                    (in_array('Đúng', $opts) && in_array('Sai', $opts))
+                );
+                if (!$isTrueFalse) {
+                    shuffle($opts);
+                }
+                $q->options = $opts;
+            }
+            return $q;
+        });
+
         // --- User session stats ---
         $user = Auth::guard('web')->user();
         $recentQuizSessions = $user

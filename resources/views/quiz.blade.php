@@ -305,7 +305,10 @@
                     {{-- Options List --}}
 
                     <div class="mt-6 grid gap-3 sm:grid-cols-2">
-                        @foreach ($question->options as $option)
+                        @php
+                            $optionLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
+                        @endphp
+                        @foreach ($question->options as $optIdx => $option)
                             <button type="button"
                                     data-qid="{{ $question->id }}"
                                     data-val="{{ $option }}"
@@ -314,11 +317,11 @@
                                     class="relative flex items-center justify-between rounded-2xl border p-4 text-left font-medium transition"
                                     :class="getOptionClass($el.dataset.qid, $el.dataset.val)">
                                 <span class="flex items-center gap-3">
-                                    <span class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-bold transition"
+                                    <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-xl border text-xs font-black transition"
                                           :class="getOptionRadioClass($el.dataset.qid, $el.dataset.val)">
-                                        <span x-show="isOptionSelected($el.dataset.qid, $el.dataset.val)" class="h-2 w-2 rounded-full bg-current"></span>
+                                        {{ $optionLetters[$optIdx] ?? ($optIdx + 1) }}
                                     </span>
-                                    <span class="text-sm sm:text-base" :class="getOptionTextClass($el.dataset.qid, $el.dataset.val)">
+                                    <span class="text-sm sm:text-base font-semibold leading-relaxed" :class="getOptionTextClass($el.dataset.qid, $el.dataset.val)">
                                         {{ $option }}
                                     </span>
                                 </span>
@@ -603,20 +606,20 @@ function quizApp() {
         getOptionRadioClass(qId, option) {
             if (!this.isSubmitted) {
                 if (this.isOptionSelected(qId, option)) {
-                    return 'border-[#991b1b] bg-[#991b1b] text-white';
+                    return 'border-[#991b1b] bg-[#991b1b] text-white shadow-sm';
                 }
-                return 'border-slate-300 bg-white text-transparent';
+                return 'border-slate-300 bg-slate-100 text-slate-700 font-black';
             }
 
             if (this.isCorrectOption(qId, option)) {
-                return 'border-emerald-600 bg-emerald-600 text-white';
+                return 'border-emerald-600 bg-emerald-600 text-white shadow-sm font-black';
             }
 
             if (this.isUserWrongOption(qId, option)) {
-                return 'border-rose-600 bg-rose-600 text-white';
+                return 'border-rose-600 bg-rose-600 text-white shadow-sm font-black';
             }
 
-            return 'border-slate-300 bg-slate-100 text-transparent';
+            return 'border-slate-200 bg-slate-100 text-slate-400 font-bold';
         },
 
         getOptionTextClass(qId, option) {
