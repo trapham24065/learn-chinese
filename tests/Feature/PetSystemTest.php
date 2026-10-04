@@ -824,6 +824,99 @@ class PetSystemTest extends TestCase
         $this->assertArrayHasKey('mastered_words', $roomStats);
         $this->assertArrayHasKey('streak', $roomStats);
     }
+
+    // =========================================================================
+    // Test 28: Interaction API records poke & cuddle and responds with memory tier
+    // =========================================================================
+
+    public function test_interaction_api_records_and_returns_dialogue(): void
+    {
+        $petService = app(PetService::class);
+        $userPet = $petService->createInitialPet($this->user);
+
+        // 1. Initial poke (Newcomer)
+        $res = $this->actingAs($this->user)->postJson(route('pet.interact'), [
+            'action'      => 'poke',
+            'consecutive' => 1,
+        ]);
+
+        $res->assertStatus(200);
+        $res->assertJsonPath('success', true);
+        $res->assertJsonPath('action', 'poke');
+        $this->assertEquals(1, $res->json('stats.poke_count'));
+        $this->assertEquals('newcomer', $res->json('stats.interaction_level'));
+        $this->assertNotEmpty($res->json('dialogue.chinese'));
+        $this->assertNotEmpty($res->json('dialogue.vietnamese'));
+
+        // 2. Consecutive poke 2 -> returns "你又戳我啦……"
+        $res2 = $this->actingAs($this->user)->postJson(route('pet.interact'), [
+            'action'      => 'poke',
+            'consecutive' => 2,
+        ]);
+        $res2->assertStatus(200);
+        $this->assertEquals('consecutive_poked', $res2->json('dialogue.reaction_type'));
+
+        // 3. Consecutive poke >= 6 -> Dizzy reaction
+        $res3 = $this->actingAs($this->user)->postJson(route('pet.interact'), [
+            'action'      => 'poke',
+            'consecutive' => 6,
+        ]);
+        $res3->assertStatus(200);
+        $this->assertEquals('dizzy', $res3->json('dialogue.reaction_type'));
+        $this->assertStringContainsString('头好晕呀', $res3->json('dialogue.chinese'));
+
+        // 4. Cuddle action
+        $resCuddle = $this->actingAs($this->user)->postJson(route('pet.interact'), [
+            'action' => 'cuddle',
+        ]);
+        $resCuddle->assertStatus(200);
+        $this->assertEquals('cuddle', $resCuddle->json('dialogue.reaction_type'));
+        $this->assertEquals(1, $resCuddle->json('stats.cuddle_count'));
+
+        // 5. Memory Tier: simulate 35 pokes -> Soulmate level
+        $userPet->update([
+            'interaction_stats' => array_merge($userPet->getInteractionStats(), [
+                'poke_count' => 35,
+            ]),
+        ]);
+
+        $resSoulmate = $this->actingAs($this->user)->postJson(route('pet.interact'), [
+            'action'      => 'poke',
+            'consecutive' => 1,
+        ]);
+        $resSoulmate->assertStatus(200);
+        $this->assertEquals('soulmate', $resSoulmate->json('stats.interaction_level'));
+        $this->assertEquals('memory_soulmate', $resSoulmate->json('dialogue.reaction_type'));
+    }
+
+    // =========================================================================
+    // Test 29: Mini Quiz Reward awards XP via LearningActivityService
+    // =========================================================================
+
+    public function test_mini_quiz_reward_awards_xp_server_authoritative(): void
+    {
+        $petService = app(PetService::class);
+        $petService->createInitialPet($this->user);
+
+        $key = 'test_quiz_key_' . uniqid();
+        $res = $this->actingAs($this->user)->postJson(route('pet.mini-quiz-reward'), [
+            'correct'         => true,
+            'idempotency_key' => $key,
+        ]);
+
+        $res->assertStatus(200);
+        $res->assertJsonPath('success', true);
+        $this->assertEquals(2, $res->json('xp_earned'));
+        $this->assertGreaterThanOrEqual(2, $res->json('total_xp'));
+
+        // Duplicate idempotency_key returns 0 earned
+        $resDup = $this->actingAs($this->user)->postJson(route('pet.mini-quiz-reward'), [
+            'correct'         => true,
+            'idempotency_key' => $key,
+        ]);
+        $resDup->assertStatus(200);
+        $this->assertEquals(0, $resDup->json('xp_earned'));
+    }
 }
 
 

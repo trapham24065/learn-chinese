@@ -27,6 +27,7 @@ class UserPet extends Model
         'reset_count',
         'best_stage',
         'learning_dna',
+        'interaction_stats',
     ];
 
     protected $casts = [
@@ -41,6 +42,7 @@ class UserPet extends Model
         'last_hunger_calculated_at' => 'datetime',
         'dormant_at'                => 'datetime',
         'learning_dna'              => 'array',
+        'interaction_stats'         => 'array',
     ];
 
     public function user(): BelongsTo
@@ -215,5 +217,52 @@ class UserPet extends Model
     public function worldObjects(): HasMany
     {
         return $this->hasMany(PetWorldObject::class);
+    }
+
+    public function getInteractionStats(): array
+    {
+        $defaults = [
+            'poke_count'          => 0,
+            'cuddle_count'        => 0,
+            'consecutive_pokes'   => 0,
+            'last_interacted_at'  => null,
+            'interaction_level'   => 'newcomer', // newcomer (<10) | familiar (10-30) | soulmate (>30)
+        ];
+
+        $stats = array_merge($defaults, $this->interaction_stats ?? []);
+        $pokeCount = (int) ($stats['poke_count'] ?? 0);
+
+        $stats['interaction_level'] = match (true) {
+            $pokeCount >= 30 => 'soulmate',
+            $pokeCount >= 10 => 'familiar',
+            default          => 'newcomer',
+        };
+
+        return $stats;
+    }
+
+    public function recordInteraction(string $action = 'poke', int $consecutive = 1): array
+    {
+        $stats = $this->getInteractionStats();
+
+        if ($action === 'poke') {
+            $stats['poke_count'] = ($stats['poke_count'] ?? 0) + 1;
+            $stats['consecutive_pokes'] = $consecutive;
+        } elseif ($action === 'cuddle') {
+            $stats['cuddle_count'] = ($stats['cuddle_count'] ?? 0) + 1;
+        }
+
+        $stats['last_interacted_at'] = now()->toIso8601String();
+
+        $pokeCount = (int) $stats['poke_count'];
+        $stats['interaction_level'] = match (true) {
+            $pokeCount >= 30 => 'soulmate',
+            $pokeCount >= 10 => 'familiar',
+            default          => 'newcomer',
+        };
+
+        $this->update(['interaction_stats' => $stats]);
+
+        return $stats;
     }
 }

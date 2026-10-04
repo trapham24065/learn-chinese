@@ -263,6 +263,18 @@
     25% { transform: rotate(9deg) translateY(-2px); }
     75% { transform: rotate(-7deg) translateY(-1px); }
 }
+@keyframes petDizzySpin {
+    0% { transform: rotate(0deg) scale(1); }
+    20% { transform: rotate(-14deg) scale(0.94); }
+    40% { transform: rotate(14deg) scale(1.05); }
+    60% { transform: rotate(-10deg) scale(0.96); }
+    80% { transform: rotate(10deg) scale(1.03); }
+    100% { transform: rotate(0deg) scale(1); }
+}
+@keyframes petCuddlePulse {
+    0%, 100% { transform: scale(1) translateY(0); }
+    50% { transform: scale(1.07, 0.94) translateY(3px) rotate(1.5deg); }
+}
 
 @keyframes dragonTalkingBounce {
     0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
@@ -366,6 +378,8 @@
 .pet-anim-dozing { animation: petDozing 4.2s ease-in-out infinite; }
 .pet-anim-waking { animation: petWaking 1.8s ease-out forwards; }
 .pet-anim-waving { animation: petWaving 0.9s ease-in-out 3; }
+.pet-anim-dizzy { animation: petDizzySpin 0.75s ease-in-out infinite; }
+.pet-anim-cuddle { animation: petCuddlePulse 1.2s ease-in-out infinite; }
 
 /* Tactile Eye & Head Perception */
 .pet-pupil-tracker {

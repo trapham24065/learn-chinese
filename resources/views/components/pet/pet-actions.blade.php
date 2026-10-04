@@ -31,11 +31,18 @@
 
     {{-- Bottom Utility Bar --}}
     <div class="flex items-center justify-between pt-1 text-[11px]">
-        <button type="button" @click="nextDialogue()" title="Nghe câu nói khác"
-                class="inline-flex items-center gap-1 text-slate-500 hover:text-amber-700 font-medium transition py-0.5">
-            <i data-lucide="refresh-cw" class="h-3 w-3"></i>
-            <span>Đổi câu</span>
-        </button>
+        <div class="flex items-center gap-2">
+            <button type="button" @click="nextDialogue()" title="Nghe câu nói khác"
+                    class="inline-flex items-center gap-1 text-slate-500 hover:text-amber-700 font-medium transition py-0.5">
+                <i data-lucide="refresh-cw" class="h-3 w-3"></i>
+                <span>Đổi câu</span>
+            </button>
+            <button type="button" @click="startMiniQuiz()" title="Đố vui chớp nhoáng cùng Pet"
+                    class="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-semibold transition py-0.5">
+                <i data-lucide="help-circle" class="h-3 w-3"></i>
+                <span>Đố vui</span>
+            </button>
+        </div>
 
         <a href="{{ route('pet.index') }}"
            class="inline-flex items-center gap-1 font-bold text-amber-800 hover:text-amber-950 transition py-0.5">

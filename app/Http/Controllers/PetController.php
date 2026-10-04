@@ -296,6 +296,7 @@ class PetController extends Controller
             'affinity'            => (int) ($userPet->affinity ?? 0),
             'affinity_tier'       => $userPet->getAffinityTier(),
             'affinity_summary'    => $this->affinityService->getAffinitySummary($userPet),
+            'interaction_stats'   => $userPet->getInteractionStats(),
             'is_active'           => $userPet->isActive(),
             'is_dormant'          => $userPet->isDormant(),
             'is_egg'              => $userPet->isEgg(),
@@ -354,6 +355,70 @@ class PetController extends Controller
         return response()->json([
             'objects' => $this->worldService->getWorldObjects($userPet),
             'dream'   => $this->worldService->generateDreamSentence($userPet),
+        ]);
+    }
+
+    /**
+     * POST /student/pet/interact — Record interaction (poke, cuddle, wake, dizzy) and return reactive dialogue.
+     */
+    public function interact(Request $request): JsonResponse
+    {
+        $request->validate([
+            'action'       => ['required', 'string', 'in:poke,cuddle,wake,dizzy'],
+            'consecutive'  => ['nullable', 'integer', 'min:1', 'max:50'],
+            'page_context' => ['nullable', 'string', 'max:50'],
+        ]);
+
+        $user = $request->user();
+        $userPet = $this->petService->getActivePet($user);
+
+        if (!$userPet) {
+            return response()->json(['error' => 'No pet found.'], 404);
+        }
+
+        $action = $request->input('action', 'poke');
+        $consecutive = (int) $request->input('consecutive', 1);
+
+        $stats = $userPet->recordInteraction($action, $consecutive);
+        $context = $request->all();
+
+        $dialogue = $this->dialogueService->getInteractionDialogue($user, $userPet, $action, $context);
+
+        return response()->json([
+            'success'  => true,
+            'action'   => $action,
+            'dialogue' => $dialogue,
+            'stats'    => $stats,
+        ]);
+    }
+
+    /**
+     * POST /student/pet/mini-quiz-reward — Server-authoritative XP reward for mascot mini pop quiz.
+     */
+    public function miniQuizReward(Request $request, \App\Services\LearningActivityService $activityService): JsonResponse
+    {
+        $request->validate([
+            'idempotency_key' => ['nullable', 'string', 'max:191'],
+            'correct'         => ['required', 'boolean'],
+        ]);
+
+        $user = $request->user();
+        if (!$request->boolean('correct')) {
+            return response()->json(['success' => true, 'xp_earned' => 0]);
+        }
+
+        $idempotencyKey = $request->input('idempotency_key')
+            ?? ('pet_quiz_' . $user->id . '_' . now()->format('Ymd_His') . '_' . rand(1000, 9999));
+
+        $result = $activityService->logActivity($user, 'pet_mini_quiz', [
+            'idempotency_key' => $idempotencyKey,
+            'meta'            => ['xp' => 2, 'source' => 'pet_floating_quiz'],
+        ]);
+
+        return response()->json([
+            'success'   => true,
+            'xp_earned' => $result['xp']['earned'] ?? 2,
+            'total_xp'  => $result['xp']['total'] ?? 0,
         ]);
     }
 }

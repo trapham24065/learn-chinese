@@ -26,6 +26,7 @@ class XpService
         'fast_match_completed' => 15,
         'audio_quiz' => 15,
         'audio_quiz_completed' => 15,
+        'pet_mini_quiz' => 2,
     ];
 
     /**

@@ -115,8 +115,31 @@
         </div>
     </div>
 
+    {{-- Mini Pop Quiz Challenge Card --}}
+    <div x-show="miniQuizActive" x-cloak class="mb-3 rounded-xl border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 to-purple-50 p-2.5 shadow-sm">
+        <div class="flex items-center justify-between mb-1.5">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-800 flex items-center gap-1">
+                <i data-lucide="help-circle" class="h-3 w-3 text-indigo-600"></i>
+                Đố vui chớp nhoáng ⚡
+            </span>
+            <span class="text-[9px] font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full">+2 XP</span>
+        </div>
+        <p class="text-xs font-bold text-slate-800 mb-2" x-text="currentMiniQuiz?.question"></p>
+        <div class="grid grid-cols-2 gap-1.5">
+            <template x-for="(opt, idx) in (currentMiniQuiz?.options || [])" :key="idx">
+                <button type="button" @click="answerMiniQuiz(opt)"
+                        :disabled="miniQuizAnswered"
+                        class="rounded-lg bg-white border border-indigo-200 hover:border-indigo-400 hover:bg-indigo-50 py-1.5 px-2 text-[11px] font-medium text-slate-700 text-left transition active:scale-95 disabled:opacity-50 shadow-2xs"
+                        x-text="opt">
+                </button>
+            </template>
+        </div>
+        <p x-show="miniQuizFeedback" x-text="miniQuizFeedback" class="mt-2 text-center text-[10px] font-bold"
+           :class="miniQuizFeedback.includes('Chưa đúng') ? 'text-rose-600' : 'text-emerald-600'"></p>
+    </div>
+
     {{-- Vocabulary Companion Card (Chỉ hiện khi có từ đã đạt Mastery) --}}
-    <div x-show="pet && pet.random_word" x-cloak class="mb-3 rounded-xl border border-indigo-100 bg-indigo-50/70 p-2.5 space-y-1.5">
+    <div x-show="pet && pet.random_word && !miniQuizActive" x-cloak class="mb-3 rounded-xl border border-indigo-100 bg-indigo-50/70 p-2.5 space-y-1.5">
             <div class="flex items-center justify-between">
                 <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-800 flex items-center gap-1">
                     <i data-lucide="book-open" class="h-3 w-3"></i>

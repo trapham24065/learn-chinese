@@ -13,6 +13,8 @@
 <div x-data="petFloatingCompanion({
     statusUrl: '{{ route('pet.status') }}',
     feedUrl: '{{ route('pet.feed') }}',
+    interactUrl: '{{ route('pet.interact') }}',
+    miniQuizRewardUrl: '{{ route('pet.mini-quiz-reward') }}',
     pageContext: '{{ $pageContext }}'
 })" x-init="initCompanion()" x-cloak
      class="fixed bottom-6 right-4 sm:bottom-6 sm:right-6 z-40 select-none">
@@ -52,12 +54,19 @@
 
         {{-- 3. Living Pet Mascot Model --}}
         <div x-ref="petWrapper"
-             class="relative cursor-pointer transition-transform duration-150 active:scale-95"
-             @mouseenter="onHoverPet()"
-             @mouseleave="hoverHint = false"
-             @click="pokePet()"
-             @dblclick="toggleSpeechBubble()"
-             title="Chạm nhẹ để tương tác cùng Pet (Nhấp đúp để trò chuyện)">
+             tabindex="0"
+             class="relative cursor-pointer transition-transform duration-150 active:scale-95 focus:outline-none"
+             @mouseenter="isHovered = true; onHoverPet()"
+             @mouseleave="isHovered = false; hoverHint = false; endPress()"
+             @focus="isHovered = true"
+             @blur="isHovered = false"
+             @mousedown="startPress()"
+             @mouseup="endPress()"
+             @touchstart.passive="startPress()"
+             @touchend="endPress()"
+             @touchcancel="endPress()"
+             @click="handleMascotClick()"
+             title="Chạm để tương tác và trò chuyện cùng Pet (Giữ 1.5s để ôm)">
 
             {{-- Living SVG Avatar --}}
             <x-pet.pet-avatar />

@@ -10,13 +10,22 @@
          'pet-anim-dozing': state === 'dozing',
          'pet-anim-waking': state === 'waking_up',
          'pet-anim-waving': state === 'waving',
+         'pet-anim-dizzy': state === 'dizzy',
+         'pet-anim-cuddle': state === 'cuddle',
          'animate-[bounce_0.6s_ease-in-out_infinite]': state === 'excited'
      }">
 
-    {{-- Floating hearts / particles effect when happy or excited or petting --}}
-    <div x-show="showHearts || state === 'petting'" x-cloak class="absolute -top-3 left-1/2 -translate-x-1/2 pointer-events-none z-20 flex gap-1">
+    {{-- Floating hearts / particles effect when happy or excited or petting or cuddle --}}
+    <div x-show="showHearts || state === 'petting' || state === 'cuddle'" x-cloak class="absolute -top-3 left-1/2 -translate-x-1/2 pointer-events-none z-20 flex gap-1">
         <span class="pet-heart-particle text-rose-500 font-bold text-base inline-block">❤️</span>
         <span class="pet-heart-particle text-amber-400 font-bold text-xs inline-block" style="animation-delay: 0.2s;">✨</span>
+        <span x-show="state === 'cuddle'" class="text-xs font-bold text-pink-400 inline-block animate-bounce">🥰</span>
+    </div>
+
+    {{-- Dizzy stars / swirl particle --}}
+    <div x-show="state === 'dizzy'" x-cloak class="absolute -top-3 left-1/2 -translate-x-1/2 pointer-events-none z-20 flex gap-1">
+        <span class="text-xs font-black inline-block animate-spin">💫</span>
+        <span class="text-xs font-black inline-block animate-ping">✨</span>
     </div>
 
     {{-- Reading partner accessory (studying quietly beside user) --}}

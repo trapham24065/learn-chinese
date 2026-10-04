@@ -40,6 +40,28 @@ export function petFloatingCompanion(config = {}) {
         showHearts: false,
         heartTimer: null,
 
+        // Interaction Engine & Memory Loop State
+        consecutivePokes: 0,
+        lastPokeTime: 0,
+        consecutiveTimer: null,
+        pressStartTime: 0,
+        pressTimer: null,
+        isLongPress: false,
+        isHovered: false,
+        keyBuffer: '',
+        keyBufferTimer: null,
+        interactionStats: {
+            poke_count: 0,
+            cuddle_count: 0,
+            consecutive_pokes: 0,
+            interaction_level: 'newcomer'
+        },
+        recentDialoguesHistory: [],
+        miniQuizActive: false,
+        miniQuizAnswered: false,
+        miniQuizFeedback: '',
+        currentMiniQuiz: null,
+
         // Live Audio Reactive Settings
         sfxEnabled: PetAudioEngine.isSfxEnabled(),
         voiceEnabled: PetVoiceManager.isVoiceEnabled(),
@@ -57,6 +79,9 @@ export function petFloatingCompanion(config = {}) {
                     const data = await res.json();
                     if (data && data.has_pet) {
                         this.pet = data;
+                        if (data.interaction_stats) {
+                            this.interactionStats = data.interaction_stats;
+                        }
                         if (data.random_dialogue) {
                             this.currentDialogue = data.random_dialogue;
                         }
@@ -75,6 +100,11 @@ export function petFloatingCompanion(config = {}) {
                     this.lifeEngine.setPetElement(this.$refs.petWrapper);
                 }
             }, 100);
+
+            // Bind key sequence listener with hover/focus guardrail
+            if (typeof window !== 'undefined') {
+                window.addEventListener('keydown', (e) => this.handleKeySequence(e));
+            }
 
             // Bind unified event bus listeners
             this.bindEventBusListeners();
@@ -128,6 +158,7 @@ export function petFloatingCompanion(config = {}) {
             PetEventBus.on('pet:quiz-completed', (payload) => this.handleQuizCompletedReaction(payload));
             PetEventBus.on('pet:struggle', (payload) => this.handleStruggleReaction(payload));
             PetEventBus.on('pet:affinity-up', (payload) => this.handleAffinityUpReaction(payload));
+            PetEventBus.on('pet:mini-quiz-completed', (payload) => this.handleMiniQuizCompletedReaction(payload));
 
             // Backward compatibility listener for legacy pet-event CustomEvent
             if (typeof window !== 'undefined') {
@@ -239,11 +270,435 @@ export function petFloatingCompanion(config = {}) {
             return this.pet?.name || 'Pet đồng hành';
         },
 
-        pokePet() {
-            this.hoverHint = false;
-            if (this.lifeEngine) {
-                this.lifeEngine.handlePoke();
+        // Primary Single-Click Action & FSM Reactions
+        handleMascotClick() {
+            if (this.isLongPress) {
+                this.isLongPress = false;
+                return;
             }
+
+            this.hoverHint = false;
+            const now = Date.now();
+
+            // 1. If currently sleeping, wake up pet first!
+            if (this.state === 'sleeping' || this.lifeEngine?.currentState === 'sleeping') {
+                this.wakeUpPet();
+                return;
+            }
+
+            // 2. Track consecutive pokes (<3.5s window)
+            if (now - this.lastPokeTime < 3500) {
+                this.consecutivePokes++;
+            } else {
+                this.consecutivePokes = 1;
+            }
+            this.lastPokeTime = now;
+            clearTimeout(this.consecutiveTimer);
+            this.consecutiveTimer = setTimeout(() => {
+                this.consecutivePokes = 0;
+            }, 3500);
+
+            const consecutive = this.consecutivePokes;
+            let action = 'poke';
+            let chosenDialogue = '';
+
+            // 3. FSM reaction branch
+            if (consecutive >= 6) {
+                // Dizzy Easter Egg!
+                action = 'dizzy';
+                this.state = 'dizzy';
+                if (this.canPlayAudio()) {
+                    PetAudioEngine.pop();
+                    PetAudioEngine.chirp(1.4);
+                }
+                chosenDialogue = "哎呀，头好晕呀！(Āiyā, tóu hǎo yūn ya!) Oái, hoa hết cả mắt rồi nè! Chóng mặt quá, tha cho tớ đi mà~ 😵💫";
+                setTimeout(() => {
+                    if (this.state === 'dizzy') {
+                        if (this.speechBubbleOpen) this.state = 'speaking';
+                        else this.determineInitialState();
+                    }
+                }, 2500);
+            } else if (consecutive >= 3) {
+                // Annoyed / Playful consecutive reactions
+                action = 'poke';
+                this.state = 'happy';
+                if (this.canPlayAudio()) {
+                    PetAudioEngine.chirp(1.25);
+                }
+                const consecutivePool = [
+                    "别闹啦，快去学习！(Bié nào la, kuài qù xuéxí!) Haha đừng trêu nữa, mau tập trung học bài đi nào! 📚",
+                    "哈哈，好痒好痒！(Hāha, hǎo yǎng hǎo yǎng!) Haha nhột quá đi thôi! Cậu chọc lét tớ à? 😆",
+                    "真拿你没办法~ (Zhēn ná nǐ méi bànfǎ~) Thật là hết cách với cậu luôn á~ Chọc hoài à! 🎈"
+                ];
+                chosenDialogue = this.pickNonRepeatingDialogue(consecutivePool);
+            } else if (consecutive === 2) {
+                // Repeated poke
+                action = 'poke';
+                this.state = 'poked';
+                this.lifeEngine?.handlePoke();
+                if (this.canPlayAudio()) {
+                    PetAudioEngine.pop();
+                }
+                const repeatPool = [
+                    "你又戳我啦……(Nǐ yòu chuō wǒ la...) Cậu lại chọc tớ nữa rồi nè... Có chuyện gì thế? 😳",
+                    "哎呀，怎么又来啦！(Āiyā, zěnme yòu lái la!) Oái, sao lại bấm tớ tiếp thế!",
+                    "别急别急，慢慢戳！(Bié jí bié jí, mànman chuō!) Từ từ thôi nào, chọc gì mà vội vàng thế!"
+                ];
+                chosenDialogue = this.pickNonRepeatingDialogue(repeatPool);
+            } else {
+                // Single-click primary reaction: state & memory aware
+                action = 'poke';
+                this.state = 'happy';
+                this.lifeEngine?.handlePoke();
+                if (this.canPlayAudio()) {
+                    PetAudioEngine.pop();
+                    PetAudioEngine.chirp(1.1);
+                }
+                this.spawnHeart();
+
+                chosenDialogue = this.determineResponsiveDialogue();
+            }
+
+            // Immediate 0ms UI reaction (Speech Bubble + Dialogue + TTS)
+            this.setDialogueAndSpeak(chosenDialogue);
+            this.speechBubbleOpen = true;
+            this.scheduleBubbleAutoDismiss();
+
+            // Background server sync with optimistic stats
+            this.syncInteraction(action, consecutive);
+        },
+
+        // Alias for backwards compatibility
+        pokePet() {
+            this.handleMascotClick();
+        },
+
+        wakeUpPet() {
+            this.state = 'waking_up';
+            this.lifeEngine?.wakeUp();
+            if (this.canPlayAudio()) {
+                PetAudioEngine.chirp(1.1);
+            }
+            this.spawnHeart();
+
+            const wakePool = [
+                "早安！我充满电啦！(Zǎo'ān! Wǒ chōngmǎn diàn la!) Oáp~ Tớ tỉnh ngủ rồi nè! Sạc đầy năng lượng để cùng cậu học bài rồi! ☀️",
+                "睡醒啦，今天也一起努力！(Shuì xǐng la, jīntiān yě yīqǐ nǔlì!) Tớ đã dậy rồi, hôm nay chúng mình lại cùng nhau cố gắng nhé! 🚀",
+                "揉揉眼睛，看到你真好。(Róurou yǎnjīng, kàndào nǐ zhēn hǎo.) Dụi dụi mắt một cái, mở mắt ra thấy bạn học là vui nhất trần đời! ✨"
+            ];
+            const dialogue = this.pickNonRepeatingDialogue(wakePool);
+            this.setDialogueAndSpeak(dialogue);
+            this.speechBubbleOpen = true;
+            this.scheduleBubbleAutoDismiss();
+
+            this.syncInteraction('wake', 1);
+
+            setTimeout(() => {
+                if (this.state === 'waking_up') {
+                    if (this.speechBubbleOpen) this.state = 'speaking';
+                    else this.determineInitialState();
+                }
+            }, 2000);
+        },
+
+        startPress() {
+            this.isLongPress = false;
+            this.pressStartTime = Date.now();
+            clearTimeout(this.pressTimer);
+            this.pressTimer = setTimeout(() => {
+                this.isLongPress = true;
+                this.triggerCuddle();
+            }, 1500);
+        },
+
+        endPress() {
+            clearTimeout(this.pressTimer);
+        },
+
+        async triggerCuddle() {
+            this.hoverHint = false;
+            this.state = 'cuddle';
+            this.spawnHeart();
+            if (this.canPlayAudio()) {
+                PetAudioEngine.purr();
+            }
+
+            const cuddlePool = [
+                "抱抱！感觉好温暖呀。(Bàobào! Gǎnjué hǎo wēnnuǎn ya!) Được bạn ôm tớ thấy ấm áp và hạnh phúc lắm! 🥰",
+                "好舒服，谢谢你的拥抱！(Hǎo shūfu, xièxie nǐ de yōngbào!) Thật là dễ chịu, cảm ơn cái ôm ấm lòng của bạn nhé! ❤️",
+                "有你陪着，心里超踏实。(Yǒu nǐ péizhe, xīnlǐ chāo tàshi!) Có bạn ở bên, trong lòng tớ luôn thấy bình yên và hạnh phúc 🌸"
+            ];
+            const dialogue = this.pickNonRepeatingDialogue(cuddlePool);
+            this.setDialogueAndSpeak(dialogue);
+            this.speechBubbleOpen = true;
+            this.scheduleBubbleAutoDismiss();
+
+            this.syncInteraction('cuddle', 1);
+
+            setTimeout(() => {
+                if (this.state === 'cuddle') {
+                    if (this.speechBubbleOpen) this.state = 'speaking';
+                    else this.determineInitialState();
+                }
+            }, 2500);
+        },
+
+        determineResponsiveDialogue() {
+            // Check starving
+            if ((this.pet?.hunger ?? 100) <= 20 && this.pet?.is_active) {
+                const hungryPool = [
+                    "肚子咕咕叫了，好饿呀……(Dùzi gūgū jiào le, hǎo è ya...) Bụng tớ đang réo ùng ục rồi nè, vào phòng cho tớ ăn chút đi mà~ 🥣",
+                    "没力气啦，想吃好吃的！(Méi lìqi la, xiǎng chī hǎochī de!) Hết sạch năng lượng rồi, thèm một món ngon do cậu thưởng quá! 🥺"
+                ];
+                return this.pickNonRepeatingDialogue(hungryPool);
+            }
+
+            // Check late night (23h - 5h)
+            const hour = new Date().getHours();
+            if (hour >= 23 || hour < 5) {
+                const nightPool = [
+                    "夜深了，注意休息哦。(Yè shēn le, zhùyì xiūxi ó.) Khuya lắm rồi... học bài xong nhớ ngủ sớm giữ gìn sức khỏe nhé, mai gặp lại! 🌙",
+                    "快去睡觉吧，明天见！(Kuài qù shuìjiào ba, míngtiān jiàn!) Đi ngủ thật ngon thôi nào, chúc bạn học của tớ có giấc mơ đẹp! 💤"
+                ];
+                return this.pickNonRepeatingDialogue(nightPool);
+            }
+
+            // Check page context (35% chance)
+            const ctx = config.pageContext || 'other';
+            if (Math.random() < 0.35 && ['flashcard', 'quiz', 'lesson'].includes(ctx)) {
+                if (ctx === 'flashcard') {
+                    return "一张一张翻，把生词都记住！(Yī zhāng yī zhāng fān, bǎ shēngcí dōu jìzhù!) Lật từng tấm thẻ thật tập trung, cùng làm chủ toàn bộ chữ Hán nào! 🃏";
+                }
+                if (ctx === 'quiz') {
+                    return "仔细读题，你可以拿满分的！(Zǐxì dú tí, nǐ kěyǐ ná mǎnfēn de!) Đọc đề thật cẩn thận nha, tớ tin cậu chắc chắn sẽ đạt điểm tuyệt đối! 🎯";
+                }
+                if (ctx === 'lesson') {
+                    return "循序渐进，一课一课通关！(Xúnxù jiànjìn, yī kè yī kè tōngguān!) Từng bước vững chắc, chinh phục từng bài học một cách tự tin nhé! 📖";
+                }
+            }
+
+            // Interaction Memory Loop: dialogue conditioned on historical pokes
+            const level = this.interactionStats?.interaction_level || 'newcomer';
+            if (level === 'soulmate') {
+                const soulmatePool = [
+                    "你真的很喜欢戳我呀！(Nǐ zhēn de hěn xǐhuan chuō wǒ ya!) Cậu thực sự thích chọc tớ ghê á! Thôi cho cậu chọc đó, có cậu ở cạnh vui lắm~ ❤️",
+                    "无论什么时候，我都在你身边。(Wúlùn shénme shíhou, wǒ dōu zài nǐ shēnbiān.) Bất kể lúc nào, tớ cũng luôn ở đây đồng hành học tiếng Trung cùng cậu! 🥰",
+                    "我们是最好的学习搭档！(Wǒmen shì zuì hǎo de xuéxí dādàng!) Đôi bạn học tuyệt vời nhất quả đất chính là chúng mình! 🐉✨"
+                ];
+                return this.pickNonRepeatingDialogue(soulmatePool);
+            } else if (level === 'familiar') {
+                const familiarPool = [
+                    "又来了…… 找我有事吗？(Yòu lái le... Zhǎo wǒ yǒu shì ma?) Lại trêu tớ rồi... Có chữ nào khó hiểu cần tớ giúp không nào? 🔍",
+                    "嗨！今天状态看起来不错！(Hāi! Jīntiān zhuàngtài kàn qǐlai bùcuò!) Chào cậu! Trông tinh thần học tập hôm nay của cậu đỉnh quá nè! ☀️",
+                    "我们已经越来越有默契了！(Wǒmen yǐjīng yuè lái yuè yǒu mòqì le!) Chúng mình ngày càng hiểu ý nhau hơn rồi đó, học tiếp thôi! 🍵"
+                ];
+                return this.pickNonRepeatingDialogue(familiarPool);
+            } else {
+                // Newcomer (<10 pokes)
+                const newcomerPool = [
+                    "哎呀，你碰我啦！(Āiyā, nǐ pèng wǒ la!) Oái, cậu vừa chạm vào tớ kìa! Chào bạn học mới nhé! ✨",
+                    "你好呀！今天我们学什么？(Nǐ hǎo ya! Jīntiān wǒmen xué shénme?) Xin chào! Hôm nay chúng mình sẽ cùng học nội dung gì nào? 🎈",
+                    "初次见面，请多关照哦！(Chūcì jiànmiàn, qǐng duō guānzhào ó!) Lần đầu đồng hành, hãy chiếu cố và giúp đỡ tớ nhiều nha! 🌸"
+                ];
+                return this.pickNonRepeatingDialogue(newcomerPool);
+            }
+        },
+
+        pickNonRepeatingDialogue(pool) {
+            if (!pool || pool.length === 0) return '你好呀！';
+            const available = pool.filter(d => !this.recentDialoguesHistory.includes(d));
+            const selected = available.length > 0
+                ? available[Math.floor(Math.random() * available.length)]
+                : pool[Math.floor(Math.random() * pool.length)];
+            return selected;
+        },
+
+        recordDialogueHistory(dialogue) {
+            this.recentDialoguesHistory.push(dialogue);
+            if (this.recentDialoguesHistory.length > 5) {
+                this.recentDialoguesHistory.shift();
+            }
+        },
+
+        setDialogueAndSpeak(dialogue) {
+            this.currentDialogue = dialogue;
+            this.recordDialogueHistory(dialogue);
+            if (this.voiceEnabled) {
+                const parsed = this.parseDialogueItem(dialogue);
+                if (parsed.audio_text || parsed.chinese) {
+                    PetVoiceManager.speak(parsed.audio_text || parsed.chinese);
+                }
+            }
+        },
+
+        async syncInteraction(action, consecutive = 1) {
+            try {
+                const endpoint = config.interactUrl || '/student/pet/interact';
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: action,
+                        consecutive: consecutive,
+                        page_context: config.pageContext || 'other',
+                    }),
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.stats) {
+                        this.interactionStats = data.stats;
+                    }
+                }
+            } catch (e) {}
+        },
+
+        handleKeySequence(e) {
+            // Strict guardrail: Pet must be hovered or focused
+            if (!this.isHovered) return;
+            const target = e.target;
+            const tag = target ? target.tagName : '';
+            if (tag === 'INPUT' || tag === 'TEXTAREA' || target?.isContentEditable) return;
+
+            if (e.key && e.key.length === 1 && /[a-zA-Z]/.test(e.key)) {
+                this.keyBuffer += e.key.toLowerCase();
+                if (this.keyBuffer.length > 20) {
+                    this.keyBuffer = this.keyBuffer.slice(-20);
+                }
+                clearTimeout(this.keyBufferTimer);
+                this.keyBufferTimer = setTimeout(() => { this.keyBuffer = ''; }, 4000);
+
+                if (this.keyBuffer.endsWith('dragon')) {
+                    this.keyBuffer = '';
+                    this.triggerDragonEasterEgg();
+                } else if (this.keyBuffer.endsWith('hsk')) {
+                    this.keyBuffer = '';
+                    this.triggerHskEasterEgg();
+                }
+            }
+        },
+
+        triggerDragonEasterEgg() {
+            this.state = 'excited';
+            if (this.canPlayAudio()) {
+                PetAudioEngine.celebration();
+            }
+            this.spawnHeart();
+            const easterEggDialogue = "神龙现身！召唤神龙成功啦！(Shénlóng xiànshēn!) Chúc mừng bạn đã giải mã mật mã bí mật Tiểu Long! 🐉✨";
+            this.setDialogueAndSpeak(easterEggDialogue);
+            this.speechBubbleOpen = true;
+            this.scheduleBubbleAutoDismiss();
+        },
+
+        triggerHskEasterEgg() {
+            this.state = 'happy';
+            if (this.canPlayAudio()) {
+                PetAudioEngine.levelUp();
+            }
+            this.spawnHeart();
+            const easterEggDialogue = "HSK必胜！(HSK bì shèng!) Chúc bạn thi đỗ HSK điểm số tối đa! Cùng Tiểu Long cố gắng nhé! 🎓🎉";
+            this.setDialogueAndSpeak(easterEggDialogue);
+            this.speechBubbleOpen = true;
+            this.scheduleBubbleAutoDismiss();
+        },
+
+        startMiniQuiz() {
+            this.miniQuizActive = true;
+            this.miniQuizAnswered = false;
+            this.miniQuizFeedback = '';
+            this.speechBubbleOpen = true;
+
+            const vocab = this.pet?.random_word || {
+                hanzi: '学习',
+                pinyin: 'xuéxí',
+                meaning: 'Học tập'
+            };
+
+            const distractors = ['Ăn cơm', 'Nước uống', 'Đi ngủ', 'Bạn bè', 'Trường học', 'Gia đình', 'Cảm ơn']
+                .filter(d => d !== vocab.meaning)
+                .sort(() => 0.5 - Math.random())
+                .slice(0, 3);
+
+            const options = [vocab.meaning, ...distractors].sort(() => 0.5 - Math.random());
+
+            this.currentMiniQuiz = {
+                question: `Chữ 「${vocab.hanzi}」[${vocab.pinyin}] có nghĩa là gì?`,
+                word: vocab.hanzi,
+                options: options,
+                correct: vocab.meaning,
+            };
+
+            setTimeout(() => window.refreshIcons?.(), 50);
+        },
+
+        async answerMiniQuiz(selected) {
+            if (this.miniQuizAnswered || !this.currentMiniQuiz) return;
+            this.miniQuizAnswered = true;
+
+            const isCorrect = (selected === this.currentMiniQuiz.correct);
+
+            if (isCorrect) {
+                this.miniQuizFeedback = '🎉 Chính xác! Đang nhận +2 XP thưởng...';
+                if (this.canPlayAudio()) {
+                    PetAudioEngine.celebration();
+                }
+                this.spawnHeart();
+
+                // Server-Authoritative XP reward event
+                PetEventBus.emit('pet:mini-quiz-completed', {
+                    correct: true,
+                    word: this.currentMiniQuiz.word
+                });
+
+                try {
+                    const endpoint = config.miniQuizRewardUrl || '/student/pet/mini-quiz-reward';
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+                    const res = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            correct: true,
+                            idempotency_key: 'mascot_quiz_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8)
+                        })
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        this.miniQuizFeedback = `🎉 Xuất sắc! +${data.xp_earned || 2} XP học tập!`;
+                    }
+                } catch (e) {
+                    this.miniQuizFeedback = '🎉 Chính xác!';
+                }
+            } else {
+                this.miniQuizFeedback = `Chưa đúng rồi! Đáp án là "${this.currentMiniQuiz.correct}"`;
+                if (this.canPlayAudio()) {
+                    PetAudioEngine.pop();
+                }
+            }
+
+            setTimeout(() => {
+                this.miniQuizActive = false;
+                this.miniQuizAnswered = false;
+                this.miniQuizFeedback = '';
+                this.determineInitialState();
+                setTimeout(() => window.refreshIcons?.(), 50);
+            }, 3000);
+        },
+
+        handleMiniQuizCompletedReaction(payload = {}) {
+            this.onUserActivity();
+            this.state = 'excited';
+            if (this.canPlayAudio()) {
+                PetAudioEngine.celebration();
+            }
+            this.spawnHeart();
         },
 
         toggleSpeechBubble() {
@@ -408,6 +863,14 @@ export function petFloatingCompanion(config = {}) {
 
         parseDialogueItem(item) {
             if (!item) return { chinese: '你好呀！', pinyin: '', vietnamese: '', audio_text: '你好呀！' };
+            if (typeof item === 'object') {
+                return {
+                    chinese: item.chinese || '',
+                    pinyin: item.pinyin || '',
+                    vietnamese: item.vietnamese || '',
+                    audio_text: item.audio_text || item.chinese || ''
+                };
+            }
             const str = String(item).trim();
             const match = str.match(/^([^\(\)（）]+?)\s*[\(（]([^\(\)（）]+?)[\)）]\s*(.*)$/u);
             if (match) {

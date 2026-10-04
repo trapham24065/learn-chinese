@@ -583,4 +583,129 @@ class PetDialogueService
             default    => "不积细流无以成江海，从容起步。(Bù jī xì liú wú yǐ chéng jiāng hǎi, cóngróng qǐbù.) Vạn sự khởi đầu nan. Hãy thong thả mở bài học đầu tiên khi bạn đã sẵn sàng 🍵",
         };
     }
+
+    /**
+     * Get interaction-specific dialogue with state, context, and memory level awareness.
+     */
+    public function getInteractionDialogue(User $user, UserPet $userPet, string $action = 'poke', array $context = []): array
+    {
+        $consecutive = (int) ($context['consecutive'] ?? 1);
+        $pageContext = $context['page_context'] ?? 'other';
+        $stats       = $userPet->getInteractionStats();
+        $pokeCount   = (int) ($stats['poke_count'] ?? 0);
+        $level       = $stats['interaction_level'] ?? 'newcomer';
+        $personality = $userPet->personality ?? 'playful';
+
+        // 1. Dizzy condition: rapid consecutive pokes (>= 6)
+        if ($consecutive >= 6) {
+            $raw = "哎呀，头好晕呀！(Āiyā, tóu hǎo yūn ya!) Oái, hoa hết cả mắt rồi nè! Chóng mặt quá, tha cho tớ đi mà~ 😵💫";
+            return array_merge($this->parseDialogue($raw), ['reaction_type' => 'dizzy']);
+        }
+
+        // 2. Annoyed / Playful consecutive pokes (>= 3)
+        if ($consecutive >= 3) {
+            $pool = [
+                "别闹啦，快去学习！(Bié nào la, kuài qù xuéxí!) Haha đừng trêu nữa, mau tập trung học bài đi nào! 📚",
+                "哈哈，好痒好痒！(Hāha, hǎo yǎng hǎo yǎng!) Haha nhột quá đi thôi! Cậu chọc lét tớ à? 😆",
+                "真拿你没办法~ (Zhēn ná nǐ méi bànfǎ~) Thật là hết cách với cậu luôn á~ Chọc hoài à! 🎈",
+            ];
+            $raw = $pool[array_rand($pool)];
+            return array_merge($this->parseDialogue($raw), ['reaction_type' => 'consecutive_annoyed']);
+        }
+
+        // 3. Repeated poke reaction (consecutive == 2)
+        if ($consecutive === 2) {
+            $pool = [
+                "你又戳我啦……(Nǐ yòu chuō wǒ la...) Cậu lại chọc tớ nữa rồi nè... Có chuyện gì thế? 😳",
+                "哎呀，怎么又来啦！(Āiyā, zěnme yòu lái la!) Oái, sao lại bấm tớ tiếp thế!",
+                "别急别急，慢慢戳！(Bié jí bié jí, mànman chuō!) Từ từ thôi nào, chọc gì mà vội vàng thế!",
+            ];
+            $raw = $pool[array_rand($pool)];
+            return array_merge($this->parseDialogue($raw), ['reaction_type' => 'consecutive_poked']);
+        }
+
+        // 4. Cuddle / Hug
+        if ($action === 'cuddle') {
+            $pool = [
+                "抱抱！感觉好温暖呀。(Bàobào! Gǎnjué hǎo wēnnuǎn ya!) Được cậu ôm tớ thấy ấm áp và hạnh phúc lắm! 🥰",
+                "好舒服，谢谢你的拥抱！(Hǎo shūfu, xièxie nǐ de yōngbào!) Thật là dễ chịu, cảm ơn cái ôm ấm lòng của bạn học nhé! ❤️",
+                "有你陪着，心里超踏实。(Yǒu nǐ péizhe, xīnlǐ chāo tàshi!) Có cậu ở bên, trong lòng tớ luôn thấy bình yên và hạnh phúc 🌸",
+            ];
+            $raw = $pool[array_rand($pool)];
+            return array_merge($this->parseDialogue($raw), ['reaction_type' => 'cuddle']);
+        }
+
+        // 5. Wake up
+        if ($action === 'wake') {
+            $pool = [
+                "早安！我充满电啦！(Zǎo'ān! Wǒ chōngmǎn diàn la!) Oáp~ Tớ tỉnh ngủ rồi nè! Sạc đầy năng lượng để cùng cậu học bài rồi! ☀️",
+                "睡醒啦，今天也一起努力！(Shuì xǐng la, jīntiān yě yīqǐ nǔlì!) Tớ đã dậy rồi, hôm nay chúng mình lại cùng nhau cố gắng nhé! 🚀",
+                "揉揉眼睛，看到你真好。(Róurou yǎnjīng, kàndào nǐ zhēn hǎo.) Dụi dụi mắt một cái, mở mắt ra thấy bạn học là vui nhất trần đời! ✨",
+            ];
+            $raw = $pool[array_rand($pool)];
+            return array_merge($this->parseDialogue($raw), ['reaction_type' => 'wake']);
+        }
+
+        // 6. Starving condition
+        if ($userPet->hunger <= 20 && $userPet->isActive()) {
+            $pool = [
+                "肚子咕咕叫了，好饿呀……(Dùzi gūgū jiào le, hǎo è ya...) Bụng tớ đang réo ùng ục rồi nè, vào phòng cho tớ ăn chút đi mà~ 🥣",
+                "没力气啦，想吃好吃的！(Méi lìqi la, xiǎng chī hǎochī de!) Hết sạch năng lượng rồi, thèm một món ngon do cậu thưởng quá! 🥺",
+            ];
+            $raw = $pool[array_rand($pool)];
+            return array_merge($this->parseDialogue($raw), ['reaction_type' => 'hungry']);
+        }
+
+        // 7. Late night (hour >= 23 or hour < 5)
+        $hour = (int) now()->format('H');
+        if ($hour >= 23 || $hour < 5) {
+            $pool = [
+                "夜深了，注意休息哦。(Yè shēn le, zhùyì xiūxi ó.) Khuya lắm rồi... học bài xong nhớ ngủ sớm giữ gìn sức khỏe nhé, mai gặp lại! 🌙",
+                "快去睡觉吧，明天见！(Kuài qù shuìjiào ba, míngtiān jiàn!) Đi ngủ thật ngon thôi nào, chúc bạn học của tớ có giấc mơ đẹp! 💤",
+            ];
+            $raw = $pool[array_rand($pool)];
+            return array_merge($this->parseDialogue($raw), ['reaction_type' => 'night']);
+        }
+
+        // 8. Page context (35% chance if specific page)
+        if (rand(1, 100) <= 35 && in_array($pageContext, ['flashcard', 'quiz', 'lesson'], true)) {
+            if ($pageContext === 'flashcard') {
+                $raw = "一张一张翻，把生词都记住！(Yī zhāng yī zhāng fān, bǎ shēngcí dōu jìzhù!) Lật từng tấm thẻ thật tập trung, cùng làm chủ toàn bộ chữ Hán nào! 🃏";
+                return array_merge($this->parseDialogue($raw), ['reaction_type' => 'context_flashcard']);
+            }
+            if ($pageContext === 'quiz') {
+                $raw = "仔细读题，你可以拿满分的！(Zǐxì dú tí, nǐ kěyǐ ná mǎnfēn de!) Đọc đề thật cẩn thận nha, tớ tin cậu chắc chắn sẽ đạt điểm tuyệt đối! 🎯";
+                return array_merge($this->parseDialogue($raw), ['reaction_type' => 'context_quiz']);
+            }
+            if ($pageContext === 'lesson') {
+                $raw = "循序渐进，一课一课通关！(Xúnxù jiànjìn, yī kè yī kè tōngguān!) Từng bước vững chắc, chinh phục từng bài học một cách tự tin nhé! 📖";
+                return array_merge($this->parseDialogue($raw), ['reaction_type' => 'context_lesson']);
+            }
+        }
+
+        // 9. Standard Poke Dialogue conditioned on Interaction Memory Tier!
+        if ($level === 'soulmate') {
+            $pool = [
+                "你真的很喜欢戳我呀！(Nǐ zhēn de hěn xǐhuan chuō wǒ ya!) Cậu thực sự thích chọc tớ ghê á! Thôi cho cậu chọc đó, có cậu ở cạnh vui lắm~ ❤️",
+                "无论什么时候，我都在你身边。(Wúlùn shénme shíhou, wǒ dōu zài nǐ shēnbiān.) Bất kể lúc nào, tớ cũng luôn ở đây đồng hành học tiếng Trung cùng cậu! 🥰",
+                "我们是最好的学习搭档！(Wǒmen shì zuì hǎo de xuéxí dādàng!) Đôi bạn học tuyệt vời nhất quả đất chính là chúng mình! 🐉✨",
+            ];
+        } elseif ($level === 'familiar') {
+            $pool = [
+                "又来了…… 找我有事吗？(Yòu lái le... Zhǎo wǒ yǒu shì ma?) Lại trêu tớ rồi... Có chữ nào khó hiểu cần tớ giúp không nào? 🔍",
+                "嗨！今天状态看起来不错！(Hāi! Jīntiān zhuàngtài kàn qǐlai bùcuò!) Chào cậu! Trông tinh thần học tập hôm nay của cậu đỉnh quá nè! ☀️",
+                "我们已经越来越有默契了！(Wǒmen yǐjīng yuè lái yuè yǒu mòqì le!) Chúng mình ngày càng hiểu ý nhau hơn rồi đó, học tiếp thôi! 🍵",
+            ];
+        } else {
+            // Newcomer
+            $pool = [
+                "哎呀，你碰我啦！(Āiyā, nǐ pèng wǒ la!) Oái, cậu vừa chạm vào tớ kìa! Chào bạn học mới nhé! ✨",
+                "你好呀！今天我们学什么？(Nǐ hǎo ya! Jīntiān wǒmen xué shénme?) Xin chào! Hôm nay chúng mình sẽ cùng học nội dung gì nào? 🎈",
+                "初次见面，请多关照哦！(Chūcì jiànmiàn, qǐng duō guānzhào ó!) Lần đầu đồng hành, hãy chiếu cố và giúp đỡ tớ nhiều nha! 🌸",
+            ];
+        }
+
+        $raw = $pool[array_rand($pool)];
+        return array_merge($this->parseDialogue($raw), ['reaction_type' => 'memory_' . $level]);
+    }
 }
