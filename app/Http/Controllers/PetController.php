@@ -393,6 +393,137 @@ class PetController extends Controller
     }
 
     /**
+     * GET /student/pet/mini-quiz — Fetch a fresh, non-repeating mini pop quiz question.
+     */
+    public function miniQuiz(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        // Parse excluded word IDs passed from client history
+        $excludeIds = array_filter(array_map('intval', explode(',', (string) $request->query('exclude_ids', ''))));
+
+        // 1. Try to fetch from user's reviewed/mastered flashcards first
+        $userCardQuery = \App\Models\FlashcardProgress::where('user_id', $user->id);
+        if (!empty($excludeIds)) {
+            $userCardQuery->whereNotIn('flashcard_id', $excludeIds);
+        }
+        $userCardId = (clone $userCardQuery)->inRandomOrder()->value('flashcard_id');
+
+        $card = null;
+        if ($userCardId) {
+            $card = \App\Models\Flashcard::where('id', $userCardId)
+                ->whereNotNull('hanzi')
+                ->whereNotNull('meaning')
+                ->first();
+        }
+
+        // 2. If no user card available or all excluded, fetch from general active flashcards
+        if (!$card) {
+            $cardQuery = \App\Models\Flashcard::whereNotNull('hanzi')
+                ->whereNotNull('meaning')
+                ->where('is_active', true);
+            if (!empty($excludeIds)) {
+                $cardQuery->whereNotIn('id', $excludeIds);
+            }
+            $card = $cardQuery->inRandomOrder()->first();
+        }
+
+        // 3. Fallback if still null (all excluded in small db) -> reset exclusion and pick any
+        if (!$card) {
+            $card = \App\Models\Flashcard::whereNotNull('hanzi')
+                ->whereNotNull('meaning')
+                ->where('is_active', true)
+                ->inRandomOrder()
+                ->first();
+        }
+
+        // Fallback default if DB has no flashcards at all
+        if (!$card) {
+            return response()->json([
+                'success'   => true,
+                'word_id'   => 0,
+                'quiz_type' => 'hanzi_to_meaning',
+                'question'  => 'Chữ 「学习」[xuéxí] có nghĩa là gì?',
+                'word'      => '学习',
+                'pinyin'    => 'xuéxí',
+                'meaning'   => 'Học tập',
+                'options'   => ['Học tập', 'Ăn cơm', 'Nước uống', 'Đi ngủ'],
+                'correct'   => 'Học tập',
+            ]);
+        }
+
+        // Determine quiz format:
+        // Format A (70%): Hanzi -> Meaning
+        // Format B (30%): Meaning -> Hanzi
+        $quizType = (rand(1, 10) <= 7) ? 'hanzi_to_meaning' : 'meaning_to_hanzi';
+
+        if ($quizType === 'meaning_to_hanzi') {
+            $hanziDistractors = \App\Models\Flashcard::where('id', '!=', $card->id)
+                ->whereNotNull('hanzi')
+                ->where('hanzi', '!=', $card->hanzi)
+                ->inRandomOrder()
+                ->limit(3)
+                ->pluck('hanzi')
+                ->toArray();
+
+            $backupHanzi = ['谢谢', '你好', '再见', '老师', '朋友', '苹果', '喝水', '看书'];
+            foreach ($backupHanzi as $bh) {
+                if (count($hanziDistractors) >= 3) break;
+                if ($bh !== $card->hanzi && !in_array($bh, $hanziDistractors, true)) {
+                    $hanziDistractors[] = $bh;
+                }
+            }
+
+            $options = array_merge([$card->hanzi], array_slice($hanziDistractors, 0, 3));
+            shuffle($options);
+
+            return response()->json([
+                'success'   => true,
+                'word_id'   => $card->id,
+                'quiz_type' => $quizType,
+                'question'  => "Từ có nghĩa là \"{$card->meaning}\" trong tiếng Trung viết thế nào?",
+                'word'      => $card->hanzi,
+                'pinyin'    => $card->pinyin,
+                'meaning'   => $card->meaning,
+                'options'   => $options,
+                'correct'   => $card->hanzi,
+            ]);
+        }
+
+        // Default: Hanzi -> Meaning
+        $distractors = \App\Models\Flashcard::where('id', '!=', $card->id)
+            ->whereNotNull('meaning')
+            ->where('meaning', '!=', $card->meaning)
+            ->inRandomOrder()
+            ->limit(3)
+            ->pluck('meaning')
+            ->toArray();
+
+        $fillers = ['Học tập', 'Ăn cơm', 'Uống nước', 'Đi ngủ', 'Bạn bè', 'Trường học', 'Gia đình', 'Cảm ơn', 'Tạm biệt'];
+        foreach ($fillers as $f) {
+            if (count($distractors) >= 3) break;
+            if ($f !== $card->meaning && !in_array($f, $distractors, true)) {
+                $distractors[] = $f;
+            }
+        }
+
+        $options = array_merge([$card->meaning], array_slice($distractors, 0, 3));
+        shuffle($options);
+
+        return response()->json([
+            'success'   => true,
+            'word_id'   => $card->id,
+            'quiz_type' => 'hanzi_to_meaning',
+            'question'  => "Chữ 「{$card->hanzi}」" . ($card->pinyin ? "[{$card->pinyin}]" : '') . " có nghĩa là gì?",
+            'word'      => $card->hanzi,
+            'pinyin'    => $card->pinyin,
+            'meaning'   => $card->meaning,
+            'options'   => $options,
+            'correct'   => $card->meaning,
+        ]);
+    }
+
+    /**
      * POST /student/pet/mini-quiz-reward — Server-authoritative XP reward for mascot mini pop quiz.
      */
     public function miniQuizReward(Request $request, \App\Services\LearningActivityService $activityService): JsonResponse

@@ -917,6 +917,59 @@ class PetSystemTest extends TestCase
         $resDup->assertStatus(200);
         $this->assertEquals(0, $resDup->json('xp_earned'));
     }
+
+    // =========================================================================
+    // Test 30: Mini Quiz Endpoint returns rotating questions and respects exclude_ids
+    // =========================================================================
+
+    public function test_mini_quiz_endpoint_returns_questions_and_respects_exclude_ids(): void
+    {
+        $card1 = \App\Models\Flashcard::create([
+            'hanzi'   => '学习',
+            'pinyin'  => 'xuéxí',
+            'meaning' => 'Học tập',
+            'hsk_level' => 1,
+            'is_active' => true,
+        ]);
+
+        $card2 = \App\Models\Flashcard::create([
+            'hanzi'   => '朋友',
+            'pinyin'  => 'péngyou',
+            'meaning' => 'Bạn bè',
+            'hsk_level' => 1,
+            'is_active' => true,
+        ]);
+
+        $card3 = \App\Models\Flashcard::create([
+            'hanzi'   => '高兴',
+            'pinyin'  => 'gāoxìng',
+            'meaning' => 'Vui mừng',
+            'hsk_level' => 1,
+            'is_active' => true,
+        ]);
+
+        $card4 = \App\Models\Flashcard::create([
+            'hanzi'   => '苹果',
+            'pinyin'  => 'píngguǒ',
+            'meaning' => 'Quả táo',
+            'hsk_level' => 1,
+            'is_active' => true,
+        ]);
+
+        $res1 = $this->actingAs($this->user)->getJson(route('pet.mini-quiz'));
+        $res1->assertStatus(200);
+        $res1->assertJsonPath('success', true);
+        $this->assertNotEmpty($res1->json('question'));
+        $this->assertCount(4, $res1->json('options'));
+
+        $firstWordId = $res1->json('word_id');
+        $this->assertNotNull($firstWordId);
+
+        // Exclude first card
+        $res2 = $this->actingAs($this->user)->getJson(route('pet.mini-quiz', ['exclude_ids' => $firstWordId]));
+        $res2->assertStatus(200);
+        $this->assertNotEquals($firstWordId, $res2->json('word_id'));
+    }
 }
 
 

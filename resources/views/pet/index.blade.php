@@ -42,8 +42,29 @@ window.petRoom = function petRoom(config) {
         activeHotspot: null,
 
         // Model Action States for Vuốt ve, Trò chuyện, Mời trà, Ru ngủ
-        currentAction: null, // 'petting' | 'talking' | 'tea' | 'sleep' | 'waking' | null
+        currentAction: null, // 'petting' | 'talking' | 'tea' | 'sleep' | 'waking' | 'dizzy' | 'surprised' | null
         actionTimeout: null,
+        roomConsecutivePokes: 0,
+        roomLastPokeTime: 0,
+        roomConsecutiveTimer: null,
+
+        getPetExpression() {
+            if (this.currentAction === 'dizzy' || this.petEmote === 'dizzy') return 'dizzy';
+            if (this.eatingPhase === 'eating') return 'eating';
+            if (this.eatingPhase === 'satisfied') return 'satisfied';
+            if (this.currentAction === 'tea') return 'tea';
+            if (this.currentAction === 'surprised') return 'surprised';
+            if (this.currentAction === 'petting') return 'petting';
+            if (this.currentAction === 'talking') return 'talking';
+            if (this.currentAction === 'sleep' || this.petEmote === 'sleep') return 'sleeping';
+            if (this.currentAction === 'waking') return 'waking';
+            if (this.petEmote === 'love' || this.petEmote === 'cuddle') return 'cuddle';
+            if (this.petEmote === 'surprised') return 'surprised';
+            if (this.petEmote === 'happy' || this.petEmote === 'blush') return 'happy';
+            if (this.hunger <= 20) return 'hungry';
+            if (this.hungerState === 'dormant') return 'sleeping';
+            return 'idle';
+        },
 
         // Audio reactivity
         sfxEnabled: (window.PetAudioEngine ? window.PetAudioEngine.isSfxEnabled() : true),
@@ -338,10 +359,57 @@ window.petRoom = function petRoom(config) {
         },
 
         pokePet() {
+            const now = Date.now();
+            if (now - this.roomLastPokeTime < 1000) {
+                this.roomConsecutivePokes++;
+            } else {
+                this.roomConsecutivePokes = 1;
+            }
+            this.roomLastPokeTime = now;
+
+            if (this.roomConsecutiveTimer) clearTimeout(this.roomConsecutiveTimer);
+            this.roomConsecutiveTimer = setTimeout(() => {
+                this.roomConsecutivePokes = 0;
+            }, 3500);
+
+            if (this.roomConsecutivePokes >= 6) {
+                this.roomConsecutivePokes = 0;
+                this.currentAction = 'dizzy';
+                this.triggerPetEmote('dizzy');
+                if (window.PetAudioEngine?.chirp) {
+                    window.PetAudioEngine.chirp(1.4);
+                } else if (window.PetAudioEngine?.pop) {
+                    window.PetAudioEngine.pop();
+                }
+                const dizzyLines = [
+                    "头好晕呀，转圈圈了……(Tóu hǎo yūn ya, zhuànquānquān le...) Chóng mặt quá đi... Trời đất quay cuồng rồi nè cậu ơi @ @ 💫",
+                    "别戳啦，眼冒金星啦！(Bié chuō la, yǎn mào jīnxīng la!) Đừng chọc nữa mà, tớ thấy sao bay đầy đầu rồi nè! 💫",
+                    "晕乎乎的，让我缓一缓……(Yūnhūhū de, ràng wǒ huǎn yī huǎn...) Lảo đảo quá chừng... Cho tớ định thần lại một xíu nha 😵",
+                ];
+                const chosenDizzy = dizzyLines[Math.floor(Math.random() * dizzyLines.length)];
+                this.setDialogue(chosenDizzy, true);
+
+                if (this.actionTimeout) clearTimeout(this.actionTimeout);
+                this.actionTimeout = setTimeout(() => {
+                    if (this.currentAction === 'dizzy') {
+                        this.currentAction = null;
+                        this.triggerPetEmote('happy');
+                    }
+                }, 3000);
+                return;
+            }
+
+            // Normal poke: Instant surprise blink (O O) for 450ms, then soft blushing smile
             if (window.PetAudioEngine) window.PetAudioEngine.pop();
             if (this.actionTimeout) clearTimeout(this.actionTimeout);
-            this.currentAction = 'petting';
+            this.currentAction = 'surprised';
             this.triggerPetEmote('blush');
+
+            setTimeout(() => {
+                if (this.currentAction === 'surprised') {
+                    this.currentAction = 'petting';
+                }
+            }, 450);
             
             const responses = {
                 playful: [
@@ -1142,6 +1210,12 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                                 <div x-show="currentAction === 'waking'" x-cloak class="absolute inset-0 pointer-events-none z-30 flex items-center justify-center">
                                     <span class="text-4xl animate-spin" style="animation-duration: 4s">☀️</span>
                                     <span class="absolute text-2xl animate-ping">✨</span>
+                                </div>
+
+                                {{-- Action Layer 6: Chóng mặt (Dizzy spinning stars) --}}
+                                <div x-show="currentAction === 'dizzy' || petEmote === 'dizzy'" x-cloak class="absolute -top-1 inset-x-0 pointer-events-none z-30 flex justify-center gap-1.5">
+                                    <span class="text-2xl animate-spin" style="animation-duration: 1.2s">💫</span>
+                                    <span class="text-xl animate-ping" style="animation-duration: 0.8s">✨</span>
                                 </div>
 
                                 <x-pet-avatar :stage="$userPet->stage" :mood="$userPet->getHungerState()" :personality="$userPet->personality ?? 'playful'" size="xl" :interactive="true" />

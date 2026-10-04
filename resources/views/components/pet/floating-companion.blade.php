@@ -15,6 +15,7 @@
     feedUrl: '{{ route('pet.feed') }}',
     interactUrl: '{{ route('pet.interact') }}',
     miniQuizRewardUrl: '{{ route('pet.mini-quiz-reward') }}',
+    miniQuizUrl: '{{ route('pet.mini-quiz') }}',
     pageContext: '{{ $pageContext }}'
 })" x-init="initCompanion()" x-cloak
      class="fixed bottom-6 right-4 sm:bottom-6 sm:right-6 z-40 select-none">

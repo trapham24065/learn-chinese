@@ -61,6 +61,7 @@ export function petFloatingCompanion(config = {}) {
         miniQuizAnswered: false,
         miniQuizFeedback: '',
         currentMiniQuiz: null,
+        recentQuizWordIds: [],
 
         // Live Audio Reactive Settings
         sfxEnabled: PetAudioEngine.isSfxEnabled(),
@@ -265,9 +266,28 @@ export function petFloatingCompanion(config = {}) {
             if (this.state === 'reading') return 'Đang cùng học bài 📖';
             if (this.state === 'observing') return 'Đang chăm chú theo dõi 👀';
             if (this.state === 'hungry') return 'Tớ hơi đói... 🥺';
+            if (this.state === 'eating') return 'Nhai nhóp nhép ngon quá... 😋';
             if (this.state === 'petting') return 'Thích quá... ❤️';
-            if (this.state === 'poked') return 'Ủa! 😳';
+            if (this.state === 'cuddle') return 'Ấm áp quá... 🥰';
+            if (this.state === 'dizzy') return 'Chóng mặt quá... 😵';
+            if (this.state === 'poked' || this.state === 'surprised') return 'Ủa! 😳';
             return this.pet?.name || 'Pet đồng hành';
+        },
+
+        getPetExpression() {
+            if (this.state === 'dizzy') return 'dizzy';
+            if (this.state === 'cuddle') return 'cuddle';
+            if (this.state === 'petting') return 'petting';
+            if (this.state === 'happy' || this.state === 'excited') return 'happy';
+            if (this.state === 'poked' || this.state === 'surprised') return 'surprised';
+            if (this.state === 'speaking') return 'talking';
+            if (this.state === 'sleeping') return 'sleeping';
+            if (this.state === 'dozing') return 'dozing';
+            if (this.state === 'waking_up') return 'waking';
+            if (this.state === 'eating') return 'eating';
+            if (this.state === 'tea') return 'tea';
+            if (this.state === 'hungry' || (this.pet && this.pet.hunger < 40)) return 'hungry';
+            return 'idle';
         },
 
         // Primary Single-Click Action & FSM Reactions
@@ -302,7 +322,7 @@ export function petFloatingCompanion(config = {}) {
             let action = 'poke';
             let chosenDialogue = '';
 
-            // 3. FSM reaction branch
+            // 3. FSM reaction branch with genuine facial expression changes
             if (consecutive >= 6) {
                 // Dizzy Easter Egg!
                 action = 'dizzy';
@@ -317,11 +337,11 @@ export function petFloatingCompanion(config = {}) {
                         if (this.speechBubbleOpen) this.state = 'speaking';
                         else this.determineInitialState();
                     }
-                }, 2500);
+                }, 2800);
             } else if (consecutive >= 3) {
                 // Annoyed / Playful consecutive reactions
                 action = 'poke';
-                this.state = 'happy';
+                this.state = 'poked';
                 if (this.canPlayAudio()) {
                     PetAudioEngine.chirp(1.25);
                 }
@@ -331,6 +351,9 @@ export function petFloatingCompanion(config = {}) {
                     "真拿你没办法~ (Zhēn ná nǐ méi bànfǎ~) Thật là hết cách với cậu luôn á~ Chọc hoài à! 🎈"
                 ];
                 chosenDialogue = this.pickNonRepeatingDialogue(consecutivePool);
+                setTimeout(() => {
+                    if (this.state === 'poked') this.state = 'happy';
+                }, 600);
             } else if (consecutive === 2) {
                 // Repeated poke
                 action = 'poke';
@@ -345,16 +368,25 @@ export function petFloatingCompanion(config = {}) {
                     "别急别急，慢慢戳！(Bié jí bié jí, mànman chuō!) Từ từ thôi nào, chọc gì mà vội vàng thế!"
                 ];
                 chosenDialogue = this.pickNonRepeatingDialogue(repeatPool);
+                setTimeout(() => {
+                    if (this.state === 'poked') this.state = 'happy';
+                }, 800);
             } else {
-                // Single-click primary reaction: state & memory aware
+                // Single-click primary reaction: instant surprised blink then happy smile
                 action = 'poke';
-                this.state = 'happy';
+                this.state = 'surprised';
                 this.lifeEngine?.handlePoke();
                 if (this.canPlayAudio()) {
                     PetAudioEngine.pop();
                     PetAudioEngine.chirp(1.1);
                 }
                 this.spawnHeart();
+
+                setTimeout(() => {
+                    if (this.state === 'surprised') {
+                        this.state = 'happy';
+                    }
+                }, 450);
 
                 chosenDialogue = this.determineResponsiveDialogue();
             }
@@ -606,31 +638,68 @@ export function petFloatingCompanion(config = {}) {
             this.scheduleBubbleAutoDismiss();
         },
 
-        startMiniQuiz() {
+        async startMiniQuiz() {
             this.miniQuizActive = true;
             this.miniQuizAnswered = false;
             this.miniQuizFeedback = '';
             this.speechBubbleOpen = true;
 
-            const vocab = this.pet?.random_word || {
-                hanzi: '学习',
-                pinyin: 'xuéxí',
-                meaning: 'Học tập'
-            };
+            // Fetch a fresh, non-repeating quiz from server
+            let quiz = null;
+            try {
+                const endpoint = config.miniQuizUrl || '/student/pet/mini-quiz';
+                const excludeQuery = (this.recentQuizWordIds && this.recentQuizWordIds.length > 0)
+                    ? `?exclude_ids=${this.recentQuizWordIds.join(',')}`
+                    : '';
+                const res = await fetch(`${endpoint}${excludeQuery}`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.success && data.options && data.options.length > 0) {
+                        quiz = data;
+                    }
+                }
+            } catch (e) {
+                // Network failure fallback
+            }
 
-            const distractors = ['Ăn cơm', 'Nước uống', 'Đi ngủ', 'Bạn bè', 'Trường học', 'Gia đình', 'Cảm ơn']
-                .filter(d => d !== vocab.meaning)
-                .sort(() => 0.5 - Math.random())
-                .slice(0, 3);
+            // Rich rotating fallback pool (20 diverse vocabulary items) if server request failed
+            if (!quiz) {
+                const fallbackPool = [
+                    { word_id: 101, word: '学习', pinyin: 'xuéxí', question: 'Chữ 「学习」[xuéxí] có nghĩa là gì?', correct: 'Học tập', options: ['Học tập', 'Ăn cơm', 'Uống nước', 'Đi ngủ'] },
+                    { word_id: 102, word: '朋友', pinyin: 'péngyou', question: 'Chữ 「朋友」[péngyou] có nghĩa là gì?', correct: 'Bạn bè', options: ['Bạn bè', 'Thầy cô', 'Gia đình', 'Bác sĩ'] },
+                    { word_id: 103, word: '高兴', pinyin: 'gāoxìng', question: 'Chữ 「高兴」[gāoxìng] có nghĩa là gì?', correct: 'Vui mừng', options: ['Vui mừng', 'Tức giận', 'Buồn bã', 'Mệt mỏi'] },
+                    { word_id: 104, word: '谢谢', pinyin: 'xièxie', question: 'Chữ 「谢谢」[xièxie] có nghĩa là gì?', correct: 'Cảm ơn', options: ['Cảm ơn', 'Tạm biệt', 'Xin chào', 'Không có gì'] },
+                    { word_id: 105, word: '苹果', pinyin: 'píngguǒ', question: 'Chữ 「苹果」[píngguǒ] có nghĩa là gì?', correct: 'Quả táo', options: ['Quả táo', 'Quả chuối', 'Quả dưa', 'Quả đào'] },
+                    { word_id: 106, word: '喝茶', pinyin: 'hē chá', question: 'Từ 「喝茶」[hē chá] có nghĩa là gì?', correct: 'Uống trà', options: ['Uống trà', 'Ăn cơm', 'Nấu ăn', 'Rửa bát'] },
+                    { word_id: 107, word: '学校', pinyin: 'xuéxiào', question: 'Chữ 「学校」[xuéxiào] có nghĩa là gì?', correct: 'Trường học', options: ['Trường học', 'Bệnh viện', 'Ngân hàng', 'Sân bay'] },
+                    { word_id: 108, word: '再见', pinyin: 'zàijiàn', question: 'Chữ 「再见」[zàijiàn] có nghĩa là gì?', correct: 'Tạm biệt', options: ['Tạm biệt', 'Hẹn gặp lại', 'Xin lỗi', 'Hoan nghênh'] },
+                    { word_id: 109, word: '老师', pinyin: 'lǎoshī', question: 'Chữ 「老师」[lǎoshī] có nghĩa là gì?', correct: 'Thầy cô giáo', options: ['Thầy cô giáo', 'Học sinh', 'Hiệu trưởng', 'Bạn học'] },
+                    { word_id: 110, word: '天气', pinyin: 'tiānqì', question: 'Chữ 「天气」[tiānqì] có nghĩa là gì?', correct: 'Thời tiết', options: ['Thời tiết', 'Mùa xuân', 'Bầu trời', 'Ánh nắng'] },
+                    { word_id: 111, word: '喜欢', pinyin: 'xǐhuan', question: 'Chữ 「喜欢」[xǐhuan] có nghĩa là gì?', correct: 'Thích', options: ['Thích', 'Ghét', 'Sợ', 'Yêu thương'] },
+                    { word_id: 112, word: '明天', pinyin: 'míngtiān', question: 'Chữ 「明天」[míngtiān] có nghĩa là gì?', correct: 'Ngày mai', options: ['Ngày mai', 'Hôm nay', 'Hôm qua', 'Năm sau'] },
+                    { word_id: 113, word: '漂亮', pinyin: 'piàoliang', question: 'Chữ 「漂亮」[piàoliang] có nghĩa là gì?', correct: 'Xinh đẹp', options: ['Xinh đẹp', 'Thông minh', 'Dễ thương', 'Hiền lành'] },
+                    { word_id: 114, word: '中文', pinyin: 'zhōngwén', question: 'Chữ 「中文」[zhōngwén] có nghĩa là gì?', correct: 'Tiếng Trung', options: ['Tiếng Trung', 'Chữ Hán', 'Tiếng Anh', 'Văn hóa'] },
+                    { word_id: 115, word: '中国', pinyin: 'zhōngguó', question: 'Từ có nghĩa là "Trung Quốc" viết thế nào?', correct: '中国', options: ['中国', '美国', '英国', '越南'] }
+                ];
 
-            const options = [vocab.meaning, ...distractors].sort(() => 0.5 - Math.random());
+                const available = fallbackPool.filter(p => !this.recentQuizWordIds.includes(p.word_id));
+                const candidates = available.length > 0 ? available : fallbackPool;
+                const picked = candidates[Math.floor(Math.random() * candidates.length)];
+                quiz = {
+                    ...picked,
+                    options: [...picked.options].sort(() => 0.5 - Math.random())
+                };
+            }
 
-            this.currentMiniQuiz = {
-                question: `Chữ 「${vocab.hanzi}」[${vocab.pinyin}] có nghĩa là gì?`,
-                word: vocab.hanzi,
-                options: options,
-                correct: vocab.meaning,
-            };
+            this.currentMiniQuiz = quiz;
+            if (quiz.word_id) {
+                this.recentQuizWordIds.push(quiz.word_id);
+                if (this.recentQuizWordIds.length > 20) {
+                    this.recentQuizWordIds.shift();
+                }
+            }
 
             setTimeout(() => window.refreshIcons?.(), 50);
         },
@@ -641,7 +710,13 @@ export function petFloatingCompanion(config = {}) {
 
             const isCorrect = (selected === this.currentMiniQuiz.correct);
 
+            // Audio & pronunciation reinforcement
+            if (this.currentMiniQuiz?.word && this.voiceEnabled) {
+                PetVoiceManager.speak(this.currentMiniQuiz.word);
+            }
+
             if (isCorrect) {
+                this.state = 'excited';
                 this.miniQuizFeedback = '🎉 Chính xác! Đang nhận +2 XP thưởng...';
                 if (this.canPlayAudio()) {
                     PetAudioEngine.celebration();
@@ -677,6 +752,7 @@ export function petFloatingCompanion(config = {}) {
                     this.miniQuizFeedback = '🎉 Chính xác!';
                 }
             } else {
+                this.state = 'surprised';
                 this.miniQuizFeedback = `Chưa đúng rồi! Đáp án là "${this.currentMiniQuiz.correct}"`;
                 if (this.canPlayAudio()) {
                     PetAudioEngine.pop();
@@ -812,14 +888,17 @@ export function petFloatingCompanion(config = {}) {
                         PetEventBus.emit('pet:evolved', { new_stage: data.new_stage });
                         setTimeout(() => { this.state = 'happy'; }, 3200);
                     } else {
-                        this.state = 'happy';
+                        this.state = 'eating';
                         const foodLabel = data.food ? `${data.food.emoji} ${data.food.hanzi}: ` : '';
                         const reaction = data.food_reaction || `+${data.xp_fed} EXP thành công!`;
                         this.feedNotice = `${foodLabel}${reaction}`;
                         setTimeout(() => {
-                            if (this.speechBubbleOpen) this.state = 'speaking';
-                            else this.determineInitialState();
-                        }, 2500);
+                            this.state = 'happy';
+                            setTimeout(() => {
+                                if (this.speechBubbleOpen) this.state = 'speaking';
+                                else this.determineInitialState();
+                            }, 1800);
+                        }, 1600);
                     }
                     setTimeout(() => { this.feedNotice = ''; }, 4500);
                     this.scheduleBubbleAutoDismiss();
