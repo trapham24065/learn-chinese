@@ -12,6 +12,9 @@ window.petRoom = function petRoom(config) {
         hungerState: config.userPet?.hunger_state || 'happy',
         currentDialogue: config.currentDialogue || 'Cùng học tiếng Trung chăm chỉ nhé!',
         dialogues: config.dialogues || [],
+        richDialogues: config.richDialogues || [],
+        currentDialogueObj: null,
+        dialogueHistory: [], // Stores recently spoken dialogue keys/audio_texts to prevent repetitive loops
         dialogueIndex: 0,
         masteredWords: config.masteredWords || [],
         vocabSearch: '',
@@ -69,6 +72,92 @@ window.petRoom = function petRoom(config) {
         savingPersonality: false,
         personalityMessage: '',
 
+        /**
+         * Parse any dialogue item into a structured object with Chinese, Pinyin, Vietnamese, and clean audio text.
+         */
+        parseDialogueItem(item) {
+            if (!item) {
+                return {
+                    chinese: '你好呀！',
+                    pinyin: 'Nǐ hǎo ya!',
+                    vietnamese: 'Cùng học tiếng Trung chăm chỉ nhé!',
+                    audio_text: '你好呀！',
+                    full_text: '你好呀！(Nǐ hǎo ya!) Cùng học tiếng Trung chăm chỉ nhé!'
+                };
+            }
+            if (typeof item === 'object' && item.chinese) {
+                return item;
+            }
+            const str = String(item).trim();
+            // Match pattern: "Chinese (Pinyin) Vietnamese" or "Chinese（Pinyin）Vietnamese"
+            const match = str.match(/^([^\(\)（）]+?)\s*[\(（]([^\(\)（）]+?)[\)）]\s*(.*)$/u);
+            if (match) {
+                const chineseRaw = match[1].trim();
+                const pinyin = match[2].trim();
+                const vietnamese = match[3].trim();
+                const audioText = chineseRaw.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{1F018}-\u{1F270}]/gu, '').trim() || chineseRaw;
+                return {
+                    chinese: chineseRaw,
+                    pinyin: pinyin,
+                    vietnamese: vietnamese,
+                    audio_text: audioText,
+                    full_text: str
+                };
+            }
+            // Fallback: extract Hanzi characters
+            const cnMatches = str.match(/[\u4e00-\u9fa5，。？！、\s]+/g);
+            if (cnMatches && cnMatches.length > 0) {
+                const cnStr = cnMatches.join('').trim();
+                return {
+                    chinese: cnStr || '你好！',
+                    pinyin: '',
+                    vietnamese: str,
+                    audio_text: cnStr || '你好！',
+                    full_text: str
+                };
+            }
+            return {
+                chinese: '你好呀！',
+                pinyin: 'Nǐ hǎo ya!',
+                vietnamese: str,
+                audio_text: '你好呀！',
+                full_text: str
+            };
+        },
+
+        /**
+         * Set current dialogue state and optionally play synchronized voice.
+         */
+        setDialogue(item, playAudio = false) {
+            const parsed = this.parseDialogueItem(item);
+            this.currentDialogueObj = parsed;
+            this.currentDialogue = parsed.full_text || `${parsed.chinese} (${parsed.pinyin}) ${parsed.vietnamese}`;
+
+            if (parsed.audio_text) {
+                this.dialogueHistory.push(parsed.audio_text);
+                if (this.dialogueHistory.length > 8) {
+                    this.dialogueHistory.shift();
+                }
+            }
+
+            if (playAudio) {
+                this.speakCurrentDialogue();
+            }
+        },
+
+        /**
+         * Speak the exact Chinese text corresponding to the currently displayed dialogue.
+         */
+        speakCurrentDialogue() {
+            const textToSpeak = this.currentDialogueObj?.audio_text || this.currentDialogueObj?.chinese;
+            if (textToSpeak) {
+                this.speakWord(textToSpeak);
+            } else {
+                const cnMatch = (this.currentDialogue || '').match(/[\u4e00-\u9fa5]+/g);
+                this.speakWord(cnMatch ? cnMatch.join('') : '你好！');
+            }
+        },
+
         async selectPersonality(type) {
             if (this.savingPersonality || this.personality === type) return;
             this.savingPersonality = true;
@@ -89,8 +178,11 @@ window.petRoom = function petRoom(config) {
                     this.personalityLabel = data.label;
                     this.personalityEmoji = data.emoji;
                     this.personalityDesc = data.description;
-                    if (data.random_dialogue) this.currentDialogue = data.random_dialogue;
                     if (data.dialogues) this.dialogues = data.dialogues;
+                    if (data.rich_dialogues) this.richDialogues = data.rich_dialogues;
+                    if (data.random_dialogue) {
+                        this.setDialogue(data.random_dialogue, false);
+                    }
                     this.personalityMessage = data.message;
                     if (window.PetAudioEngine) {
                         window.PetAudioEngine.pop();
@@ -111,6 +203,15 @@ window.petRoom = function petRoom(config) {
             this.realtimeInterval = setInterval(() => {
                 this.updateRealtimeScenery();
             }, 30000);
+
+            // Initialize structured dialogue object
+            if (this.richDialogues && this.richDialogues.length > 0) {
+                const initial = this.richDialogues.find(d => d.full_text === this.currentDialogue) || this.richDialogues[0];
+                this.setDialogue(initial, false);
+            } else {
+                this.setDialogue(this.currentDialogue, false);
+            }
+
             setTimeout(() => window.refreshIcons?.(), 100);
         },
 
@@ -199,11 +300,28 @@ window.petRoom = function petRoom(config) {
             setTimeout(() => window.refreshIcons?.(), 50);
         },
 
-        nextDialogue() {
-            if (!this.dialogues || this.dialogues.length === 0) return;
-            this.dialogueIndex = (this.dialogueIndex + 1) % this.dialogues.length;
-            this.currentDialogue = this.dialogues[this.dialogueIndex];
-            if (window.PetAudioEngine) {
+        nextDialogue(playAudio = false) {
+            const pool = (this.richDialogues && this.richDialogues.length > 0)
+                ? this.richDialogues
+                : (this.dialogues && this.dialogues.length > 0 ? this.dialogues : []);
+            
+            if (!pool || pool.length === 0) return;
+
+            // Anti-repetition: pick candidate not in recent history
+            let candidates = pool.filter(item => {
+                const key = typeof item === 'object' ? item.audio_text : item;
+                return !this.dialogueHistory.includes(key);
+            });
+
+            if (candidates.length === 0) {
+                this.dialogueHistory = [];
+                candidates = pool;
+            }
+
+            const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+            this.setDialogue(chosen, playAudio);
+
+            if (!playAudio && window.PetAudioEngine) {
                 window.PetAudioEngine.pop();
             }
         },
@@ -226,16 +344,44 @@ window.petRoom = function petRoom(config) {
             this.triggerPetEmote('blush');
             
             const responses = {
-                playful: ['Hi hi! Nhột quá nè~ Cậu muốn chơi đố chữ với tớ à? 😆', 'Oái! Cậu chọc tớ làm tớ cười nghiêng ngả luôn nè~ ✨', 'Haha, tớ cũng chọc lại cậu nè! Học tiếp thôi nào! 🎈'],
-                curious: ['Ủa? Cậu chạm tớ có việc gì thế? Có chữ Hán nào cần tra cứu không? 👀', 'Mắt tớ đang dõi theo con trỏ của cậu này! Có gì hay ho thế? 🔍', 'Ồ! Cậu muốn tớ kể nghe chuyện gì về chữ Hán hôm nay à? ✨'],
-                shy: ['Ưm... cậu xoa đầu làm tớ ngại ghê á... nhưng mà ấm áp lắm 😳', 'Hì hì... có cậu ở cạnh học cùng tớ vui lắm, mà hơi thẹn chút... 🌸', 'Tớ... tớ thích cậu vuốt ve như vậy lắm á... ❤️'],
-                cheerful: ['Cậu chạm tớ một cái là tớ thấy tràn đầy năng lượng liền! ❤️', 'Yay! Hôm nay chúng mình nhất định sẽ học thuộc thật nhiều từ mới! 🌟', 'Vui quá đi! Được làm bạn học cùng cậu là tuyệt nhất trần đời! 🥳'],
-                calm: ['Cảm nhận được sự ấm áp từ cậu rồi... Cảm ơn cậu luôn kiên nhẫn cùng tớ nhé 😊', 'Hít thở một hơi thật sâu nào. Chúng mình cứ từ từ học, không cần vội vã 🍵', 'Bình yên bên cạnh cậu... Cùng mở sách ôn lại bài học nhé 🌿']
+                playful: [
+                    "哎呀，好痒呀！(Āiyā, hǎo yǎng ya!) Hi hi! Nhột quá nè~ Cậu muốn chơi đố chữ với tớ à? 😆",
+                    "哇！吓我一跳！(Wā! Xià wǒ yí tiào!) Oái! Cậu chọc tớ làm tớ cười nghiêng ngả luôn nè~ ✨",
+                    "我也戳戳你，快去学习！(Wǒ yě chuōchuō nǐ, kuài qù xuéxí!) Haha, tớ cũng chọc lại cậu nè! Học tiếp thôi nào! 🎈",
+                    "哈哈，猜猜我在想什么？(Hāha, cāicai wǒ zài xiǎng shénme?) Đố cậu biết tớ đang nhớ từ vựng nào đấy? Đoán thử xem! 😜",
+                ],
+                curious: [
+                    "咦？有什么新发现吗？(Yí? Yǒu shénme xīn fāxiàn ma?) Ủa? Cậu chạm tớ có việc gì thế? Có chữ Hán nào cần tra cứu không? 👀",
+                    "我在看着你呢，发现新问题了？(Wǒ zài kànzhe nǐ ne, fāxiàn xīn wèntí le?) Mắt tớ đang dõi theo con trỏ của cậu này! Có gì hay ho thế? 🔍",
+                    "今天有什么有趣的故事？(Jīntiān yǒu shénme yǒuqù de gùshi?) Ồ! Cậu muốn tớ kể nghe chuyện gì về chữ Hán hôm nay à? ✨",
+                    "快告诉我新的中文知识！(Kuài gàosu wǒ xīn de zhōngwén zhīshi!) Mau bật mí cho tớ nghe kiến thức tiếng Trung mới cậu vừa học nào! 📚",
+                ],
+                shy: [
+                    "摸摸头……有点害羞呢。(Mō mō tóu... yǒudiǎn hàixiū ne.) Ưm... cậu xoa đầu làm tớ ngại ghê á... nhưng mà ấm áp lắm 😳",
+                    "有你陪着，心里暖暖的。(Yǒu nǐ péizhe, xīnlǐ nuǎnnuǎn de.) Hì hì... có cậu ở cạnh học cùng tớ vui lắm, mà hơi thẹn chút... 🌸",
+                    "你真好，我喜欢和你一起。(Nǐ zhēn hǎo, wǒ xǐhuan hé nǐ yīqǐ.) Cậu tốt bụng quá... Tớ thích được cùng cậu luyện bài mỗi ngày ❤️",
+                    "脸红啦，我们悄悄学中文。(Liǎnhóng la, wǒmen qiāoqiāo xué zhōngwén.) Má tớ đỏ ửng rồi nè... Chúng mình cùng thì thầm học chữ mới nhé 🙈",
+                ],
+                cheerful: [
+                    "充满活力！今天一起冲刺！(Chōngmǎn huólì! Jīntiān yīqǐ chōngcì!) Cậu chạm tớ một cái là tớ thấy tràn đầy năng lượng liền! ❤️",
+                    "太棒啦！今天一定大丰收！(Tài bàng la! Jīntiān yídìng dà fēngshōu!) Yay! Hôm nay chúng mình nhất định sẽ thuộc thật nhiều từ mới! 🌟",
+                    "好开心！我们是最好的搭档！(Hǎo kāixīn! Wǒmen shì zuì hǎo de dādàng!) Vui quá đi! Được làm bạn học cùng cậu là tuyệt nhất trần đời! 🥳",
+                    "加油加油，没有什么能难倒我们！(Jiāyóu jiāyóu, méiyǒu shénme néng nándǎo wǒmen!) Cố lên nào! Không có bài HSK nào làm khó được đôi bạn này! ☀️",
+                ],
+                calm: [
+                    "心如止水，感受这份温暖。(Xīn rú zhǐ shuǐ, gǎnshòu zhè fèn wēnnuǎn.) Cảm nhận được sự ấm áp từ cậu rồi... Cảm ơn cậu luôn kiên nhẫn cùng tớ nhé 😊",
+                    "深呼吸，循序渐进不着急。(Shēn hūxī, xúnxù jiànjìn bù zháojí.) Hít thở sâu nào. Chúng mình cứ từ từ học, không cần vội vã 🍵",
+                    "静下心来，温习每一个字。(Jìng xià xīn lái, wēnxí měi yī gè zì.) Bình yên bên cạnh cậu... Cùng mở sách ôn lại từng nét chữ nhé 🌿",
+                    "坚持不懈，方得始终。(Jiānchí bù xiè, fāng dé shǐzhōng.) Kiên trì bền bỉ ắt gặt hái thành công. Thư thái bước tiếp con đường học vấn 🪷",
+                ]
             };
 
             const pool = responses[this.personality] || responses['playful'];
-            this.currentDialogue = pool[Math.floor(Math.random() * pool.length)];
-            this.speakWord('你好呀！');
+            let candidates = pool.filter(line => !this.dialogueHistory.includes(this.parseDialogueItem(line).audio_text));
+            if (candidates.length === 0) candidates = pool;
+            const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+
+            this.setDialogue(chosen, true);
 
             this.actionTimeout = setTimeout(() => {
                 if (this.currentAction === 'petting') {
@@ -252,8 +398,23 @@ window.petRoom = function petRoom(config) {
 
             this.currentAction = 'petting';
             this.triggerPetEmote('happy');
-            this.currentDialogue = 'Được cậu vuốt ve ấm áp quá đi~ Cảm ơn người bạn học tuyệt vời của tớ! 🥰';
-            this.speakWord('谢谢你！');
+
+            const petHeadLines = [
+                "摸摸头，真舒服呀！(Mō mō tóu, zhēn shūfu ya!) Được cậu xoa đầu dễ chịu và ấm áp quá đi~ Cảm ơn bạn học của tớ! 🥰",
+                "好喜欢你摸我！(Hǎo xǐhuan nǐ mō wǒ!) Cảm nhận được tình cảm ấm áp của bạn học rồi nè! Tiếp tục đồng hành nhé ❤️",
+                "感觉好幸福呢！(Gǎnjué hǎo xìngfú ne!) Được ở bên cạnh cậu thật là hạnh phúc! Cùng học thật giỏi nha 🌸",
+                "谢谢你的陪伴！(Xièxie nǐ de péibàn!) Cảm ơn cậu đã luôn kiên nhẫn đồng hành học tiếng Trung cùng tớ! ✨",
+                "今天也要加油哦！(Jīntiān yě yào jiāyóu ó!) Nhận thêm sức mạnh từ cái xoa đầu rồi, cùng cố gắng nhé! ☀️",
+                "有你真好！(Yǒu nǐ zhēn hǎo!) Có người bạn như cậu là điều tuyệt vời nhất trần đời! 🎈",
+                "好温暖的感觉！(Hǎo wēnnuǎn de gǎnjué!) Cảm giác ấm áp lan tỏa khắp căn phòng nhỏ này~ 🍵",
+                "我们一起进步吧！(Wǒmen yīqǐ jìnbù ba!) Cùng nhau tiến bộ mỗi ngày trên con đường chinh phục HSK nhé! 🐉"
+            ];
+
+            let candidates = petHeadLines.filter(line => !this.dialogueHistory.includes(this.parseDialogueItem(line).audio_text));
+            if (candidates.length === 0) candidates = petHeadLines;
+            const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+
+            this.setDialogue(chosen, true);
 
             this.actionTimeout = setTimeout(() => {
                 if (this.currentAction === 'petting') {
@@ -268,14 +429,9 @@ window.petRoom = function petRoom(config) {
 
             this.currentAction = 'talking';
             this.triggerPetEmote('happy');
-            this.nextDialogue();
 
-            const cnMatch = (this.currentDialogue || '').match(/[\u4e00-\u9fa5]+/);
-            if (cnMatch) {
-                this.speakWord(cnMatch[0]);
-            } else {
-                this.speakWord('你好！');
-            }
+            // Pick a fresh non-repeating dialogue and speak its exact Chinese sentence
+            this.nextDialogue(true);
 
             this.actionTimeout = setTimeout(() => {
                 if (this.currentAction === 'talking') {
@@ -290,8 +446,23 @@ window.petRoom = function petRoom(config) {
 
             this.currentAction = 'tea';
             this.triggerPetEmote('happy');
-            this.currentDialogue = 'Aaa... Trà Ô Long thơm ngát, thanh mát quá! Cảm ơn chén trà ấm lòng của cậu nhé! 🍵✨';
-            this.speakWord('喝茶！');
+
+            const teaLines = [
+                "这茶真香，好喝！(Zhè chá zhēn xiāng, hǎo hē!) Trà Ô Long thơm ngát, thanh mát quá! Cảm ơn chén trà của cậu nhé! 🍵✨",
+                "茶香四溢，心旷神怡。(Chá xiāng sì yì, xīn kuàng shén yí!) Hương trà lan tỏa làm tâm trí sảng khoái hẳn ra, cùng học tiếp nào! 🍃",
+                "品一杯好茶，背几个生词。(Pǐn yī bēi hǎo chá, bèi jǐ gè shēngcí!) Thưởng thức chén trà thơm, nhâm nhi vài chữ Hán thật tao nhã! 📖",
+                "谢谢你的热茶，很暖心。(Xièxie nǐ de rè chá, hěn nuǎnxīn!) Cảm ơn chén trà nóng ấm lòng của cậu, tớ tỉnh táo hẳn ra! 🍵",
+                "喝完茶，精力充沛！(Hē wán chá, jīnglì chōngpèi!) Uống trà xong là tràn đầy sinh lực để cùng cậu ôn bài rồi! ☀️",
+                "好甘甜的茶水呀！(Hǎo gāntián de cháshuǐ ya!) Vị trà ngọt hậu đọng lại nơi đầu lưỡi, thích quá đi! 😋",
+                "劳逸结合，喝茶休息一下。(Láoyì jiéhé, hē chá xiūxi yīxià!) Vừa học vừa nghỉ ngơi uống trà là phương pháp học tốt nhất! 🍵",
+                "茶道也是一种修行。(Chádào yě shì yī zhǒng xiūxíng!) Trà đạo cũng là một nét đẹp văn hóa Trung Hoa tuyệt vời! 🪷"
+            ];
+
+            let candidates = teaLines.filter(line => !this.dialogueHistory.includes(this.parseDialogueItem(line).audio_text));
+            if (candidates.length === 0) candidates = teaLines;
+            const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+
+            this.setDialogue(chosen, true);
 
             this.actionTimeout = setTimeout(() => {
                 if (this.currentAction === 'tea') {
@@ -307,8 +478,21 @@ window.petRoom = function petRoom(config) {
             if (this.currentAction === 'sleep' || this.petEmote === 'sleep') {
                 this.currentAction = 'waking';
                 this.petEmote = '';
-                this.currentDialogue = 'Oáp~ Tớ tỉnh ngủ rồi nè! Tràn đầy năng lượng để học cùng cậu rồi! ☀️';
-                this.speakWord('我醒了！');
+
+                const wakeLines = [
+                    "早安！我精神百倍！(Zǎo'ān! Wǒ jīngshén bǎibèi!) Oáp~ Tớ tỉnh ngủ rồi nè! Tràn đầy 100% năng lượng để học cùng cậu! ☀️",
+                    "睡醒啦，今天继续加油！(Shuì xǐng la, jīntiān jìxù jiāyóu!) Đã ngủ đẫy giấc rồi! Chúng mình tiếp tục chiến đấu với từ mới nào! 🚀",
+                    "我充满电了，开始学习吧！(Wǒ chōngmǎn diàn le, kāishǐ xuéxí ba!) Tớ đã sạc đầy pin rồi, mở sách ra học ngay thôi! 📚",
+                    "伸个懒腰，神清气爽！(Shēn gè lǎnyāo, shén qīng qì shuǎng!) Vươn vai một cái thật sảng khoái! Sẵn sàng đồng hành cùng cậu! ✨",
+                    "阳光真好，我们开始吧！(Yángguāng zhēn hǎo, wǒmen kāishǐ ba!) Ánh sáng chan hòa rồi, bắt tay vào buổi học hôm nay thôi! 🌈"
+                ];
+
+                let candidates = wakeLines.filter(line => !this.dialogueHistory.includes(this.parseDialogueItem(line).audio_text));
+                if (candidates.length === 0) candidates = wakeLines;
+                const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+
+                this.setDialogue(chosen, true);
+
                 this.actionTimeout = setTimeout(() => {
                     if (this.currentAction === 'waking') {
                         this.currentAction = null;
@@ -317,8 +501,20 @@ window.petRoom = function petRoom(config) {
             } else {
                 this.currentAction = 'sleep';
                 this.petEmote = 'sleep';
-                this.currentDialogue = 'Khò khò... Tớ chợp mắt một lát nha, cậu học bài xong nhớ đánh thức tớ nhé 💤';
-                this.speakWord('我想睡觉');
+
+                const sleepLines = [
+                    "我先睡一会儿，晚安。(Wǒ xiān shuì yíhuìr, wǎn'ān.) Tớ chợp mắt một lát nha, cậu học bài xong nhớ gọi tớ nhé 💤",
+                    "打个小盹，养精蓄锐。(Dǎ gè xiǎo dùn, yǎng jīng xù ruì.) Chợp mắt ngủ trưa chút để nạp lại năng lượng học cùng cậu! 🌙",
+                    "好困呀，我想休息了。(Hǎo kùn ya, wǒ xiǎng xiūxi le.) Buồn ngủ quá chừng... Tớ vào giấc ngủ êm đềm đây, khò khò... 💤",
+                    "做个关于汉字的美梦。(Zuò gè guānyú hànzì de měimèng.) Tớ đi ngủ để mơ thấy những chữ Hán chúng mình đã học đây! ✨",
+                    "呼呼大睡，充饱电再学。(Hūhū dà shuì, chōng bǎo diàn zài xué.) Tớ ngủ một giấc thật sâu, sạc đầy pin rồi lại thức học tiếp nha! 🛌"
+                ];
+
+                let candidates = sleepLines.filter(line => !this.dialogueHistory.includes(this.parseDialogueItem(line).audio_text));
+                if (candidates.length === 0) candidates = sleepLines;
+                const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+
+                this.setDialogue(chosen, true);
             }
         },
 
@@ -332,58 +528,54 @@ window.petRoom = function petRoom(config) {
             const words = this.roomStats?.mastered_words || 0;
             const days = this.roomStats?.days_together || 1;
 
+            let line = '';
             switch(type) {
                 case 'window':
                     if (this.roomScenery === 'night') {
-                        this.currentDialogue = 'Nhìn qua cửa sổ thấy trời đêm yên tĩnh quá... Cậu học chăm chỉ rồi nhớ đi ngủ sớm nha 🌙';
-                        this.speakWord('晚上好！');
+                        line = '夜深人静，注意休息哦。(Yè shēn rén jìng, zhùyì xiūxi ó.) Nhìn qua cửa sổ thấy trời đêm yên tĩnh quá... Cậu học chăm chỉ rồi nhớ đi ngủ sớm nha 🌙';
                     } else if (this.roomScenery === 'sunset') {
-                        this.currentDialogue = 'Hoàng hôn ngoài cửa sổ buông sắc cam đẹp ghê! Cậu học cả ngày vất vả rồi nhé 🌅';
-                        this.speakWord('傍晚好！');
+                        line = '晚霞很美，今天辛苦啦！(Wǎnxiá hěn měi, jīntiān xīnkǔ la!) Hoàng hôn ngoài cửa sổ buông sắc cam đẹp ghê! Cậu học cả ngày vất vả rồi nhé 🌅';
                     } else {
-                        this.currentDialogue = 'Trời sáng trong xanh ngoài cửa sổ, ngắm một chút là tràn đầy năng lượng học tiếp liền! ☀️';
-                        this.speakWord('晴天好！');
+                        line = '窗外阳光正好，充满力量！(Chuāngwài yángguāng zhèng hǎo, chōngmǎn lìliang!) Trời sáng trong xanh ngoài cửa sổ, ngắm một chút là tràn đầy năng lượng học tiếp liền! ☀️';
                     }
                     break;
                 case 'lamp':
                     this.lampLit = !this.lampLit;
-                    this.currentDialogue = this.lampLit
-                        ? 'Đèn phòng ấm áp sáng bừng rồi nè! Cùng học chữ mới trong ánh sáng dịu mắt nhé 💡'
-                        : 'Tắt bớt đèn cho dịu mắt nha, vừa thư giãn vừa ôn bài thật bình yên 🏮';
+                    line = this.lampLit
+                        ? '灯光暖暖，照亮每一个汉字。(Dēngguāng nuǎnnuǎn, zhàoliàng měi yī gè hànzì.) Đèn phòng ấm áp sáng bừng rồi nè! Cùng học chữ mới trong ánh sáng dịu mắt nhé 💡'
+                        : '光线柔和，静心思考更专注。(Guāngxiàn róuhuó, jìngxīn sīkǎo gèng zhuānzhù.) Tắt bớt đèn cho dịu mắt nha, vừa thư giãn vừa ôn bài thật bình yên 🏮';
                     break;
                 case 'teatable':
                     this.serveTea();
-                    break;
+                    return;
                 case 'bookshelf':
                     if (this.masteredWords && this.masteredWords.length > 0) {
                         const randomW = this.masteredWords[Math.floor(Math.random() * this.masteredWords.length)];
-                        this.currentDialogue = `Kệ sách này có chữ "${randomW.hanzi}" (${randomW.pinyin} - ${randomW.meaning}) cậu dạy mình nè! Cậu còn nhớ phát âm không? 📚✨`;
-                        this.speakWord(randomW.hanzi);
+                        line = `书架上有\"${randomW.hanzi}\"，你还记得怎么读吗？(Shūjià shang yǒu \"${randomW.hanzi}\", nǐ hái jìde zěnme dú ma?) Kệ sách này có chữ \"${randomW.hanzi}\" (${randomW.pinyin} - ${randomW.meaning}) cậu dạy mình nè! Cậu còn nhớ phát âm không? 📚✨`;
                     } else {
-                        this.currentDialogue = 'Kệ sách đang chờ đón những chữ Hán đầu tiên cậu dạy cho mình! Cùng mở Flashcard học nhé 📖';
-                        this.speakWord('学习');
+                        line = '书中自有黄金屋，快来学第一个词！(Shū zhōng zì yǒu huángjīnwū, kuài lái xué dì yī gè cí!) Kệ sách đang chờ đón những chữ Hán đầu tiên cậu dạy cho mình! Cùng mở Flashcard học nhé 📖';
                     }
                     break;
                 case 'plant':
-                    this.currentDialogue = streak > 0
-                        ? `Chậu cây may mắn này đang xanh tốt nhờ chuỗi học ${streak} ngày bền bỉ của cậu đó! Cùng giữ streak nhé 🌱💚`
-                        : 'Chậu mầm cây nhỏ này sẽ lớn nhanh theo mỗi ngày cậu chăm chỉ học tiếng Trung đấy! 🌱';
-                    this.speakWord('加油！');
+                    line = streak > 0
+                        ? `绿植生机勃勃，多亏你坚持了${streak}天！(Lǜzhí shēngjī bóbó, duōkuī nǐ jiānchí le ${streak} tiān!) Chậu cây may mắn này đang xanh tốt nhờ chuỗi học ${streak} ngày bền bỉ của cậu đó! Cùng giữ streak nhé 🌱💚`
+                        : '小盆栽也在期待你的第一堂课！(Xiǎo pénzāi yě zài qīdài nǐ de dì yī táng kè!) Chậu mầm cây nhỏ này sẽ lớn nhanh theo mỗi ngày cậu chăm chỉ học tiếng Trung đấy! 🌱';
                     break;
                 case 'foodbowl':
                     if (this.roomStats?.recent_food) {
                         const food = this.roomStats.recent_food;
-                        this.currentDialogue = `Nhớ lại món "${food.hanzi}" (${food.name}) cậu cho mình ăn ngon tuyệt cú mèo! 😋🥣`;
-                        this.speakWord(food.hanzi);
+                        line = `好想念美味的\"${food.hanzi}\"呀！(Hǎo xiǎngniàn měiwèi de \"${food.hanzi}\" ya!) Nhớ lại món \"${food.hanzi}\" (${food.name}) cậu cho mình ăn ngon tuyệt cú mèo! 😋🥣`;
                     } else {
-                        this.currentDialogue = 'Chiếc bát nhỏ đang sẵn sàng! Hãy dùng điểm XP học tập để mời mình ăn món ngon nhé 🥣';
-                        this.speakWord('吃饭');
+                        line = '小碗准备好了，用学习积分请我吃好吃的吧！(Xiǎo wǎn zhǔnbèi hǎo le, yòng xuéxí jīfēn qǐng wǒ chī hǎochī de ba!) Chiếc bát nhỏ đang sẵn sàng! Hãy dùng điểm XP học tập để mời mình ăn món ngon nhé 🥣';
                     }
                     break;
                 case 'frame':
-                    this.currentDialogue = `Khung ảnh ghi dấu ${days} ngày chúng mình đồng hành bên nhau rồi đó! Tớ trân quý từng ngày học cùng cậu ❤️`;
-                    this.speakWord('朋友');
+                    line = `我们已经相伴了${days}天，时光真美好！(Wǒmen yǐjīng xiāngbàn le ${days} tiān, shíguāng zhēn měihǎo!) Khung ảnh ghi dấu ${days} ngày chúng mình đồng hành bên nhau rồi đó! Tớ trân quý từng ngày học cùng cậu ❤️`;
                     break;
+            }
+
+            if (line) {
+                this.setDialogue(line, true);
             }
         },
 
@@ -451,8 +643,11 @@ window.petRoom = function petRoom(config) {
                     this.dailyRemaining = data.daily_remaining;
                     if (data.affinity !== undefined) this.affinity = data.affinity;
                     if (data.tier) this.affinityTier = data.tier;
-                    if (data.dialogue) this.currentDialogue = data.dialogue;
                     if (data.dialogues) this.dialogues = data.dialogues;
+                    if (data.rich_dialogues) this.richDialogues = data.rich_dialogues;
+                    if (data.dialogue) {
+                        this.setDialogue(data.dialogue, false);
+                    }
 
                     this.eatingPhase = 'satisfied';
                     this.foodReactionText = data.food_reaction || '好吃！(Ngon tuyệt!)';
@@ -596,6 +791,7 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
          userPet: {{ Js::from($userPet) }},
          progress: {{ Js::from($progress) }},
          dialogues: {{ Js::from($dialogues) }},
+         richDialogues: {{ Js::from($richDialogues) }},
          currentDialogue: {{ Js::from($randomDialogue) }},
          masteredWords: {{ Js::from($masteredWords) }},
          affinitySummary: {{ Js::from($affinitySummary) }},
@@ -837,21 +1033,38 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                     <div class="relative mb-4 w-full rounded-2xl p-4 shadow-lg border text-sm transition-all duration-300 group"
                          :class="roomTimeMode === 'night' ? 'bg-slate-800/95 border-indigo-700/80 text-white' : 'bg-white/95 border-amber-200 text-slate-800'">
                         <div class="flex items-start justify-between gap-2.5">
-                            <div class="flex items-start gap-2 text-left flex-1 min-w-0">
-                                <span class="text-lg select-none shrink-0">💬</span>
-                                <p class="text-sm font-bold leading-relaxed italic"
-                                   :class="roomTimeMode === 'night' ? 'text-slate-100' : 'text-slate-800'"
-                                   x-text="currentDialogue">
-                                    "{{ $randomDialogue }}"
-                                </p>
+                            <div class="flex items-start gap-2.5 text-left flex-1 min-w-0">
+                                <span class="text-xl select-none shrink-0 mt-0.5">💬</span>
+                                <div class="flex-1 min-w-0">
+                                    {{-- Synchronized Chinese Line + Pinyin --}}
+                                    <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                                        <span class="text-base sm:text-lg font-black tracking-wide cursor-pointer hover:underline"
+                                              @click="speakCurrentDialogue()"
+                                              title="Bấm để nghe Pet phát âm câu này"
+                                              :class="roomTimeMode === 'night' ? 'text-amber-300' : 'text-amber-900'"
+                                              x-text="currentDialogueObj?.chinese || '你好呀！'">
+                                        </span>
+                                        <span x-show="currentDialogueObj?.pinyin"
+                                              class="text-xs font-mono font-medium opacity-80"
+                                              :class="roomTimeMode === 'night' ? 'text-indigo-200' : 'text-amber-700'"
+                                              x-text="currentDialogueObj?.pinyin">
+                                        </span>
+                                    </div>
+                                    {{-- Heartfelt Vietnamese Meaning --}}
+                                    <p class="text-xs sm:text-sm font-medium leading-relaxed italic mt-1.5"
+                                       :class="roomTimeMode === 'night' ? 'text-slate-200' : 'text-slate-700'"
+                                       x-text="currentDialogueObj?.vietnamese || currentDialogue">
+                                        "{{ $randomDialogue }}"
+                                    </p>
+                                </div>
                             </div>
                             <div class="flex items-center gap-1 shrink-0">
-                                <button type="button" @click="talkWithPet()" title="Nghe Pet phát âm câu này"
+                                <button type="button" @click="speakCurrentDialogue()" title="Nghe Pet phát âm chuẩn câu này"
                                         class="p-1.5 rounded-lg transition active:scale-95"
                                         :class="roomTimeMode === 'night' ? 'text-amber-400 hover:bg-slate-700' : 'text-amber-700 hover:bg-amber-100'">
                                     <i data-lucide="volume-2" class="h-4 w-4"></i>
                                 </button>
-                                <button type="button" @click="nextDialogue()" title="Đổi câu nói khác"
+                                <button type="button" @click="nextDialogue(false)" title="Đổi câu nói khác (tránh lặp)"
                                         class="p-1.5 rounded-lg transition active:scale-95"
                                         :class="roomTimeMode === 'night' ? 'text-amber-400 hover:bg-slate-700' : 'text-amber-700 hover:bg-amber-100'">
                                     <i data-lucide="refresh-cw" class="h-4 w-4"></i>

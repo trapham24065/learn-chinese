@@ -258,13 +258,22 @@
                     {{-- Dynamic Speech Bubble --}}
                     <div class="mt-2.5 relative rounded-2xl bg-white/95 p-3.5 shadow-sm border border-amber-200/90 text-sm text-slate-800 backdrop-blur">
                         <div class="flex items-start justify-between gap-2">
-                            <p class="text-xs sm:text-sm font-medium leading-relaxed italic" x-text="currentDialogue">
+                            <p class="text-xs sm:text-sm font-medium leading-relaxed italic cursor-pointer hover:text-amber-900"
+                               @click="speakDialogue()"
+                               title="Bấm để nghe Pet phát âm"
+                               x-text="currentDialogue">
                                 "{{ $pDialogue }}"
                             </p>
-                            <button type="button" @click="nextDialogue()" title="Đổi câu nói"
-                                class="shrink-0 rounded-lg p-1 text-slate-400 hover:bg-amber-50 hover:text-amber-700 transition">
-                                <i data-lucide="refresh-cw" class="h-3.5 w-3.5"></i>
-                            </button>
+                            <div class="flex items-center gap-1 shrink-0">
+                                <button type="button" @click="speakDialogue()" title="Nghe Pet phát âm câu này"
+                                    class="shrink-0 rounded-lg p-1 text-slate-400 hover:bg-amber-50 hover:text-amber-700 transition">
+                                    <i data-lucide="volume-2" class="h-3.5 w-3.5"></i>
+                                </button>
+                                <button type="button" @click="nextDialogue()" title="Đổi câu nói"
+                                    class="shrink-0 rounded-lg p-1 text-slate-400 hover:bg-amber-50 hover:text-amber-700 transition">
+                                    <i data-lucide="refresh-cw" class="h-3.5 w-3.5"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -1002,13 +1011,46 @@
             poking: false,
             particles: [],
             pokeReactions: [
-                'Hihi, nhột quá nè! Học tiếp thôi nào! 🥰',
-                'Cậu gọi tớ hả? Cùng cố gắng đạt mục tiêu hôm nay nhé! ✨',
-                'Tớ đang tràn đầy năng lượng! Cố lên bạn ơi! 🐉',
-                'Chạm nhẹ lấy may mắn học thuộc bài siêu nhanh nha! 🍀',
-                'Cố lên nha, tớ luôn đồng hành cùng cậu mỗi ngày! ❤️',
-                'Oa, bạn học chăm chỉ quá! Tớ tự hào về bạn lắm! ⭐'
+                '哎呀，好痒呀！(Āiyā, hǎo yǎng ya!) Hihi, nhột quá nè! Học tiếp thôi nào! 🥰',
+                '你在叫我吗？(Nǐ zài jiào wǒ ma?) Cậu gọi tớ hả? Cùng cố gắng đạt mục tiêu hôm nay nhé! ✨',
+                '我充满活力！(Wǒ chōngmǎn huólì!) Tớ đang tràn đầy năng lượng! Cố lên bạn ơi! 🐉',
+                '祝你逢考必过！(Zhù nǐ féng kǎo bì guò!) Chạm nhẹ lấy may mắn học thuộc bài siêu nhanh nha! 🍀',
+                '有你陪伴真好！(Yǒu nǐ péibàn zhēn hǎo!) Cố lên nha, tớ luôn đồng hành cùng cậu mỗi ngày! ❤️',
+                '你真棒！(Nǐ zhēn bàng!) Oa, bạn học chăm chỉ quá! Tớ tự hào về bạn lắm! ⭐'
             ],
+
+            parseDialogueItem(item) {
+                if (!item) return { chinese: '你好呀！', pinyin: '', vietnamese: '', audio_text: '你好呀！' };
+                const str = String(item).trim();
+                const match = str.match(/^([^\(\)（）]+?)\s*[\(（]([^\(\)（）]+?)[\)）]\s*(.*)$/u);
+                if (match) {
+                    const chinese = match[1].trim();
+                    const pinyin = match[2].trim();
+                    const vietnamese = match[3].trim();
+                    const audioText = chinese.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{1F018}-\u{1F270}]/gu, '').trim() || chinese;
+                    return { chinese, pinyin, vietnamese, audio_text: audioText };
+                }
+                const cnMatches = str.match(/[\u4e00-\u9fa5，。？！、\s]+/g);
+                if (cnMatches) {
+                    const cnStr = cnMatches.join('').trim();
+                    return { chinese: cnStr, pinyin: '', vietnamese: str, audio_text: cnStr };
+                }
+                return { chinese: '你好呀！', pinyin: 'Nǐ hǎo ya!', vietnamese: str, audio_text: '你好呀！' };
+            },
+
+            speakDialogue() {
+                const parsed = this.parseDialogueItem(this.currentDialogue);
+                const text = parsed.audio_text || parsed.chinese;
+                if (window.PetVoiceManager) {
+                    window.PetVoiceManager.speak(text);
+                } else if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const utter = new SpeechSynthesisUtterance(text);
+                    utter.lang = 'zh-CN';
+                    utter.rate = 0.85;
+                    window.speechSynthesis.speak(utter);
+                }
+            },
 
             pokeHeroPet(event) {
                 this.poking = true;
@@ -1023,9 +1065,10 @@
                     window.PetEventBus.emit('pet:poked');
                 }
 
-                // Change dialogue to playful reaction
+                // Change dialogue to playful reaction and speak Chinese
                 const randReaction = this.pokeReactions[Math.floor(Math.random() * this.pokeReactions.length)];
                 this.currentDialogue = randReaction;
+                this.speakDialogue();
 
                 // Spawn cute floating particles
                 const emojis = ['❤️', '✨', '⭐', '💖', '🥰', '🐉'];

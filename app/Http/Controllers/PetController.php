@@ -42,9 +42,10 @@ class PetController extends Controller
         $dailyRemaining = $this->feedingService->getRemainingDailyCapacity($userPet);
         $memories       = $userPet->memories()->latest('created_at')->limit(20)->get();
 
-        // Dialogues for emotional companion
+        // Dialogues for emotional companion (both raw strings and rich objects)
         $dialogues      = $this->dialogueService->getDialogues($user, $userPet);
         $randomDialogue = $this->dialogueService->getRandomDialogue($user, $userPet);
+        $richDialogues  = $this->dialogueService->getRichDialogues($user, $userPet);
 
         // Stages with unlock requirements for the Growth tab
         $stages = $userPet->pet->stages()->orderBy('stage')->get();
@@ -104,6 +105,7 @@ class PetController extends Controller
             'roomStats',
             'dialogues',
             'randomDialogue',
+            'richDialogues',
             'stages',
             'userReqStats',
             'masteredCount',
@@ -146,6 +148,7 @@ class PetController extends Controller
             $userPet->refresh();
             $result['dialogue'] = $this->dialogueService->getRandomDialogue($user, $userPet);
             $result['dialogues'] = $this->dialogueService->getDialogues($user, $userPet);
+            $result['rich_dialogues'] = $this->dialogueService->getRichDialogues($user, $userPet);
 
             return response()->json($result);
         } catch (\InvalidArgumentException $e) {
@@ -233,6 +236,7 @@ class PetController extends Controller
             'description'      => $userPet->getPersonalityDescription(),
             'random_dialogue'  => $this->dialogueService->getRandomDialogue($user, $userPet),
             'dialogues'        => $this->dialogueService->getDialogues($user, $userPet),
+            'rich_dialogues'   => $this->dialogueService->getRichDialogues($user, $userPet),
             'message'          => "Đã cập nhật tính cách thành '{$userPet->getPersonalityLabel()}'!",
         ]);
     }
@@ -301,6 +305,7 @@ class PetController extends Controller
             'progress'            => $this->growthService->calculateExpProgress($userPet),
             'random_dialogue'     => $this->dialogueService->getRandomDialogue($user, $userPet, $context),
             'dialogues'           => $this->dialogueService->getDialogues($user, $userPet, $context),
+            'rich_dialogues'      => $this->dialogueService->getRichDialogues($user, $userPet, $context),
             'food_menu'           => PetFeedingService::getFoodMenu(),
             'random_word'         => $randomWord ? [
                 'hanzi'   => $randomWord->hanzi,

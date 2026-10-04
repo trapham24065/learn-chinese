@@ -93,9 +93,26 @@
         </div>
     </div>
 
-    {{-- Dialogue Text --}}
-    <div class="mb-3">
-        <p class="leading-relaxed text-slate-700 font-medium italic text-xs" x-text="currentDialogue"></p>
+    {{-- Dialogue Text (Bilingual Chinese + Pinyin + Vietnamese) --}}
+    <div class="mb-3 rounded-xl bg-amber-50/70 border border-amber-200/70 p-2.5">
+        <div class="flex items-start justify-between gap-1.5">
+            <div class="flex-1 min-w-0 cursor-pointer" @click="speakCurrentDialogue()" title="Bấm để nghe Pet phát âm">
+                <template x-if="parseDialogueItem(currentDialogue).pinyin">
+                    <div>
+                        <div class="text-sm font-black text-amber-950 tracking-wide" x-text="parseDialogueItem(currentDialogue).chinese"></div>
+                        <div class="text-[10px] font-mono text-amber-700 opacity-80" x-text="parseDialogueItem(currentDialogue).pinyin"></div>
+                        <div class="text-[11px] text-slate-700 font-medium italic mt-1 leading-snug" x-text="parseDialogueItem(currentDialogue).vietnamese"></div>
+                    </div>
+                </template>
+                <template x-if="!parseDialogueItem(currentDialogue).pinyin">
+                    <p class="leading-relaxed text-slate-700 font-medium italic text-xs" x-text="currentDialogue"></p>
+                </template>
+            </div>
+            <button type="button" @click="speakCurrentDialogue()" title="Nghe Pet phát âm chuẩn câu này"
+                    class="shrink-0 rounded-lg p-1 text-slate-400 hover:text-amber-700 hover:bg-amber-100/70 transition">
+                <i data-lucide="volume-2" class="h-3.5 w-3.5"></i>
+            </button>
+        </div>
     </div>
 
     {{-- Vocabulary Companion Card (Chỉ hiện khi có từ đã đạt Mastery) --}}

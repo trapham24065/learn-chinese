@@ -406,6 +406,30 @@ export function petFloatingCompanion(config = {}) {
             this.scheduleBubbleAutoDismiss();
         },
 
+        parseDialogueItem(item) {
+            if (!item) return { chinese: '你好呀！', pinyin: '', vietnamese: '', audio_text: '你好呀！' };
+            const str = String(item).trim();
+            const match = str.match(/^([^\(\)（）]+?)\s*[\(（]([^\(\)（）]+?)[\)）]\s*(.*)$/u);
+            if (match) {
+                const chinese = match[1].trim();
+                const pinyin = match[2].trim();
+                const vietnamese = match[3].trim();
+                const audioText = chinese.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}\u{1F018}-\u{1F270}]/gu, '').trim() || chinese;
+                return { chinese, pinyin, vietnamese, audio_text: audioText };
+            }
+            const cnMatches = str.match(/[\u4e00-\u9fa5，。？！、\s]+/g);
+            if (cnMatches) {
+                const cnStr = cnMatches.join('').trim();
+                return { chinese: cnStr, pinyin: '', vietnamese: str, audio_text: cnStr };
+            }
+            return { chinese: '你好呀！', pinyin: 'Nǐ hǎo ya!', vietnamese: str, audio_text: '你好呀！' };
+        },
+
+        speakCurrentDialogue() {
+            const parsed = this.parseDialogueItem(this.currentDialogue);
+            this.speakWord(parsed.audio_text || parsed.chinese);
+        },
+
         minimizePet() {
             this.isMinimized = true;
             this.speechBubbleOpen = false;
