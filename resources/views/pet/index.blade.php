@@ -26,11 +26,21 @@ window.petRoom = function petRoom(config) {
         timelineMemories: config.timelineMemories || [],
         roomStats: config.roomStats || {},
         selectedMemoryFilter: 'all',
-        roomScenery: (new Date().getHours() >= 18 || new Date().getHours() < 6) ? 'night' : 'day',
-        roomTimeMode: (new Date().getHours() >= 18 || new Date().getHours() < 6) ? 'night' : 'day',
+        roomScenery: (new Date().getHours() >= 19 || new Date().getHours() < 5) ? 'night' : ((new Date().getHours() >= 17) ? 'sunset' : 'day'),
+        roomTimeMode: (new Date().getHours() >= 17 || new Date().getHours() < 5) ? 'night' : 'day',
+        realtimeClock: '',
+        roomTimeLabel: '',
+        roomTimeEmoji: '',
+        roomTimeHint: '',
+        lampLit: true,
+        realtimeInterval: null,
         petEmote: '',
         showHeartBurst: false,
         activeHotspot: null,
+
+        // Model Action States for Vuốt ve, Trò chuyện, Mời trà, Ru ngủ
+        currentAction: null, // 'petting' | 'talking' | 'tea' | 'sleep' | 'waking' | null
+        actionTimeout: null,
 
         // Audio reactivity
         sfxEnabled: (window.PetAudioEngine ? window.PetAudioEngine.isSfxEnabled() : true),
@@ -96,7 +106,69 @@ window.petRoom = function petRoom(config) {
         },
 
         initRoom() {
+            this.updateRealtimeScenery();
+            if (this.realtimeInterval) clearInterval(this.realtimeInterval);
+            this.realtimeInterval = setInterval(() => {
+                this.updateRealtimeScenery();
+            }, 30000);
             setTimeout(() => window.refreshIcons?.(), 100);
+        },
+
+        updateRealtimeScenery() {
+            const now = new Date();
+            const hour = now.getHours();
+            const minute = now.getMinutes();
+            const pad = (n) => n < 10 ? '0' + n : n;
+            this.realtimeClock = pad(hour) + ':' + pad(minute);
+
+            let scenery = 'day';
+            let label = 'Buổi sáng ngập nắng';
+            let emoji = '☀️';
+            let hint = 'Nắng sớm chan hòa ngoài ô cửa';
+
+            if (hour >= 5 && hour < 11) {
+                scenery = 'day';
+                label = 'Buổi sáng ngập nắng';
+                emoji = '☀️';
+                hint = 'Nắng sớm chan hòa ngoài ô cửa';
+            } else if (hour >= 11 && hour < 14) {
+                scenery = 'day';
+                label = 'Buổi trưa quang đãng';
+                emoji = '🌤️';
+                hint = 'Trời trưa sáng rõ, không gian ấm cúng';
+            } else if (hour >= 14 && hour < 17) {
+                scenery = 'day';
+                label = 'Buổi chiều êm ả';
+                emoji = '🌤️';
+                hint = 'Ánh nắng chiều dịu nhẹ soi qua ô cửa';
+            } else if (hour >= 17 && hour < 19) {
+                scenery = 'sunset';
+                label = 'Hoàng hôn ấm áp';
+                emoji = '🌅';
+                hint = 'Hoàng hôn buông sắc cam dịu dàng';
+            } else {
+                scenery = 'night';
+                label = 'Đêm trăng tĩnh mịch';
+                emoji = '🌙';
+                hint = 'Màn đêm yên ả, ánh đèn phòng ấm cúng';
+            }
+
+            this.roomScenery = scenery;
+            this.roomTimeLabel = label;
+            this.roomTimeEmoji = emoji;
+            this.roomTimeHint = hint;
+            this.roomTimeMode = (scenery === 'night' || scenery === 'sunset') ? 'night' : 'day';
+        },
+
+        getDynamicPetAnimClass() {
+            if (this.eatingPhase === 'eating') return 'pet-anim-chew';
+            if (this.currentAction === 'petting') return 'pet-anim-petting';
+            if (this.currentAction === 'talking') return 'pet-anim-talking';
+            if (this.currentAction === 'tea') return 'pet-anim-tea';
+            if (this.currentAction === 'sleep' || this.petEmote === 'sleep') return 'pet-anim-sleeping';
+            if (this.currentAction === 'waking') return 'pet-anim-waking';
+            if (this.petEmote === 'blush' || this.petEmote === 'happy') return 'pet-anim-happy';
+            return 'pet-anim-idle-' + (this.personality || 'playful');
         },
 
         toggleSfx() {
@@ -136,40 +208,6 @@ window.petRoom = function petRoom(config) {
             }
         },
 
-        setScenery(scenery) {
-            this.roomScenery = scenery;
-            this.roomTimeMode = (scenery === 'night' || scenery === 'sunset' || scenery === 'rain') ? 'night' : 'day';
-            if (window.PetAudioEngine) window.PetAudioEngine.pop();
-            this.triggerPetEmote('happy');
-            
-            switch(scenery) {
-                case 'day':
-                    this.currentDialogue = 'Bầu trời ban ngày trong xanh rực rỡ! Cùng mở sách học chữ mới thật hứng khởi nào ☀️';
-                    this.speakWord('晴天好！');
-                    break;
-                case 'sunset':
-                    this.currentDialogue = 'Hoàng hôn buông sắc cam ấm áp quá... Cậu học cả ngày vất vả rồi, thư giãn một chút nhé 🌅';
-                    this.speakWord('傍晚好！');
-                    break;
-                case 'night':
-                    this.currentDialogue = 'Đêm về rồi, ngàn sao lấp lánh trên bầu trời... Cậu nhớ học vừa sức rồi ngủ sớm nha 🌙';
-                    this.speakWord('晚安！');
-                    break;
-                case 'rain':
-                    this.currentDialogue = 'Ngoài kia mưa rơi rả rích... Ngồi trong phòng ấm uống trà học bài cùng cậu thật bình yên 🌧️';
-                    this.speakWord('下雨了！');
-                    break;
-            }
-            setTimeout(() => window.refreshIcons?.(), 50);
-        },
-
-        cycleScenery() {
-            const list = ['day', 'sunset', 'night', 'rain'];
-            const idx = list.indexOf(this.roomScenery);
-            const next = list[(idx + 1) % list.length];
-            this.setScenery(next);
-        },
-
         triggerPetEmote(emote) {
             this.petEmote = emote;
             if (emote === 'blush' || emote === 'happy') {
@@ -183,6 +221,8 @@ window.petRoom = function petRoom(config) {
 
         pokePet() {
             if (window.PetAudioEngine) window.PetAudioEngine.pop();
+            if (this.actionTimeout) clearTimeout(this.actionTimeout);
+            this.currentAction = 'petting';
             this.triggerPetEmote('blush');
             
             const responses = {
@@ -196,33 +236,87 @@ window.petRoom = function petRoom(config) {
             const pool = responses[this.personality] || responses['playful'];
             this.currentDialogue = pool[Math.floor(Math.random() * pool.length)];
             this.speakWord('你好呀！');
+
+            this.actionTimeout = setTimeout(() => {
+                if (this.currentAction === 'petting') {
+                    this.currentAction = null;
+                }
+            }, 3000);
         },
 
         petHead() {
-            if (window.PetAudioEngine) window.PetAudioEngine.pop();
+            if (window.PetAudioEngine) {
+                window.PetAudioEngine.purr ? window.PetAudioEngine.purr() : window.PetAudioEngine.pop();
+            }
+            if (this.actionTimeout) clearTimeout(this.actionTimeout);
+
+            this.currentAction = 'petting';
             this.triggerPetEmote('happy');
             this.currentDialogue = 'Được cậu vuốt ve ấm áp quá đi~ Cảm ơn người bạn học tuyệt vời của tớ! 🥰';
             this.speakWord('谢谢你！');
+
+            this.actionTimeout = setTimeout(() => {
+                if (this.currentAction === 'petting') {
+                    this.currentAction = null;
+                }
+            }, 3500);
         },
 
         talkWithPet() {
             if (window.PetAudioEngine) window.PetAudioEngine.pop();
+            if (this.actionTimeout) clearTimeout(this.actionTimeout);
+
+            this.currentAction = 'talking';
             this.triggerPetEmote('happy');
             this.nextDialogue();
+
             const cnMatch = (this.currentDialogue || '').match(/[\u4e00-\u9fa5]+/);
             if (cnMatch) {
                 this.speakWord(cnMatch[0]);
+            } else {
+                this.speakWord('你好！');
             }
+
+            this.actionTimeout = setTimeout(() => {
+                if (this.currentAction === 'talking') {
+                    this.currentAction = null;
+                }
+            }, 3500);
+        },
+
+        serveTea() {
+            if (window.PetAudioEngine) window.PetAudioEngine.pop();
+            if (this.actionTimeout) clearTimeout(this.actionTimeout);
+
+            this.currentAction = 'tea';
+            this.triggerPetEmote('happy');
+            this.currentDialogue = 'Aaa... Trà Ô Long thơm ngát, thanh mát quá! Cảm ơn chén trà ấm lòng của cậu nhé! 🍵✨';
+            this.speakWord('喝茶！');
+
+            this.actionTimeout = setTimeout(() => {
+                if (this.currentAction === 'tea') {
+                    this.currentAction = null;
+                }
+            }, 4000);
         },
 
         napPet() {
             if (window.PetAudioEngine) window.PetAudioEngine.pop();
-            if (this.petEmote === 'sleep') {
-                this.triggerPetEmote('happy');
+            if (this.actionTimeout) clearTimeout(this.actionTimeout);
+
+            if (this.currentAction === 'sleep' || this.petEmote === 'sleep') {
+                this.currentAction = 'waking';
+                this.petEmote = '';
                 this.currentDialogue = 'Oáp~ Tớ tỉnh ngủ rồi nè! Tràn đầy năng lượng để học cùng cậu rồi! ☀️';
                 this.speakWord('我醒了！');
+                this.actionTimeout = setTimeout(() => {
+                    if (this.currentAction === 'waking') {
+                        this.currentAction = null;
+                    }
+                }, 2500);
             } else {
-                this.triggerPetEmote('sleep');
+                this.currentAction = 'sleep';
+                this.petEmote = 'sleep';
                 this.currentDialogue = 'Khò khò... Tớ chợp mắt một lát nha, cậu học bài xong nhớ đánh thức tớ nhé 💤';
                 this.speakWord('我想睡觉');
             }
@@ -240,7 +334,25 @@ window.petRoom = function petRoom(config) {
 
             switch(type) {
                 case 'window':
-                    this.cycleScenery();
+                    if (this.roomScenery === 'night') {
+                        this.currentDialogue = 'Nhìn qua cửa sổ thấy trời đêm yên tĩnh quá... Cậu học chăm chỉ rồi nhớ đi ngủ sớm nha 🌙';
+                        this.speakWord('晚上好！');
+                    } else if (this.roomScenery === 'sunset') {
+                        this.currentDialogue = 'Hoàng hôn ngoài cửa sổ buông sắc cam đẹp ghê! Cậu học cả ngày vất vả rồi nhé 🌅';
+                        this.speakWord('傍晚好！');
+                    } else {
+                        this.currentDialogue = 'Trời sáng trong xanh ngoài cửa sổ, ngắm một chút là tràn đầy năng lượng học tiếp liền! ☀️';
+                        this.speakWord('晴天好！');
+                    }
+                    break;
+                case 'lamp':
+                    this.lampLit = !this.lampLit;
+                    this.currentDialogue = this.lampLit
+                        ? 'Đèn phòng ấm áp sáng bừng rồi nè! Cùng học chữ mới trong ánh sáng dịu mắt nhé 💡'
+                        : 'Tắt bớt đèn cho dịu mắt nha, vừa thư giãn vừa ôn bài thật bình yên 🏮';
+                    break;
+                case 'teatable':
+                    this.serveTea();
                     break;
                 case 'bookshelf':
                     if (this.masteredWords && this.masteredWords.length > 0) {
@@ -258,23 +370,19 @@ window.petRoom = function petRoom(config) {
                         : 'Chậu mầm cây nhỏ này sẽ lớn nhanh theo mỗi ngày cậu chăm chỉ học tiếng Trung đấy! 🌱';
                     this.speakWord('加油！');
                     break;
-                case 'teatable':
-                    this.currentDialogue = 'Mời cậu một tách trà Ô Long ấm thơm 🍵 Học tiếng Trung cũng như thưởng trà, cần kiên nhẫn từng ngụm nhỏ!';
-                    this.speakWord('喝茶');
+                case 'foodbowl':
+                    if (this.roomStats?.recent_food) {
+                        const food = this.roomStats.recent_food;
+                        this.currentDialogue = `Nhớ lại món "${food.hanzi}" (${food.name}) cậu cho mình ăn ngon tuyệt cú mèo! 😋🥣`;
+                        this.speakWord(food.hanzi);
+                    } else {
+                        this.currentDialogue = 'Chiếc bát nhỏ đang sẵn sàng! Hãy dùng điểm XP học tập để mời mình ăn món ngon nhé 🥣';
+                        this.speakWord('吃饭');
+                    }
                     break;
                 case 'frame':
-                    this.currentDialogue = `Khung ảnh ghi dấu ${days} ngày chúng mình làm bạn cùng nhau! Cậu xem lại Sổ Kỷ Niệm chưa? 🖼️❤️`;
+                    this.currentDialogue = `Khung ảnh ghi dấu ${days} ngày chúng mình đồng hành bên nhau rồi đó! Tớ trân quý từng ngày học cùng cậu ❤️`;
                     this.speakWord('朋友');
-                    break;
-                case 'foodbowl':
-                    this.currentDialogue = this.roomStats?.recent_food
-                        ? `Đĩa món ăn ${this.roomStats.recent_food.emoji} ${this.roomStats.recent_food.hanzi} cậu cho mình vẫn còn ấm áp thơm lừng nè! 😋`
-                        : 'Bát thức ăn sạch bóng nè, cậu có muốn đãi mình một món ngon Trung Hoa không? 🥟';
-                    if (this.roomStats?.recent_food?.hanzi) {
-                        this.speakWord(this.roomStats.recent_food.hanzi);
-                    } else {
-                        this.speakWord('好吃');
-                    }
                     break;
             }
         },
@@ -631,47 +739,25 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                     </div>
                 </div>
 
-                {{-- Interactive Scenery Switcher Pills (Sáng / Chiều / Tối / Mưa) --}}
-                <div class="flex items-center gap-1.5 p-1 rounded-2xl border backdrop-blur transition shadow-sm"
-                     :class="roomTimeMode === 'night' ? 'bg-slate-900/90 border-white/10' : 'bg-white/90 border-amber-200'">
-                    <span class="text-[10px] font-bold uppercase tracking-wider px-2"
-                          :class="roomTimeMode === 'night' ? 'text-slate-400' : 'text-slate-500'">Khung cảnh:</span>
-
-                    <button type="button"
-                            @click="setScenery('day')"
-                            title="Bầu trời ban ngày quang đãng"
-                            :class="roomScenery === 'day' ? 'bg-amber-400 text-slate-900 shadow-sm font-black' : 'text-slate-500 hover:text-slate-900'"
-                            class="rounded-xl px-2.5 py-1 text-xs font-bold transition flex items-center gap-1">
-                        <span>☀️</span>
-                        <span class="hidden sm:inline">Sáng</span>
-                    </button>
-
-                    <button type="button"
-                            @click="setScenery('sunset')"
-                            title="Hoàng hôn buông sắc cam ấm áp"
-                            :class="roomScenery === 'sunset' ? 'bg-orange-500 text-white shadow-sm font-black' : 'text-slate-500 hover:text-slate-900'"
-                            class="rounded-xl px-2.5 py-1 text-xs font-bold transition flex items-center gap-1">
-                        <span>🌅</span>
-                        <span class="hidden sm:inline">Chiều</span>
-                    </button>
-
-                    <button type="button"
-                            @click="setScenery('night')"
-                            title="Bầu trời đêm trăng sao tĩnh lặng"
-                            :class="roomScenery === 'night' ? 'bg-indigo-600 text-white shadow-sm font-black' : 'text-slate-500 hover:text-slate-900'"
-                            class="rounded-xl px-2.5 py-1 text-xs font-bold transition flex items-center gap-1">
-                        <span>🌙</span>
-                        <span class="hidden sm:inline">Đêm</span>
-                    </button>
-
-                    <button type="button"
-                            @click="setScenery('rain')"
-                            title="Mưa rơi rả rích tĩnh lặng"
-                            :class="roomScenery === 'rain' ? 'bg-sky-600 text-white shadow-sm font-black' : 'text-slate-500 hover:text-slate-900'"
-                            class="rounded-xl px-2.5 py-1 text-xs font-bold transition flex items-center gap-1">
-                        <span>🌧️</span>
-                        <span class="hidden sm:inline">Mưa</span>
-                    </button>
+                {{-- Real-time Living Atmosphere Badge (Automatic according to local time) --}}
+                <div class="flex items-center gap-2.5 px-3.5 py-1.5 rounded-2xl border backdrop-blur shadow-sm select-none transition-colors duration-500"
+                     :class="roomTimeMode === 'night' ? 'bg-slate-900/90 border-indigo-700/60 text-indigo-200' : 'bg-white/90 border-amber-200 text-amber-900'">
+                    <div class="flex items-center gap-1.5">
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+                                  :class="roomTimeMode === 'night' ? 'bg-indigo-400' : 'bg-emerald-400'"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2"
+                                  :class="roomTimeMode === 'night' ? 'bg-indigo-500' : 'bg-emerald-500'"></span>
+                        </span>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Thời gian thực:</span>
+                        <span class="text-xs font-black font-mono tracking-tight" x-text="realtimeClock"></span>
+                    </div>
+                    <span class="h-3 w-px bg-slate-300 dark:bg-slate-700"></span>
+                    <div class="flex items-center gap-1 text-xs font-bold"
+                         :class="roomTimeMode === 'night' ? 'text-amber-300' : 'text-amber-800'">
+                        <span x-text="roomTimeEmoji"></span>
+                        <span x-text="roomTimeLabel"></span>
+                    </div>
                 </div>
             </div>
 
@@ -681,7 +767,7 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                 <div class="flex flex-col items-center md:items-start space-y-2">
                     <div @click="interactRoomItem('window')"
                          role="button"
-                         title="Bấm vào cửa sổ để đổi khung cảnh bên ngoài"
+                         title="Cửa sổ thời gian thực (bấm để ngắm trời cùng Pet)"
                          class="group relative w-36 h-44 sm:w-44 sm:h-52 rounded-t-full border-4 shadow-xl overflow-hidden cursor-pointer transition-all duration-500 hover:scale-105 active:scale-95"
                          :class="roomScenery === 'night'
                             ? 'border-indigo-800 bg-gradient-to-b from-slate-950 via-indigo-950 to-slate-900 shadow-indigo-900/50'
@@ -740,8 +826,8 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                             </span>
                         </div>
                     </div>
-                    <p class="text-[11px] font-medium" :class="roomTimeMode === 'night' ? 'text-slate-400' : 'text-slate-500'">
-                        Bấm cửa sổ để đổi khung cảnh
+                    <p class="text-[11px] font-medium text-center md:text-left" :class="roomTimeMode === 'night' ? 'text-slate-400' : 'text-slate-500'">
+                        <span x-text="roomTimeHint"></span> • Bấm để ngắm trời cùng Pet
                     </p>
                 </div>
 
@@ -806,8 +892,45 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
 
                         {{-- Pet Avatar Box --}}
                         <div class="relative z-10 pb-2 transition-transform duration-300 hover:scale-105 active:scale-95">
-                            <div class="flex h-44 w-44 sm:h-52 sm:w-52 items-center justify-center rounded-[2.5rem] shadow-2xl border-4 p-3"
+                            <div class="flex h-44 w-44 sm:h-52 sm:w-52 items-center justify-center rounded-[2.5rem] shadow-2xl border-4 p-3 relative overflow-hidden"
                                  :class="[getPetBorderClass(), roomTimeMode === 'night' ? 'bg-slate-900/95 shadow-indigo-900/50' : 'bg-white shadow-amber-900/10']">
+                                
+                                {{-- Action Layer 1: Vuốt ve (Petting hand stroke + soft blush cheeks) --}}
+                                <div x-show="currentAction === 'petting'" x-cloak class="absolute inset-0 pointer-events-none z-30 flex flex-col items-center justify-between p-3">
+                                    <div class="animate-pet-stroke text-3xl filter drop-shadow mt-1">🫳</div>
+                                    <div class="w-full flex items-center justify-between px-6 mb-7">
+                                        <span class="w-4 h-2.5 rounded-full bg-rose-400/70 blur-xs"></span>
+                                        <span class="w-4 h-2.5 rounded-full bg-rose-400/70 blur-xs"></span>
+                                    </div>
+                                </div>
+
+                                {{-- Action Layer 2: Trò chuyện (Talking musical notes + sound ripples) --}}
+                                <div x-show="currentAction === 'talking'" x-cloak class="absolute inset-x-0 -top-1 pointer-events-none z-30 flex justify-center gap-3">
+                                    <span class="animate-note-float-1 text-lg">🎵</span>
+                                    <span class="animate-note-float-2 text-base">🎶</span>
+                                    <span class="animate-note-float-3 text-lg">✨</span>
+                                </div>
+
+                                {{-- Action Layer 3: Mời trà (Steaming teacup delivery + herbal aroma) --}}
+                                <div x-show="currentAction === 'tea'" x-cloak class="absolute bottom-2 right-2 pointer-events-none z-30 animate-tea-delivery flex flex-col items-center">
+                                    <span class="text-[10px] text-emerald-400 font-mono animate-pulse">♨️ 🍃</span>
+                                    <span class="text-3xl filter drop-shadow-md">🍵</span>
+                                </div>
+
+                                {{-- Action Layer 4: Ru ngủ (Sleeping moon + Zzz drift) --}}
+                                <div x-show="currentAction === 'sleep' || petEmote === 'sleep'" x-cloak class="absolute -top-1 -right-1 pointer-events-none z-30 flex flex-col items-center">
+                                    <span class="text-xl">🌙</span>
+                                    <span class="text-xs font-black text-indigo-400 font-mono pet-sleep-particle">Z</span>
+                                    <span class="text-[10px] font-black text-indigo-400 font-mono pet-sleep-particle" style="animation-delay: 0.4s">z</span>
+                                    <span class="text-[8px] font-black text-indigo-400 font-mono pet-sleep-particle" style="animation-delay: 0.8s">z</span>
+                                </div>
+
+                                {{-- Action Layer 5: Đánh thức (Joyful waking sunburst) --}}
+                                <div x-show="currentAction === 'waking'" x-cloak class="absolute inset-0 pointer-events-none z-30 flex items-center justify-center">
+                                    <span class="text-4xl animate-spin" style="animation-duration: 4s">☀️</span>
+                                    <span class="absolute text-2xl animate-ping">✨</span>
+                                </div>
+
                                 <x-pet-avatar :stage="$userPet->stage" :mood="$userPet->getHungerState()" :personality="$userPet->personality ?? 'playful'" size="xl" :interactive="true" />
                             </div>
 
@@ -826,7 +949,9 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                         <button type="button" @click="petHead()"
                                 title="Vuốt ve xoa đầu Pet"
                                 class="inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-bold transition shadow-sm border active:scale-95"
-                                :class="roomTimeMode === 'night' ? 'bg-slate-800 text-rose-300 border-rose-800/80 hover:bg-slate-700' : 'bg-white text-rose-700 border-rose-200 hover:bg-rose-50'">
+                                :class="currentAction === 'petting'
+                                    ? 'bg-rose-500 text-white ring-2 ring-rose-400 shadow-md scale-105'
+                                    : (roomTimeMode === 'night' ? 'bg-slate-800 text-rose-300 border-rose-800/80 hover:bg-slate-700' : 'bg-white text-rose-700 border-rose-200 hover:bg-rose-50')">
                             <span>🫳</span>
                             <span>Vuốt ve</span>
                         </button>
@@ -834,15 +959,19 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                         <button type="button" @click="talkWithPet()"
                                 title="Nói chuyện cùng Pet"
                                 class="inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-bold transition shadow-sm border active:scale-95"
-                                :class="roomTimeMode === 'night' ? 'bg-slate-800 text-amber-300 border-amber-800/80 hover:bg-slate-700' : 'bg-white text-amber-800 border-amber-200 hover:bg-amber-50'">
+                                :class="currentAction === 'talking'
+                                    ? 'bg-amber-500 text-white ring-2 ring-amber-400 shadow-md scale-105'
+                                    : (roomTimeMode === 'night' ? 'bg-slate-800 text-amber-300 border-amber-800/80 hover:bg-slate-700' : 'bg-white text-amber-800 border-amber-200 hover:bg-amber-50')">
                             <span>💬</span>
                             <span>Trò chuyện</span>
                         </button>
 
-                        <button type="button" @click="interactRoomItem('teatable')"
+                        <button type="button" @click="serveTea()"
                                 title="Mời Pet một chén trà Ô Long"
                                 class="inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-bold transition shadow-sm border active:scale-95"
-                                :class="roomTimeMode === 'night' ? 'bg-slate-800 text-emerald-300 border-emerald-800/80 hover:bg-slate-700' : 'bg-white text-emerald-800 border-emerald-200 hover:bg-emerald-50'">
+                                :class="currentAction === 'tea'
+                                    ? 'bg-emerald-600 text-white ring-2 ring-emerald-400 shadow-md scale-105'
+                                    : (roomTimeMode === 'night' ? 'bg-slate-800 text-emerald-300 border-emerald-800/80 hover:bg-slate-700' : 'bg-white text-emerald-800 border-emerald-200 hover:bg-emerald-50')">
                             <span>🍵</span>
                             <span>Mời trà</span>
                         </button>
@@ -850,9 +979,11 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                         <button type="button" @click="napPet()"
                                 title="Ru Pet ngủ hoặc đánh thức"
                                 class="inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-bold transition shadow-sm border active:scale-95"
-                                :class="roomTimeMode === 'night' ? 'bg-slate-800 text-indigo-300 border-indigo-800/80 hover:bg-slate-700' : 'bg-white text-indigo-800 border-indigo-200 hover:bg-indigo-50'">
-                            <span x-text="petEmote === 'sleep' ? '☀️' : '💤'"></span>
-                            <span x-text="petEmote === 'sleep' ? 'Đánh thức' : 'Ru ngủ'"></span>
+                                :class="(currentAction === 'sleep' || petEmote === 'sleep')
+                                    ? 'bg-indigo-600 text-white ring-2 ring-indigo-400 shadow-md'
+                                    : (roomTimeMode === 'night' ? 'bg-slate-800 text-indigo-300 border-indigo-800/80 hover:bg-slate-700' : 'bg-white text-indigo-800 border-indigo-200 hover:bg-indigo-50')">
+                            <span x-text="(currentAction === 'sleep' || petEmote === 'sleep') ? '☀️' : '💤'"></span>
+                            <span x-text="(currentAction === 'sleep' || petEmote === 'sleep') ? 'Đánh thức' : 'Ru ngủ'"></span>
                         </button>
                     </div>
                 </div>
@@ -884,23 +1015,26 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                     </div>
 
                     {{-- Cozy Vintage Lantern / Lamp (Hotspot) --}}
-                    <div @click="cycleScenery()"
+                    <div @click="interactRoomItem('lamp')"
                          role="button"
-                         title="Đèn phòng ấm áp (bấm để đổi ánh sáng)"
+                         title="Đèn phòng ấm cúng (bấm để bật / tắt ánh sáng)"
                          class="group relative w-36 sm:w-40 p-3 rounded-2xl border transition-all cursor-pointer hover:scale-105 active:scale-95 text-center shadow-md"
                          :class="roomTimeMode === 'night'
                             ? 'bg-slate-800/80 border-indigo-700/70 hover:border-amber-400'
                             : 'bg-white/90 border-amber-200 hover:border-amber-400 hover:bg-white'">
-                        <div class="flex items-center justify-center h-16 rounded-xl border relative mb-2 cozy-lamp-glow"
-                             :class="roomTimeMode === 'night' ? 'bg-amber-950/60 border-amber-500/80' : 'bg-amber-100 border-amber-300'">
-                            <span class="text-3xl select-none" x-text="roomTimeMode === 'night' ? '🏮' : '💡'"></span>
+                        <div class="flex items-center justify-center h-16 rounded-xl border relative mb-2 transition-all duration-300"
+                             :class="lampLit
+                                ? (roomTimeMode === 'night' ? 'bg-amber-950/80 border-amber-400 cozy-lamp-glow ring-2 ring-amber-400/30' : 'bg-amber-100 border-amber-300 cozy-lamp-glow ring-2 ring-amber-300/40')
+                                : (roomTimeMode === 'night' ? 'bg-slate-900/80 border-slate-700 opacity-60' : 'bg-slate-100 border-slate-300 opacity-60')">
+                            <span class="text-3xl select-none" x-text="lampLit ? (roomTimeMode === 'night' ? '🏮' : '💡') : '🕯️'"></span>
                         </div>
                         <p class="text-xs font-black group-hover:text-amber-500 transition"
                            :class="roomTimeMode === 'night' ? 'text-slate-200' : 'text-slate-800'">
                             Đèn phòng ấm cúng
                         </p>
-                        <p class="text-[10px]" :class="roomTimeMode === 'night' ? 'text-amber-300 font-semibold' : 'text-slate-500'">
-                            Bấm để đổi ánh sáng
+                        <p class="text-[10px] font-semibold"
+                           :class="lampLit ? (roomTimeMode === 'night' ? 'text-amber-300' : 'text-amber-700') : 'text-slate-400'"
+                           x-text="lampLit ? 'Đang bật sáng ấm áp' : 'Đang tắt dịu mắt'">
                         </p>
                     </div>
                 </div>

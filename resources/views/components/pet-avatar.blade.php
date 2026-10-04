@@ -64,7 +64,7 @@
 
     {{-- Giai đoạn 0: Quả trứng rồng ma thuật --}}
     @if($stage === 0)
-    <svg class="{{ $animClass }} w-full h-full drop-shadow-md" viewBox="0 0 160 200">
+    <svg class="w-full h-full drop-shadow-md" :class="typeof getDynamicPetAnimClass === 'function' ? getDynamicPetAnimClass() : '{{ $animClass }}'" viewBox="0 0 160 200">
         <defs>
             <linearGradient id="eggGrad_{{ $stage }}" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stop-color="#fef3c7" />
@@ -84,7 +84,7 @@
 
     {{-- Giai đoạn 1: Rồng sơ sinh trong vỏ trứng --}}
     @elseif($stage === 1)
-    <svg class="{{ $animClass }} w-full h-full drop-shadow-md" viewBox="0 0 180 200">
+    <svg class="w-full h-full drop-shadow-md" :class="typeof getDynamicPetAnimClass === 'function' ? getDynamicPetAnimClass() : '{{ $animClass }}'" viewBox="0 0 180 200">
         <!-- Baby Tail (Joint-anchored) -->
         <path class="anim-tail-joint" d="M 130,150 Q 165,160 160,140" fill="none" stroke="#f59e0b" stroke-width="10" stroke-linecap="round"/>
         <ellipse cx="90" cy="115" rx="50" ry="45" fill="#f59e0b" stroke="#b45309" stroke-width="3.5"/>
@@ -112,7 +112,7 @@
 
     {{-- Giai đoạn 2: Rồng bé có cánh --}}
     @elseif($stage === 2)
-    <svg class="{{ $animClass }} w-full h-full drop-shadow-md" viewBox="0 0 200 200">
+    <svg class="w-full h-full drop-shadow-md" :class="typeof getDynamicPetAnimClass === 'function' ? getDynamicPetAnimClass() : '{{ $animClass }}'" viewBox="0 0 200 200">
         <!-- Tail with flame tip (Joint-anchored group) -->
         <g class="anim-tail-joint">
             <path d="M 125,145 Q 170,155 165,125" fill="none" stroke="#f59e0b" stroke-width="12" stroke-linecap="round"/>
@@ -149,7 +149,7 @@
 
     {{-- Giai đoạn 3: Rồng thiếu niên --}}
     @elseif($stage === 3)
-    <svg class="{{ $animClass }} w-full h-full drop-shadow-md" viewBox="0 0 220 220">
+    <svg class="w-full h-full drop-shadow-md" :class="typeof getDynamicPetAnimClass === 'function' ? getDynamicPetAnimClass() : '{{ $animClass }}'" viewBox="0 0 220 220">
         <!-- Tail with flaming plume (Joint-anchored group) -->
         <g class="anim-tail-joint">
             <path d="M 130,160 Q 195,175 190,120" fill="none" stroke="#ea580c" stroke-width="14" stroke-linecap="round"/>
@@ -182,7 +182,7 @@
 
     {{-- Giai đoạn 4: Rồng trưởng thành --}}
     @elseif($stage === 4)
-    <svg class="{{ $animClass }} w-full h-full drop-shadow-md" viewBox="0 0 240 240">
+    <svg class="w-full h-full drop-shadow-md" :class="typeof getDynamicPetAnimClass === 'function' ? getDynamicPetAnimClass() : '{{ $animClass }}'" viewBox="0 0 240 240">
         <!-- Grand Wings Background (Left & Right - Joint Anchored) -->
         <g class="anim-wing-left">
             <path d="M 65,115 Q -10,40 15,135 Q 45,160 70,135 Z" fill="#b91c1c" stroke="#7f1d1d" stroke-width="3.5"/>
@@ -212,7 +212,7 @@
 
     {{-- Giai đoạn 5: Thần Long Hoàng Kim --}}
     @elseif($stage === 5)
-    <svg class="{{ $animClass }} w-full h-full drop-shadow-lg" viewBox="0 0 260 260">
+    <svg class="w-full h-full drop-shadow-lg" :class="typeof getDynamicPetAnimClass === 'function' ? getDynamicPetAnimClass() : '{{ $animClass }}'" viewBox="0 0 260 260">
         <path d="M 40,200 Q 70,180 90,205 Q 120,185 150,210 Q 180,190 220,215" fill="none" stroke="#60a5fa" stroke-width="4" opacity="0.6" stroke-linecap="round"/>
         <path d="M 50,170 Q 110,230 190,160 Q 230,100 170,75 Q 110,65 95,115 Q 85,155 145,165"
               fill="none" stroke="#f59e0b" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
