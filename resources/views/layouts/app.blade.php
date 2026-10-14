@@ -246,22 +246,6 @@
                         <span class="rounded-full bg-rose-100 border border-rose-300 px-1.5 py-0.2 text-[9px] font-black uppercase text-rose-800 {{ request()->routeIs('courses.index') || request()->routeIs('courses.show') ? 'bg-white/20 text-white border-transparent' : '' }}">Meet</span>
                     </a>
                     @endif
-                </div>
-            </nav>
-
-            {{-- Compact Streak Box --}}
-            <div class="rounded-2xl bg-[linear-gradient(135deg,_#111827_0%,_#1f2937_45%,_#991b1b_100%)] p-3.5 text-white shadow-lg shadow-slate-950/15">
-                <div class="flex items-center justify-between">
-                    <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-200/80">Streak học tập</p>
-                    <i data-lucide="flame" class="h-3.5 w-3.5 text-amber-400"></i>
-                </div>
-                <div class="mt-1.5 flex items-baseline justify-between">
-                    <p class="text-xl font-black">{{ $sidebarStreak ?? 0 }}</p>
-                    <p class="text-[11px] text-slate-300">ngày liên tiếp</p>
-                </div>
-                <div class="mt-2 h-1.5 rounded-full bg-white/10">
-                    <div class="h-1.5 rounded-full bg-gradient-to-r from-amber-300 to-red-400" style="width: {{ min(100, max(15, ($sidebarStreak ?? 0) * 15)) }}%"></div>
-                </div>
             </div>
 
         </div>
@@ -280,10 +264,6 @@
                     </div>
                 </a>
                 <div class="flex items-center gap-1 shrink-0">
-                    <a href="{{ route('pet.index') }}" title="Bạn đồng hành Pet"
-                        class="grid h-8 w-8 place-items-center rounded-xl bg-amber-50 text-amber-600 hover:bg-amber-100 hover:text-amber-800 border border-amber-200 transition">
-                        <i data-lucide="sparkles" class="h-3.5 w-3.5"></i>
-                    </a>
                     <form method="POST" action="{{ route('logout') }}" class="shrink-0">
                         @csrf
                         <button type="submit" title="Đăng xuất"
@@ -589,19 +569,8 @@
                         </div>
                     </nav>
 
-                    {{-- Drawer Footer: Streak + User Info --}}
+                    {{-- Drawer Footer: User Info --}}
                     <div class="shrink-0 space-y-3 border-t border-slate-100 px-4 py-4">
-
-                        {{-- Streak Box --}}
-                        <div class="flex items-center justify-between rounded-xl bg-slate-950 px-4 py-3 text-white">
-                            <div class="flex items-center gap-2">
-                                <i data-lucide="flame" class="h-4 w-4 text-amber-400"></i>
-                                <p class="text-xs font-semibold text-slate-400">Streak học tập</p>
-                            </div>
-                            <p class="text-sm font-black text-amber-300">
-                                {{ $sidebarStreak ?? 0 }} ngày
-                            </p>
-                        </div>
 
                         {{-- User Profile / Auth Actions --}}
                         @if ($authUser)
@@ -616,10 +585,6 @@
                                     </div>
                                 </a>
                                 <div class="flex items-center gap-1 shrink-0">
-                                    <a href="{{ route('pet.index') }}" @click="mobileMenuOpen = false" title="Bạn đồng hành Pet"
-                                       class="grid h-8 w-8 place-items-center rounded-lg border border-amber-200 bg-amber-50 text-amber-600 transition hover:bg-amber-100 hover:text-amber-800">
-                                        <i data-lucide="sparkles" class="h-3.5 w-3.5"></i>
-                                    </a>
                                     <form method="POST" action="{{ route('logout') }}" class="shrink-0">
                                         @csrf
                                         <button type="submit" title="Đăng xuất"

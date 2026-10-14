@@ -6,7 +6,7 @@
 <script>
 window.petRoom = function petRoom(config) {
     return {
-        activeTab: 'overview',
+        activeTab: config.activeTab || 'room',
         dailyRemaining: config.dailyRemaining || 0,
         hunger: config.userPet?.hunger || 100,
         hungerState: config.userPet?.hunger_state || 'happy',
@@ -854,7 +854,7 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
 
 <div class="max-w-5xl mx-auto px-4 py-6 sm:py-8 space-y-6"
      x-data="petRoom({
-         activeTab: 'overview',
+         activeTab: 'room',
          dailyRemaining: {{ $dailyRemaining }},
          userPet: {{ Js::from($userPet) }},
          progress: {{ Js::from($progress) }},
@@ -891,19 +891,15 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
 
         {{-- Top Quick Stats Pill --}}
         <div class="flex items-center gap-2 sm:gap-3">
-            <div class="rounded-2xl border border-slate-200/90 bg-white px-3.5 py-2 shadow-sm text-center">
+            <div @click="setTab('journey')" role="button" class="cursor-pointer rounded-2xl border border-slate-200/90 bg-white hover:bg-slate-50 px-3.5 py-2 shadow-sm text-center transition">
                 <p class="text-[10px] uppercase font-bold text-slate-400">Giai đoạn</p>
                 <p class="text-base font-black text-slate-900">{{ $userPet->stage }}/5</p>
             </div>
-            <div class="rounded-2xl border border-slate-200/90 bg-white px-3.5 py-2 shadow-sm text-center">
-                <p class="text-[10px] uppercase font-bold text-slate-400">Tổng EXP</p>
-                <p class="text-base font-black text-purple-600">{{ $userPet->exp }}</p>
-            </div>
-            <div class="rounded-2xl border border-slate-200/90 bg-white px-3.5 py-2 shadow-sm text-center">
+            <div @click="setTab('world')" role="button" class="cursor-pointer rounded-2xl border border-slate-200/90 bg-white hover:bg-slate-50 px-3.5 py-2 shadow-sm text-center transition">
                 <p class="text-[10px] uppercase font-bold text-slate-400">Từ đã dạy</p>
                 <p class="text-base font-black text-emerald-600">{{ $masteredCount }}</p>
             </div>
-            <div @click="setTab('affinity')" role="button" class="cursor-pointer rounded-2xl border border-rose-200 bg-rose-50/70 hover:bg-rose-100/80 px-3.5 py-2 shadow-sm text-center transition">
+            <div @click="setTab('journey')" role="button" class="cursor-pointer rounded-2xl border border-rose-200 bg-rose-50/70 hover:bg-rose-100/80 px-3.5 py-2 shadow-sm text-center transition">
                 <p class="text-[10px] uppercase font-bold text-rose-500">Thân thiết</p>
                 <p class="text-base font-black text-rose-700 flex items-center justify-center gap-1">
                     <span x-text="affinityTier?.emoji || '🌱'"></span>
@@ -913,54 +909,37 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
         </div>
     </div>
 
-    {{-- 2. Navigation Tabs --}}
+    {{-- 2. Navigation Tabs (3 Natural Experience Tabs) --}}
     <div class="flex items-center gap-2 border-b border-slate-200 overflow-x-auto pb-px custom-scrollbar">
         <button type="button"
-                @click="setTab('overview')"
-                :class="activeTab === 'overview' ? 'border-[#991b1b] text-[#991b1b] bg-red-50/50' : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'"
-                class="flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold transition whitespace-nowrap rounded-t-xl">
-            <i data-lucide="layout-dashboard" class="h-4 w-4"></i>
-            <span>Tổng quan & Cho ăn</span>
+                @click="setTab('room')"
+                :class="activeTab === 'room' ? 'border-[#991b1b] text-[#991b1b] bg-red-50/50' : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'"
+                class="flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold transition whitespace-nowrap rounded-t-xl">
+            <i data-lucide="home" class="h-4 w-4"></i>
+            <span>Phòng của chúng mình</span>
         </button>
 
         <button type="button"
-                @click="setTab('growth')"
-                :class="activeTab === 'growth' ? 'border-[#991b1b] text-[#991b1b] bg-red-50/50' : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'"
-                class="flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold transition whitespace-nowrap rounded-t-xl">
-            <i data-lucide="git-fork" class="h-4 w-4"></i>
-            <span>Lộ trình tiến hóa (Giai đoạn)</span>
+                @click="setTab('journey')"
+                :class="activeTab === 'journey' ? 'border-[#991b1b] text-[#991b1b] bg-red-50/50' : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'"
+                class="flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold transition whitespace-nowrap rounded-t-xl">
+            <i data-lucide="compass" class="h-4 w-4 text-amber-600"></i>
+            <span>Hành trình của Pet</span>
+            <span class="rounded-full bg-amber-100 text-amber-800 px-2 py-0.2 text-[10px] font-bold">Cấp {{ $userPet->stage }}/5</span>
         </button>
 
         <button type="button"
-                @click="setTab('vocab')"
-                :class="activeTab === 'vocab' ? 'border-[#991b1b] text-[#991b1b] bg-red-50/50' : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'"
-                class="flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold transition whitespace-nowrap rounded-t-xl">
-            <i data-lucide="book-open" class="h-4 w-4"></i>
-            <span>Vốn từ vựng đã học</span>
-            <span class="rounded-full bg-slate-200 px-2 py-0.2 text-[10px] font-bold text-slate-700" x-text="masteredWords.length"></span>
-        </button>
-
-        <button type="button"
-                @click="setTab('affinity')"
-                :class="activeTab === 'affinity' ? 'border-[#991b1b] text-[#991b1b] bg-red-50/50' : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'"
-                class="flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold transition whitespace-nowrap rounded-t-xl">
-            <i data-lucide="heart-handshake" class="h-4 w-4 text-rose-500"></i>
-            <span>Tri kỷ & Tính cách</span>
-            <span class="rounded-full bg-rose-100 text-rose-700 px-2 py-0.2 text-[10px] font-bold" x-text="(affinityTier?.name || 'Bỡ ngỡ') + ' • ' + affinity + '/100'"></span>
-        </button>
-
-        <button type="button"
-                @click="setTab('memories')"
-                :class="activeTab === 'memories' ? 'border-[#991b1b] text-[#991b1b] bg-red-50/50' : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'"
-                class="flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold transition whitespace-nowrap rounded-t-xl">
-            <i data-lucide="book-heart" class="h-4 w-4 text-amber-600"></i>
-            <span>Sổ Kỷ niệm & Cột mốc</span>
-            <span class="rounded-full bg-amber-100 text-amber-800 px-2 py-0.2 text-[10px] font-bold" x-text="timelineMemories.length"></span>
+                @click="setTab('world')"
+                :class="activeTab === 'world' ? 'border-[#991b1b] text-[#991b1b] bg-red-50/50' : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'"
+                class="flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-bold transition whitespace-nowrap rounded-t-xl">
+            <i data-lucide="globe" class="h-4 w-4 text-indigo-600"></i>
+            <span>Thế giới nhỏ</span>
+            <span class="rounded-full bg-indigo-100 text-indigo-800 px-2 py-0.2 text-[10px] font-bold" x-text="masteredWords.length + ' từ'"></span>
         </button>
     </div>
 
-    {{-- TAB 1: TỔNG QUAN & CĂN PHÒNG SỐNG CÙNG (COZY LIVING ROOM & CARE) --}}
-    <div x-show="activeTab === 'overview'" class="space-y-6">
+    {{-- TAB 1: PHÒNG CỦA CHÚNG MÌNH (COZY LIVING ROOM & CARE) --}}
+    <div x-show="activeTab === 'room'" class="space-y-6">
         {{-- Hero Living Room Stage --}}
         <div class="relative overflow-hidden rounded-3xl border transition-all duration-700 shadow-2xl p-5 sm:p-8"
              :class="roomScenery === 'night'
@@ -1562,104 +1541,436 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
         </div>
     </div>
 
-    {{-- TAB 2: LỘ TRÌNH TIẾN HÓA (GROWTH ROADMAP) --}}
-    <div x-show="activeTab === 'growth'" class="space-y-6">
+    {{-- TAB 2: HÀNH TRÌNH CỦA PET (GROWTH JOURNEY, PERSONALITY & SCRAPBOOK) --}}
+    <div x-show="activeTab === 'journey'" class="space-y-6">
+        {{-- Section 1: Growth Stages Story --}}
         <div class="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-xl shadow-slate-900/5 space-y-6">
-            <div>
-                <h3 class="text-xl font-black text-slate-900">Lộ trình tiến hóa sinh vật</h3>
-                <p class="text-sm text-slate-500 mt-1">
-                    Để pet tiến hóa lên giai đoạn cao hơn, bạn không chỉ cần nuôi EXP mà còn phải thực sự nâng cao năng lực tiếng Trung.
-                </p>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                <div>
+                    <div class="inline-flex items-center gap-1.5 rounded-full bg-amber-100 border border-amber-300 px-3 py-0.5 text-xs font-bold text-amber-900">
+                        <i data-lucide="sparkles" class="h-3.5 w-3.5 text-amber-600"></i>
+                        <span>Quá trình lớn lên</span>
+                    </div>
+                    <h3 class="text-xl font-black text-slate-900 mt-1">Hành trình Trưởng thành</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">
+                        Pet đồng hành và lớn lên cùng bạn qua từng chặng đường học tập, từ quả trứng nhỏ đến Rồng thần uy phong.
+                    </p>
+                </div>
+                <div class="shrink-0">
+                    <span class="rounded-2xl border border-amber-200 bg-amber-50/70 px-3.5 py-1.5 text-xs font-bold text-amber-900">
+                        Giai đoạn hiện tại: <strong>Cấp {{ $userPet->stage }}/5</strong>
+                    </span>
+                </div>
             </div>
 
-            <div class="space-y-4">
+            @php
+                $stageStoryDescriptions = [
+                    0 => 'Quả trứng nhỏ đang được ấp ủ bằng những bài học đầu tiên.',
+                    1 => 'Bắt đầu bập bẹ làm quen với những thanh điệu và nét chữ Hán cơ bản.',
+                    2 => 'Nhận biết từ vựng quen thuộc và các mẫu câu chào hỏi hàng ngày.',
+                    3 => 'Tự tin ghép câu, luyện phản xạ và giao tiếp những đoạn ngắn.',
+                    4 => 'Làm chủ nhiều chủ đề từ vựng phong phú, phản xạ nhanh nhạy.',
+                    5 => 'Đỉnh cao gắn kết, tự do vẫy vùng cùng bạn trong thế giới tiếng Trung.',
+                ];
+            @endphp
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 @foreach($stages as $stage)
                 @php
                     $isUnlocked = $userPet->stage >= $stage->stage;
                     $isCurrent = $userPet->stage === $stage->stage;
                     $isNext = $userPet->stage + 1 === $stage->stage;
                 @endphp
-                <div class="rounded-2xl border p-4 sm:p-5 transition-all
-                            {{ $isCurrent ? 'border-amber-400 bg-amber-50/40 ring-2 ring-amber-400/20 shadow-md' : ($isUnlocked ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200/80 bg-slate-50/50 opacity-90') }}">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div class="flex items-center gap-3.5">
-                            <div class="grid h-14 w-14 shrink-0 place-items-center rounded-2xl text-3xl shadow-sm border
+                <div class="rounded-2xl border p-4.5 space-y-3 transition-all
+                            {{ $isCurrent ? 'border-amber-400 bg-amber-50/50 ring-2 ring-amber-400/20 shadow-md' : ($isUnlocked ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200/80 bg-slate-50/50 opacity-80') }}">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl text-2xl shadow-xs border
                                         {{ $isCurrent ? 'bg-amber-100 border-amber-300' : ($isUnlocked ? 'bg-emerald-100 border-emerald-300' : 'bg-slate-100 border-slate-200') }}">
                                 {{ $stage->emoji }}
                             </div>
                             <div>
-                                <div class="flex items-center gap-2">
-                                    <h4 class="text-base font-black text-slate-900">
-                                        Giai đoạn {{ $stage->stage }}: {{ $stage->name }}
-                                    </h4>
-                                    @if($isCurrent)
-                                    <span class="rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-black uppercase text-white">Đang ở đây</span>
-                                    @elseif($isUnlocked)
-                                    <span class="rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-black uppercase text-white">✓ Đã đạt</span>
-                                    @elseif($isNext)
-                                    <span class="rounded-full bg-purple-600 px-2 py-0.5 text-[10px] font-black uppercase text-white">Mục tiêu tiếp theo</span>
-                                    @endif
-                                </div>
-                                <p class="text-xs text-slate-500 mt-0.5">
-                                    Yêu cầu tối thiểu: <strong>{{ number_format($stage->required_exp) }} EXP</strong>
-                                </p>
+                                <h4 class="text-sm font-black text-slate-900">
+                                    Cấp {{ $stage->stage }}: {{ $stage->name }}
+                                </h4>
+                                <span class="text-[11px] text-slate-400">
+                                    {{ $stage->stage === 0 ? 'Khởi đầu' : number_format($stage->required_exp) . ' EXP' }}
+                                </span>
                             </div>
                         </div>
 
-                        {{-- Requirement Badges --}}
-                        <div class="flex flex-wrap gap-2 text-xs">
-                            {{-- EXP --}}
-                            <span class="rounded-xl px-2.5 py-1 font-semibold flex items-center gap-1 border
-                                         {{ $userReqStats['exp'] >= $stage->required_exp ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-slate-100 border-slate-200 text-slate-600' }}">
-                                <i data-lucide="{{ $userReqStats['exp'] >= $stage->required_exp ? 'check' : 'circle' }}" class="h-3.5 w-3.5"></i>
-                                <span>EXP: {{ $userReqStats['exp'] }}/{{ $stage->required_exp }}</span>
-                            </span>
-
-                            {{-- Mastered Vocab --}}
-                            @if($stage->required_mastered_vocabulary > 0)
-                            <span class="rounded-xl px-2.5 py-1 font-semibold flex items-center gap-1 border
-                                         {{ $userReqStats['mastered_vocab'] >= $stage->required_mastered_vocabulary ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-slate-100 border-slate-200 text-slate-600' }}">
-                                <i data-lucide="{{ $userReqStats['mastered_vocab'] >= $stage->required_mastered_vocabulary ? 'check' : 'circle' }}" class="h-3.5 w-3.5"></i>
-                                <span>Từ thành thạo: {{ $userReqStats['mastered_vocab'] }}/{{ $stage->required_mastered_vocabulary }}</span>
-                            </span>
-                            @endif
-
-                            {{-- Used Vocab --}}
-                            @if($stage->required_used_vocabulary > 0)
-                            <span class="rounded-xl px-2.5 py-1 font-semibold flex items-center gap-1 border
-                                         {{ $userReqStats['used_vocab'] >= $stage->required_used_vocabulary ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-slate-100 border-slate-200 text-slate-600' }}">
-                                <i data-lucide="{{ $userReqStats['used_vocab'] >= $stage->required_used_vocabulary ? 'check' : 'circle' }}" class="h-3.5 w-3.5"></i>
-                                <span>Từ tích cực: {{ $userReqStats['used_vocab'] }}/{{ $stage->required_used_vocabulary }}</span>
-                            </span>
-                            @endif
-
-                            {{-- Reading Activities --}}
-                            @if($stage->required_reading_activities > 0)
-                            <span class="rounded-xl px-2.5 py-1 font-semibold flex items-center gap-1 border
-                                         {{ $userReqStats['reading_activity'] >= $stage->required_reading_activities ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-slate-100 border-slate-200 text-slate-600' }}">
-                                <i data-lucide="{{ $userReqStats['reading_activity'] >= $stage->required_reading_activities ? 'check' : 'circle' }}" class="h-3.5 w-3.5"></i>
-                                <span>Bài đọc: {{ $userReqStats['reading_activity'] }}/{{ $stage->required_reading_activities }}</span>
-                            </span>
-                            @endif
-
-                            {{-- Listening Activities --}}
-                            @if($stage->required_listening_activities > 0)
-                            <span class="rounded-xl px-2.5 py-1 font-semibold flex items-center gap-1 border
-                                         {{ $userReqStats['listening_activity'] >= $stage->required_listening_activities ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-slate-100 border-slate-200 text-slate-600' }}">
-                                <i data-lucide="{{ $userReqStats['listening_activity'] >= $stage->required_listening_activities ? 'check' : 'circle' }}" class="h-3.5 w-3.5"></i>
-                                <span>Bài nghe: {{ $userReqStats['listening_activity'] }}/{{ $stage->required_listening_activities }}</span>
-                            </span>
+                        <div>
+                            @if($isCurrent)
+                            <span class="rounded-full bg-amber-500 px-2.5 py-0.5 text-[10px] font-black uppercase text-white shadow-xs">Đang ở đây</span>
+                            @elseif($isUnlocked)
+                            <span class="rounded-full bg-emerald-500 px-2.5 py-0.5 text-[10px] font-black uppercase text-white">✓ Đã đạt</span>
+                            @elseif($isNext)
+                            <span class="rounded-full bg-purple-600 px-2.5 py-0.5 text-[10px] font-black uppercase text-white">Mục tiêu tới</span>
+                            @else
+                            <span class="rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-500">Chưa mở</span>
                             @endif
                         </div>
                     </div>
+
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        {{ $stageStoryDescriptions[$stage->stage] ?? 'Chặng đường học tập ý nghĩa cùng Pet.' }}
+                    </p>
+
+                    @if($isNext)
+                    <div class="rounded-xl bg-purple-50 border border-purple-200/70 p-2.5 text-[11px] text-purple-900 flex items-center gap-1.5">
+                        <i data-lucide="sparkles" class="h-3.5 w-3.5 text-purple-600 shrink-0"></i>
+                        <span>Hãy tiếp tục tích lũy EXP và ôn từ vựng để mở khóa!</span>
+                    </div>
+                    @endif
                 </div>
                 @endforeach
             </div>
         </div>
+
+        {{-- Section 2: Personality & Affinity --}}
+        <div class="rounded-3xl border border-rose-200/90 bg-gradient-to-br from-rose-50/70 via-white to-amber-50/40 p-6 sm:p-8 shadow-xl shadow-rose-950/5 space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div class="space-y-2">
+                    <div class="inline-flex items-center gap-1.5 rounded-full bg-rose-100 border border-rose-200 px-3 py-0.5 text-xs font-bold text-rose-800">
+                        <i data-lucide="heart" class="h-3.5 w-3.5 fill-rose-500 text-rose-500"></i>
+                        <span>Tâm hồn & Chiều sâu cảm xúc</span>
+                    </div>
+                    <h3 class="text-2xl font-black text-slate-900">
+                        Tri kỷ đồng hành — Không áp lực, chỉ có thấu hiểu
+                    </h3>
+                    <p class="text-sm text-slate-600 max-w-2xl leading-relaxed">
+                        Pet không phải là một chuỗi chỉ số máy móc, mà là người bạn nhỏ có tính cách riêng biệt, lưu giữ từng chữ bạn học và ngày càng gắn kết theo thời gian.
+                    </p>
+                </div>
+
+                {{-- Current Affinity Ring/Pill --}}
+                <div class="shrink-0 rounded-2xl border-2 border-rose-200 bg-white p-4 shadow-md text-center min-w-[200px]">
+                    <div class="text-3xl mb-1" x-text="affinityTier?.emoji || '🌱'"></div>
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Cấp độ quan hệ</p>
+                    <p class="text-lg font-black text-rose-700" x-text="affinityTier?.title || 'Người lạ mới gặp'"></p>
+                    <p class="text-xs font-semibold text-slate-500 mt-0.5" x-text="affinity + ' / 100 điểm Thân thiết'"></p>
+                    <div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                        <div class="h-full rounded-full bg-gradient-to-r from-rose-400 to-pink-500 transition-all duration-500"
+                             :style="'width: ' + affinity + '%'"></div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- 5 Archetypes Selector --}}
+            <div class="space-y-3 pt-2">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-rose-100 pb-3">
+                    <h4 class="text-sm font-black text-slate-900 flex items-center gap-1.5">
+                        <i data-lucide="smile" class="h-4 w-4 text-amber-500"></i>
+                        <span>Chọn nét Tính cách cho Pet:</span>
+                    </h4>
+                    <div x-show="personalityMessage" x-cloak
+                         class="rounded-xl px-3 py-1 text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"
+                         x-text="personalityMessage"></div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                    {{-- 1. Playful --}}
+                    <div @click="selectPersonality('playful')" role="button"
+                         :class="personality === 'playful' ? 'border-amber-500 ring-2 ring-amber-500/30 bg-amber-50/60' : 'border-slate-200 hover:border-amber-300 bg-white'"
+                         class="rounded-2xl border p-3.5 transition text-left cursor-pointer space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-2xl">✨</span>
+                            <span x-show="personality === 'playful'" class="rounded-full bg-amber-500 text-white px-2 py-0.2 text-[9px] font-black uppercase">Đang chọn</span>
+                        </div>
+                        <div>
+                            <h5 class="text-xs font-black text-slate-900">Tinh nghịch</h5>
+                            <p class="text-[11px] text-slate-500 mt-0.5 line-clamp-2">Hiếu động, luôn đố vui và rủ bạn cùng học tiếp.</p>
+                        </div>
+                    </div>
+
+                    {{-- 2. Curious --}}
+                    <div @click="selectPersonality('curious')" role="button"
+                         :class="personality === 'curious' ? 'border-blue-500 ring-2 ring-blue-500/30 bg-blue-50/60' : 'border-slate-200 hover:border-blue-300 bg-white'"
+                         class="rounded-2xl border p-3.5 transition text-left cursor-pointer space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-2xl">🔍</span>
+                            <span x-show="personality === 'curious'" class="rounded-full bg-blue-600 text-white px-2 py-0.2 text-[9px] font-black uppercase">Đang chọn</span>
+                        </div>
+                        <div>
+                            <h5 class="text-xs font-black text-slate-900">Tò mò</h5>
+                            <p class="text-[11px] text-slate-500 mt-0.5 line-clamp-2">Ham khám phá bộ thủ và nguồn gốc chữ Hán.</p>
+                        </div>
+                    </div>
+
+                    {{-- 3. Shy --}}
+                    <div @click="selectPersonality('shy')" role="button"
+                         :class="personality === 'shy' ? 'border-pink-500 ring-2 ring-pink-500/30 bg-pink-50/60' : 'border-slate-200 hover:border-pink-300 bg-white'"
+                         class="rounded-2xl border p-3.5 transition text-left cursor-pointer space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-2xl">🌸</span>
+                            <span x-show="personality === 'shy'" class="rounded-full bg-pink-500 text-white px-2 py-0.2 text-[9px] font-black uppercase">Đang chọn</span>
+                        </div>
+                        <div>
+                            <h5 class="text-xs font-black text-slate-900">E thẹn</h5>
+                            <p class="text-[11px] text-slate-500 mt-0.5 line-clamp-2">Dịu dàng, an ủi ngọt ngào khi gặp từ khó.</p>
+                        </div>
+                    </div>
+
+                    {{-- 4. Cheerful --}}
+                    <div @click="selectPersonality('cheerful')" role="button"
+                         :class="personality === 'cheerful' ? 'border-orange-500 ring-2 ring-orange-500/30 bg-orange-50/60' : 'border-slate-200 hover:border-orange-300 bg-white'"
+                         class="rounded-2xl border p-3.5 transition text-left cursor-pointer space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-2xl">☀️</span>
+                            <span x-show="personality === 'cheerful'" class="rounded-full bg-orange-500 text-white px-2 py-0.2 text-[9px] font-black uppercase">Đang chọn</span>
+                        </div>
+                        <div>
+                            <h5 class="text-xs font-black text-slate-900">Lạc quan</h5>
+                            <p class="text-[11px] text-slate-500 mt-0.5 line-clamp-2">Tràn trề năng lượng, tiếp thêm tự tin mỗi ngày.</p>
+                        </div>
+                    </div>
+
+                    {{-- 5. Calm --}}
+                    <div @click="selectPersonality('calm')" role="button"
+                         :class="personality === 'calm' ? 'border-emerald-600 ring-2 ring-emerald-600/30 bg-emerald-50/60' : 'border-slate-200 hover:border-emerald-300 bg-white'"
+                         class="rounded-2xl border p-3.5 transition text-left cursor-pointer space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-2xl">🍵</span>
+                            <span x-show="personality === 'calm'" class="rounded-full bg-emerald-600 text-white px-2 py-0.2 text-[9px] font-black uppercase">Đang chọn</span>
+                        </div>
+                        <div>
+                            <h5 class="text-xs font-black text-slate-900">Điềm tĩnh</h5>
+                            <p class="text-[11px] text-slate-500 mt-0.5 line-clamp-2">Uyên bác, học như thưởng trà, tích lũy từng ngày.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Section 3: Scrapbook Timeline Memories --}}
+        <div class="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-xl shadow-slate-900/5 space-y-6">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                <div>
+                    <div class="inline-flex items-center gap-1.5 rounded-full bg-amber-100 border border-amber-300 px-3 py-0.5 text-xs font-bold text-amber-900">
+                        <i data-lucide="book-heart" class="h-3.5 w-3.5 text-amber-700"></i>
+                        <span>Sổ Kỷ niệm</span>
+                    </div>
+                    <h3 class="text-xl font-black text-slate-900 mt-1">Cột mốc Đồng hành</h3>
+                </div>
+
+                {{-- Category Filter Chips --}}
+                <div class="flex flex-wrap items-center gap-1.5">
+                    <button type="button"
+                            @click="selectedMemoryFilter = 'all'; setTimeout(() => window.refreshIcons?.(), 50)"
+                            :class="selectedMemoryFilter === 'all'
+                                ? 'bg-[#991b1b] text-white shadow-xs'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                            class="rounded-xl px-3 py-1.5 text-xs font-bold transition">
+                        Tất cả (<span x-text="timelineMemories.length"></span>)
+                    </button>
+
+                    <button type="button"
+                            @click="selectedMemoryFilter = 'growth'; setTimeout(() => window.refreshIcons?.(), 50)"
+                            :class="selectedMemoryFilter === 'growth'
+                                ? 'bg-emerald-600 text-white shadow-xs'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                            class="rounded-xl px-3 py-1.5 text-xs font-bold transition flex items-center gap-1">
+                        <span>🌱</span>
+                        <span>Trưởng thành</span>
+                    </button>
+
+                    <button type="button"
+                            @click="selectedMemoryFilter = 'learning'; setTimeout(() => window.refreshIcons?.(), 50)"
+                            :class="selectedMemoryFilter === 'learning'
+                                ? 'bg-blue-600 text-white shadow-xs'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                            class="rounded-xl px-3 py-1.5 text-xs font-bold transition flex items-center gap-1">
+                        <span>📚</span>
+                        <span>Học tập</span>
+                    </button>
+
+                    <button type="button"
+                            @click="selectedMemoryFilter = 'care'; setTimeout(() => window.refreshIcons?.(), 50)"
+                            :class="selectedMemoryFilter === 'care'
+                                ? 'bg-rose-600 text-white shadow-xs'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+                            class="rounded-xl px-3 py-1.5 text-xs font-bold transition flex items-center gap-1">
+                        <span>❤️</span>
+                        <span>Chăm sóc</span>
+                    </button>
+                </div>
+            </div>
+
+            {{-- Timeline List --}}
+            <template x-if="filteredTimelineMemories().length > 0">
+                <div class="space-y-3.5">
+                    <template x-for="memory in filteredTimelineMemories()" :key="memory.id">
+                        <div class="group relative rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 sm:p-5 transition-all hover:bg-white hover:border-amber-300 hover:shadow-md space-y-2.5">
+                            <div class="flex items-center justify-between flex-wrap gap-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="grid h-7 w-7 place-items-center rounded-xl bg-white shadow-xs border text-sm select-none"
+                                          x-text="memory.badge_emoji || '🌟'"></span>
+                                    <span class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border"
+                                          :class="memory.category === 'growth' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : (memory.category === 'learning' ? 'bg-blue-50 text-blue-800 border-blue-200' : (memory.category === 'care' ? 'bg-rose-50 text-rose-800 border-rose-200' : 'bg-purple-50 text-purple-800 border-purple-200'))"
+                                          x-text="memory.category === 'growth' ? 'Tiến hóa' : (memory.category === 'learning' ? 'Học tập' : (memory.category === 'care' ? 'Chăm sóc' : 'Cột mốc'))"></span>
+                                </div>
+                                <div class="flex items-center gap-2 text-xs">
+                                    <span class="rounded-full bg-slate-200/80 text-slate-700 px-2.5 py-0.5 text-[10px] font-bold"
+                                          x-text="memory.days_ago_badge || 'Gần đây'"></span>
+                                    <span class="text-slate-400 tabular-nums text-[11px]" x-text="memory.formatted_date"></span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h4 class="text-sm font-black text-slate-900 group-hover:text-amber-800 transition" x-text="memory.title"></h4>
+                                <p class="text-xs text-slate-600 mt-0.5 leading-relaxed" x-text="memory.description"></p>
+                            </div>
+
+                            {{-- Speech bubble --}}
+                            <template x-if="memory.pet_reflection">
+                                <div class="rounded-xl bg-amber-50/80 border border-amber-200/70 p-3 flex items-start gap-2.5">
+                                    <span class="text-base select-none shrink-0 mt-0.5">🐉</span>
+                                    <div class="space-y-0.5">
+                                        <p class="text-[10px] font-bold uppercase tracking-wider text-amber-800">Pet thỏ thẻ:</p>
+                                        <p class="text-xs italic text-amber-950 font-medium leading-relaxed" x-text="'“' + memory.pet_reflection + '”'"></p>
+                                    </div>
+                                </div>
+                            </template>
+
+                            {{-- Audio button if milestone is connected to word --}}
+                            <template x-if="memory.metadata && memory.metadata.related_word">
+                                <div class="flex items-center justify-between pt-2 border-t border-slate-200/60 text-xs">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-slate-500 text-[11px]">Chữ Hán:</span>
+                                        <span class="font-bold text-slate-900 text-sm" x-text="memory.metadata.related_word"></span>
+                                        <template x-if="memory.metadata.pinyin">
+                                            <span class="text-amber-600 text-[11px] font-semibold" x-text="'(' + memory.metadata.pinyin + ')'"></span>
+                                        </template>
+                                    </div>
+                                    <button type="button" @click="speakWord(memory.metadata.related_word)"
+                                            class="inline-flex items-center gap-1 rounded-xl bg-white border border-slate-200 px-2.5 py-1 text-[11px] font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-800 transition">
+                                        <i data-lucide="volume-2" class="h-3.5 w-3.5 text-amber-600"></i>
+                                        <span>Phát âm lại</span>
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
+            <template x-if="filteredTimelineMemories().length === 0">
+                <div class="rounded-2xl border border-dashed border-slate-200 p-8 text-center space-y-2">
+                    <span class="text-3xl">📖</span>
+                    <h4 class="text-sm font-bold text-slate-800">Chưa có kỷ niệm nào</h4>
+                    <p class="text-xs text-slate-500">Hãy tiếp tục học bài và chăm sóc Pet để lưu lại những mốc đáng nhớ nhé!</p>
+                </div>
+            </template>
+        </div>
     </div>
 
-    {{-- TAB 3: VỐN TỪ VỰNG ĐÃ HỌC (PET VOCABULARY) --}}
-    <div x-show="activeTab === 'vocab'" class="space-y-6">
+    {{-- TAB 3: THẾ GIỚI NHỎ (MINI WORLD CANVAS, DREAM SENTENCE & VOCABULARY BOOKSHELF) --}}
+    <div x-show="activeTab === 'world'" class="space-y-6">
+        {{-- Section 1: Floating Memory World Canvas --}}
+        <div class="rounded-3xl border border-indigo-200/90 bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-900 p-6 sm:p-8 shadow-xl shadow-indigo-950/20 text-white space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-5">
+                <div>
+                    <div class="inline-flex items-center gap-1.5 rounded-full bg-indigo-500/20 border border-indigo-400/30 px-3 py-0.5 text-xs font-bold text-indigo-300">
+                        <i data-lucide="globe-2" class="h-3.5 w-3.5 text-indigo-300"></i>
+                        <span>Thế giới Tâm thức & Ký ức Ngôn ngữ</span>
+                    </div>
+                    <h3 class="text-2xl font-black text-white mt-1.5 flex items-center gap-2">
+                        <span>Pet Memory World</span>
+                        <span class="text-xl">🌏</span>
+                    </h3>
+                    <p class="text-xs text-indigo-200/80 max-w-2xl mt-1 leading-relaxed">
+                        Mỗi từ vựng bạn làm chủ sẽ hóa thân thành một thực thể bay lượn trong thế giới tâm thức của Pet.
+                    </p>
+                </div>
+
+                <div class="shrink-0 flex items-center gap-3">
+                    <span class="rounded-2xl border border-indigo-400/30 bg-white/10 px-3.5 py-1.5 text-xs font-bold text-indigo-200 flex items-center gap-1.5">
+                        <span>✨</span>
+                        <span><strong>{{ count($worldObjs) }}</strong> thực thể</span>
+                    </span>
+                    <a href="{{ route('pet.world') }}"
+                       class="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 px-4 py-2 text-xs font-bold text-white shadow-md transition active:scale-95">
+                        <i data-lucide="compass" class="h-3.5 w-3.5"></i>
+                        <span>Mở toàn cảnh 3D →</span>
+                    </a>
+                </div>
+            </div>
+
+            {{-- Floating Universe Canvas --}}
+            <div class="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-gradient-to-b from-slate-950 via-indigo-950/80 to-slate-950 p-4 shadow-2xl"
+                 style="min-height: 260px;">
+                <div class="absolute inset-0 opacity-40 pointer-events-none bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-400/20 via-transparent to-transparent"></div>
+                <div class="absolute top-4 right-6 text-indigo-300/20 text-5xl select-none pointer-events-none">✨</div>
+                <div class="absolute bottom-6 left-8 text-indigo-300/10 text-4xl select-none pointer-events-none">🌙</div>
+
+                @if(count($worldObjs) > 0)
+                <div class="relative w-full h-[220px]">
+                    @foreach($worldObjs as $obj)
+                    <div class="absolute group cursor-pointer transition-all duration-300 hover:scale-125 hover:z-30"
+                         style="left: {{ $obj['pos_x'] }}%; top: {{ $obj['pos_y'] }}%; transform: translate(-50%, -50%); font-size: {{ 14 + ($obj['size'] ?? 3) * 4 }}px;"
+                         @click="speakWord('{{ $obj['hanzi'] }}')">
+                        <span class="select-none inline-block transition-transform duration-300 group-hover:animate-bounce drop-shadow-md">
+                            {{ $obj['emoji'] }}
+                        </span>
+
+                        {{-- Rich Tooltip on Hover --}}
+                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex flex-col items-center bg-slate-900/95 backdrop-blur-md text-white border border-indigo-400/40 text-xs px-3 py-2 rounded-xl shadow-2xl whitespace-nowrap z-50 pointer-events-none">
+                            <div class="flex items-center gap-1.5">
+                                <span class="font-black text-amber-300 text-sm">{{ $obj['hanzi'] }}</span>
+                                <span class="font-mono text-indigo-200 text-[11px]">({{ $obj['pinyin'] }})</span>
+                            </div>
+                            <span class="text-slate-200 text-[11px] font-medium mt-0.5">{{ $obj['meaning'] }}</span>
+                            <span class="text-[9px] text-indigo-300/80 mt-1 uppercase tracking-wider">Bấm để nghe phát âm 🔊</span>
+                            <div class="w-2 h-2 bg-slate-900 rotate-45 -mb-1 mt-0.5 border-r border-b border-indigo-400/40"></div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+                <div class="relative z-10 flex items-center justify-between pt-2 border-t border-white/10 text-[11px] text-indigo-300/70">
+                    <span>💡 Rê chuột để xem chữ Hán · Bấm vào biểu tượng để Pet đọc mẫu</span>
+                    <span>Tự động cập nhật khi bạn học từ mới</span>
+                </div>
+                @else
+                <div class="flex flex-col items-center justify-center py-10 text-center space-y-2">
+                    <span class="text-4xl animate-pulse">🌌</span>
+                    <h5 class="text-sm font-bold text-indigo-200">Thế giới tâm thức đang đón chờ những từ đầu tiên</h5>
+                    <p class="text-xs text-indigo-300/70 max-w-sm">
+                        Khi bạn ôn tập Flashcard đạt từ 2 lần đúng trở lên, các chữ Hán sẽ hóa thành đồ vật và cảnh sắc sống động tại đây!
+                    </p>
+                </div>
+                @endif
+            </div>
+
+            {{-- Pet Dream Sentence --}}
+            @if($dreamSent)
+            <div class="rounded-2xl border border-indigo-400/30 bg-white/5 backdrop-blur-sm p-4 sm:p-5 space-y-3">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2 text-xs font-bold text-indigo-300 uppercase tracking-wider">
+                        <span class="text-lg">💤</span>
+                        <span>Giấc mơ của Pet đêm qua:</span>
+                    </div>
+                    <button type="button"
+                            @click="speakWord('{{ addslashes($dreamSent) }}')"
+                            title="Nghe Pet kể lại giấc mơ bằng tiếng Trung"
+                            class="inline-flex items-center gap-1.5 rounded-xl bg-indigo-500/30 hover:bg-indigo-500/50 border border-indigo-400/40 px-3 py-1.5 text-xs font-bold text-indigo-100 transition active:scale-95 shadow-xs">
+                        <i data-lucide="volume-2" class="h-3.5 w-3.5 text-indigo-200"></i>
+                        <span>Nghe kể lại</span>
+                    </button>
+                </div>
+
+                <div class="rounded-xl bg-slate-950/60 border border-indigo-500/20 p-4">
+                    <p class="text-lg sm:text-xl font-bold text-amber-200 tracking-wide font-sans leading-relaxed">
+                        “{{ $dreamSent }}”
+                    </p>
+                </div>
+                <p class="text-[11px] text-indigo-300/70 italic">
+                    ✨ Pet tự động dệt nên giấc mơ này từ các từ vựng bạn đã cùng học. Mỗi lần mở ra là một giấc mơ mới!
+                </p>
+            </div>
+            @endif
+        </div>
+
+        {{-- Section 2: Mastered Words Bookshelf --}}
         <div class="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-xl shadow-slate-900/5 space-y-5">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-4">
                 <div>
@@ -1708,7 +2019,7 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
 
             {{-- Empty State --}}
             <template x-if="filteredWords().length === 0">
-                <div class="rounded-2xl border border-dashed border-slate-200 p-10 text-center space-y-3">
+                <div class="rounded-2xl border border-dashed border-slate-200 p-8 text-center space-y-3">
                     <span class="text-4xl">📚</span>
                     <h4 class="text-base font-bold text-slate-800">Chưa có từ vựng nào đạt độ nhớ</h4>
                     <p class="text-xs text-slate-500 max-w-md mx-auto">
@@ -1721,622 +2032,6 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                     </a>
                 </div>
             </template>
-        </div>
-    </div>
-
-    {{-- TAB 4: SỔ KỶ NIỆM SỐNG ĐỘNG & CỘT MỐC TRI KỶ (SCRAPBOOK TIMELINE) --}}
-    <div x-show="activeTab === 'memories'" class="space-y-6">
-        {{-- Scrapbook Milestone Header Card --}}
-        <div class="rounded-3xl border border-amber-200/90 bg-gradient-to-br from-amber-50/80 via-white to-orange-50/50 p-6 sm:p-8 shadow-xl shadow-amber-950/5">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div class="space-y-2">
-                    <div class="inline-flex items-center gap-1.5 rounded-full bg-amber-100 border border-amber-300 px-3 py-0.5 text-xs font-bold text-amber-900">
-                        <i data-lucide="book-heart" class="h-3.5 w-3.5 text-amber-700"></i>
-                        <span>Cuốn sổ Kỷ niệm của Pet & Bạn</span>
-                    </div>
-                    <h3 class="text-2xl font-black text-slate-900">
-                        Ký ức & Dấu mốc Đồng hành
-                    </h3>
-                    <p class="text-sm text-slate-600 max-w-2xl leading-relaxed">
-                        Mỗi bước tiến bộ học tập, từng bữa ăn ngon và những cột mốc kiên trì của bạn đều được Pet trân trọng khắc ghi thành những trang nhật ký sống động.
-                    </p>
-                </div>
-
-                {{-- 3 Milestone Summary Badges --}}
-                <div class="grid grid-cols-3 gap-2 sm:gap-3 shrink-0">
-                    <div class="rounded-2xl border border-amber-200 bg-white/90 p-3 text-center shadow-sm">
-                        <span class="text-xl">🌱</span>
-                        <p class="text-[10px] font-bold uppercase text-slate-400 mt-1">Gặp nhau</p>
-                        <p class="text-sm font-black text-slate-800">
-                            {{ ($roomStats['days_together'] ?? 0) > 0 ? $roomStats['days_together'] . ' ngày' : 'Hôm nay' }}
-                        </p>
-                    </div>
-
-                    <div class="rounded-2xl border border-amber-200 bg-white/90 p-3 text-center shadow-sm">
-                        <span class="text-xl">📸</span>
-                        <p class="text-[10px] font-bold uppercase text-slate-400 mt-1">Kỷ niệm</p>
-                        <p class="text-sm font-black text-amber-700" x-text="timelineMemories.length + ' mốc'"></p>
-                    </div>
-
-                    <div class="rounded-2xl border border-rose-200 bg-rose-50/70 p-3 text-center shadow-sm">
-                        <span class="text-xl" x-text="affinityTier?.emoji || '❤️'"></span>
-                        <p class="text-[10px] font-bold uppercase text-rose-400 mt-1">Gắn kết</p>
-                        <p class="text-xs font-black text-rose-700 truncate" x-text="affinityTier?.name || 'Bỡ ngỡ'"></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- Main Scrapbook Container --}}
-        <div class="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-xl shadow-slate-900/5 space-y-6">
-            {{-- Category Filter Chips --}}
-            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
-                <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                    <button type="button"
-                            @click="selectedMemoryFilter = 'all'; setTimeout(() => window.refreshIcons?.(), 50)"
-                            :class="selectedMemoryFilter === 'all'
-                                ? 'bg-[#991b1b] text-white shadow-sm'
-                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
-                            class="rounded-xl px-3.5 py-1.5 text-xs font-bold transition">
-                        Tất cả (<span x-text="timelineMemories.length"></span>)
-                    </button>
-
-                    <button type="button"
-                            @click="selectedMemoryFilter = 'growth'; setTimeout(() => window.refreshIcons?.(), 50)"
-                            :class="selectedMemoryFilter === 'growth'
-                                ? 'bg-emerald-600 text-white shadow-sm'
-                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
-                            class="rounded-xl px-3.5 py-1.5 text-xs font-bold transition flex items-center gap-1">
-                        <span>🌱</span>
-                        <span>Trưởng thành</span>
-                    </button>
-
-                    <button type="button"
-                            @click="selectedMemoryFilter = 'learning'; setTimeout(() => window.refreshIcons?.(), 50)"
-                            :class="selectedMemoryFilter === 'learning'
-                                ? 'bg-blue-600 text-white shadow-sm'
-                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
-                            class="rounded-xl px-3.5 py-1.5 text-xs font-bold transition flex items-center gap-1">
-                        <span>📚</span>
-                        <span>Học tập</span>
-                    </button>
-
-                    <button type="button"
-                            @click="selectedMemoryFilter = 'care'; setTimeout(() => window.refreshIcons?.(), 50)"
-                            :class="selectedMemoryFilter === 'care'
-                                ? 'bg-rose-600 text-white shadow-sm'
-                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
-                            class="rounded-xl px-3.5 py-1.5 text-xs font-bold transition flex items-center gap-1">
-                        <span>❤️</span>
-                        <span>Chăm sóc</span>
-                    </button>
-
-                    <button type="button"
-                            @click="selectedMemoryFilter = 'special'; setTimeout(() => window.refreshIcons?.(), 50)"
-                            :class="selectedMemoryFilter === 'special'
-                                ? 'bg-purple-600 text-white shadow-sm'
-                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
-                            class="rounded-xl px-3.5 py-1.5 text-xs font-bold transition flex items-center gap-1">
-                        <span>🌟</span>
-                        <span>Đặc biệt</span>
-                    </button>
-                </div>
-
-                <div class="text-xs text-slate-400 font-medium">
-                    Đang hiển thị <strong class="text-slate-700" x-text="filteredTimelineMemories().length"></strong> mốc kỷ niệm
-                </div>
-            </div>
-
-            {{-- Timeline / Scrapbook Grid --}}
-            <template x-if="filteredTimelineMemories().length > 0">
-                <div class="space-y-4">
-                    <template x-for="memory in filteredTimelineMemories()" :key="memory.id">
-                        <div class="group relative rounded-2xl border border-slate-200/80 bg-slate-50/60 p-5 transition-all hover:bg-white hover:border-amber-300 hover:shadow-md space-y-3">
-                            {{-- Top Header Row: Category Badge, Days Ago & Timestamp --}}
-                            <div class="flex items-center justify-between flex-wrap gap-2">
-                                <div class="flex items-center gap-2">
-                                    <span class="grid h-8 w-8 place-items-center rounded-xl bg-white shadow-xs border text-base select-none"
-                                          :class="memory.category === 'growth' ? 'border-emerald-200 bg-emerald-50/50' : (memory.category === 'learning' ? 'border-blue-200 bg-blue-50/50' : (memory.category === 'care' ? 'border-rose-200 bg-rose-50/50' : 'border-amber-200 bg-amber-50/50'))"
-                                          x-text="memory.badge_emoji || '🌟'"></span>
-                                    <div>
-                                        <span class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border"
-                                              :class="memory.category === 'growth' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : (memory.category === 'learning' ? 'bg-blue-50 text-blue-800 border-blue-200' : (memory.category === 'care' ? 'bg-rose-50 text-rose-800 border-rose-200' : 'bg-purple-50 text-purple-800 border-purple-200'))"
-                                              x-text="memory.category === 'growth' ? 'Tiến hóa' : (memory.category === 'learning' ? 'Học tập' : (memory.category === 'care' ? 'Chăm sóc' : 'Cột mốc'))"></span>
-                                    </div>
-                                </div>
-
-                                <div class="flex items-center gap-2 text-xs">
-                                    <span class="rounded-full bg-slate-200/80 text-slate-700 px-2.5 py-0.5 text-[10px] font-bold"
-                                          x-text="memory.days_ago_badge || 'Gần đây'"></span>
-                                    <span class="text-slate-400 tabular-nums text-[11px]" x-text="memory.formatted_date"></span>
-                                </div>
-                            </div>
-
-                            {{-- Memory Title & Description --}}
-                            <div>
-                                <h4 class="text-base font-black text-slate-900 group-hover:text-amber-800 transition" x-text="memory.title"></h4>
-                                <p class="text-xs text-slate-600 mt-1 leading-relaxed" x-text="memory.description"></p>
-                            </div>
-
-                            {{-- Pet Reflection Speech Bubble (Touching companion dialogue) --}}
-                            <template x-if="memory.pet_reflection">
-                                <div class="rounded-2xl bg-amber-50/80 border border-amber-200/70 p-3.5 flex items-start gap-3">
-                                    <span class="text-xl select-none shrink-0 mt-0.5">🐉</span>
-                                    <div class="space-y-0.5">
-                                        <p class="text-[10px] font-bold uppercase tracking-wider text-amber-800">
-                                            Pet thỏ thẻ nhớ lại:
-                                        </p>
-                                        <p class="text-xs italic text-amber-950 font-medium leading-relaxed"
-                                           x-text="'“' + memory.pet_reflection + '”'"></p>
-                                    </div>
-                                </div>
-                            </template>
-
-                            {{-- Related Word Audio Button (If milestone is connected to Chinese word) --}}
-                            <template x-if="memory.metadata && memory.metadata.related_word">
-                                <div class="flex items-center justify-between pt-2 border-t border-slate-200/60 text-xs">
-                                    <div class="flex items-center gap-1.5">
-                                        <span class="text-slate-500 text-[11px]">Chữ Hán ghi dấu:</span>
-                                        <span class="font-bold text-slate-900 text-sm" x-text="memory.metadata.related_word"></span>
-                                        <template x-if="memory.metadata.pinyin">
-                                            <span class="text-amber-600 text-[11px] font-semibold" x-text="'(' + memory.metadata.pinyin + ')'"></span>
-                                        </template>
-                                    </div>
-
-                                    <button type="button"
-                                            @click="speakWord(memory.metadata.related_word)"
-                                            title="Nghe Pet phát âm lại chữ này"
-                                            class="inline-flex items-center gap-1 rounded-xl bg-white border border-slate-200 px-2.5 py-1 text-[11px] font-bold text-slate-700 hover:bg-amber-50 hover:text-amber-800 hover:border-amber-300 transition active:scale-95 shadow-2xs">
-                                        <i data-lucide="volume-2" class="h-3.5 w-3.5 text-amber-600"></i>
-                                        <span>Phát âm lại</span>
-                                    </button>
-                                </div>
-                            </template>
-
-                            {{-- Related Food Item (If milestone is first feeding) --}}
-                            <template x-if="memory.metadata && memory.metadata.food_item">
-                                <div class="flex items-center gap-2 pt-2 border-t border-slate-200/60 text-xs text-slate-600">
-                                    <span class="text-slate-500 text-[11px]">Món ăn đầu tiên:</span>
-                                    <span class="font-bold text-slate-900" x-text="(memory.metadata.food_emoji || '🍎') + ' ' + memory.metadata.food_item"></span>
-                                </div>
-                            </template>
-                        </div>
-                    </template>
-                </div>
-            </template>
-
-            {{-- Empty State --}}
-            <template x-if="filteredTimelineMemories().length === 0">
-                <div class="rounded-2xl border border-dashed border-slate-200 p-10 text-center space-y-3">
-                    <span class="text-4xl">📖</span>
-                    <h4 class="text-base font-bold text-slate-800">Chưa có kỷ niệm nào trong mục này</h4>
-                    <p class="text-xs text-slate-500 max-w-md mx-auto">
-                        Hãy tiếp tục học bài, cho Pet ăn và cùng nhau ôn tập từ vựng để tạo nên thêm thật nhiều cột mốc ý nghĩa nhé!
-                    </p>
-                </div>
-            </template>
-        </div>
-
-        {{-- Section 2: Thế giới Tâm thức & Giấc mơ Ngôn ngữ (Pet Memory World 🌏) --}}
-        <div class="rounded-3xl border border-indigo-200/90 bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-900 p-6 sm:p-8 shadow-xl shadow-indigo-950/20 text-white space-y-6">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-5">
-                <div>
-                    <div class="inline-flex items-center gap-1.5 rounded-full bg-indigo-500/20 border border-indigo-400/30 px-3 py-0.5 text-xs font-bold text-indigo-300">
-                        <i data-lucide="globe-2" class="h-3.5 w-3.5 text-indigo-300"></i>
-                        <span>Thế giới Tâm thức & Ký ức Ngôn ngữ</span>
-                    </div>
-                    <h3 class="text-2xl font-black text-white mt-1.5 flex items-center gap-2">
-                        <span>Pet Memory World</span>
-                        <span class="text-xl">🌏</span>
-                    </h3>
-                    <p class="text-xs text-indigo-200/80 max-w-2xl mt-1 leading-relaxed">
-                        Mỗi từ vựng bạn làm chủ (mastered) sẽ hóa thân thành một sinh vật, đồ vật hoặc phong cảnh bay lượn trong thế giới tâm thức của Pet.
-                    </p>
-                </div>
-
-                <div class="shrink-0 flex items-center gap-2">
-                    <span class="rounded-2xl border border-indigo-400/30 bg-white/10 px-4 py-2 text-xs font-bold text-indigo-200 flex items-center gap-2 shadow-inner">
-                        <span class="text-base">✨</span>
-                        <span><strong>{{ count($worldObjs) }}</strong> thực thể đang hiện hữu</span>
-                    </span>
-                </div>
-            </div>
-
-            {{-- Floating Word Objects Universe Canvas --}}
-            <div class="relative overflow-hidden rounded-2xl border border-indigo-500/30 bg-gradient-to-b from-slate-950 via-indigo-950/80 to-slate-950 p-4 shadow-2xl"
-                 style="min-height: 280px;">
-                {{-- Ambient stars background --}}
-                <div class="absolute inset-0 opacity-40 pointer-events-none bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-400/20 via-transparent to-transparent"></div>
-                <div class="absolute top-4 right-6 text-indigo-300/20 text-5xl select-none pointer-events-none">✨</div>
-                <div class="absolute bottom-6 left-8 text-indigo-300/10 text-4xl select-none pointer-events-none">🌙</div>
-
-                @if(count($worldObjs) > 0)
-                <div class="relative w-full h-[240px]">
-                    @foreach($worldObjs as $obj)
-                    <div class="absolute group cursor-pointer transition-all duration-300 hover:scale-125 hover:z-30"
-                         style="left: {{ $obj['pos_x'] }}%; top: {{ $obj['pos_y'] }}%; transform: translate(-50%, -50%); font-size: {{ 14 + ($obj['size'] ?? 3) * 4 }}px;"
-                         @click="speakWord('{{ $obj['hanzi'] }}')">
-                        <span class="select-none inline-block transition-transform duration-300 group-hover:animate-bounce drop-shadow-md">
-                            {{ $obj['emoji'] }}
-                        </span>
-
-                        {{-- Rich Tooltip on Hover --}}
-                        <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:flex flex-col items-center bg-slate-900/95 backdrop-blur-md text-white border border-indigo-400/40 text-xs px-3 py-2 rounded-xl shadow-2xl whitespace-nowrap z-50 pointer-events-none">
-                            <div class="flex items-center gap-1.5">
-                                <span class="font-black text-amber-300 text-sm">{{ $obj['hanzi'] }}</span>
-                                <span class="font-mono text-indigo-200 text-[11px]">({{ $obj['pinyin'] }})</span>
-                            </div>
-                            <span class="text-slate-200 text-[11px] font-medium mt-0.5">{{ $obj['meaning'] }}</span>
-                            <span class="text-[9px] text-indigo-300/80 mt-1 uppercase tracking-wider">Bấm để nghe phát âm 🔊</span>
-                            <div class="w-2 h-2 bg-slate-900 rotate-45 -mb-1 mt-0.5 border-r border-b border-indigo-400/40"></div>
-                        </div>
-                    </div>
-                    @endforeach
-                </div>
-                <div class="relative z-10 flex items-center justify-between pt-2 border-t border-white/10 text-[11px] text-indigo-300/70">
-                    <span>💡 Rê chuột để xem chữ Hán · Bấm vào biểu tượng để Pet đọc mẫu</span>
-                    <span>Tự động cập nhật khi bạn học từ mới</span>
-                </div>
-                @else
-                <div class="flex flex-col items-center justify-center py-12 text-center space-y-3">
-                    <span class="text-4xl animate-pulse">🌌</span>
-                    <h5 class="text-sm font-bold text-indigo-200">Thế giới tâm thức đang đón chờ những từ đầu tiên</h5>
-                    <p class="text-xs text-indigo-300/70 max-w-sm">
-                        Khi bạn ôn tập Flashcard đạt từ 2 lần đúng trở lên, các chữ Hán sẽ hóa thành đồ vật và phong cảnh sống động tại đây!
-                    </p>
-                </div>
-                @endif
-            </div>
-
-            {{-- Pet Dream Sentence (Giấc mơ dệt bằng từ vựng) --}}
-            @if($dreamSent)
-            <div class="rounded-2xl border border-indigo-400/30 bg-white/5 backdrop-blur-sm p-4 sm:p-5 space-y-3">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2 text-xs font-bold text-indigo-300 uppercase tracking-wider">
-                        <span class="text-lg">💤</span>
-                        <span>Giấc mơ của Pet đêm qua:</span>
-                    </div>
-                    <button type="button"
-                            @click="speakWord('{{ addslashes($dreamSent) }}')"
-                            title="Nghe Pet kể lại giấc mơ bằng tiếng Trung"
-                            class="inline-flex items-center gap-1.5 rounded-xl bg-indigo-500/30 hover:bg-indigo-500/50 border border-indigo-400/40 px-3 py-1.5 text-xs font-bold text-indigo-100 transition active:scale-95 shadow-sm">
-                        <i data-lucide="volume-2" class="h-3.5 w-3.5 text-indigo-200"></i>
-                        <span>Nghe kể lại</span>
-                    </button>
-                </div>
-
-                <div class="rounded-xl bg-slate-950/60 border border-indigo-500/20 p-4">
-                    <p class="text-lg sm:text-xl font-bold text-amber-200 tracking-wide font-sans leading-relaxed">
-                        “{{ $dreamSent }}”
-                    </p>
-                </div>
-                <p class="text-[11px] text-indigo-300/70 italic">
-                    ✨ Pet tự động dệt nên giấc mơ này từ các từ vựng bạn đã cùng học. Mỗi lần mở ra là một giấc mơ mới!
-                </p>
-            </div>
-            @endif
-        </div>
-    </div>
-
-    {{-- TAB 5: TRI KỶ & TÍNH CÁCH (AFFINITY & PERSONALITY) --}}
-    <div x-show="activeTab === 'affinity'" class="space-y-6">
-        {{-- Hero Intro Card --}}
-        <div class="rounded-3xl border border-rose-200/90 bg-gradient-to-br from-rose-50/80 via-white to-amber-50/40 p-6 sm:p-8 shadow-xl shadow-rose-950/5">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div class="space-y-2">
-                    <div class="inline-flex items-center gap-1.5 rounded-full bg-rose-100 border border-rose-200 px-3 py-0.5 text-xs font-bold text-rose-800">
-                        <i data-lucide="heart" class="h-3.5 w-3.5 fill-rose-500 text-rose-500"></i>
-                        <span>Tâm hồn & Chiều sâu cảm xúc</span>
-                    </div>
-                    <h3 class="text-2xl font-black text-slate-900">
-                        Tri kỷ đồng hành — Không áp lực, chỉ có thấu hiểu
-                    </h3>
-                    <p class="text-sm text-slate-600 max-w-2xl leading-relaxed">
-                        Pet không phải là một chuỗi thanh chỉ số để bạn phải quản lý áp lực, mà là một sinh linh có tính cách riêng biệt, có ký ức về từng chữ bạn học và ngày càng gắn bó sâu sắc theo thời gian.
-                    </p>
-                </div>
-
-                {{-- Current Affinity Ring/Pill --}}
-                <div class="shrink-0 rounded-2xl border-2 border-rose-200 bg-white p-4 shadow-md text-center min-w-[200px]">
-                    <div class="text-3xl mb-1" x-text="affinityTier?.emoji || '🌱'"></div>
-                    <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Cấp độ quan hệ</p>
-                    <p class="text-lg font-black text-rose-700" x-text="affinityTier?.title || 'Người lạ mới gặp'"></p>
-                    <p class="text-xs font-semibold text-slate-500 mt-0.5" x-text="affinity + ' / 100 điểm Thân thiết'"></p>
-                    <div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                        <div class="h-full rounded-full bg-gradient-to-r from-rose-400 to-pink-500 transition-all duration-500"
-                             :style="'width: ' + affinity + '%'"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- Section 1: Personality Archetypes Picker --}}
-        <div class="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-xl shadow-slate-900/5 space-y-5">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4">
-                <div>
-                    <h4 class="text-lg font-black text-slate-900 flex items-center gap-2">
-                        <i data-lucide="sparkles" class="h-5 w-5 text-amber-500"></i>
-                        <span>1. Định hình Tính cách Pet (Personality Archetype)</span>
-                    </h4>
-                    <p class="text-xs text-slate-500 mt-0.5">
-                        Chọn một phong cách tính cách phù hợp với tâm trạng và sở thích của bạn. Mỗi tính cách sẽ thay đổi biểu cảm, âm thanh và lời thoại.
-                    </p>
-                </div>
-                <div x-show="personalityMessage" x-cloak
-                     class="rounded-xl px-3 py-1.5 text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200"
-                     x-text="personalityMessage"></div>
-            </div>
-
-            {{-- 5 Archetype Cards Grid --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {{-- Archetype 1: Playful --}}
-                <div @click="selectPersonality('playful')"
-                     role="button"
-                     :class="personality === 'playful' ? 'border-amber-500 ring-2 ring-amber-500/30 bg-amber-50/40' : 'border-slate-200 hover:border-amber-300 hover:bg-slate-50/70'"
-                     class="relative rounded-2xl border p-5 transition text-left cursor-pointer space-y-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-3xl">✨</span>
-                        <span x-show="personality === 'playful'" class="rounded-full bg-amber-500 text-white px-2.5 py-0.5 text-[10px] font-black uppercase">Đang chọn</span>
-                    </div>
-                    <div>
-                        <h5 class="text-base font-black text-slate-900">Tinh nghịch & Vui nhộn</h5>
-                        <p class="text-xs text-slate-500 mt-1 leading-relaxed">
-                            Hiếu động, thích nhún nhảy, luôn bày trò đố vui ôn bài và rủ bạn quẩy tiếp sau mỗi bài học.
-                        </p>
-                    </div>
-                    <div class="rounded-xl bg-white/80 p-2.5 border border-amber-200/60 text-[11px] italic text-amber-900">
-                        "Nè nè! Đố bạn nhớ chữ này nghĩa là gì đó, giỏi thì đọc lại xem nào~ ✨"
-                    </div>
-                </div>
-
-                {{-- Archetype 2: Curious --}}
-                <div @click="selectPersonality('curious')"
-                     role="button"
-                     :class="personality === 'curious' ? 'border-blue-500 ring-2 ring-blue-500/30 bg-blue-50/40' : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50/70'"
-                     class="relative rounded-2xl border p-5 transition text-left cursor-pointer space-y-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-3xl">🔍</span>
-                        <span x-show="personality === 'curious'" class="rounded-full bg-blue-600 text-white px-2.5 py-0.5 text-[10px] font-black uppercase">Đang chọn</span>
-                    </div>
-                    <div>
-                        <h5 class="text-base font-black text-slate-900">Tò mò & Khám phá</h5>
-                        <p class="text-xs text-slate-500 mt-1 leading-relaxed">
-                            Ham học hỏi, thích giải mã các bộ thủ và đặt câu hỏi gợi mở để kích thích trí nhớ dài hạn của bạn.
-                        </p>
-                    </div>
-                    <div class="rounded-xl bg-white/80 p-2.5 border border-blue-200/60 text-[11px] italic text-blue-900">
-                        "Bộ thủ của chữ này thú vị ghê! Chúng mình cùng tìm hiểu xem vì sao nó ghép lại nhé? 🔍"
-                    </div>
-                </div>
-
-                {{-- Archetype 3: Shy --}}
-                <div @click="selectPersonality('shy')"
-                     role="button"
-                     :class="personality === 'shy' ? 'border-pink-500 ring-2 ring-pink-500/30 bg-pink-50/40' : 'border-slate-200 hover:border-pink-300 hover:bg-slate-50/70'"
-                     class="relative rounded-2xl border p-5 transition text-left cursor-pointer space-y-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-3xl">🌸</span>
-                        <span x-show="personality === 'shy'" class="rounded-full bg-pink-500 text-white px-2.5 py-0.5 text-[10px] font-black uppercase">Đang chọn</span>
-                    </div>
-                    <div>
-                        <h5 class="text-base font-black text-slate-900">E thẹn & Dịu dàng</h5>
-                        <p class="text-xs text-slate-500 mt-1 leading-relaxed">
-                            Bẽn lẽn, đáng yêu, luôn dùng lời an ủi ngọt ngào và ở cạnh bên bạn mỗi khi gặp từ vựng khó.
-                        </p>
-                    </div>
-                    <div class="rounded-xl bg-white/80 p-2.5 border border-pink-200/60 text-[11px] italic text-pink-900">
-                        "Bạn đừng buồn nhé... Chữ này khó thật mà, tớ luôn ở đây cùng bạn nè 🌸"
-                    </div>
-                </div>
-
-                {{-- Archetype 4: Cheerful --}}
-                <div @click="selectPersonality('cheerful')"
-                     role="button"
-                     :class="personality === 'cheerful' ? 'border-orange-500 ring-2 ring-orange-500/30 bg-orange-50/40' : 'border-slate-200 hover:border-orange-300 hover:bg-slate-50/70'"
-                     class="relative rounded-2xl border p-5 transition text-left cursor-pointer space-y-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-3xl">☀️</span>
-                        <span x-show="personality === 'cheerful'" class="rounded-full bg-orange-500 text-white px-2.5 py-0.5 text-[10px] font-black uppercase">Đang chọn</span>
-                    </div>
-                    <div>
-                        <h5 class="text-base font-black text-slate-900">Lạc quan & Ánh nắng</h5>
-                        <p class="text-xs text-slate-500 mt-1 leading-relaxed">
-                            Tràn trề năng lượng như hoạt náo viên, luôn nhiệt huyết tiếp thêm sức mạnh cho bạn vươn xa.
-                        </p>
-                    </div>
-                    <div class="rounded-xl bg-white/80 p-2.5 border border-orange-200/60 text-[11px] italic text-orange-900">
-                        "Tuyệt đỉnh luôn! Bạn đã cố gắng hết mình rồi, hôm nay hãy cùng tỏa sáng rực rỡ nhé! ☀️"
-                    </div>
-                </div>
-
-                {{-- Archetype 5: Calm --}}
-                <div @click="selectPersonality('calm')"
-                     role="button"
-                     :class="personality === 'calm' ? 'border-emerald-600 ring-2 ring-emerald-600/30 bg-emerald-50/40' : 'border-slate-200 hover:border-emerald-300 hover:bg-slate-50/70'"
-                     class="relative rounded-2xl border p-5 transition text-left cursor-pointer space-y-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-3xl">🍵</span>
-                        <span x-show="personality === 'calm'" class="rounded-full bg-emerald-600 text-white px-2.5 py-0.5 text-[10px] font-black uppercase">Đang chọn</span>
-                    </div>
-                    <div>
-                        <h5 class="text-base font-black text-slate-900">Điềm tĩnh & Uyên bác</h5>
-                        <p class="text-xs text-slate-500 mt-1 leading-relaxed">
-                            Trầm tĩnh, sâu sắc, nhắc nhở bạn học hành như thưởng trà, tích tiểu thành đại từng ngày.
-                        </p>
-                    </div>
-                    <div class="rounded-xl bg-white/80 p-2.5 border border-emerald-200/60 text-[11px] italic text-emerald-900">
-                        "Học tập như ngâm trà ngon, cần thời gian và kiên nhẫn. Từng bước vững vàng mỗi ngày 🍵"
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- Section 2: Relationship Progression Roadmap --}}
-        <div class="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-xl shadow-slate-900/5 space-y-6">
-            <div class="border-b border-slate-100 pb-4">
-                <h4 class="text-lg font-black text-slate-900 flex items-center gap-2">
-                    <i data-lucide="compass" class="h-5 w-5 text-rose-500"></i>
-                    <span>2. Lộ trình Mối quan hệ (Affinity Progression Roadmap)</span>
-                </h4>
-                <p class="text-xs text-slate-500 mt-0.5">
-                    Độ thân thiết (0 - 100) tăng lên tự nhiên khi bạn học tập và chăm sóc Pet đều đặn. Mỗi cấp độ mở ra chiều sâu trò chuyện mới.
-                </p>
-            </div>
-
-            {{-- 6 Tiers Roadmap Grid --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                @php
-                    $tiersList = [
-                        ['tier' => 'stranger', 'name' => 'Bỡ ngỡ', 'title' => 'Người lạ mới gặp', 'emoji' => '🌱', 'range' => '0 - 19 điểm', 'desc' => 'Pet còn bẽn lẽn, giao tiếp lễ phép lịch sự và bắt đầu làm quen với bạn qua các bài học đầu tiên.'],
-                        ['tier' => 'met', 'name' => 'Làm quen', 'title' => 'Bạn mới quen', 'emoji' => '🌿', 'range' => '20 - 39 điểm', 'desc' => 'Pet đã nhớ mặt bạn, bắt đầu gọi tên thân mật và hào hứng khi thấy bạn mở bài học.'],
-                        ['tier' => 'familiar', 'name' => 'Thân quen', 'title' => 'Bạn bè quen thuộc', 'emoji' => '🌸', 'range' => '40 - 59 điểm', 'desc' => 'Pet ghi nhớ các từ vựng bạn đã từng học và thường xuyên nhắc lại những kỷ niệm xưa cũ.'],
-                        ['tier' => 'companion', 'name' => 'Đồng hành', 'title' => 'Bạn đồng hành', 'emoji' => '⭐', 'range' => '60 - 79 điểm', 'desc' => 'Pet luôn chủ động tiếp sức khi bạn gặp câu khó, không để bạn nản lòng hay cô đơn.'],
-                        ['tier' => 'close_friend', 'name' => 'Thân thiết', 'title' => 'Bạn thân thiết', 'emoji' => '💖', 'range' => '80 - 94 điểm', 'desc' => 'Gắn kết bền chặt, Pet chia sẻ nhiều tâm sự riêng và cùng bạn ăn mừng mọi thành tựu.'],
-                        ['tier' => 'partner', 'name' => 'Tri kỷ', 'title' => 'Tri kỷ học tập', 'emoji' => '🐉', 'range' => '95 - 100 điểm', 'desc' => 'Đỉnh cao của sự gắn kết. Pet xem bạn là tri kỷ trọn đời trên con đường chinh phục tiếng Trung.'],
-                    ];
-                @endphp
-
-                @foreach($tiersList as $t)
-                <div class="rounded-2xl border p-4.5 space-y-2.5 transition
-                            {{ ($userPet->getAffinityTier()['tier'] === $t['tier']) ? 'border-rose-400 bg-rose-50/60 ring-2 ring-rose-400/30 shadow-sm' : 'border-slate-200 bg-slate-50/40 opacity-80' }}">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <span class="text-2xl">{{ $t['emoji'] }}</span>
-                            <div>
-                                <h6 class="text-sm font-black text-slate-900">{{ $t['name'] }}</h6>
-                                <span class="text-[10px] font-bold text-rose-600">{{ $t['range'] }}</span>
-                            </div>
-                        </div>
-                        @if($userPet->getAffinityTier()['tier'] === $t['tier'])
-                        <span class="rounded-full bg-rose-600 text-white px-2.5 py-0.5 text-[9px] font-black uppercase">Hiện tại</span>
-                        @endif
-                    </div>
-                    <p class="text-xs text-slate-600 leading-relaxed">{{ $t['desc'] }}</p>
-                </div>
-                @endforeach
-            </div>
-
-            {{-- How to earn affinity naturally --}}
-            <div class="rounded-2xl border border-amber-200/80 bg-amber-50/50 p-4.5 space-y-2 text-xs text-slate-700">
-                <h6 class="font-bold text-amber-900 flex items-center gap-1.5">
-                    <i data-lucide="lightbulb" class="h-4 w-4 text-amber-600"></i>
-                    <span>Cách tích lũy Độ thân thiết tự nhiên mỗi ngày (Không cày cuốc áp lực):</span>
-                </h6>
-                <ul class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 pt-1 text-slate-600">
-                    <li class="flex items-center gap-1.5">
-                        <span class="text-emerald-500 font-bold">✓</span>
-                        <span>Làm chủ từ vựng Flashcard: <strong>+1 điểm</strong> (tối đa 5/ngày)</span>
-                    </li>
-                    <li class="flex items-center gap-1.5">
-                        <span class="text-emerald-500 font-bold">✓</span>
-                        <span>Hoàn thành phiên học: <strong>+2 điểm</strong> (tối đa 4/ngày)</span>
-                    </li>
-                    <li class="flex items-center gap-1.5">
-                        <span class="text-emerald-500 font-bold">✓</span>
-                        <span>Đạt Mục tiêu ngày (Daily Goal): <strong>+3 điểm</strong> / ngày</span>
-                    </li>
-                    <li class="flex items-center gap-1.5">
-                        <span class="text-emerald-500 font-bold">✓</span>
-                        <span>Đạt mốc chuỗi học (Streak): <strong>+2 điểm</strong> / mốc</span>
-                    </li>
-                    <li class="flex items-center gap-1.5">
-                        <span class="text-emerald-500 font-bold">✓</span>
-                        <span>Chăm sóc cho ăn mỗi ngày: <strong>+1 điểm</strong> (tối đa 2/ngày)</span>
-                    </li>
-                    <li class="flex items-center gap-1.5">
-                        <span class="text-emerald-500 font-bold">✓</span>
-                        <span>Pet tiến hóa cấp mới: <strong>+10 điểm</strong> thưởng</span>
-                    </li>
-                </ul>
-            </div>
-        </div>
-
-        {{-- Section 3: Learning DNA 🧬 Engine (DNA Học tập & Định hình Tính cách Tự nhiên) --}}
-        <div class="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 shadow-xl shadow-slate-900/5 space-y-6">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-                <div>
-                    <h4 class="text-lg font-black text-slate-900 flex items-center gap-2">
-                        <i data-lucide="dna" class="h-5 w-5 text-indigo-600"></i>
-                        <span>3. Learning DNA 🧬 — Năng lực & Tính cách tự nhiên của Pet</span>
-                    </h4>
-                    <p class="text-xs text-slate-500 mt-0.5">
-                        Tính cách Pet được nuôi dưỡng tự động từ phong cách học tập thực tế của bạn (Từ vựng, Flashcard, Quiz, Luyện nghe, Kiên trì & Vượt khó).
-                    </p>
-                </div>
-
-                {{-- Dominant Trait Badge --}}
-                @php
-                    $dominantTrait = $userPet->learning_dna['dominant_trait'] ?? null;
-                    $traitLabels = [
-                        'scholar'    => ['name' => 'Uyên bác (Scholar)', 'emoji' => '📚', 'desc' => 'Tập trung học sâu từ vựng', 'color' => 'bg-indigo-50 text-indigo-800 border-indigo-200'],
-                        'listener'   => ['name' => 'Thính giác nhạy bén (Listener)', 'emoji' => '🎧', 'desc' => 'Chăm chỉ luyện nghe ngữ âm', 'color' => 'bg-emerald-50 text-emerald-800 border-emerald-200'],
-                        'explorer'   => ['name' => 'Nhà thám hiểm (Explorer)', 'emoji' => '⚡', 'desc' => 'Hăng say thử thách Quiz', 'color' => 'bg-amber-50 text-amber-800 border-amber-200'],
-                        'resilient'  => ['name' => 'Kiên cường (Resilient)', 'emoji' => '🛡️', 'desc' => 'Bền bỉ vượt qua lỗi sai', 'color' => 'bg-rose-50 text-rose-800 border-rose-200'],
-                        'consistent' => ['name' => 'Bền bỉ (Consistent)', 'emoji' => '⭐', 'desc' => 'Duy trì chuỗi học mỗi ngày', 'color' => 'bg-blue-50 text-blue-800 border-blue-200'],
-                    ];
-                    $currentTraitInfo = $traitLabels[$dominantTrait] ?? ['name' => 'Đang định hình', 'emoji' => '🌱', 'desc' => 'Tiếp tục học để Pet rõ nét phong cách', 'color' => 'bg-slate-50 text-slate-700 border-slate-200'];
-                @endphp
-                <div class="shrink-0 flex items-center gap-2">
-                    <span class="rounded-2xl border px-3.5 py-1.5 text-xs font-bold flex items-center gap-1.5 {{ $currentTraitInfo['color'] }}">
-                        <span class="text-base">{{ $currentTraitInfo['emoji'] }}</span>
-                        <span>Thiên hướng: <strong>{{ $currentTraitInfo['name'] }}</strong></span>
-                    </span>
-                </div>
-            </div>
-
-            {{-- 6 Trait Progress Bars Grid --}}
-            @if(count($dna) > 0)
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                @php
-                    $traitDescriptions = [
-                        'vocabulary'  => 'Mật độ từ vựng thành thạo (đã ôn trên 2 lần)',
-                        'flashcard'   => 'Tỷ lệ tích cực ôn tập bộ thẻ Flashcard',
-                        'quiz'        => 'Tần suất tham gia và cọ xát bài kiểm tra Quiz',
-                        'listening'   => 'Số bài luyện nghe phát âm và câu hỏi âm thanh',
-                        'consistency' => 'Chỉ số duy trì chuỗi Streak và tần suất vào học',
-                        'resilience'  => 'Chỉ số kiên trì sửa sai khi gặp từ vựng khó',
-                    ];
-                @endphp
-                @foreach($dna as $trait)
-                <div class="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 space-y-2 hover:bg-slate-50 transition">
-                    <div class="flex items-center justify-between text-xs font-semibold">
-                        <div class="flex items-center gap-2">
-                            <span class="h-2.5 w-2.5 rounded-full" style="background-color: {{ $trait['color'] }}"></span>
-                            <span class="font-bold text-slate-800 text-sm">{{ $trait['label'] }}</span>
-                        </div>
-                        <span class="font-black text-slate-900 font-mono text-sm">{{ $trait['score'] }}/100</span>
-                    </div>
-
-                    {{-- Progress Bar --}}
-                    <div class="h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
-                        <div class="h-full rounded-full transition-all duration-700"
-                             style="width: {{ $trait['score'] }}%; background-color: {{ $trait['color'] }}"></div>
-                    </div>
-
-                    <p class="text-[11px] text-slate-500 leading-tight">
-                        {{ $traitDescriptions[$trait['key']] ?? 'Chỉ số học tập của người dùng' }}
-                    </p>
-                </div>
-                @endforeach
-            </div>
-            @else
-            <div class="rounded-2xl border border-dashed border-slate-200 p-8 text-center space-y-2">
-                <span class="text-3xl">🧬</span>
-                <p class="text-xs font-semibold text-slate-600">DNA của Pet đang được thu thập từ các bài học đầu tiên.</p>
-                <p class="text-[11px] text-slate-400">Hãy bắt đầu ôn từ vựng và làm bài tập để kích hoạt biểu đồ nhé!</p>
-            </div>
-            @endif
-
-            {{-- DNA Evolution Note --}}
-            <div class="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4 flex items-start gap-3 text-xs text-indigo-950">
-                <i data-lucide="info" class="h-4 w-4 text-indigo-600 shrink-0 mt-0.5"></i>
-                <div class="space-y-0.5 leading-relaxed">
-                    <p class="font-bold text-indigo-900">Cách DNA tương tác với đời sống của Pet:</p>
-                    <p class="text-indigo-800/90 text-[11px]">
-                        Khi một chỉ số vượt trội hơn các chỉ số khác từ 15 điểm trở lên, Pet sẽ tự động chuyển hướng tính cách tương ứng. Ví dụ: Người học chăm nghe bài sẽ giúp Pet trở nên tinh tế tò mò (Curious), người học kiên trì vượt khó giúp Pet trở nên lạc quan tươi vui (Cheerful).
-                    </p>
-                </div>
-            </div>
         </div>
     </div>
 

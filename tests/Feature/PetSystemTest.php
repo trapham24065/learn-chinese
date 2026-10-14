@@ -453,7 +453,7 @@ class PetSystemTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('Giai đoạn 0: Trứng');
-        $response->assertSee('Cho pet ăn nhanh');
+        $response->assertSee('Thăm phòng Pet');
     }
 
     // =========================================================================

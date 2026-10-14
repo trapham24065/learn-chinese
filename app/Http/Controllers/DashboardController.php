@@ -40,6 +40,7 @@ class DashboardController extends Controller
                     'estimated_minutes' => $lesson->estimated_minutes,
                     'accent_color' => $lesson->accent_color ?? '#991b1b',
                     'questions_count' => $lesson->questions_count,
+                    'hsk_level' => $lesson->hsk_level,
                     'status' => $progress?->status ?? 'not_started',
                     'progress_percent' => $progress?->progress_percent ?? 0,
                     'last_accessed_at' => $progress?->last_accessed_at,
@@ -52,6 +53,9 @@ class DashboardController extends Controller
         $completedLessonsCount = $lessons->where('status', 'completed')->count();
         $inProgressLessons = $lessons->where('status', 'in_progress')->values();
         $notStartedLessons = $lessons->where('status', 'not_started')->values();
+        $currentLesson = $inProgressLessons->sortByDesc('last_accessed_at')->first()
+            ?? $notStartedLessons->first()
+            ?? $lessons->first();
 
         $todayMinutes = $studySessions
             ->filter(fn (StudySession $session) => $this->sessionDate($session)->isToday())
@@ -73,6 +77,18 @@ class DashboardController extends Controller
 
         $weeklyChart = $this->buildWeeklyChart($studySessions);
         $chartMax = max(1, $weeklyChart->max('sessions'));
+
+        $dayNames = ['Mon' => 'T2', 'Tue' => 'T3', 'Wed' => 'T4', 'Thu' => 'T5', 'Fri' => 'T6', 'Sat' => 'T7', 'Sun' => 'CN'];
+        $weeklyRhythm = $weeklyChart->map(function ($point) use ($dayNames) {
+            return [
+                'day'       => $dayNames[$point['label']] ?? $point['label'],
+                'date'      => $point['date'],
+                'is_today'  => $point['is_today'],
+                'has_study' => ($point['sessions'] > 0 || $point['minutes'] > 0),
+                'sessions'  => $point['sessions'],
+                'minutes'   => $point['minutes'],
+            ];
+        });
 
         $overview = [
             ['label' => 'Streak', 'value' => $streakDays . ' ngày', 'note' => 'Học liên tiếp'],
@@ -131,11 +147,13 @@ class DashboardController extends Controller
         return view('dashboard', [
             'student' => $student,
             'lessons' => $lessons,
+            'currentLesson' => $currentLesson,
             'totalLessonsCount' => $totalLessonsCount,
             'completedLessonsCount' => $completedLessonsCount,
             'inProgressLessons' => $inProgressLessons,
             'overview' => $overview,
             'weeklyChart' => $weeklyChart,
+            'weeklyRhythm' => $weeklyRhythm,
             'chartMax' => $chartMax,
             'streakDays' => $activeStreak,
             'todayMinutes' => $todayMinutes,

@@ -101,15 +101,6 @@
             <span>Tiêu chuẩn HSK:</span>
         </div>
         <div class="flex items-center gap-2">
-            <div x-data="{ sfx: window.soundEngine?.isSfxEnabled() ?? true }" class="mr-1">
-                <button type="button" @click="sfx = window.soundEngine?.toggleSfx()" 
-                        class="inline-flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-bold transition"
-                        :class="sfx ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-xs' : 'bg-slate-100 text-slate-400 border border-slate-200'"
-                        title="Bật/Tắt âm thanh phản hồi (SFX)">
-                    <i data-lucide="volume-2" class="h-3.5 w-3.5"></i>
-                    <span x-text="sfx ? 'SFX Bật' : 'SFX Tắt'"></span>
-                </button>
-            </div>
             <a href="{{ route('flashcards', array_filter(['standard' => 'hsk_2_0', 'hsk' => $hskLevel, 'lesson' => $lessonSlug, 'q' => $search, 'starred' => $isStarred ? 1 : null])) }}"
                class="inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition
                       {{ ($standardCode ?? 'hsk_2_0') === 'hsk_2_0' ? 'bg-slate-900 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}">
@@ -748,13 +739,9 @@
                     {{-- Front: Hanzi + Lesson label + Star button --}}
                     <div class="flip-card-front relative flex flex-col items-center justify-center gap-3 bg-slate-950 p-8 text-white shadow-2xl shadow-slate-950/20">
                         <div class="flex flex-wrap items-center justify-center gap-1.5">
-                            <template x-if="card.hsk2_level">
+                            <template x-if="card.hsk_level || card.hsk2_level || card.hsk3_level">
                                 <span class="rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold text-slate-300"
-                                      x-text="'HSK 2.0: C' + card.hsk2_level" title="Chuẩn HSK 2.0 (2010)"></span>
-                            </template>
-                            <template x-if="card.hsk3_level">
-                                <span class="rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 px-2.5 py-0.5 text-[11px] font-bold"
-                                      x-text="'HSK 3.0: C' + card.hsk3_level" title="Chuẩn HSK 3.0 (Triển khai 12/2026)"></span>
+                                      x-text="'HSK ' + (card.hsk_level || card.hsk2_level || card.hsk3_level)"></span>
                             </template>
                             <template x-if="card.lesson">
                                 <span class="rounded-full bg-white/10 px-3 py-0.5 text-xs font-semibold uppercase tracking-widest text-slate-300"
@@ -971,18 +958,31 @@
     </div>
 </div>
 
-{{-- Static card grid with pagination --}}
-<section class="mt-12" x-data>
-    <div class="mb-5 flex items-center justify-between flex-wrap gap-3">
-        <p class="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">
-            Toàn bộ {{ $deckTotal }} thẻ trong bộ này
-        </p>
-        <p class="text-sm text-slate-400">
-            Trang {{ $flashcards->currentPage() }} / {{ $flashcards->lastPage() }}
+{{-- Static card grid with pagination (Collapsible to keep focus on 3D card) --}}
+<section class="mt-12" x-data="{ showList: false }">
+    <div class="flex flex-col items-center justify-center gap-3">
+        <button type="button" @click="showList = !showList; setTimeout(() => window.refreshIcons?.(), 50)"
+            class="inline-flex items-center gap-2 rounded-2xl border border-slate-200/90 bg-white px-6 py-3 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50 hover:border-slate-300 transition active:scale-[0.98]">
+            <i data-lucide="list" class="h-4 w-4 text-[#991b1b]"></i>
+            <span x-text="showList ? 'Thu gọn danh sách từ vựng' : 'Xem toàn bộ {{ $deckTotal }} từ vựng trong bộ này'"></span>
+            <i data-lucide="chevron-down" class="h-4 w-4 text-slate-400 transition-transform duration-200" :class="showList ? 'rotate-180' : ''"></i>
+        </button>
+        <p x-show="!showList" class="text-xs text-slate-500">
+            Mặc định tập trung vào một thẻ tại một thời điểm. Mở danh sách khi cần tra cứu nhanh.
         </p>
     </div>
 
-    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div x-show="showList" x-transition class="mt-8 space-y-6">
+        <div class="flex items-center justify-between flex-wrap gap-3">
+            <p class="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">
+                Toàn bộ {{ $deckTotal }} thẻ trong bộ này
+            </p>
+            <p class="text-sm text-slate-400">
+                Trang {{ $flashcards->currentPage() }} / {{ $flashcards->lastPage() }}
+            </p>
+        </div>
+
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         @foreach($flashcards as $card)
         @php
             $cardPayload = [
@@ -1042,21 +1042,12 @@
 
                     <div class="flex flex-col items-end gap-1">
                         <div class="flex flex-wrap items-center justify-end gap-1">
-                            @if($card->hsk2Level())
-                            <span class="shrink-0 rounded-lg bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700 border border-slate-200"
-                                  title="Chuẩn HSK 2.0 (2010)">
-                                2.0: C{{ $card->hsk2Level() }}
-                            </span>
-                            @endif
-                            @if($card->hsk3Level())
-                            <span class="shrink-0 rounded-lg bg-red-50 px-2 py-0.5 text-[10px] font-bold text-[#991b1b] border border-red-200"
-                                  title="Chuẩn HSK 3.0 (Triển khai 12/2026)">
-                                3.0: C{{ $card->hsk3Level() }}
-                            </span>
-                            @endif
-                            @if(!$card->hsk2Level() && !$card->hsk3Level() && $card->hsk_level)
-                            <span class="shrink-0 rounded-lg bg-red-50/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-red-600 border border-red-100">
-                                HSK {{ $card->hsk_level }}
+                            @php
+                                $simpleHsk = $card->hsk_level ?? $card->hsk2Level() ?? $card->hsk3Level();
+                            @endphp
+                            @if($simpleHsk)
+                            <span class="shrink-0 rounded-lg bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700 border border-slate-200">
+                                HSK {{ $simpleHsk }}
                             </span>
                             @endif
                         </div>
@@ -1138,6 +1129,7 @@
         Hiển thị {{ $flashcards->firstItem() }}–{{ $flashcards->lastItem() }} trong tổng số {{ $deckTotal }} thẻ
     </p>
     @endif
+    </div>{{-- End Collapsible Div --}}
 </section>
 @endif
 
