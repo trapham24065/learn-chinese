@@ -223,6 +223,132 @@
     </section>
 
     @if (count($questions) > 0)
+        @php
+            $petStageObj = $userPet?->pet?->stages?->where('stage', $userPet->stage)?->first();
+            $petDefaultEmoji = $petStageObj?->emoji ?? '🐉';
+            $petDefaultName = $userPet?->name ?? 'Tiểu Long';
+        @endphp
+
+        {{-- Pet Co-op Assistant & Live Combo Bar --}}
+        <div class="relative overflow-hidden rounded-[2rem] border border-amber-200/90 bg-gradient-to-r from-amber-50 via-orange-50/50 to-red-50 p-4 sm:p-5 shadow-lg shadow-amber-950/5 mb-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                {{-- Left: Pet Avatar & Dynamic Speech --}}
+                <div class="flex items-center gap-3.5">
+                    <div class="relative grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-white shadow-md border border-amber-200/80 transition-transform duration-300 hover:scale-105">
+                        <span class="text-3xl select-none" x-text="petEmoji || '{{ $petDefaultEmoji }}'"></span>
+                        <span class="absolute -top-1 -right-1 flex h-4 w-4">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-4 w-4 bg-amber-500 text-[9px] font-black text-white items-center justify-center">★</span>
+                        </span>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-black uppercase tracking-wider text-amber-800">Trợ giảng {{ $petDefaultName }}</span>
+                            <span class="rounded-full bg-amber-200/80 px-2 py-0.2 text-[10px] font-bold text-amber-900">
+                                Cấp {{ $userPet?->stage ?? 1 }}: {{ $petStageObj?->name ?? 'Bạn đồng hành' }}
+                            </span>
+                        </div>
+                        <p class="text-sm font-semibold text-slate-800 mt-0.5 leading-snug" x-text="petSpeech">
+                            "Cùng tớ tập trung cao độ để hoàn thành xuất sắc bài quiz này nhé! 🎯"
+                        </p>
+                    </div>
+                </div>
+
+                {{-- Right: Live Streak / Combo Status --}}
+                <div class="flex items-center gap-3 self-end sm:self-center">
+                    {{-- Dynamic Combo Streak Pill --}}
+                    <div x-show="maxComboStreak >= 2 || isSubmitted"
+                         x-transition:enter="transition ease-out duration-300"
+                         x-transition:enter-start="opacity-0 scale-90"
+                         x-transition:enter-end="opacity-100 scale-100"
+                         class="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-red-600 to-amber-500 px-3.5 py-2 text-white shadow-md shadow-red-600/20">
+                        <i data-lucide="flame" class="h-4 w-4 text-yellow-200 animate-bounce"></i>
+                        <div>
+                            <p class="text-[9px] font-bold uppercase tracking-widest text-yellow-100 leading-none">Max Combo</p>
+                            <p class="text-sm font-black leading-tight">
+                                <span x-text="'x' + maxComboStreak"></span>
+                                <span x-show="maxComboStreak >= 5" class="text-[10px] text-yellow-200">🔥 Bùng nổ!</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div x-show="!isSubmitted" class="rounded-xl bg-white/80 border border-amber-200/80 px-3 py-1.5 text-xs text-amber-900 font-medium hidden sm:block">
+                        <span>Thưởng hoàn thành: <strong class="font-bold text-amber-800">+15~25 EXP cho Pet</strong> 🐉</span>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Big Explosive Combo Celebration Banner --}}
+            <div x-show="showComboCelebration"
+                 x-transition:enter="transition cubic-bezier(0.34, 1.56, 0.64, 1) duration-500"
+                 x-transition:enter-start="opacity-0 scale-50 translate-y-4"
+                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-300"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-95"
+                 class="mt-3 flex items-center justify-between rounded-2xl bg-gradient-to-r from-amber-500 via-red-600 to-purple-600 p-3 text-white shadow-xl animate-pulse">
+                <div class="flex items-center gap-2.5">
+                    <span class="text-2xl animate-spin">🔥</span>
+                    <div>
+                        <p class="text-xs font-black uppercase tracking-wider text-yellow-200" x-text="comboNotice"></p>
+                        <p class="text-xs text-white/90">Chuỗi câu trả lời đúng liên tiếp siêu chuẩn xác!</p>
+                    </div>
+                </div>
+                <span class="rounded-full bg-white/20 px-3 py-1 text-xs font-black text-white">
+                    +Thưởng Pet EXP!
+                </span>
+            </div>
+        </div>
+
+        {{-- Post-Submit Pet Reward & Victory Banner --}}
+        <div x-show="isSubmitted && petReward"
+             x-transition:enter="transition ease-out duration-400"
+             x-transition:enter-start="opacity-0 translate-y-4"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             class="rounded-[2.5rem] bg-gradient-to-br from-slate-950 via-slate-900 to-red-950 p-6 sm:p-8 text-white shadow-2xl border border-red-500/20 relative overflow-hidden mb-6">
+            <div class="absolute -right-10 -top-10 h-48 w-48 rounded-full bg-amber-500/10 blur-3xl pointer-events-none"></div>
+            <div class="absolute -left-10 -bottom-10 h-48 w-48 rounded-full bg-red-600/10 blur-3xl pointer-events-none"></div>
+
+            <div class="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                <div class="flex items-center gap-4">
+                    <div class="grid h-20 w-20 shrink-0 place-items-center rounded-3xl bg-white/10 border border-white/10 text-5xl shadow-xl animate-bounce">
+                        <span x-text="petReward?.emoji || '{{ $petDefaultEmoji }}'"></span>
+                    </div>
+                    <div>
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-400/20 px-3 py-0.5 text-xs font-bold text-amber-300">
+                            <i data-lucide="sparkles" class="h-3 w-3"></i>
+                            <span>Phần thưởng bạn đồng hành</span>
+                        </span>
+                        <h3 class="text-2xl font-black mt-1">
+                            <span x-text="petReward?.pet_name || '{{ $petDefaultName }}'"></span> đã nhận được quà!
+                        </h3>
+                        <p class="text-sm text-slate-300 mt-1 max-w-lg" x-text="petSpeech"></p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 shrink-0">
+                    <div class="rounded-2xl border border-white/10 bg-white/5 p-3 text-center">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">EXP cho Pet</p>
+                        <p class="text-xl font-black text-amber-300 mt-0.5" x-text="'+' + (petReward?.exp_bonus || 0) + ' EXP'"></p>
+                    </div>
+                    <div class="rounded-2xl border border-white/10 bg-white/5 p-3 text-center">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Độ no tăng</p>
+                        <p class="text-xl font-black text-emerald-400 mt-0.5" x-text="'+' + (petReward?.hunger_gain || 0) + ' No'"></p>
+                    </div>
+                    <div class="col-span-2 sm:col-span-1 rounded-2xl border border-white/10 bg-white/5 p-3 text-center">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Vật phẩm</p>
+                        <p class="text-xs font-black text-rose-300 mt-1 truncate" x-text="petReward?.gift_item || '🍎 Táo ngọt'"></p>
+                    </div>
+                </div>
+            </div>
+
+            <template x-if="petReward?.stage_up">
+                <div class="mt-4 rounded-2xl bg-amber-500/20 border border-amber-400/40 p-3 text-center text-amber-200 text-sm font-black animate-pulse">
+                    🎉 CHÚC MỪNG! Pet của bạn đã đủ điều kiện TIẾN HÓA lên cấp mới!
+                </div>
+            </template>
+        </div>
+
         {{-- Questions List --}}
         <div class="space-y-6">
             @foreach ($questions as $index => $question)
@@ -348,25 +474,77 @@
                          x-transition:enter-start="opacity-0 translate-y-2"
                          x-transition:enter-end="opacity-100 translate-y-0"
                          class="mt-6 rounded-2xl border p-4 sm:p-5"
-                         :class="results?.details?.[{{ $question->id }}]?.is_correct ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950' : 'bg-amber-50/70 border-amber-200 text-amber-950'">
-                        <div class="flex items-start gap-3">
-                            <div class="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-amber-100 text-amber-800">
-                                <i data-lucide="lightbulb" class="h-4 w-4"></i>
-                            </div>
-                            <div class="space-y-1">
-                                <p class="text-xs font-bold uppercase tracking-wider text-slate-600">
-                                    Giải thích chi tiết:
-                                </p>
-                                <p class="text-sm font-semibold">
-                                    Đáp án đúng: <span class="text-emerald-700 font-bold">{{ $question->correct_answer }}</span>
-                                </p>
-                                @if ($question->explanation)
-                                    <p class="text-sm text-slate-700 leading-relaxed pt-1">
-                                        {{ $question->explanation }}
-                                    </p>
-                                @endif
+                         :class="results?.details?.[{{ $question->id }}]?.is_correct ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950' : 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-300 text-amber-950 shadow-sm'">
+                        <div class="flex items-start gap-3.5">
+                            <template x-if="results?.details?.[{{ $question->id }}]?.is_correct">
+                                <div class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-800">
+                                    <i data-lucide="circle-check-big" class="h-5 w-5"></i>
+                                </div>
+                            </template>
+                            <template x-if="!results?.details?.[{{ $question->id }}]?.is_correct">
+                                <div class="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-amber-200/80 text-xl shadow-xs">
+                                    <span>{{ $petDefaultEmoji }}</span>
+                                </div>
+                            </template>
+
+                            <div class="space-y-1.5 flex-1">
+                                <template x-if="results?.details?.[{{ $question->id }}]?.is_correct">
+                                    <div>
+                                        <p class="text-xs font-bold uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
+                                            <span>✓ Chuẩn xác! Trợ giảng {{ $petDefaultName }} tặng bạn 10 điểm! ✨</span>
+                                        </p>
+                                        <p class="text-sm font-semibold pt-1">
+                                            Đáp án: <span class="text-emerald-700 font-bold">{{ $question->correct_answer }}</span>
+                                        </p>
+                                        @if ($question->explanation)
+                                            <p class="text-sm text-slate-700 leading-relaxed pt-1">
+                                                {{ $question->explanation }}
+                                            </p>
+                                        @endif
+                                    </div>
+                                </template>
+
+                                <template x-if="!results?.details?.[{{ $question->id }}]?.is_correct">
+                                    <div>
+                                        <div class="flex items-center justify-between">
+                                            <p class="text-xs font-black uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+                                                <span>💡 Trợ giảng {{ $petDefaultName }} mách nước:</span>
+                                            </p>
+                                            <span class="rounded-full bg-amber-200/80 px-2.5 py-0.5 text-[10px] font-bold text-amber-900 shadow-2xs">
+                                                Ghi nhớ mẹo
+                                            </span>
+                                        </div>
+                                        <div class="flex items-baseline gap-2 pt-1">
+                                            <p class="text-sm font-semibold text-slate-900">
+                                                Đáp án đúng: <span class="text-emerald-700 font-black text-base">{{ $question->correct_answer }}</span>
+                                                @if ($question->pinyin)
+                                                    <span class="text-xs font-mono text-slate-500">[{{ $question->pinyin }}]</span>
+                                                @endif
+                                            </p>
+                                            @if ($question->audio_text)
+                                                <button type="button"
+                                                        data-audio="{{ $question->audio_text }}"
+                                                        onclick="playQuizAudio(this, this.dataset.audio)"
+                                                        class="tts-btn inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-800 hover:underline">
+                                                    <i data-lucide="volume-2" class="h-3.5 w-3.5 tts-play-icon"></i>
+                                                    <i data-lucide="square" class="h-3.5 w-3.5 tts-stop-icon hidden"></i>
+                                                    <span>Nghe phát âm</span>
+                                                </button>
+                                            @endif
+                                        </div>
+                                        @if ($question->explanation)
+                                            <p class="text-xs sm:text-sm text-slate-800 leading-relaxed bg-white/80 p-2.5 rounded-xl border border-amber-200/70 mt-1.5">
+                                                {{ $question->explanation }}
+                                            </p>
+                                        @endif
+                                        <p class="text-[11px] text-amber-800 font-medium italic pt-1 flex items-center gap-1">
+                                            <span>💬 "Đừng nản nhé! Càng sai thì càng nhớ sâu, lần sau gặp lại câu này chắc chắn cậu sẽ chọn đúng ngay! ✨"</span>
+                                        </p>
+                                    </div>
+                                </template>
                             </div>
                         </div>
+                    </div>
                     </div>
                 </article>
             @endforeach
@@ -550,6 +728,15 @@ function quizApp() {
         startTime: null,
         totalCount: {{ count($questions) }},
 
+        // Pet Co-op Assistant State
+        petName: '{{ $petDefaultName }}',
+        petEmoji: '{{ $petDefaultEmoji }}',
+        petSpeech: 'Chào bạn! Cùng tớ hoàn thành thật xuất sắc bài quiz này nhé! 🎯',
+        petReward: null,
+        maxComboStreak: 0,
+        showComboCelebration: false,
+        comboNotice: '',
+
         initQuiz() {
             this.startTime = Date.now();
         },
@@ -567,6 +754,22 @@ function quizApp() {
             if (this.isSubmitted) return;
             this.answers[+qId] = option;
             window.soundEngine?.play('tap');
+
+            // Pet companion co-op micro-reaction
+            const remaining = this.totalCount - this.answeredCount;
+            if (remaining === 0) {
+                this.petSpeech = 'Đã chọn đủ tất cả câu hỏi! Nhấn "Nộp bài & Chấm điểm" bên dưới để cùng xem kết quả nhé! 🚀';
+            } else if (remaining === 1) {
+                this.petSpeech = 'Chỉ còn đúng 1 câu nữa thôi! Cố lên bạn ơi! 🔥';
+            } else {
+                const phrases = [
+                    'Ghi nhận đáp án! Chăm chú quan sát tiếp nào! 👀',
+                    'Rất tự tin! Cùng tiếp tục nhé! 💡',
+                    'Đúng đắn lắm, câu này tớ cũng thấy hay! ✨',
+                    'Tập trung cao độ, điểm cao trong tầm tay! 🎯'
+                ];
+                this.petSpeech = phrases[Math.floor(Math.random() * phrases.length)];
+            }
         },
 
         isOptionSelected(qId, option) {
@@ -681,13 +884,48 @@ function quizApp() {
                 const data = await response.json();
                 this.results = data;
                 this.isSubmitted = true;
+                this.petReward = data.pet_reward;
 
-                // Tiered SFX Feedback
-                if (data.score >= 80) {
+                // Calculate max combo streak (consecutive correct answers)
+                let curCombo = 0;
+                let maxCombo = 0;
+                if (data.details) {
+                    for (const qId in data.details) {
+                        if (data.details[qId].is_correct) {
+                            curCombo++;
+                            if (curCombo > maxCombo) maxCombo = curCombo;
+                        } else {
+                            curCombo = 0;
+                        }
+                    }
+                }
+                this.maxComboStreak = maxCombo;
+
+                // Trigger Combo Celebration if >= 3
+                if (maxCombo >= 3) {
+                    this.showComboCelebration = true;
+                    if (maxCombo >= 8) {
+                        this.comboNotice = '⚡ RỒNG THẦN BÙNG NỔ! COMBO x' + maxCombo + ' LIÊN HOÀN CƯỚC!';
+                    } else if (maxCombo >= 5) {
+                        this.comboNotice = '🔥 THẦN TỐC x' + maxCombo + '! CHUỖI ĐÚNG SIÊU ĐẲNG!';
+                    } else {
+                        this.comboNotice = '🔥 COMBO x' + maxCombo + '! TRÍ NHỚ XUẤT SẮC!';
+                    }
+                    setTimeout(() => { this.showComboCelebration = false; }, 4500);
+                }
+
+                // Dynamic Pet Speech & Reaction based on score
+                if (data.score === 100) {
+                    this.petSpeech = `🎉 TUYỆT ĐỐI 100%! Bạn trả lời đúng toàn bộ ${data.total_questions} câu! Tớ tự hào về bạn vô cùng! 🏆✨`;
+                    window.soundEngine?.play('fanfare');
+                } else if (data.score >= 80) {
+                    this.petSpeech = `Đỉnh chóp! Đúng ${data.correct_count}/${data.total_questions} câu! Tớ vừa được no bụng và nhận thêm EXP rồi nè! 🐉❤️`;
                     window.soundEngine?.play('fanfare');
                 } else if (data.score >= 50) {
+                    this.petSpeech = `Làm tốt lắm! Đúng ${data.correct_count}/${data.total_questions} câu. Hãy xem kỹ những câu sai có gợi ý của tớ nhé! 💡`;
                     window.soundEngine?.play('milestone');
                 } else {
+                    this.petSpeech = `Không sao cả nè! Vạn sự khởi đầu nan. Hãy xem phần mách nước chi tiết của tớ ở từng câu để nhớ sâu hơn nhé! 🌸`;
                     window.soundEngine?.play('ding');
                 }
 
@@ -739,6 +977,10 @@ function quizApp() {
             this.answers = {};
             this.isSubmitted = false;
             this.results = null;
+            this.petReward = null;
+            this.maxComboStreak = 0;
+            this.showComboCelebration = false;
+            this.petSpeech = 'Chào bạn! Cùng tớ hoàn thành thật xuất sắc bài quiz này nhé! 🎯';
             this.startTime = Date.now();
             setTimeout(() => window.refreshIcons?.(), 50);
             window.scrollTo({ top: 0, behavior: 'smooth' });

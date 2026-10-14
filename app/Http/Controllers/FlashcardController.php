@@ -128,9 +128,11 @@ class FlashcardController extends Controller
 
         $totalCount = Flashcard::where('is_active', true)->count();
 
+        $userPet = $user ? \App\Models\UserPet::where('user_id', $user->id)->with('pet.stages')->first() : null;
+
         return view('flashcards', compact(
             'flashcards', 'lessons', 'lessonSlug', 'hskLevel', 'standardCode', 'search', 'isStarred', 'starredCount',
-            'activeLesson', 'totalCount', 'deckBatch', 'deckTotal', 'lessonsByLevel', 'availableHskLevels'
+            'activeLesson', 'totalCount', 'deckBatch', 'deckTotal', 'lessonsByLevel', 'availableHskLevels', 'userPet'
         ));
     }
 
@@ -277,21 +279,52 @@ class FlashcardController extends Controller
             'completed_at'     => now(),
         ]);
 
+        $petReward = null;
         try {
-            $userPet = \App\Models\UserPet::where('user_id', $student->id)->first();
+            $userPet = \App\Models\UserPet::where('user_id', $student->id)->with('pet.stages')->first();
             if ($userPet && $userPet->isActive()) {
                 $userPet->update(['last_studied_at' => now()]);
                 $userPet->increment('study_session_count');
                 app(\App\Services\Pet\PetAffinityService::class)->addAffinity($userPet, 2, 'study_session');
+
+                // Award pet bonus exp & hunger for completing cards
+                $cardsReviewed = (int) ($validated['cards_reviewed'] ?? 0);
+                $petExpGain = min(20, max(5, (int) round($cardsReviewed * 1.5)));
+                $growthResult = app(\App\Services\Pet\PetGrowthService::class)->feedExp($student, $userPet, $petExpGain);
+
+                $hungerBonus = min(15, max(3, (int) round($cardsReviewed / 2)));
+                $newHunger = min(100, $userPet->hunger + $hungerBonus);
+                $userPet->update([
+                    'hunger' => $newHunger,
+                    'total_fed_xp' => $userPet->total_fed_xp + $petExpGain,
+                    'last_fed_at' => now(),
+                ]);
+
+                app(\App\Services\Pet\PetDnaService::class)->compute($student, $userPet);
+
+                $giftItems = ['🍎 Táo giòn ngọt', '🥟 Bánh bao thịt', '🧋 Trà sữa trân châu', '🎋 Búp măng tươi', '🍑 Đào tiên'];
+                $chosenGift = $giftItems[array_rand($giftItems)];
+
+                $petReward = [
+                    'pet_name'    => $userPet->name ?? $userPet->pet->name,
+                    'emoji'       => optional($userPet->pet->stages->where('stage', $userPet->stage)->first())->emoji ?? '🐉',
+                    'stage'       => $userPet->stage,
+                    'exp_bonus'   => $petExpGain,
+                    'hunger_gain' => $hungerBonus,
+                    'gift_item'   => $chosenGift,
+                    'stage_up'    => $growthResult['stage_up'] ?? false,
+                    'new_stage'   => $growthResult['new_stage'] ?? null,
+                ];
             }
         } catch (\Throwable $e) {
             report($e);
         }
 
         return response()->json([
-            'success' => true,
-            'message' => 'Ghi nhận phiên Flashcard thành công! (+' . $validated['duration_minutes'] . ' phút)',
-            'streak'  => $student->calculateStreak(),
+            'success'    => true,
+            'message'    => 'Ghi nhận phiên Flashcard thành công! (+' . $validated['duration_minutes'] . ' phút)',
+            'streak'     => $student->calculateStreak(),
+            'pet_reward' => $petReward,
         ]);
     }
 

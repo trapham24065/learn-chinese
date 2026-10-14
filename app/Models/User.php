@@ -91,6 +91,11 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasMany(UserDailyProgress::class);
     }
 
+    public function userPet(): HasOne
+    {
+        return $this->hasOne(UserPet::class);
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === self::ROLE_ADMIN;

@@ -34,167 +34,219 @@
         {{-- 2. Scrollable Middle Area: Nav Links + Streak Box --}}
         <div class="flex-1 overflow-y-auto overflow-x-hidden pr-1 space-y-3.5 custom-scrollbar">
             
-            <nav class="space-y-1.5 text-sm font-medium">
+            <nav class="space-y-3.5 text-sm font-medium">
 
-                {{-- Group: Học tập & Luyện tập --}}
-                <p class="px-3 pt-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Học tập & Thực hành</p>
+                {{-- Group 1: HỌC TẬP TRỌNG TÂM --}}
+                <div class="space-y-1">
+                    <p class="px-3 pt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                        <span>Học tập trọng tâm</span>
+                        <i data-lucide="book-open" class="h-3 w-3 text-slate-400"></i>
+                    </p>
 
-                {{-- Trang chủ (Dashboard) --}}
-                <a href="{{ auth()->check() ? route('dashboard') : route('home') }}"
-                    class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ (request()->routeIs('dashboard') || request()->routeIs('home')) ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
-                    <span class="flex items-center gap-3">
-                        <span class="grid h-7 w-7 place-items-center rounded-lg {{ (request()->routeIs('dashboard') || request()->routeIs('home')) ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
-                            <i data-lucide="house" class="h-4 w-4"></i>
+                    {{-- Trang chủ (Dashboard) --}}
+                    <a href="{{ auth()->check() ? route('dashboard') : route('home') }}"
+                        class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ (request()->routeIs('dashboard') || request()->routeIs('home')) ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                        <span class="flex items-center gap-3">
+                            <span class="grid h-7 w-7 place-items-center rounded-lg {{ (request()->routeIs('dashboard') || request()->routeIs('home')) ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
+                                <i data-lucide="house" class="h-4 w-4"></i>
+                            </span>
+                            Trang chủ
                         </span>
-                        Trang chủ
-                    </span>
-                </a>
+                    </a>
 
-                {{-- Flashcard --}}
-                @if(!function_exists('setting_bool') || setting_bool('feature_flashcards', true))
-                <a href="{{ route('flashcards') }}"
-                    class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('flashcards') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
-                    <span class="flex items-center gap-3">
-                        <span class="grid h-7 w-7 place-items-center rounded-lg {{ request()->routeIs('flashcards') ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
-                            <i data-lucide="layers" class="h-4 w-4"></i>
+                    {{-- Lộ trình HSK 1-6 --}}
+                    <a href="{{ route('hsk.overview') }}"
+                        class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ (request()->routeIs('hsk.overview') || request()->routeIs('hsk.show')) ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                        <span class="flex items-center gap-3">
+                            <span class="grid h-7 w-7 place-items-center rounded-lg {{ (request()->routeIs('hsk.overview') || request()->routeIs('hsk.show')) ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
+                                <i data-lucide="graduation-cap" class="h-4 w-4"></i>
+                            </span>
+                            Lộ trình HSK
                         </span>
-                        Thẻ ghi nhớ
-                    </span>
-                </a>
-                @endif
+                    </a>
 
-                {{-- Luyện đọc hiểu Graded Reader --}}
-                @if(!function_exists('setting_bool') || setting_bool('feature_stories', true))
-                <a href="{{ route('stories.index') }}"
-                    class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('stories.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
-                    <span class="flex items-center gap-3">
-                        <span class="grid h-7 w-7 place-items-center rounded-lg {{ request()->routeIs('stories.*') ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
-                            <i data-lucide="book-open-check" class="h-4 w-4"></i>
+                    {{-- Flashcard Thẻ ghi nhớ --}}
+                    @if(!function_exists('setting_bool') || setting_bool('feature_flashcards', true))
+                    <a href="{{ route('flashcards') }}"
+                        class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('flashcards') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                        <span class="flex items-center gap-3">
+                            <span class="grid h-7 w-7 place-items-center rounded-lg {{ request()->routeIs('flashcards') ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
+                                <i data-lucide="layers" class="h-4 w-4"></i>
+                            </span>
+                            Thẻ ghi nhớ
                         </span>
-                        Luyện đọc hiểu
-                    </span>
-                    <span class="rounded-full bg-emerald-100 border border-emerald-300 px-1.5 py-0.2 text-[9px] font-black uppercase text-emerald-800 {{ request()->routeIs('stories.*') ? 'bg-white/20 text-white border-transparent' : '' }}">Mới</span>
-                </a>
-                @endif
+                    </a>
+                    @endif
+                </div>
 
-                {{-- Tra từ điển & Video YouGlish --}}
-                @if(!function_exists('setting_bool') || setting_bool('feature_dictionary', true))
-                <a href="{{ route('dictionary.index') }}"
-                    class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('dictionary.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
-                    <span class="flex items-center gap-3">
-                        <span class="grid h-7 w-7 place-items-center rounded-lg {{ request()->routeIs('dictionary.*') ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
-                            <i data-lucide="video" class="h-4 w-4"></i>
+                {{-- Group 2: LUYỆN TẬP & TRẢI NGHIỆM --}}
+                <div class="space-y-1">
+                    <p class="px-3 pt-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                        <span>Luyện tập & Thực hành</span>
+                        <i data-lucide="swords" class="h-3 w-3 text-slate-400"></i>
+                    </p>
+
+                    {{-- Quiz / Luyện tập nhanh --}}
+                    @if(!function_exists('setting_bool') || setting_bool('feature_quiz', true))
+                    <a href="{{ route('quiz') }}"
+                        class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('quiz') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                        <span class="flex items-center gap-3">
+                            <span class="grid h-7 w-7 place-items-center rounded-lg {{ request()->routeIs('quiz') ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
+                                <i data-lucide="target" class="h-4 w-4"></i>
+                            </span>
+                            Luyện tập nhanh
                         </span>
-                        Từ điển & Video
-                    </span>
-                    <span class="rounded-full bg-red-100 border border-red-300 px-1.5 py-0.2 text-[9px] font-black uppercase text-red-800 {{ request()->routeIs('dictionary.*') ? 'bg-white/20 text-white border-transparent' : '' }}">Hot</span>
-                </a>
-                @endif
+                    </a>
+                    @endif
 
-                {{-- 214 Bộ thủ Khang Hy --}}
-                <a href="{{ route('radicals.index') }}"
-                    class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('radicals.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
-                    <span class="flex items-center gap-3">
-                        <span class="grid h-7 w-7 place-items-center rounded-lg {{ request()->routeIs('radicals.*') ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
-                            <i data-lucide="layout-grid" class="h-4 w-4"></i>
+                    {{-- Luyện đọc hiểu Graded Reader --}}
+                    @if(!function_exists('setting_bool') || setting_bool('feature_stories', true))
+                    <a href="{{ route('stories.index') }}"
+                        class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('stories.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                        <span class="flex items-center gap-3">
+                            <span class="grid h-7 w-7 place-items-center rounded-lg {{ request()->routeIs('stories.*') ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
+                                <i data-lucide="book-open-check" class="h-4 w-4"></i>
+                            </span>
+                            Luyện đọc hiểu
                         </span>
-                        214 Bộ thủ
-                    </span>
-                    <span class="rounded-full bg-amber-100 border border-amber-300 px-1.5 py-0.2 text-[9px] font-black uppercase text-amber-800 {{ request()->routeIs('radicals.*') ? 'bg-white/20 text-white border-transparent' : '' }}">Hay</span>
-                </a>
+                        <span class="rounded-full bg-emerald-100 border border-emerald-300 px-1.5 py-0.2 text-[9px] font-black uppercase text-emerald-800 {{ request()->routeIs('stories.*') ? 'bg-white/20 text-white border-transparent' : '' }}">Mới</span>
+                    </a>
+                    @endif
 
-                {{-- Bảng phát âm Pinyin chuẩn --}}
-                <a href="{{ route('pinyin.index') }}"
-                    class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('pinyin.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
-                    <span class="flex items-center gap-3">
-                        <span class="grid h-7 w-7 place-items-center rounded-lg {{ request()->routeIs('pinyin.*') ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
-                            <i data-lucide="mic" class="h-4 w-4"></i>
+                    {{-- Thi thử HSK Mô phỏng --}}
+                    @if(!function_exists('setting_bool') || setting_bool('feature_hsk_mock', true))
+                    <a href="{{ route('hsk.mock.index') }}"
+                        class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('hsk.mock.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                        <span class="flex items-center gap-3">
+                            <span class="grid h-7 w-7 place-items-center rounded-lg {{ request()->routeIs('hsk.mock.*') ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
+                                <i data-lucide="award" class="h-4 w-4"></i>
+                            </span>
+                            Thi thử HSK
                         </span>
-                        Bảng Pinyin
-                    </span>
-                    <span class="rounded-full bg-rose-100 border border-rose-300 px-1.5 py-0.2 text-[9px] font-black uppercase text-rose-800 {{ request()->routeIs('pinyin.*') ? 'bg-white/20 text-white border-transparent' : '' }}">Chuẩn</span>
-                </a>
+                        <span class="rounded-full bg-amber-100 border border-amber-300 px-1.5 py-0.2 text-[9px] font-black uppercase text-amber-800 {{ request()->routeIs('hsk.mock.*') ? 'bg-white/20 text-white border-transparent' : '' }}">Thi</span>
+                    </a>
+                    @endif
 
-                {{-- Quiz / Luyện tập nhanh --}}
-                @if(!function_exists('setting_bool') || setting_bool('feature_quiz', true))
-                <a href="{{ route('quiz') }}"
-                    class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('quiz') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
-                    <span class="flex items-center gap-3">
-                        <span class="grid h-7 w-7 place-items-center rounded-lg {{ request()->routeIs('quiz') ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
-                            <i data-lucide="target" class="h-4 w-4"></i>
+                    {{-- Mini-Game Học Tập --}}
+                    <a href="{{ route('games.index') }}"
+                        class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('games.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                        <span class="flex items-center gap-3">
+                            <span class="grid h-7 w-7 place-items-center rounded-lg {{ request()->routeIs('games.*') ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
+                                <i data-lucide="gamepad-2" class="h-4 w-4"></i>
+                            </span>
+                            Mini-Game Học Tập
                         </span>
-                        Luyện tập nhanh
-                    </span>
-                </a>
-                @endif
+                        <span class="rounded-full bg-amber-100 border border-amber-300 px-1.5 py-0.2 text-[9px] font-black uppercase text-amber-800 {{ request()->routeIs('games.*') ? 'bg-white/20 text-white border-transparent' : '' }}">Fun</span>
+                    </a>
+                </div>
 
-                {{-- Mini-Game Học Tập --}}
-                <a href="{{ route('games.index') }}"
-                    class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('games.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
-                    <span class="flex items-center gap-3">
-                        <span class="grid h-7 w-7 place-items-center rounded-lg {{ request()->routeIs('games.*') ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
-                            <i data-lucide="gamepad-2" class="h-4 w-4"></i>
+                {{-- Group 3: TRA CỨU & CÔNG CỤ --}}
+                <div class="space-y-1">
+                    <p class="px-3 pt-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                        <span>Tra cứu & Công cụ</span>
+                        <i data-lucide="compass" class="h-3 w-3 text-slate-400"></i>
+                    </p>
+
+                    {{-- Tra từ điển & Video YouGlish --}}
+                    @if(!function_exists('setting_bool') || setting_bool('feature_dictionary', true))
+                    <a href="{{ route('dictionary.index') }}"
+                        class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('dictionary.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                        <span class="flex items-center gap-3">
+                            <span class="grid h-7 w-7 place-items-center rounded-lg {{ request()->routeIs('dictionary.*') ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
+                                <i data-lucide="video" class="h-4 w-4"></i>
+                            </span>
+                            Từ điển & Video
                         </span>
-                        Mini-Game Học Tập
-                    </span>
-                    <span class="rounded-full bg-amber-100 border border-amber-300 px-1.5 py-0.2 text-[9px] font-black uppercase text-amber-800 {{ request()->routeIs('games.*') ? 'bg-white/20 text-white border-transparent' : '' }}">Fun</span>
-                </a>
+                        <span class="rounded-full bg-red-100 border border-red-300 px-1.5 py-0.2 text-[9px] font-black uppercase text-red-800 {{ request()->routeIs('dictionary.*') ? 'bg-white/20 text-white border-transparent' : '' }}">Hot</span>
+                    </a>
+                    @endif
 
-                {{-- Group: Đào tạo Trực tuyến --}}
-                @if(!function_exists('setting_bool') || setting_bool('feature_courses', true))
-                <p class="px-3 pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">Đào tạo Trực tuyến</p>
-
-                <a href="{{ route('courses.index') }}"
-                    class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('courses.index') || request()->routeIs('courses.show') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
-                    <span class="flex items-center gap-3">
-                        <span class="grid h-7 w-7 place-items-center rounded-lg {{ request()->routeIs('courses.index') || request()->routeIs('courses.show') ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
-                            <i data-lucide="video" class="h-4 w-4"></i>
+                    {{-- 214 Bộ thủ Khang Hy --}}
+                    <a href="{{ route('radicals.index') }}"
+                        class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('radicals.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                        <span class="flex items-center gap-3">
+                            <span class="grid h-7 w-7 place-items-center rounded-lg {{ request()->routeIs('radicals.*') ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
+                                <i data-lucide="layout-grid" class="h-4 w-4"></i>
+                            </span>
+                            214 Bộ thủ
                         </span>
-                        Khóa học Online
-                    </span>
-                    <span class="rounded-full bg-rose-100 border border-rose-300 px-1.5 py-0.2 text-[9px] font-black uppercase text-rose-800 {{ request()->routeIs('courses.index') || request()->routeIs('courses.show') ? 'bg-white/20 text-white border-transparent' : '' }}">Meet</span>
-                </a>
+                        <span class="rounded-full bg-amber-100 border border-amber-300 px-1.5 py-0.2 text-[9px] font-black uppercase text-amber-800 {{ request()->routeIs('radicals.*') ? 'bg-white/20 text-white border-transparent' : '' }}">Hay</span>
+                    </a>
 
-                @auth
-                <a href="{{ route('profile.edit') }}#my-courses"
-                    class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('courses.my') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
-                    <span class="flex items-center gap-3">
-                        <span class="grid h-7 w-7 place-items-center rounded-lg {{ request()->routeIs('courses.my') ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
-                            <i data-lucide="bookmark-check" class="h-4 w-4"></i>
+                    {{-- Bảng phát âm Pinyin chuẩn --}}
+                    <a href="{{ route('pinyin.index') }}"
+                        class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('pinyin.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                        <span class="flex items-center gap-3">
+                            <span class="grid h-7 w-7 place-items-center rounded-lg {{ request()->routeIs('pinyin.*') ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
+                                <i data-lucide="mic" class="h-4 w-4"></i>
+                            </span>
+                            Bảng Pinyin
                         </span>
-                        Khóa học của tôi
-                    </span>
-                </a>
-                @endauth
-                @endif
+                        <span class="rounded-full bg-rose-100 border border-rose-300 px-1.5 py-0.2 text-[9px] font-black uppercase text-rose-800 {{ request()->routeIs('pinyin.*') ? 'bg-white/20 text-white border-transparent' : '' }}">Chuẩn</span>
+                    </a>
+                </div>
 
-                {{-- Group: Khung HSK --}}
-                <p class="px-3 pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">Khung Chứng chỉ HSK</p>
+                {{-- Group 4: BẠN ĐỒNG HÀNH & KHÓA HỌC --}}
+                <div class="space-y-1">
+                    <p class="px-3 pt-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                        <span>Bạn đồng hành</span>
+                        <i data-lucide="sparkles" class="h-3 w-3 text-slate-400"></i>
+                    </p>
 
-                {{-- HSK Overview --}}
-                <a href="{{ route('hsk.overview') }}"
-                    class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ (request()->routeIs('hsk.overview') || request()->routeIs('hsk.show')) ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
-                    <span class="flex items-center gap-3">
-                        <span class="grid h-7 w-7 place-items-center rounded-lg {{ (request()->routeIs('hsk.overview') || request()->routeIs('hsk.show')) ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
-                            <i data-lucide="graduation-cap" class="h-4 w-4"></i>
+                    @auth
+                    {{-- Phòng Thú Cưng (Pet) --}}
+                    <a href="{{ route('pet.index') }}"
+                        class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('pet.index') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                        <span class="flex items-center gap-3">
+                            <span class="grid h-7 w-7 place-items-center rounded-lg {{ request()->routeIs('pet.index') ? 'bg-white/10' : 'bg-amber-50 group-hover:bg-amber-100 text-amber-700' }}">
+                                <span class="text-sm select-none">{{ $sidebarPet?->pet?->stages?->where('stage', $sidebarPet->stage)?->first()?->emoji ?? '🥚' }}</span>
+                            </span>
+                            <span class="flex flex-col text-left">
+                                <span class="leading-tight">{{ $sidebarPet?->name ?? 'Phòng Thú Cưng' }}</span>
+                                <span class="text-[10px] text-slate-400 {{ request()->routeIs('pet.index') ? 'text-amber-200' : '' }}">
+                                    {{ $sidebarPet ? ($sidebarPet->hunger >= 70 ? '😊 Vui vẻ' : ($sidebarPet->hunger >= 40 ? '🙂 Hơi đói' : '😟 Cần cho ăn')) : 'Nhận pet ngay' }}
+                                </span>
+                            </span>
                         </span>
-                        Lộ trình HSK
-                    </span>
-                </a>
+                        <span class="rounded-full bg-amber-100 border border-amber-300 px-1.5 py-0.2 text-[9px] font-black uppercase text-amber-800 {{ request()->routeIs('pet.index') ? 'bg-white/20 text-white border-transparent' : '' }}">Pet</span>
+                    </a>
 
-                {{-- Thi thử HSK Mô phỏng --}}
-                @if(!function_exists('setting_bool') || setting_bool('feature_hsk_mock', true))
-                <a href="{{ route('hsk.mock.index') }}"
-                    class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('hsk.mock.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
-                    <span class="flex items-center gap-3">
-                        <span class="grid h-7 w-7 place-items-center rounded-lg {{ request()->routeIs('hsk.mock.*') ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
-                            <i data-lucide="award" class="h-4 w-4"></i>
+                    {{-- Thế giới ký ức --}}
+                    <a href="{{ route('pet.world') }}"
+                        class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('pet.world') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                        <span class="flex items-center gap-3">
+                            <span class="grid h-7 w-7 place-items-center rounded-lg {{ request()->routeIs('pet.world') ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
+                                <i data-lucide="globe" class="h-4 w-4"></i>
+                            </span>
+                            Thế giới ký ức
                         </span>
-                        Thi thử HSK
-                    </span>
-                    <span class="rounded-full bg-amber-100 border border-amber-300 px-1.5 py-0.2 text-[9px] font-black uppercase text-amber-800 {{ request()->routeIs('hsk.mock.*') ? 'bg-white/20 text-white border-transparent' : '' }}">Thi</span>
-                </a>
-                @endif
+                    </a>
+                    @else
+                    <a href="{{ route('login') }}"
+                        class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition text-slate-500 hover:bg-slate-100 hover:text-slate-700">
+                        <span class="flex items-center gap-3">
+                            <span class="grid h-7 w-7 place-items-center rounded-lg bg-amber-50 text-amber-700">
+                                🥚
+                            </span>
+                            <span>Nhận Pet đồng hành</span>
+                        </span>
+                        <span class="text-[10px] text-amber-600 font-bold">Đăng nhập</span>
+                    </a>
+                    @endauth
+
+                    @if(!function_exists('setting_bool') || setting_bool('feature_courses', true))
+                    <a href="{{ route('courses.index') }}"
+                        class="group flex items-center justify-between rounded-xl px-3.5 py-2.5 transition {{ request()->routeIs('courses.index') || request()->routeIs('courses.show') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/15' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                        <span class="flex items-center gap-3">
+                            <span class="grid h-7 w-7 place-items-center rounded-lg {{ request()->routeIs('courses.index') || request()->routeIs('courses.show') ? 'bg-white/10' : 'bg-slate-100 group-hover:bg-red-50' }}">
+                                <i data-lucide="video" class="h-4 w-4"></i>
+                            </span>
+                            Khóa học Online
+                        </span>
+                        <span class="rounded-full bg-rose-100 border border-rose-300 px-1.5 py-0.2 text-[9px] font-black uppercase text-rose-800 {{ request()->routeIs('courses.index') || request()->routeIs('courses.show') ? 'bg-white/20 text-white border-transparent' : '' }}">Meet</span>
+                    </a>
+                    @endif
+                </div>
             </nav>
 
             {{-- Compact Streak Box --}}
@@ -364,134 +416,177 @@
                     </div>
 
                     {{-- Drawer Navigation Links --}}
-                    <nav class="flex-1 overflow-y-auto px-4 py-4 space-y-0.5">
-                        <p class="px-2 pb-2 pt-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">Học tập &amp; Thực hành</p>
+                    <nav class="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+                        {{-- Hub 1: Học tập --}}
+                        <div class="space-y-1">
+                            <p class="px-2 pb-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">Học tập trọng tâm</p>
 
-                        <a href="{{ auth()->check() ? route('dashboard') : route('home') }}"
-                           @click="mobileMenuOpen = false"
-                           class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ (request()->routeIs('dashboard') || request()->routeIs('home')) ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
-                            <i data-lucide="house" class="h-4 w-4 shrink-0"></i>
-                            Trang chủ
-                        </a>
+                            <a href="{{ auth()->check() ? route('dashboard') : route('home') }}"
+                               @click="mobileMenuOpen = false"
+                               class="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold transition {{ (request()->routeIs('dashboard') || request()->routeIs('home')) ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                                <i data-lucide="house" class="h-4 w-4 shrink-0"></i>
+                                Trang chủ
+                            </a>
 
-                        @if(!function_exists('setting_bool') || setting_bool('feature_flashcards', true))
-                        <a href="{{ route('flashcards') }}"
-                           @click="mobileMenuOpen = false"
-                           class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ request()->routeIs('flashcards') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
-                            <i data-lucide="layers" class="h-4 w-4 shrink-0"></i>
-                            Thẻ ghi nhớ
-                        </a>
-                        @endif
+                            <a href="{{ route('hsk.overview') }}"
+                               @click="mobileMenuOpen = false"
+                               class="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold transition {{ (request()->routeIs('hsk.overview') || request()->routeIs('hsk.show')) ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                                <i data-lucide="graduation-cap" class="h-4 w-4 shrink-0"></i>
+                                Lộ trình HSK
+                            </a>
 
-                        @if(!function_exists('setting_bool') || setting_bool('feature_stories', true))
-                        <a href="{{ route('stories.index') }}"
-                           @click="mobileMenuOpen = false"
-                           class="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ request()->routeIs('stories.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
-                            <span class="flex items-center gap-3">
-                                <i data-lucide="book-open-check" class="h-4 w-4 shrink-0"></i>
-                                Luyện đọc hiểu
-                            </span>
-                            <span class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black {{ request()->routeIs('stories.*') ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-800' }}">Mới</span>
-                        </a>
-                        @endif
+                            @if(!function_exists('setting_bool') || setting_bool('feature_flashcards', true))
+                            <a href="{{ route('flashcards') }}"
+                               @click="mobileMenuOpen = false"
+                               class="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold transition {{ request()->routeIs('flashcards') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                                <i data-lucide="layers" class="h-4 w-4 shrink-0"></i>
+                                Thẻ ghi nhớ
+                            </a>
+                            @endif
+                        </div>
 
-                        @if(!function_exists('setting_bool') || setting_bool('feature_dictionary', true))
-                        <a href="{{ route('dictionary.index') }}"
-                           @click="mobileMenuOpen = false"
-                           class="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ request()->routeIs('dictionary.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
-                            <span class="flex items-center gap-3">
-                                <i data-lucide="video" class="h-4 w-4 shrink-0"></i>
-                                Từ điển &amp; Video
-                            </span>
-                            <span class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black {{ request()->routeIs('dictionary.*') ? 'bg-white/20 text-white' : 'bg-red-100 text-red-800' }}">Hot</span>
-                        </a>
-                        @endif
+                        {{-- Hub 2: Luyện tập & Thực hành --}}
+                        <div class="space-y-1">
+                            <p class="px-2 pb-1 pt-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">Luyện tập &amp; Thực hành</p>
 
-                        {{-- 214 Bộ thủ Khang Hy Mobile --}}
-                        <a href="{{ route('radicals.index') }}"
-                           @click="mobileMenuOpen = false"
-                           class="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ request()->routeIs('radicals.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
-                            <span class="flex items-center gap-3">
-                                <i data-lucide="layout-grid" class="h-4 w-4 shrink-0"></i>
-                                214 Bộ thủ
-                            </span>
-                            <span class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black {{ request()->routeIs('radicals.*') ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-800' }}">Hay</span>
-                        </a>
+                            @if(!function_exists('setting_bool') || setting_bool('feature_quiz', true))
+                            <a href="{{ route('quiz') }}"
+                               @click="mobileMenuOpen = false"
+                               class="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold transition {{ request()->routeIs('quiz') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                                <i data-lucide="target" class="h-4 w-4 shrink-0"></i>
+                                Luyện tập nhanh
+                            </a>
+                            @endif
 
-                        {{-- Bảng phát âm Pinyin Mobile --}}
-                        <a href="{{ route('pinyin.index') }}"
-                           @click="mobileMenuOpen = false"
-                           class="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ request()->routeIs('pinyin.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
-                            <span class="flex items-center gap-3">
-                                <i data-lucide="mic" class="h-4 w-4 shrink-0"></i>
-                                Bảng phát âm Pinyin
-                            </span>
-                            <span class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black {{ request()->routeIs('pinyin.*') ? 'bg-white/20 text-white' : 'bg-rose-100 text-rose-800' }}">Chuẩn</span>
-                        </a>
+                            @if(!function_exists('setting_bool') || setting_bool('feature_stories', true))
+                            <a href="{{ route('stories.index') }}"
+                               @click="mobileMenuOpen = false"
+                               class="flex items-center justify-between gap-3 rounded-xl px-3 py-2 text-sm font-semibold transition {{ request()->routeIs('stories.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                                <span class="flex items-center gap-3">
+                                    <i data-lucide="book-open-check" class="h-4 w-4 shrink-0"></i>
+                                    Luyện đọc hiểu
+                                </span>
+                                <span class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black {{ request()->routeIs('stories.*') ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-800' }}">Mới</span>
+                            </a>
+                            @endif
 
-                        @if(!function_exists('setting_bool') || setting_bool('feature_quiz', true))
-                        <a href="{{ route('quiz') }}"
-                           @click="mobileMenuOpen = false"
-                           class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ request()->routeIs('quiz') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
-                            <i data-lucide="target" class="h-4 w-4 shrink-0"></i>
-                            Luyện tập nhanh
-                        </a>
-                        @endif
+                            @if(!function_exists('setting_bool') || setting_bool('feature_hsk_mock', true))
+                            <a href="{{ route('hsk.mock.index') }}"
+                               @click="mobileMenuOpen = false"
+                               class="flex items-center justify-between gap-3 rounded-xl px-3 py-2 text-sm font-semibold transition {{ request()->routeIs('hsk.mock.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                                <span class="flex items-center gap-3">
+                                    <i data-lucide="award" class="h-4 w-4 shrink-0"></i>
+                                    Thi thử HSK
+                                </span>
+                                <span class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black {{ request()->routeIs('hsk.mock.*') ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-900' }}">Thi</span>
+                            </a>
+                            @endif
 
-                        {{-- Mini-Game Học Tập Mobile --}}
-                        <a href="{{ route('games.index') }}"
-                           @click="mobileMenuOpen = false"
-                           class="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ request()->routeIs('games.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
-                            <span class="flex items-center gap-3">
-                                <i data-lucide="gamepad-2" class="h-4 w-4 shrink-0"></i>
-                                Mini-Game Học Tập
-                            </span>
-                            <span class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black {{ request()->routeIs('games.*') ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-800' }}">Fun</span>
-                        </a>
+                            {{-- Mini-Game Học Tập Mobile --}}
+                            <a href="{{ route('games.index') }}"
+                               @click="mobileMenuOpen = false"
+                               class="flex items-center justify-between gap-3 rounded-xl px-3 py-2 text-sm font-semibold transition {{ request()->routeIs('games.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                                <span class="flex items-center gap-3">
+                                    <i data-lucide="gamepad-2" class="h-4 w-4 shrink-0"></i>
+                                    Mini-Game Học Tập
+                                </span>
+                                <span class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black {{ request()->routeIs('games.*') ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-800' }}">Fun</span>
+                            </a>
+                        </div>
 
-                        @if(!function_exists('setting_bool') || setting_bool('feature_courses', true))
-                        <p class="px-2 pb-2 pt-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Đào tạo Trực tuyến</p>
+                        {{-- Hub 3: Tra cứu & Công cụ --}}
+                        <div class="space-y-1">
+                            <p class="px-2 pb-1 pt-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">Tra cứu &amp; Công cụ</p>
 
-                        <a href="{{ route('courses.index') }}"
-                           @click="mobileMenuOpen = false"
-                           class="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ request()->routeIs('courses.index') || request()->routeIs('courses.show') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
-                            <span class="flex items-center gap-3">
-                                <i data-lucide="video" class="h-4 w-4 shrink-0"></i>
-                                Khóa học Online
-                            </span>
-                            <span class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black {{ request()->routeIs('courses.index') || request()->routeIs('courses.show') ? 'bg-white/20 text-white' : 'bg-rose-100 text-rose-800' }}">Meet</span>
-                        </a>
+                            @if(!function_exists('setting_bool') || setting_bool('feature_dictionary', true))
+                            <a href="{{ route('dictionary.index') }}"
+                               @click="mobileMenuOpen = false"
+                               class="flex items-center justify-between gap-3 rounded-xl px-3 py-2 text-sm font-semibold transition {{ request()->routeIs('dictionary.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                                <span class="flex items-center gap-3">
+                                    <i data-lucide="video" class="h-4 w-4 shrink-0"></i>
+                                    Từ điển &amp; Video
+                                </span>
+                                <span class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black {{ request()->routeIs('dictionary.*') ? 'bg-white/20 text-white' : 'bg-red-100 text-red-800' }}">Hot</span>
+                            </a>
+                            @endif
 
-                        @auth
-                        <a href="{{ route('profile.edit') }}#my-courses"
-                           @click="mobileMenuOpen = false"
-                           class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ request()->routeIs('courses.my') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
-                            <i data-lucide="bookmark-check" class="h-4 w-4 shrink-0"></i>
-                            Khóa học của tôi
-                        </a>
-                        @endauth
-                        @endif
+                            <a href="{{ route('radicals.index') }}"
+                               @click="mobileMenuOpen = false"
+                               class="flex items-center justify-between gap-3 rounded-xl px-3 py-2 text-sm font-semibold transition {{ request()->routeIs('radicals.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                                <span class="flex items-center gap-3">
+                                    <i data-lucide="layout-grid" class="h-4 w-4 shrink-0"></i>
+                                    214 Bộ thủ
+                                </span>
+                                <span class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black {{ request()->routeIs('radicals.*') ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-800' }}">Hay</span>
+                            </a>
 
-                        <p class="px-2 pb-2 pt-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">Khung Chứng chỉ HSK</p>
+                            <a href="{{ route('pinyin.index') }}"
+                               @click="mobileMenuOpen = false"
+                               class="flex items-center justify-between gap-3 rounded-xl px-3 py-2 text-sm font-semibold transition {{ request()->routeIs('pinyin.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                                <span class="flex items-center gap-3">
+                                    <i data-lucide="mic" class="h-4 w-4 shrink-0"></i>
+                                    Bảng phát âm Pinyin
+                                </span>
+                                <span class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black {{ request()->routeIs('pinyin.*') ? 'bg-white/20 text-white' : 'bg-rose-100 text-rose-800' }}">Chuẩn</span>
+                            </a>
+                        </div>
 
-                        <a href="{{ route('hsk.overview') }}"
-                           @click="mobileMenuOpen = false"
-                           class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ (request()->routeIs('hsk.overview') || request()->routeIs('hsk.show')) ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
-                            <i data-lucide="graduation-cap" class="h-4 w-4 shrink-0"></i>
-                            Lộ trình HSK
-                        </a>
+                        {{-- Hub 4: Bạn đồng hành & Khóa học --}}
+                        <div class="space-y-1">
+                            <p class="px-2 pb-1 pt-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">Bạn đồng hành</p>
 
-                        @if(!function_exists('setting_bool') || setting_bool('feature_hsk_mock', true))
-                        <a href="{{ route('hsk.mock.index') }}"
-                           @click="mobileMenuOpen = false"
-                           class="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition {{ request()->routeIs('hsk.mock.*') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
-                            <span class="flex items-center gap-3">
-                                <i data-lucide="award" class="h-4 w-4 shrink-0"></i>
-                                Thi thử HSK
-                            </span>
-                            <span class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black {{ request()->routeIs('hsk.mock.*') ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-900' }}">Thi</span>
-                        </a>
-                        @endif
+                            @auth
+                            <a href="{{ route('pet.index') }}"
+                               @click="mobileMenuOpen = false"
+                               class="flex items-center justify-between gap-3 rounded-xl px-3 py-2 text-sm font-semibold transition {{ request()->routeIs('pet.index') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                                <span class="flex items-center gap-3">
+                                    <span class="text-sm select-none">{{ $sidebarPet?->pet?->stages?->where('stage', $sidebarPet->stage)?->first()?->emoji ?? '🥚' }}</span>
+                                    <span>{{ $sidebarPet?->name ?? 'Phòng Thú Cưng' }}</span>
+                                </span>
+                                <span class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black {{ request()->routeIs('pet.index') ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-800' }}">Pet</span>
+                            </a>
+
+                            <a href="{{ route('pet.world') }}"
+                               @click="mobileMenuOpen = false"
+                               class="flex items-center justify-between gap-3 rounded-xl px-3 py-2 text-sm font-semibold transition {{ request()->routeIs('pet.world') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                                <span class="flex items-center gap-3">
+                                    <i data-lucide="globe" class="h-4 w-4 shrink-0"></i>
+                                    Thế giới ký ức
+                                </span>
+                            </a>
+                            @else
+                            <a href="{{ route('login') }}"
+                               @click="mobileMenuOpen = false"
+                               class="flex items-center justify-between gap-3 rounded-xl px-3 py-2 text-sm font-semibold transition text-slate-500 hover:bg-slate-100 hover:text-slate-700">
+                                <span class="flex items-center gap-3">
+                                    <span class="text-sm select-none">🥚</span>
+                                    <span>Nhận Pet đồng hành</span>
+                                </span>
+                                <span class="text-[10px] text-amber-600 font-bold">Đăng nhập</span>
+                            </a>
+                            @endauth
+
+                            @if(!function_exists('setting_bool') || setting_bool('feature_courses', true))
+                            <a href="{{ route('courses.index') }}"
+                               @click="mobileMenuOpen = false"
+                               class="flex items-center justify-between gap-3 rounded-xl px-3 py-2 text-sm font-semibold transition {{ request()->routeIs('courses.index') || request()->routeIs('courses.show') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                                <span class="flex items-center gap-3">
+                                    <i data-lucide="video" class="h-4 w-4 shrink-0"></i>
+                                    Khóa học Online
+                                </span>
+                                <span class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-black {{ request()->routeIs('courses.index') || request()->routeIs('courses.show') ? 'bg-white/20 text-white' : 'bg-rose-100 text-rose-800' }}">Meet</span>
+                            </a>
+
+                            @auth
+                            <a href="{{ route('profile.edit') }}#my-courses"
+                               @click="mobileMenuOpen = false"
+                               class="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold transition {{ request()->routeIs('courses.my') ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/10' : 'text-slate-700 hover:bg-slate-100 hover:text-[#991b1b]' }}">
+                                <i data-lucide="bookmark-check" class="h-4 w-4 shrink-0"></i>
+                                Khóa học của tôi
+                            </a>
+                            @endauth
+                            @endif
+                        </div>
                     </nav>
 
                     {{-- Drawer Footer: Streak + User Info --}}

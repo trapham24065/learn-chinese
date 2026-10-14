@@ -276,6 +276,12 @@
 </div>
 @else
 
+@php
+    $petStageObj = $userPet?->pet?->stages?->where('stage', $userPet->stage)?->first();
+    $petDefaultEmoji = $petStageObj?->emoji ?? '🐉';
+    $petDefaultName = $userPet?->name ?? 'Tiểu Long';
+@endphp
+
 {{-- Interactive Flashcard Deck with Alpine.js (batch loading) --}}
 <div id="flashcard-deck-player"
      @select-card.window="selectCard($event.detail)"
@@ -298,8 +304,20 @@
     sessionLogged: false,
     sessionStartTime: Date.now(),
     streakCount: 0,
+    maxComboStreak: 0,
+    petEmoji: '{{ $petDefaultEmoji }}',
+    petSpeech: 'Cùng tớ lật thẻ ôn từ vựng nhé! Nhớ kỹ nghĩa và câu ví dụ nha 🎴✨',
+    comboNotice: '',
+    showComboCelebration: false,
+    petReward: null,
     floatingXp: null,
     _floatingTimer: null,
+
+    triggerComboNotice(text) {
+        this.comboNotice = text;
+        this.showComboCelebration = true;
+        setTimeout(() => { this.showComboCelebration = false; }, 2400);
+    },
 
     showFloatingXp(xp) {
         this.floatingXp = xp;
@@ -343,6 +361,13 @@
     flip() {
         this.flipped = !this.flipped;
         window.soundEngine?.play('whoosh');
+        if (this.flipped) {
+            if (this.streakCount >= 3) {
+                this.petSpeech = 'Nghĩ ra chưa? Cùng xem đáp án nào, chuỗi x' + this.streakCount + ' đang rực cháy đấy! 🔥';
+            } else {
+                this.petSpeech = 'Xem đáp án và phát âm chuẩn nhé! Có ví dụ câu hay lắm nè 📖';
+            }
+        }
     },
 
     async next() {
@@ -406,8 +431,10 @@
                 target.is_starred = data.is_starred;
                 this.starredCount = data.starred_count;
                 if (data.is_starred) {
+                    this.petSpeech = `Đã cất từ 「${target?.hanzi || ''}」vào Sổ tay riêng rồi nhé, để dành ôn lại siêu tiện! ⭐`;
                     window.toast.success('Đã lưu vào Sổ tay từ vựng!', target?.hanzi || '');
                 } else {
+                    this.petSpeech = `Đã bỏ lưu từ 「${target?.hanzi || ''}」khỏi Sổ tay.`;
                     window.toast.info('Đã bỏ lưu khỏi Sổ tay từ vựng');
                 }
             }
@@ -430,14 +457,27 @@
         const isKnown = (quality === 'known' || quality >= 4);
         if (isKnown) {
             this.streakCount = (this.streakCount || 0) + 1;
-            if (this.streakCount > 0 && this.streakCount % 5 === 0) {
+            if (this.streakCount > this.maxComboStreak) {
+                this.maxComboStreak = this.streakCount;
+            }
+
+            if (this.streakCount >= 5) {
+                this.petSpeech = `⚡ SIÊU PHÀM! Chuỗi x${this.streakCount}! Trí nhớ đỉnh nóc kịch trần luôn! 🔥`;
+                this.triggerComboNotice(`🔥 THẦN TỐC x${this.streakCount}! BÙNG NỔ!`);
+                window.soundEngine?.play('milestone');
+            } else if (this.streakCount >= 3) {
+                this.petSpeech = `🔥 Xuất sắc! Chuỗi x${this.streakCount} rồi, tiến bộ nhanh thật đấy!`;
+                this.triggerComboNotice(`🔥 COMBO x${this.streakCount}!`);
                 window.soundEngine?.play('milestone');
             } else {
+                this.petSpeech = `Đỉnh quá! Đã thuộc từ 「${currentHanzi}」rồi nè! 🎉`;
                 window.soundEngine?.play('ding');
             }
         } else {
             this.streakCount = 0;
+            this.petSpeech = `Không sao cả! Từ 「${currentHanzi}」này hơi nhiều nét, lát nữa mình ôn lại là nhớ ngay! 🌸`;
             window.soundEngine?.play('tap');
+            window.PetEventBus?.emit('pet:struggle', { word: currentHanzi });
         }
 
         try {
@@ -524,6 +564,10 @@
         this.flipped = false;
         this.done = [];
         this.sessionLogged = false;
+        this.streakCount = 0;
+        this.maxComboStreak = 0;
+        this.petReward = null;
+        this.petSpeech = 'Tuyệt vời! Chúng mình cùng ôn luyện thêm một lần nữa nhé! 💪';
         this.sessionStartTime = Date.now();
         setTimeout(() => window.refreshIcons?.(), 50);
     },
@@ -533,7 +577,7 @@
         this.sessionLogged = true;
         const minutes = Math.max(1, Math.round((Date.now() - this.sessionStartTime) / 60000));
         try {
-            await fetch('{{ route('flashcards.session') }}', {
+            const res = await fetch('{{ route('flashcards.session') }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -545,6 +589,11 @@
                     lesson_id: this.card?.lesson_id ?? null,
                 }),
             });
+            const data = await res.json();
+            if (data?.pet_reward) {
+                this.petReward = data.pet_reward;
+                this.petSpeech = `Oa! Cậu đã hoàn thành ${this.cards.length} thẻ rồi! Tớ được thưởng +${data.pet_reward.exp_bonus} EXP và ăn no nê! 💖`;
+            }
         } catch(e) {}
     },
 }" x-init="ready = true; window.__deckPlayer = this; setTimeout(() => window.refreshIcons?.(), 50);" class="space-y-8">
@@ -582,6 +631,77 @@
              class="pointer-events-none fixed top-24 right-8 z-50 flex items-center gap-1.5 rounded-full bg-amber-400 px-3.5 py-1.5 text-xs font-black text-slate-950 shadow-lg shadow-amber-400/30">
             <i data-lucide="sparkles" class="h-3.5 w-3.5 fill-current"></i>
             <span x-text="'+' + floatingXp + ' XP'"></span>
+        </div>
+
+        {{-- Pet Co-op Companion & Live Streak / Speech Bubble --}}
+        <div class="relative overflow-hidden rounded-[2rem] border border-amber-200/90 bg-gradient-to-r from-amber-50 via-orange-50/50 to-red-50 p-4 sm:p-5 shadow-lg shadow-amber-950/5">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                {{-- Left: Pet Avatar & Dynamic Speech --}}
+                <div class="flex items-center gap-3.5">
+                    <div class="relative grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-white shadow-md border border-amber-200/80 transition-transform duration-300 hover:scale-105">
+                        <span class="text-3xl select-none" x-text="petEmoji || '{{ $petDefaultEmoji }}'"></span>
+                        <span class="absolute -top-1 -right-1 flex h-4 w-4">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-4 w-4 bg-amber-500 text-[9px] font-black text-white items-center justify-center">★</span>
+                        </span>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-black uppercase tracking-wider text-amber-800">Bạn học {{ $petDefaultName }}</span>
+                            <span class="rounded-full bg-amber-200/80 px-2 py-0.2 text-[10px] font-bold text-amber-900">
+                                Cấp {{ $userPet?->stage ?? 1 }}: {{ $petStageObj?->name ?? 'Bạn đồng hành' }}
+                            </span>
+                        </div>
+                        <p class="text-sm font-semibold text-slate-800 mt-0.5 leading-snug" x-text="petSpeech">
+                            "Cùng tớ lật thẻ ôn từ vựng nhé! Nhớ kỹ nghĩa và câu ví dụ nha 🎴✨"
+                        </p>
+                    </div>
+                </div>
+
+                {{-- Right: Live Streak / Combo Status --}}
+                <div class="flex items-center gap-3 self-end sm:self-center">
+                    {{-- Dynamic Combo Streak Pill --}}
+                    <div x-show="streakCount >= 2"
+                         x-transition:enter="transition ease-out duration-300"
+                         x-transition:enter-start="opacity-0 scale-90"
+                         x-transition:enter-end="opacity-100 scale-100"
+                         class="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-red-600 to-amber-500 px-3.5 py-2 text-white shadow-md shadow-red-600/20">
+                        <i data-lucide="flame" class="h-4 w-4 text-yellow-200 animate-bounce"></i>
+                        <div>
+                            <p class="text-[9px] font-bold uppercase tracking-widest text-yellow-100 leading-none">Chuỗi nhớ</p>
+                            <p class="text-sm font-black leading-tight">
+                                <span x-text="'x' + streakCount"></span>
+                                <span x-show="streakCount >= 5" class="text-[10px] text-yellow-200">🔥 Siêu nhớ!</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="rounded-xl bg-white/80 border border-amber-200/80 px-3 py-1.5 text-xs text-amber-900 font-medium hidden sm:block">
+                        <span>Thưởng hoàn thành: <strong class="font-bold text-amber-800">+10~20 EXP cho Pet</strong> 🐉</span>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Big Explosive Combo Celebration Banner --}}
+            <div x-show="showComboCelebration"
+                 x-transition:enter="transition cubic-bezier(0.34, 1.56, 0.64, 1) duration-500"
+                 x-transition:enter-start="opacity-0 scale-50 translate-y-4"
+                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-300"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-95"
+                 class="mt-3 flex items-center justify-between rounded-2xl bg-gradient-to-r from-amber-500 via-red-600 to-purple-600 p-3 text-white shadow-xl animate-pulse">
+                <div class="flex items-center gap-2.5">
+                    <span class="text-2xl animate-spin">🔥</span>
+                    <div>
+                        <p class="text-xs font-black uppercase tracking-wider text-yellow-200" x-text="comboNotice"></p>
+                        <p class="text-xs text-white/90">Bạn ghi nhớ liên tiếp cực chuẩn xác, Pet rất tự hào về bạn!</p>
+                    </div>
+                </div>
+                <span class="rounded-full bg-white/20 px-3 py-1 text-xs font-black text-white">
+                    +Thưởng Pet EXP!
+                </span>
+            </div>
         </div>
 
         {{-- Progress bar --}}
@@ -776,25 +896,74 @@
 
     {{-- Completion screen --}}
     <template x-if="done.length >= cards.length">
-        <div class="flex flex-col items-center gap-6 rounded-[2rem] bg-slate-950 py-16 text-center text-white shadow-2xl shadow-slate-950/20">
+        <div class="flex flex-col items-center gap-6 rounded-[2.5rem] bg-slate-950 py-12 px-6 text-center text-white shadow-2xl shadow-slate-950/20 border border-white/10 relative overflow-hidden">
+            <div class="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-amber-500/10 blur-3xl pointer-events-none"></div>
+            <div class="absolute -left-16 -bottom-16 h-48 w-48 rounded-full bg-red-600/10 blur-3xl pointer-events-none"></div>
+
             <div class="grid h-16 w-16 place-items-center rounded-3xl bg-amber-400/20 text-amber-300">
                 <i data-lucide="party-popper" class="h-8 w-8"></i>
             </div>
             <div>
-                <p class="text-sm uppercase tracking-[0.28em] text-amber-300/80">Xong rồi!</p>
-                <h2 class="mt-2 text-3xl font-black">Bạn đã ôn hết <span x-text="cards.length"></span> thẻ!</h2>
-                <p class="mt-3 text-slate-400">Phiên học của bạn đã được ghi nhận tự động.</p>
+                <p class="text-sm uppercase tracking-[0.28em] text-amber-300/80">Hoàn thành xuất sắc!</p>
+                <h2 class="mt-2 text-3xl font-black">Bạn đã ôn hết <span x-text="cards.length"></span> thẻ từ vựng!</h2>
+                <p class="mt-2 text-slate-400 text-sm">Phiên học đã được ghi nhận tự động vào tiến trình học tập của bạn.</p>
             </div>
-            <div class="flex gap-3">
+
+            {{-- Post-Session Pet Reward & Victory Card --}}
+            <div class="w-full max-w-xl rounded-3xl bg-white/10 border border-white/15 p-5 text-left text-white shadow-xl">
+                <div class="flex flex-col sm:flex-row items-center gap-4">
+                    <div class="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-white/10 border border-white/10 text-4xl shadow-md animate-bounce">
+                        <span x-text="petReward?.emoji || '{{ $petDefaultEmoji }}'"></span>
+                    </div>
+                    <div class="flex-1 text-center sm:text-left">
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-400/20 px-2.5 py-0.5 text-xs font-bold text-amber-300">
+                            <i data-lucide="sparkles" class="h-3 w-3"></i>
+                            <span>Phần thưởng bạn đồng hành</span>
+                        </span>
+                        <h4 class="text-lg font-black mt-1">
+                            <span x-text="petReward?.pet_name || '{{ $petDefaultName }}'"></span> rất vui vì được học cùng bạn!
+                        </h4>
+                        <p class="text-xs text-slate-300 mt-0.5 leading-relaxed" x-text="petSpeech"></p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2.5 mt-4">
+                    <div class="rounded-xl border border-white/10 bg-white/5 p-2.5 text-center">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">EXP cho Pet</p>
+                        <p class="text-base font-black text-amber-300 mt-0.5" x-text="'+' + (petReward?.exp_bonus || 15) + ' EXP'"></p>
+                    </div>
+                    <div class="rounded-xl border border-white/10 bg-white/5 p-2.5 text-center">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Độ no tăng</p>
+                        <p class="text-base font-black text-emerald-400 mt-0.5" x-text="'+' + (petReward?.hunger_gain || 8) + ' No'"></p>
+                    </div>
+                    <div class="rounded-xl border border-white/10 bg-white/5 p-2.5 text-center">
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Vật phẩm</p>
+                        <p class="text-xs font-black text-rose-300 mt-1 truncate" x-text="petReward?.gift_item || '🥟 Bánh bao thịt'"></p>
+                    </div>
+                </div>
+
+                <template x-if="petReward?.stage_up">
+                    <div class="mt-3 rounded-xl bg-amber-500/20 border border-amber-400/40 p-2.5 text-center text-amber-200 text-xs font-black animate-pulse">
+                        🎉 CHÚC MỪNG! Pet của bạn đã đủ điều kiện TIẾN HÓA lên cấp mới!
+                    </div>
+                </template>
+            </div>
+
+            <div class="flex flex-wrap justify-center gap-3 mt-2">
                 <button @click="restart()"
-                    class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/20">
+                    class="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/20 hover:scale-105 active:scale-95">
                     <i data-lucide="rotate-ccw" class="h-4 w-4"></i>
                     <span>Học lại từ đầu</span>
                 </button>
                 <a href="{{ route('quiz', $lessonSlug ? ['lesson' => $lessonSlug] : []) }}"
-                    class="inline-flex items-center gap-2 rounded-full bg-amber-300 px-6 py-3 text-sm font-bold text-slate-950 transition hover:bg-amber-200">
+                    class="inline-flex items-center gap-2 rounded-full bg-amber-300 px-6 py-3 text-sm font-bold text-slate-950 transition hover:bg-amber-200 hover:scale-105 active:scale-95">
                     <i data-lucide="target" class="h-4 w-4"></i>
                     <span>Làm Quiz kiểm tra →</span>
+                </a>
+                <a href="{{ route('pet.index') }}"
+                    class="inline-flex items-center gap-2 rounded-full border border-amber-400/40 bg-amber-400/10 px-6 py-3 text-sm font-bold text-amber-300 transition hover:bg-amber-400/20 hover:scale-105 active:scale-95">
+                    <i data-lucide="heart" class="h-4 w-4"></i>
+                    <span>Vào phòng thăm Pet →</span>
                 </a>
             </div>
         </div>

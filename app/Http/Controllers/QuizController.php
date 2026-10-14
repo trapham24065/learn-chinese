@@ -105,6 +105,9 @@ class QuizController extends Controller
             ->groupBy('hsk_level')
             ->pluck('count', 'hsk_level');
 
+        // --- Pet Companion Co-op Data ---
+        $userPet = $user ? \App\Models\UserPet::where('user_id', $user->id)->with('pet.stages')->first() : null;
+
         return view('quiz', [
             'lessons'               => $lessons,
             'lessonsByLevel'        => $lessonsByLevel,
@@ -119,6 +122,7 @@ class QuizController extends Controller
             'userAverageScore'      => $userAverageScore,
             'recentSessionsCount'   => $recentQuizSessions->count(),
             'questionCountsByLevel' => $questionCountsByLevel,
+            'userPet'               => $userPet,
         ]);
     }
 
@@ -193,13 +197,45 @@ class QuizController extends Controller
                 'completed_at' => now(),
             ]);
 
-            $userPet = \App\Models\UserPet::where('user_id', $user->id)->first();
+            $userPet = \App\Models\UserPet::where('user_id', $user->id)->with('pet.stages')->first();
+            $petReward = null;
             if ($userPet && $userPet->isActive()) {
+                // EXP bonus: 5 base + 2 per correct answer (capped at 25)
+                $petExpBonus = min(25, max(5, (int) round($correctCount * 2)));
+                $userPet->increment('exp', $petExpBonus);
+
+                // Hunger restored: +10 if >= 80, +5 if >= 50, +2 otherwise (max 100)
+                $hungerGain = $scorePercent >= 80 ? 10 : ($scorePercent >= 50 ? 5 : 2);
+                $newHunger = min(100, $userPet->hunger + $hungerGain);
+                $userPet->update([
+                    'hunger' => $newHunger,
+                    'last_fed_at' => now(),
+                    'last_studied_at' => now(),
+                ]);
+
+                // Check stage-up & DNA recompute
+                $growthResult = app(\App\Services\Pet\PetGrowthService::class)->checkAndApplyStageUp($user, $userPet);
                 app(\App\Services\Pet\PetDnaService::class)->compute($user, $userPet);
+
                 if ($scorePercent === 100) {
                     $lessonTitle = isset($lesson) && $lesson ? $lesson->title : 'Tổng hợp';
                     app(\App\Services\Pet\PetMemoryService::class)->rememberFirstPerfectQuiz($userPet, $lessonTitle);
                 }
+
+                $stageObj = $userPet->pet?->stages?->where('stage', $userPet->stage)?->first();
+                $petReward = [
+                    'has_pet'         => true,
+                    'pet_name'        => $userPet->name ?? 'Tiểu Long',
+                    'emoji'           => $stageObj?->emoji ?? '🐉',
+                    'stage'           => $userPet->stage,
+                    'stage_name'      => $stageObj?->name ?? 'Trứng',
+                    'exp_bonus'       => $petExpBonus,
+                    'hunger_gain'     => $hungerGain,
+                    'new_hunger'      => $userPet->fresh()->hunger,
+                    'new_exp'         => $userPet->fresh()->exp,
+                    'stage_up'        => $growthResult['stage_up'] ?? false,
+                    'gift_item'       => $scorePercent >= 80 ? '🍎 Táo ngọt Tăng lực (+20 EXP)' : '🥟 Bánh bao Năng lượng (+10 EXP)',
+                ];
             }
         }
 
@@ -217,6 +253,7 @@ class QuizController extends Controller
             'total_questions' => $totalQuestions,
             'message' => $message,
             'details' => $details,
+            'pet_reward' => $petReward ?? null,
         ]);
     }
 }

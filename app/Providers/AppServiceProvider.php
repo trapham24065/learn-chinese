@@ -62,9 +62,17 @@ class AppServiceProvider extends ServiceProvider
                 });
             }
 
+            $sidebarPet = null;
+            if ($user) {
+                $sidebarPet = \App\Models\UserPet::where('user_id', $user->id)
+                    ->with('pet.stages')
+                    ->first();
+            }
+
             $view->with([
                 'authUser'      => $user,
                 'sidebarStreak' => $streak,
+                'sidebarPet'    => $sidebarPet,
             ]);
         });
     }
