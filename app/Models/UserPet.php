@@ -214,6 +214,104 @@ class UserPet extends Model
         };
     }
 
+    /**
+     * Check if a specific personality archetype is unlocked for this pet.
+     */
+    public function isPersonalityUnlocked(string $type): array
+    {
+        $stage = (int) ($this->stage ?? 0);
+        $affinity = (int) ($this->affinity ?? 0);
+
+        return match ($type) {
+            'playful' => [
+                'unlocked'    => true,
+                'requirement' => 'Mở sẵn từ ban đầu',
+            ],
+            'curious' => [
+                'unlocked'    => ($stage >= 1 || $affinity >= 15),
+                'requirement' => 'Cần Cấp 1 (Sơ sinh) hoặc Thân thiết ≥ 15',
+            ],
+            'shy' => [
+                'unlocked'    => ($stage >= 2 || $affinity >= 30),
+                'requirement' => 'Cần Cấp 2 (Bé) hoặc Thân thiết ≥ 30',
+            ],
+            'cheerful' => [
+                'unlocked'    => ($stage >= 3 || $affinity >= 50),
+                'requirement' => 'Cần Cấp 3 (Nhỏ) hoặc Thân thiết ≥ 50',
+            ],
+            'calm' => [
+                'unlocked'    => ($stage >= 4 || $affinity >= 75),
+                'requirement' => 'Cần Cấp 4 (Trưởng thành) hoặc Thân thiết ≥ 75',
+            ],
+            default => [
+                'unlocked'    => false,
+                'requirement' => 'Chưa mở khóa',
+            ],
+        };
+    }
+
+    /**
+     * Get all 5 personality archetypes with unlock status for this user pet.
+     */
+    public function getPersonalityArchetypes(): array
+    {
+        $archetypes = [
+            'playful' => [
+                'type'        => 'playful',
+                'name'        => 'Tinh nghịch',
+                'title'       => 'Tinh nghịch & Vui nhộn',
+                'emoji'       => '✨',
+                'desc'        => 'Hiếu động, luôn đố vui và rủ bạn cùng học tiếp.',
+                'quote'       => 'Nè nè! Đố bạn nhớ chữ này nghĩa là gì đó, giỏi thì đọc lại xem nào~ ✨',
+                'color'       => 'amber',
+            ],
+            'curious' => [
+                'type'        => 'curious',
+                'name'        => 'Tò mò',
+                'title'       => 'Tò mò & Khám phá',
+                'emoji'       => '🔍',
+                'desc'        => 'Ham khám phá bộ thủ và nguồn gốc chữ Hán.',
+                'quote'       => 'Bộ thủ của chữ này thú vị ghê! Chúng mình cùng tìm hiểu xem vì sao nó ghép lại nhé? 🔍',
+                'color'       => 'blue',
+            ],
+            'shy' => [
+                'type'        => 'shy',
+                'name'        => 'E thẹn',
+                'title'       => 'E thẹn & Dịu dàng',
+                'emoji'       => '🌸',
+                'desc'        => 'Dịu dàng, an ủi ngọt ngào khi gặp từ khó.',
+                'quote'       => 'Bạn đừng buồn nhé... Chữ này khó thật mà, tớ luôn ở đây cùng bạn nè 🌸',
+                'color'       => 'pink',
+            ],
+            'cheerful' => [
+                'type'        => 'cheerful',
+                'name'        => 'Lạc quan',
+                'title'       => 'Lạc quan & Ánh nắng',
+                'emoji'       => '☀️',
+                'desc'        => 'Tràn trề năng lượng, tiếp thêm tự tin mỗi ngày.',
+                'quote'       => 'Tuyệt đỉnh luôn! Bạn đã cố gắng hết mình rồi, hôm nay hãy cùng tỏa sáng rực rỡ nhé! ☀️',
+                'color'       => 'orange',
+            ],
+            'calm' => [
+                'type'        => 'calm',
+                'name'        => 'Điềm tĩnh',
+                'title'       => 'Điềm tĩnh & Uyên bác',
+                'emoji'       => '🍵',
+                'desc'        => 'Uyên bác, học như thưởng trà, tích lũy từng ngày.',
+                'quote'       => 'Học tập như ngâm trà ngon, cần thời gian và kiên nhẫn. Từng bước vững vàng mỗi ngày 🍵',
+                'color'       => 'emerald',
+            ],
+        ];
+
+        foreach ($archetypes as $key => &$arch) {
+            $unlock = $this->isPersonalityUnlocked($key);
+            $arch['unlocked'] = $unlock['unlocked'];
+            $arch['requirement'] = $unlock['requirement'];
+        }
+
+        return $archetypes;
+    }
+
     public function worldObjects(): HasMany
     {
         return $this->hasMany(PetWorldObject::class);

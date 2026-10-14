@@ -29,6 +29,8 @@ window.petRoom = function petRoom(config) {
         timelineMemories: config.timelineMemories || [],
         roomStats: config.roomStats || {},
         selectedMemoryFilter: 'all',
+        memoryPage: 1,
+        memoriesPerPage: 4,
         roomScenery: (new Date().getHours() >= 19 || new Date().getHours() < 5) ? 'night' : ((new Date().getHours() >= 17) ? 'sunset' : 'day'),
         roomTimeMode: (new Date().getHours() >= 17 || new Date().getHours() < 5) ? 'night' : 'day',
         realtimeClock: '',
@@ -90,6 +92,7 @@ window.petRoom = function petRoom(config) {
         affinity: config.userPet?.affinity || 0,
         affinityTier: config.affinityTier || {},
         affinitySummary: config.affinitySummary || {},
+        archetypes: config.personalityArchetypes || {},
         savingPersonality: false,
         personalityMessage: '',
 
@@ -180,6 +183,19 @@ window.petRoom = function petRoom(config) {
         },
 
         async selectPersonality(type) {
+            const arch = this.archetypes?.[type];
+            if (arch && !arch.unlocked) {
+                this.personalityMessage = `🔒 Nét tính cách "${arch.name}" chưa mở khóa! Yêu cầu: ${arch.requirement}.`;
+                if (window.toast) {
+                    window.toast.warning('Chưa mở khóa tính cách', `Cần: ${arch.requirement}`);
+                }
+                if (window.PetAudioEngine?.chirp) {
+                    window.PetAudioEngine.chirp(0.8);
+                }
+                setTimeout(() => { if (this.personalityMessage.includes('chưa mở khóa')) this.personalityMessage = ''; }, 4500);
+                return;
+            }
+
             if (this.savingPersonality || this.personality === type) return;
             this.savingPersonality = true;
             this.personalityMessage = '';
@@ -209,6 +225,8 @@ window.petRoom = function petRoom(config) {
                         window.PetAudioEngine.pop();
                     }
                     setTimeout(() => { this.personalityMessage = ''; }, 3500);
+                } else {
+                    this.personalityMessage = data.error || data.message || 'Chưa thể chọn tính cách này';
                 }
             } catch (e) {
                 this.personalityMessage = 'Lỗi kết nối khi cập nhật tính cách';
@@ -647,12 +665,36 @@ window.petRoom = function petRoom(config) {
             }
         },
 
+        setMemoryFilter(filter) {
+            this.selectedMemoryFilter = filter;
+            this.memoryPage = 1;
+            setTimeout(() => window.refreshIcons?.(), 50);
+        },
+
         filteredTimelineMemories() {
             if (!this.timelineMemories || this.timelineMemories.length === 0) return [];
             if (this.selectedMemoryFilter === 'all') {
                 return this.timelineMemories;
             }
             return this.timelineMemories.filter(m => m.category === this.selectedMemoryFilter);
+        },
+
+        totalMemoryPages() {
+            return Math.max(1, Math.ceil(this.filteredTimelineMemories().length / this.memoriesPerPage));
+        },
+
+        paginatedTimelineMemories() {
+            const list = this.filteredTimelineMemories();
+            const start = (this.memoryPage - 1) * this.memoriesPerPage;
+            return list.slice(start, start + this.memoriesPerPage);
+        },
+
+        goToMemoryPage(page) {
+            const max = this.totalMemoryPages();
+            if (page >= 1 && page <= max) {
+                this.memoryPage = page;
+                setTimeout(() => window.refreshIcons?.(), 50);
+            }
         },
 
         filteredWords() {
@@ -867,6 +909,7 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
          foodMenu: {{ Js::from($foodMenu) }},
          timelineMemories: {{ Js::from($timelineMemories) }},
          roomStats: {{ Js::from($roomStats) }},
+         personalityArchetypes: {{ Js::from($personalityArchetypes) }},
      })"
      x-init="initRoom()">
 
@@ -1669,75 +1712,85 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-                    {{-- 1. Playful --}}
-                    <div @click="selectPersonality('playful')" role="button"
-                         :class="personality === 'playful' ? 'border-amber-500 ring-2 ring-amber-500/30 bg-amber-50/60' : 'border-slate-200 hover:border-amber-300 bg-white'"
-                         class="rounded-2xl border p-3.5 transition text-left cursor-pointer space-y-2">
-                        <div class="flex items-center justify-between">
-                            <span class="text-2xl">✨</span>
-                            <span x-show="personality === 'playful'" class="rounded-full bg-amber-500 text-white px-2 py-0.2 text-[9px] font-black uppercase">Đang chọn</span>
-                        </div>
-                        <div>
-                            <h5 class="text-xs font-black text-slate-900">Tinh nghịch</h5>
-                            <p class="text-[11px] text-slate-500 mt-0.5 line-clamp-2">Hiếu động, luôn đố vui và rủ bạn cùng học tiếp.</p>
-                        </div>
-                    </div>
+                    @foreach($personalityArchetypes as $type => $arch)
+                    @php
+                        $isUnlocked = $arch['unlocked'];
+                        $colorClass = match($arch['color']) {
+                            'amber' => 'border-amber-500 ring-2 ring-amber-500/30 bg-amber-50/60 text-amber-800',
+                            'blue' => 'border-blue-500 ring-2 ring-blue-500/30 bg-blue-50/60 text-blue-800',
+                            'pink' => 'border-pink-500 ring-2 ring-pink-500/30 bg-pink-50/60 text-pink-800',
+                            'orange' => 'border-orange-500 ring-2 ring-orange-500/30 bg-orange-50/60 text-orange-800',
+                            'emerald' => 'border-emerald-600 ring-2 ring-emerald-600/30 bg-emerald-50/60 text-emerald-800',
+                            default => 'border-slate-500 ring-2 ring-slate-500/30 bg-slate-50/60 text-slate-800',
+                        };
+                        $badgeBg = match($arch['color']) {
+                            'amber' => 'bg-amber-500',
+                            'blue' => 'bg-blue-600',
+                            'pink' => 'bg-pink-500',
+                            'orange' => 'bg-orange-500',
+                            'emerald' => 'bg-emerald-600',
+                            default => 'bg-slate-600',
+                        };
+                        $hoverBorder = match($arch['color']) {
+                            'amber' => 'hover:border-amber-300',
+                            'blue' => 'hover:border-blue-300',
+                            'pink' => 'hover:border-pink-300',
+                            'orange' => 'hover:border-orange-300',
+                            'emerald' => 'hover:border-emerald-300',
+                            default => 'hover:border-slate-300',
+                        };
+                    @endphp
 
-                    {{-- 2. Curious --}}
-                    <div @click="selectPersonality('curious')" role="button"
-                         :class="personality === 'curious' ? 'border-blue-500 ring-2 ring-blue-500/30 bg-blue-50/60' : 'border-slate-200 hover:border-blue-300 bg-white'"
-                         class="rounded-2xl border p-3.5 transition text-left cursor-pointer space-y-2">
-                        <div class="flex items-center justify-between">
-                            <span class="text-2xl">🔍</span>
-                            <span x-show="personality === 'curious'" class="rounded-full bg-blue-600 text-white px-2 py-0.2 text-[9px] font-black uppercase">Đang chọn</span>
+                    <div @click="selectPersonality('{{ $type }}')"
+                         role="button"
+                         tabindex="0"
+                         :class="{
+                             '{{ $colorClass }}': personality === '{{ $type }}',
+                             '{{ $hoverBorder }} bg-white border-slate-200': personality !== '{{ $type }}' && {{ $isUnlocked ? 'true' : 'false' }},
+                             'border-dashed border-slate-300 bg-slate-50/80 opacity-80 hover:opacity-100 hover:border-slate-400': !{{ $isUnlocked ? 'true' : 'false' }}
+                         }"
+                         class="rounded-2xl border p-3.5 transition text-left flex flex-col justify-between space-y-2 {{ $isUnlocked ? 'cursor-pointer' : 'cursor-not-allowed select-none' }}">
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-2xl select-none">{{ $arch['emoji'] }}</span>
+                                <div class="flex items-center gap-1">
+                                    @if(!$isUnlocked)
+                                    <span class="inline-flex items-center gap-1 rounded-full bg-slate-200/90 text-slate-600 px-2 py-0.5 text-[9px] font-bold">
+                                        <i data-lucide="lock" class="h-2.5 w-2.5"></i>
+                                        <span>Khóa</span>
+                                    </span>
+                                    @endif
+                                    <span x-show="personality === '{{ $type }}'"
+                                          class="rounded-full {{ $badgeBg }} text-white px-2 py-0.5 text-[9px] font-black uppercase tracking-wider">
+                                        Đang chọn
+                                    </span>
+                                </div>
+                            </div>
+                            <div>
+                                <h5 class="text-xs font-black text-slate-900 flex items-center gap-1">
+                                    <span>{{ $arch['name'] }}</span>
+                                </h5>
+                                <p class="text-[11px] text-slate-500 mt-0.5 line-clamp-2 leading-relaxed">{{ $arch['desc'] }}</p>
+                            </div>
                         </div>
-                        <div>
-                            <h5 class="text-xs font-black text-slate-900">Tò mò</h5>
-                            <p class="text-[11px] text-slate-500 mt-0.5 line-clamp-2">Ham khám phá bộ thủ và nguồn gốc chữ Hán.</p>
-                        </div>
-                    </div>
 
-                    {{-- 3. Shy --}}
-                    <div @click="selectPersonality('shy')" role="button"
-                         :class="personality === 'shy' ? 'border-pink-500 ring-2 ring-pink-500/30 bg-pink-50/60' : 'border-slate-200 hover:border-pink-300 bg-white'"
-                         class="rounded-2xl border p-3.5 transition text-left cursor-pointer space-y-2">
-                        <div class="flex items-center justify-between">
-                            <span class="text-2xl">🌸</span>
-                            <span x-show="personality === 'shy'" class="rounded-full bg-pink-500 text-white px-2 py-0.2 text-[9px] font-black uppercase">Đang chọn</span>
+                        {{-- Condition notice if locked or unlocked status --}}
+                        @if(!$isUnlocked)
+                        <div class="pt-2 border-t border-slate-200/60">
+                            <div class="text-[10px] font-semibold text-rose-600 bg-rose-50 border border-rose-200/60 rounded-xl px-2 py-1 flex items-start gap-1">
+                                <i data-lucide="lock" class="h-3 w-3 shrink-0 text-rose-500 mt-0.5"></i>
+                                <span class="line-clamp-2">{{ $arch['requirement'] }}</span>
+                            </div>
                         </div>
-                        <div>
-                            <h5 class="text-xs font-black text-slate-900">E thẹn</h5>
-                            <p class="text-[11px] text-slate-500 mt-0.5 line-clamp-2">Dịu dàng, an ủi ngọt ngào khi gặp từ khó.</p>
+                        @else
+                        <div class="pt-1.5 flex items-center justify-between text-[10px] text-slate-400">
+                            <span class="text-emerald-600 font-semibold flex items-center gap-0.5">
+                                <i data-lucide="check" class="h-3 w-3"></i> Đã mở
+                            </span>
                         </div>
+                        @endif
                     </div>
-
-                    {{-- 4. Cheerful --}}
-                    <div @click="selectPersonality('cheerful')" role="button"
-                         :class="personality === 'cheerful' ? 'border-orange-500 ring-2 ring-orange-500/30 bg-orange-50/60' : 'border-slate-200 hover:border-orange-300 bg-white'"
-                         class="rounded-2xl border p-3.5 transition text-left cursor-pointer space-y-2">
-                        <div class="flex items-center justify-between">
-                            <span class="text-2xl">☀️</span>
-                            <span x-show="personality === 'cheerful'" class="rounded-full bg-orange-500 text-white px-2 py-0.2 text-[9px] font-black uppercase">Đang chọn</span>
-                        </div>
-                        <div>
-                            <h5 class="text-xs font-black text-slate-900">Lạc quan</h5>
-                            <p class="text-[11px] text-slate-500 mt-0.5 line-clamp-2">Tràn trề năng lượng, tiếp thêm tự tin mỗi ngày.</p>
-                        </div>
-                    </div>
-
-                    {{-- 5. Calm --}}
-                    <div @click="selectPersonality('calm')" role="button"
-                         :class="personality === 'calm' ? 'border-emerald-600 ring-2 ring-emerald-600/30 bg-emerald-50/60' : 'border-slate-200 hover:border-emerald-300 bg-white'"
-                         class="rounded-2xl border p-3.5 transition text-left cursor-pointer space-y-2">
-                        <div class="flex items-center justify-between">
-                            <span class="text-2xl">🍵</span>
-                            <span x-show="personality === 'calm'" class="rounded-full bg-emerald-600 text-white px-2 py-0.2 text-[9px] font-black uppercase">Đang chọn</span>
-                        </div>
-                        <div>
-                            <h5 class="text-xs font-black text-slate-900">Điềm tĩnh</h5>
-                            <p class="text-[11px] text-slate-500 mt-0.5 line-clamp-2">Uyên bác, học như thưởng trà, tích lũy từng ngày.</p>
-                        </div>
-                    </div>
+                    @endforeach
                 </div>
             </div>
         </div>
@@ -1756,7 +1809,7 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                 {{-- Category Filter Chips --}}
                 <div class="flex flex-wrap items-center gap-1.5">
                     <button type="button"
-                            @click="selectedMemoryFilter = 'all'; setTimeout(() => window.refreshIcons?.(), 50)"
+                            @click="setMemoryFilter('all')"
                             :class="selectedMemoryFilter === 'all'
                                 ? 'bg-[#991b1b] text-white shadow-xs'
                                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
@@ -1765,7 +1818,7 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                     </button>
 
                     <button type="button"
-                            @click="selectedMemoryFilter = 'growth'; setTimeout(() => window.refreshIcons?.(), 50)"
+                            @click="setMemoryFilter('growth')"
                             :class="selectedMemoryFilter === 'growth'
                                 ? 'bg-emerald-600 text-white shadow-xs'
                                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
@@ -1775,7 +1828,7 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                     </button>
 
                     <button type="button"
-                            @click="selectedMemoryFilter = 'learning'; setTimeout(() => window.refreshIcons?.(), 50)"
+                            @click="setMemoryFilter('learning')"
                             :class="selectedMemoryFilter === 'learning'
                                 ? 'bg-blue-600 text-white shadow-xs'
                                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
@@ -1785,7 +1838,7 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                     </button>
 
                     <button type="button"
-                            @click="selectedMemoryFilter = 'care'; setTimeout(() => window.refreshIcons?.(), 50)"
+                            @click="setMemoryFilter('care')"
                             :class="selectedMemoryFilter === 'care'
                                 ? 'bg-rose-600 text-white shadow-xs'
                                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
@@ -1799,7 +1852,7 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
             {{-- Timeline List --}}
             <template x-if="filteredTimelineMemories().length > 0">
                 <div class="space-y-3.5">
-                    <template x-for="memory in filteredTimelineMemories()" :key="memory.id">
+                    <template x-for="memory in paginatedTimelineMemories()" :key="memory.id">
                         <div class="group relative rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 sm:p-5 transition-all hover:bg-white hover:border-amber-300 hover:shadow-md space-y-2.5">
                             <div class="flex items-center justify-between flex-wrap gap-2">
                                 <div class="flex items-center gap-2">
@@ -1851,6 +1904,49 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                             </template>
                         </div>
                     </template>
+
+                    {{-- Pagination Controls for Timeline Memories --}}
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 border-t border-slate-100 text-xs">
+                        <div class="text-slate-500 font-medium">
+                            Hiển thị <span class="font-bold text-slate-800" x-text="((memoryPage - 1) * memoriesPerPage) + 1"></span> -
+                            <span class="font-bold text-slate-800" x-text="Math.min(memoryPage * memoriesPerPage, filteredTimelineMemories().length)"></span> /
+                            <span class="font-bold text-slate-800" x-text="filteredTimelineMemories().length"></span> cột mốc
+                        </div>
+
+                        <div class="flex items-center gap-1.5" x-show="totalMemoryPages() > 1">
+                            {{-- Prev Page Button --}}
+                            <button type="button"
+                                    @click="goToMemoryPage(memoryPage - 1)"
+                                    :disabled="memoryPage <= 1"
+                                    class="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 shadow-xs hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition">
+                                <i data-lucide="chevron-left" class="h-3.5 w-3.5"></i>
+                                <span>Trước</span>
+                            </button>
+
+                            {{-- Page Number Pills --}}
+                            <div class="flex items-center gap-1">
+                                <template x-for="p in totalMemoryPages()" :key="p">
+                                    <button type="button"
+                                            @click="goToMemoryPage(p)"
+                                            :class="memoryPage === p
+                                                ? 'bg-[#991b1b] text-white shadow-xs'
+                                                : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'"
+                                            class="h-8 w-8 rounded-xl font-bold text-xs transition grid place-items-center"
+                                            x-text="p">
+                                    </button>
+                                </template>
+                            </div>
+
+                            {{-- Next Page Button --}}
+                            <button type="button"
+                                    @click="goToMemoryPage(memoryPage + 1)"
+                                    :disabled="memoryPage >= totalMemoryPages()"
+                                    class="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-700 shadow-xs hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition">
+                                <span>Sau</span>
+                                <i data-lucide="chevron-right" class="h-3.5 w-3.5"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </template>
 

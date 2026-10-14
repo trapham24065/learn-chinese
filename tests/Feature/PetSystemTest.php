@@ -464,6 +464,8 @@ class PetSystemTest extends TestCase
     {
         $petService = app(PetService::class);
         $userPet = $petService->createInitialPet($this->user);
+        // Stage 1 unlocks 'curious' (Sơ sinh 🐣)
+        $userPet->update(['stage' => 1]);
 
         $response = $this->actingAs($this->user)
             ->postJson(route('pet.personality'), [
@@ -486,6 +488,30 @@ class PetSystemTest extends TestCase
             ->first();
         $this->assertNotNull($memory);
         $this->assertStringContainsString('Tò mò', $memory->title);
+    }
+
+    public function test_user_cannot_select_locked_personality(): void
+    {
+        $petService = app(PetService::class);
+        $userPet = $petService->createInitialPet($this->user);
+        // At stage 0 and affinity 0, 'calm' is locked (requires stage >= 4 or affinity >= 75)
+        $this->assertEquals(0, $userPet->stage);
+        $this->assertEquals(0, $userPet->affinity);
+
+        $response = $this->actingAs($this->user)
+            ->postJson(route('pet.personality'), [
+                'personality' => 'calm',
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJson([
+                'success' => false,
+            ]);
+
+        $this->assertStringContainsString('Chưa mở khóa', $response->json('message'));
+
+        $userPet->refresh();
+        $this->assertNotEquals('calm', $userPet->personality);
     }
 
     // =========================================================================

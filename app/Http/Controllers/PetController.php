@@ -95,6 +95,8 @@ class PetController extends Controller
             'memories_count' => count($timelineMemories),
         ];
 
+        $personalityArchetypes = $userPet->getPersonalityArchetypes();
+
         return view('pet.index', compact(
             'userPet',
             'progress',
@@ -115,7 +117,8 @@ class PetController extends Controller
             'dna',
             'worldObjs',
             'dreamSent',
-            'foodMenu'
+            'foodMenu',
+            'personalityArchetypes'
         ));
     }
 
@@ -213,6 +216,15 @@ class PetController extends Controller
 
         $oldPersonality = $userPet->personality ?? 'playful';
         $newPersonality = $request->input('personality');
+
+        $unlockInfo = $userPet->isPersonalityUnlocked($newPersonality);
+        if (!$unlockInfo['unlocked']) {
+            return response()->json([
+                'success' => false,
+                'error'   => "Nét tính cách này chưa mở khóa! Yêu cầu: {$unlockInfo['requirement']}.",
+                'message' => "Chưa mở khóa! Yêu cầu: {$unlockInfo['requirement']}.",
+            ], 422);
+        }
 
         $userPet->update(['personality' => $newPersonality]);
         $userPet->refresh();
