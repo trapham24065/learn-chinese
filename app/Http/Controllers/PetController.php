@@ -344,18 +344,26 @@ class PetController extends Controller
         ]);
     }
 
-    public function world(Request $request): JsonResponse
+    /**
+     * GET /student/pet/world — Pet Memory World page (HTML) or API (JSON).
+     */
+    public function world(Request $request)
     {
-        $user   = $request->user();
-        $userPet = $this->petService->getActivePet($user);
-        if (!$userPet) {
-            return response()->json(['objects' => [], 'dream' => null]);
+        $user    = $request->user();
+        $userPet = $this->petService->getActivePet($user)
+            ?? $this->petService->createInitialPet($user);
+
+        $worldObjs = $this->worldService->getWorldObjects($userPet);
+        $dreamSent = $this->worldService->generateDreamSentence($userPet);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'objects' => $worldObjs,
+                'dream'   => $dreamSent,
+            ]);
         }
 
-        return response()->json([
-            'objects' => $this->worldService->getWorldObjects($userPet),
-            'dream'   => $this->worldService->generateDreamSentence($userPet),
-        ]);
+        return view('pet.world', compact('userPet', 'worldObjs', 'dreamSent'));
     }
 
     /**

@@ -435,19 +435,21 @@
                             $optionLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
                         @endphp
                         @foreach ($question->options as $optIdx => $option)
+                            @php
+                                $optJs = Js::from($option);
+                                $qidJs = $question->id;
+                            @endphp
                             <button type="button"
-                                    data-qid="{{ $question->id }}"
-                                    data-val="{{ $option }}"
-                                    @click="selectOption($el.dataset.qid, $el.dataset.val)"
+                                    @click="selectOption({{ $qidJs }}, {{ $optJs }})"
                                     :disabled="isSubmitted"
                                     class="relative flex items-center justify-between rounded-2xl border p-4 text-left font-medium transition"
-                                    :class="getOptionClass($el.dataset.qid, $el.dataset.val)">
+                                    :class="getOptionClass({{ $qidJs }}, {{ $optJs }})">
                                 <span class="flex items-center gap-3">
                                     <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-xl border text-xs font-black transition"
-                                          :class="getOptionRadioClass($el.dataset.qid, $el.dataset.val)">
+                                          :class="getOptionRadioClass({{ $qidJs }}, {{ $optJs }})">
                                         {{ $optionLetters[$optIdx] ?? ($optIdx + 1) }}
                                     </span>
-                                    <span class="text-sm sm:text-base font-semibold leading-relaxed" :class="getOptionTextClass($el.dataset.qid, $el.dataset.val)">
+                                    <span class="text-sm sm:text-base font-semibold leading-relaxed" :class="getOptionTextClass({{ $qidJs }}, {{ $optJs }})">
                                         {{ $option }}
                                     </span>
                                 </span>
@@ -455,10 +457,10 @@
                                 {{-- Icon indicator after submit --}}
                                 <template x-if="isSubmitted">
                                     <span>
-                                        <template x-if="isCorrectOption($el.dataset.qid, $el.dataset.val)">
+                                        <template x-if="isCorrectOption({{ $qidJs }}, {{ $optJs }})">
                                             <i data-lucide="circle-check-big" class="h-5 w-5 text-emerald-600"></i>
                                         </template>
-                                        <template x-if="isUserWrongOption($el.dataset.qid, $el.dataset.val)">
+                                        <template x-if="isUserWrongOption({{ $qidJs }}, {{ $optJs }})">
                                             <i data-lucide="circle-x" class="h-5 w-5 text-rose-600"></i>
                                         </template>
                                     </span>
@@ -544,7 +546,6 @@
                                 </template>
                             </div>
                         </div>
-                    </div>
                     </div>
                 </article>
             @endforeach
