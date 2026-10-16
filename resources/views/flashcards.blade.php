@@ -167,6 +167,17 @@
                 </select>
                 <i data-lucide="chevron-down" class="pointer-events-none absolute right-3 top-2.5 h-4 w-4 text-slate-400"></i>
             </div>
+
+            {{-- Quick Access: Sổ Từ Vựng Toàn Cảnh --}}
+            <button type="button" 
+                    onclick="window.openVocabModal?.()"
+                    class="inline-flex items-center gap-1.5 rounded-full border border-amber-900/20 bg-amber-50/80 px-3.5 py-2 text-sm font-bold text-amber-950 shadow-xs hover:bg-amber-100 hover:border-amber-900/40 transition active:scale-95 cursor-pointer"
+                    title="Mở sổ tra cứu toàn cảnh">
+                <i data-lucide="book-marked" class="h-4 w-4 text-[#991b1b]"></i>
+                <span class="chinese-seal text-[9px] px-1 py-0.2">词</span>
+                <span>Sổ từ vựng</span>
+                <span class="rounded-full bg-[#991b1b] text-white px-1.5 py-0.2 text-[10px] font-black">{{ $deckTotal }}</span>
+            </button>
         </div>
 
         {{-- Search Form --}}
@@ -737,7 +748,7 @@
                  @click="flip()">
                 <div class="flip-card-inner" :class="{ flipped }">
                     {{-- Front: Hanzi + Lesson label + Star button --}}
-                    <div class="flip-card-front relative flex flex-col items-center justify-center gap-3 bg-slate-950 p-8 text-white shadow-2xl shadow-slate-950/20 overflow-hidden">
+                    <div class="flip-card-front relative flex flex-col items-center justify-center gap-3 bg-slate-950 p-8 text-white shadow-2xl shadow-slate-950/20 overflow-hidden chinese-frame-corners">
                         {{-- Subtle Chinese Watermark Motif --}}
                         <span class="chinese-watermark right-6 top-1/2 -translate-y-1/2 text-9xl text-white/5 select-none pointer-events-none">学</span>
 
@@ -752,7 +763,7 @@
                                       x-text="card.lesson"></span>
                             </template>
                         </div>
-                        <p class="font-chinese text-8xl font-black leading-none tracking-tight select-none z-10" x-text="card.hanzi"></p>
+                        <p class="font-chinese hanzi-ink-glow text-8xl font-black leading-none tracking-tight select-none z-10 transition-transform cursor-pointer" x-text="card.hanzi"></p>
                         <p class="mt-2 text-sm text-slate-400 z-10">Bấm để xem nghĩa 👆</p>
 
                         {{-- Star / Bookmark Button (Top Right) --}}
@@ -834,8 +845,8 @@
                     <span class="hidden sm:inline">Trước</span>
                 </button>
 
-                {{-- Flip card --}}
-                <div x-show="!flipped" x-cloak>
+                {{-- Flip card & Quick Catalog --}}
+                <div x-show="!flipped" x-cloak class="flex items-center gap-2">
                     <button
                         @click="flip()"
                         class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-8 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 active:scale-95">
@@ -844,6 +855,15 @@
                             <circle cx="12" cy="12" r="3"/>
                         </svg>
                         <span>Xem đáp án</span>
+                    </button>
+                    <button
+                        type="button"
+                        onclick="window.openVocabModal?.()"
+                        class="inline-flex items-center gap-1.5 rounded-full border border-amber-900/20 bg-amber-50 px-4 py-2.5 text-sm font-bold text-amber-950 shadow-sm transition hover:bg-amber-100 active:scale-95 cursor-pointer"
+                        title="Mở toàn bộ danh mục từ vựng trong sổ tra cứu">
+                        <i data-lucide="book-marked" class="h-4 w-4 text-[#991b1b]"></i>
+                        <span class="hidden md:inline">Sổ từ vựng</span>
+                        <span class="rounded-full bg-[#991b1b] text-white px-1.5 py-0.2 text-[10px] font-black">{{ $deckTotal }}</span>
                     </button>
                 </div>
 
@@ -963,8 +983,8 @@
 </div>
 
 {{-- Vocabulary Catalog Modal Trigger Section --}}
-<section class="mt-12 flex flex-col items-center justify-center text-center">
-    <div class="relative overflow-hidden rounded-[2.5rem] border border-amber-900/15 bg-white/90 p-8 shadow-sm backdrop-blur max-w-2xl w-full">
+<section x-data class="mt-12 flex flex-col items-center justify-center text-center">
+    <div class="relative overflow-hidden rounded-[2.5rem] border border-amber-900/15 bg-white/90 p-8 shadow-sm backdrop-blur max-w-2xl w-full chinese-frame-corners">
         {{-- Decorative traditional seal & title --}}
         <div class="flex items-center justify-center gap-2">
             <span class="chinese-seal px-2 py-0.5 text-xs font-bold">【词汇全表】</span>
@@ -977,8 +997,10 @@
             Mở sổ tra cứu nhanh để xem danh mục từ, nghe phát âm và chọn đưa bất kỳ từ nào lên bảng học 3D mà không làm tải lại trang.
         </p>
         <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <button type="button" @click="$dispatch('open-vocab-modal')"
-                class="inline-flex items-center gap-2.5 rounded-full bg-[#991b1b] px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-red-950/20 hover:bg-red-800 transition-all hover:scale-105 active:scale-95">
+            <button type="button"
+                onclick="window.openVocabModal?.()"
+                @click="$dispatch('open-vocab-modal')"
+                class="inline-flex items-center gap-2.5 rounded-full bg-[#991b1b] px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-red-950/20 hover:bg-red-800 transition-all hover:scale-105 active:scale-95 cursor-pointer">
                 <i data-lucide="book-marked" class="h-4 w-4"></i>
                 <span>Mở Sổ Tra Cứu Toàn Bộ Thẻ</span>
                 <span class="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-black">{{ $deckTotal }}</span>
@@ -989,11 +1011,11 @@
 
 {{-- Interactive Vocabulary Deck Modal (词汇总表) --}}
 <div x-data="vocabularyModal()"
+     x-init="init()"
      @open-vocab-modal.window="open()"
      @keydown.escape.window="close()"
      x-show="isOpen"
      x-cloak
-     style="display: none;"
      class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6">
 
     {{-- Dark Backdrop --}}
@@ -1015,7 +1037,7 @@
          x-transition:leave="transition ease-in duration-200 transform"
          x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
          x-transition:leave-end="opacity-0 translate-y-4 sm:scale-95"
-         class="relative flex flex-col w-full max-w-5xl max-h-[92vh] rounded-[2.5rem] bg-[#fcf8f2] border border-amber-900/15 shadow-2xl overflow-hidden z-10">
+         class="relative flex flex-col w-full max-w-5xl max-h-[92vh] rounded-[2.5rem] bg-[#fcf8f2] border border-amber-900/15 shadow-2xl overflow-hidden z-10 chinese-frame-corners paper-warm-texture">
 
         {{-- Header: Chinese Style with Seal Stamp --}}
         <div class="relative shrink-0 border-b border-amber-900/10 bg-white/95 px-6 py-5 sm:px-8">
@@ -1346,6 +1368,14 @@
         // 2. Dispatch custom event as fallback
         window.dispatchEvent(new CustomEvent('select-card', { detail: cardData }));
     };
+
+    window.openVocabModal = function() {
+        if (window.__vocabModal && typeof window.__vocabModal.open === 'function') {
+            window.__vocabModal.open();
+        } else {
+            window.dispatchEvent(new CustomEvent('open-vocab-modal'));
+        }
+    };
 })();
 
 function vocabularyModal() {
@@ -1363,6 +1393,9 @@ function vocabularyModal() {
         hskLevel: '{{ $hskLevel ?? '' }}',
         standardCode: '{{ $standardCode ?? 'hsk_2_0' }}',
 
+        init() {
+            window.__vocabModal = this;
+        },
         open() {
             this.isOpen = true;
             this.$nextTick(() => window.refreshIcons?.());

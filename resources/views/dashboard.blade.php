@@ -11,7 +11,7 @@
             Chào mừng trở lại{{ $student ? ', ' . $student->name : '' }}!
         </p>
         <h1 class="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
-            Hôm nay mình học gì nhỉ?
+            <span class="brush-underline">Hôm nay mình học gì nhỉ?</span>
         </h1>
         <p class="text-sm sm:text-base text-slate-600">
             Tiếp tục từ nơi bạn đã dừng lại. Học một chút mỗi ngày để tích lũy dài lâu.
@@ -32,7 +32,7 @@
     </header>
 
     {{-- Chuỗi Nhịp Học 3 Bước (Tam Bộ Học Tập 三步学): Liên kết chặt chẽ Học - Luyện - Khảo --}}
-    <section class="relative overflow-hidden rounded-[2.5rem] border border-amber-900/15 bg-gradient-to-br from-white via-[#fcf8f2] to-amber-50/50 p-6 sm:p-7 shadow-sm">
+    <section class="relative overflow-hidden rounded-[2.5rem] border border-amber-900/15 bg-gradient-to-br from-white via-[#fcf8f2] to-amber-50/50 p-6 sm:p-7 shadow-sm chinese-frame-corners">
         <span class="chinese-watermark right-6 top-1/2 -translate-y-1/2 text-8xl text-amber-900/5 select-none pointer-events-none">道</span>
 
         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5">
@@ -113,7 +113,7 @@
     <div class="grid gap-5 sm:grid-cols-2">
 
         {{-- Card 1: HỌC TIẾP --}}
-        <div class="relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-6 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+        <div class="relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-6 shadow-sm hover:shadow-md transition flex flex-col justify-between chinese-frame-corners">
             <span class="chinese-watermark right-4 bottom-4 text-8xl text-red-950/5 select-none pointer-events-none">学</span>
 
             <div class="space-y-3 z-10">
@@ -178,7 +178,7 @@
         </div>
 
         {{-- Card 2: MỘT CHÚT ÔN TẬP --}}
-        <div class="relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-6 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+        <div class="relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-6 shadow-sm hover:shadow-md transition flex flex-col justify-between chinese-frame-corners">
             <span class="chinese-watermark right-4 bottom-4 text-8xl text-amber-900/5 select-none pointer-events-none">知</span>
 
             <div class="space-y-3 z-10">
@@ -230,7 +230,7 @@
         </div>
 
         {{-- Card 3: NHỊP HỌC CỦA BẠN (7 Chấm hoạt động T2-CN) --}}
-        <div class="relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-6 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+        <div class="relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-6 shadow-sm hover:shadow-md transition flex flex-col justify-between chinese-frame-corners">
             <span class="chinese-watermark right-4 bottom-4 text-8xl text-slate-900/5 select-none pointer-events-none">志</span>
 
             <div class="space-y-4 z-10">
@@ -293,7 +293,7 @@
         </div>
 
         {{-- Card 4: PET ĐANG Ở ĐÂY --}}
-        <div class="relative overflow-hidden rounded-3xl border border-amber-200/80 bg-gradient-to-br from-amber-50/80 via-white to-orange-50/50 p-6 shadow-sm hover:shadow-md transition flex flex-col justify-between"
+        <div class="relative overflow-hidden rounded-3xl border border-amber-200/80 bg-gradient-to-br from-amber-50/80 via-white to-orange-50/50 p-6 shadow-sm hover:shadow-md transition flex flex-col justify-between chinese-frame-corners"
             x-data="{
                 dialogue: {{ Js::from($petData['randomDialogue'] ?? 'Hôm nay chúng ta cùng học tiếng Trung thật vui nhé!') }},
                 speakDialogue() {

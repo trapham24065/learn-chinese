@@ -21,8 +21,9 @@
         {{-- 1. Pinned Top: Brand Logo --}}
         <div class="shrink-0 mb-3">
             <a href="{{ auth()->check() ? route('dashboard') : route('home') }}" class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-950 px-3.5 py-3 text-white shadow-md shadow-slate-950/15 hover:bg-slate-900 transition">
-                <div class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#991b1b]">
-                    <span class="text-lg font-black">中</span>
+                <div class="relative grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[#991b1b] shadow-inner">
+                    <span class="text-lg font-black font-chinese">中</span>
+                    <span class="absolute -bottom-2 -right-1 text-[11px] animate-tassel-sway select-none pointer-events-none" title="Cát tường">🪢</span>
                 </div>
                 <div class="truncate">
                     <p class="text-xs font-bold uppercase tracking-[0.2em] text-amber-200/80">Learn Chinese</p>
@@ -321,8 +322,9 @@
 
                     {{-- Left: Brand Logo --}}
                     <a href="{{ auth()->check() ? route('dashboard') : route('home') }}" class="flex items-center gap-2.5 min-w-0">
-                        <div class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#991b1b] text-white shadow-sm">
-                            <span class="text-sm font-black">中</span>
+                        <div class="relative grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#991b1b] text-white shadow-sm">
+                            <span class="text-sm font-black font-chinese">中</span>
+                            <span class="absolute -bottom-1.5 -right-1 text-[9px] animate-tassel-sway select-none pointer-events-none">🪢</span>
                         </div>
                         <div class="min-w-0 truncate">
                             <p class="text-sm font-black tracking-tight text-slate-950">Learn Chinese</p>

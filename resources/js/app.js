@@ -4,6 +4,7 @@ import HanziWriter from 'hanzi-writer';
 import './notifications';
 import './sound-engine';
 import './tone-pinyin';
+import './chinese-ambiance';
 import { PetEventBus } from './pet/PetEventBus';
 import { PetAudioEngine } from './pet/PetAudioEngine';
 import { PetVoiceManager } from './pet/PetVoiceManager';
