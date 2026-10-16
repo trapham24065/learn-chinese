@@ -335,6 +335,10 @@
     },
 
     get card() { return this.cards[this.current] ?? null; },
+    getHanziChars() {
+        const text = this.card?.hanzi || this.card?.word || '';
+        return Array.from(text.trim());
+    },
     get progress() {
         return this.cards.length
             ? Math.round(((this.current + 1) / this.cards.length) * 100)
@@ -806,12 +810,45 @@
                             </button>
                         </div>
 
-                        {{-- Center: Mễ Tự Cách (米字格) with Hanzi & Pinyin --}}
-                        <div class="flex flex-col items-center justify-center z-10 my-auto py-1">
-                            <div class="mizige-box w-36 h-36 sm:w-40 sm:h-40 shadow-inner">
-                                <span class="font-chinese hanzi-ink-glow text-7xl sm:text-8xl font-black text-slate-950 select-none z-10 transition-transform cursor-pointer" x-text="card.hanzi"></span>
-                            </div>
-                            <p class="mt-2 text-sm font-bold tracking-wider" x-html="window.formatTonePinyin ? window.formatTonePinyin(card.pinyin) : card.pinyin"></p>
+                        {{-- Center: Mễ Tự Cách (米字格) with Responsive Multi-character Display & Pinyin --}}
+                        <div class="flex flex-col items-center justify-center z-10 my-auto py-1 w-full px-2">
+                            {{-- 1 to 4 characters: Render individual Mễ Tự Cách boxes side-by-side --}}
+                            <template x-if="getHanziChars().length > 0 && getHanziChars().length <= 4">
+                                <div class="flex items-center justify-center select-none"
+                                     :class="{
+                                         'gap-3 sm:gap-4': getHanziChars().length <= 2,
+                                         'gap-2': getHanziChars().length === 3,
+                                         'gap-1.5': getHanziChars().length === 4
+                                     }">
+                                    <template x-for="(char, cIdx) in getHanziChars()" :key="cIdx">
+                                        <div class="mizige-box shadow-inner transition-transform"
+                                             :class="{
+                                                 'w-32 h-32 sm:w-36 sm:h-36': getHanziChars().length === 1,
+                                                 'w-24 h-24 sm:w-28 sm:h-28': getHanziChars().length === 2,
+                                                 'w-18 h-18 sm:w-20 sm:h-20': getHanziChars().length === 3,
+                                                 'w-14 h-14 sm:w-16 sm:h-16': getHanziChars().length === 4
+                                             }">
+                                            <span class="font-chinese hanzi-ink-glow font-black text-slate-950 select-none z-10"
+                                                  :class="{
+                                                      'text-6xl sm:text-7xl': getHanziChars().length === 1,
+                                                      'text-4xl sm:text-5xl': getHanziChars().length === 2,
+                                                      'text-2xl sm:text-3xl': getHanziChars().length === 3,
+                                                      'text-xl sm:text-2xl': getHanziChars().length === 4
+                                                  }"
+                                                  x-text="char"></span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+
+                            {{-- 5+ characters: Render elegant calligraphic ribbon without boxes to prevent overflow --}}
+                            <template x-if="getHanziChars().length > 4">
+                                <div class="px-5 py-3 rounded-2xl bg-amber-50/70 border border-amber-900/15 shadow-inner max-w-md text-center">
+                                    <span class="font-chinese hanzi-ink-glow text-2xl sm:text-3xl font-black text-slate-950 select-none tracking-wide" x-text="card.hanzi"></span>
+                                </div>
+                            </template>
+
+                            <p class="mt-2.5 text-sm font-bold tracking-wider" x-html="window.formatTonePinyin ? window.formatTonePinyin(card.pinyin) : card.pinyin"></p>
                         </div>
 
                         {{-- Bottom Bar: Hint + Quick Action Buttons --}}

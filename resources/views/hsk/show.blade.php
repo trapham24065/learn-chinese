@@ -49,7 +49,7 @@
          style="background: linear-gradient(135deg, {{ $meta['color'] }} 0%, #111827 100%);">
     
     {{-- Classical Watermark Numeral --}}
-    <div class="pointer-events-none absolute -right-6 -top-10 text-[14rem] font-serif font-black leading-none opacity-10 select-none text-white">
+    <div class="pointer-events-none absolute -right-6 -top-10 text-[14rem] font-chinese font-black leading-none opacity-10 select-none text-white">
         {{ ['一','二','三','四','五','六'][$level - 1] }}
     </div>
 
@@ -66,13 +66,14 @@
             <div class="inline-flex flex-wrap items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1 text-xs backdrop-blur-sm">
                 <span class="font-black uppercase tracking-wider text-amber-300">{{ $meta['label'] }}</span>
                 <span class="text-white/40">·</span>
-                <span class="font-serif font-bold text-white">{{ $meta['mountain_cn'] }} ({{ $meta['mountain_vi'] }})</span>
+                <span class="font-chinese font-bold text-white">{{ $meta['mountain_cn'] }}</span>
+                <span class="font-serif text-white">({{ $meta['mountain_vi'] }})</span>
                 <span class="text-white/40">·</span>
-                <span class="font-serif italic text-white/90">“{{ $meta['mountain_quote'] }}”</span>
+                <span class="font-chinese italic text-white/90">“{{ $meta['mountain_quote'] }}”</span>
             </div>
 
-            <h1 class="mt-4 text-3xl sm:text-5xl font-black tracking-tight font-serif text-white">
-                {{ $meta['mountain_cn'] }} <span class="font-sans font-light text-white/60">·</span> {{ $meta['description'] }}
+            <h1 class="mt-4 text-3xl sm:text-5xl font-black tracking-tight text-white">
+                <span class="font-chinese">{{ $meta['mountain_cn'] }}</span> <span class="font-light text-white/60">·</span> <span class="font-serif">{{ $meta['mountain_vi'] }}</span>
             </h1>
 
             <p class="mt-2 text-sm text-white/80 font-serif">
@@ -662,7 +663,14 @@
                                     {{ $meta['label'] }}
                                 </span>
 
-                                <p class="text-7xl sm:text-8xl font-black leading-none tracking-tight font-serif" x-text="card?.hanzi"></p>
+                                <p class="font-chinese font-black leading-none tracking-tight text-white select-none text-center"
+                                   :class="{
+                                       'text-7xl sm:text-8xl': (card?.hanzi || '').length <= 1,
+                                       'text-5xl sm:text-6xl': (card?.hanzi || '').length === 2,
+                                       'text-3xl sm:text-4xl': (card?.hanzi || '').length === 3,
+                                       'text-2xl sm:text-3xl': (card?.hanzi || '').length >= 4
+                                   }"
+                                   x-text="card?.hanzi"></p>
                                 <p class="mt-1 text-xs text-white/70">Bấm để lật thẻ 👆</p>
 
                                 {{-- Star / Bookmark Button (Top Right) --}}

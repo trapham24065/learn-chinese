@@ -13,6 +13,8 @@ export default {
         extend: {
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+                serif: ['"Noto Serif"', '"Times New Roman"', 'Times', 'serif'],
+                chinese: ['"Noto Serif SC"', '"Source Han Serif SC"', 'STKaiti', 'KaiTi', 'serif'],
             },
         },
     },

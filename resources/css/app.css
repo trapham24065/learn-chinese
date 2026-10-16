@@ -501,7 +501,11 @@
    CHINESE CULTURAL AESTHETIC & DYNAMISM (TÂN TRUNG HOA / QUỐC PHONG)
    ───────────────────────────────────────────────────────────── */
 
-/* Chinese Classical & Calligraphy Fonts */
+/* Classical & Calligraphy Fonts with 100% Vietnamese Diacritics Support */
+.font-serif {
+    font-family: "Noto Serif", "Times New Roman", Times, serif;
+}
+
 .font-chinese {
     font-family: "Noto Serif SC", "Source Han Serif SC", "STKaiti", "KaiTi", "Songti SC", "SimSun", serif;
 }
@@ -694,6 +698,8 @@
     background-color: rgba(254, 242, 242, 0.4);
     border-radius: 1.25rem;
     overflow: hidden;
+    flex-shrink: 0;
+    line-height: 1;
 }
 
 .mizige-box::before {

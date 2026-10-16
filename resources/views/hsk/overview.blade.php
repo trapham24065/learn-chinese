@@ -29,21 +29,23 @@
     </div>
 
     {{-- Watermark Seal --}}
-    <div class="pointer-events-none absolute -right-6 -bottom-8 opacity-5 text-slate-900 select-none font-serif text-[13rem] leading-none font-black">
+    <div class="pointer-events-none absolute -right-6 -bottom-8 opacity-5 text-slate-900 select-none font-chinese text-[13rem] leading-none font-black">
         山河
     </div>
 
     <div class="relative z-10 max-w-4xl">
         {{-- Poetic Badge & Couplet --}}
         <div class="inline-flex flex-wrap items-center gap-2.5 rounded-full border border-amber-800/20 bg-amber-900/5 px-4 py-1.5 text-xs">
-            <span class="font-serif font-bold text-[#991b1b]">千里江山 · 学途</span>
+            <span class="font-chinese font-bold text-[#991b1b]">千里江山 · 学途</span>
             <span class="text-amber-800/40">|</span>
-            <span class="font-serif italic text-slate-700">“千里之行，始于足下” · Hành trình vạn dặm khởi từ một bước chân</span>
+            <span class="font-chinese italic text-slate-700">“千里之行，始于足下”</span>
+            <span class="text-amber-800/40">·</span>
+            <span class="font-serif italic text-slate-700">Hành trình vạn dặm khởi từ một bước chân</span>
         </div>
 
         {{-- Page Heading --}}
-        <h1 class="mt-4 text-4xl font-black tracking-tight text-slate-900 sm:text-5xl font-serif">
-            Lộ trình HSK <span class="text-slate-400 font-sans font-light">·</span> <span class="text-[#991b1b]">Giang Sơn Đồ Tri Thức</span>
+        <h1 class="mt-4 text-4xl font-black tracking-tight text-slate-900 sm:text-5xl">
+            Lộ trình HSK <span class="text-slate-400 font-light">·</span> <span class="text-[#991b1b] font-serif">Giang Sơn Đồ Tri Thức</span>
         </h1>
 
         <p class="mt-3 text-base sm:text-lg leading-relaxed text-slate-700">
@@ -54,7 +56,7 @@
         <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
             <div class="rounded-2xl border border-amber-900/10 bg-white/70 p-3.5 backdrop-blur-sm shadow-sm">
                 <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Hành Trình</p>
-                <p class="mt-0.5 text-xl font-black text-slate-900 font-serif">6 Vân Sơn</p>
+                <p class="mt-0.5 text-xl font-black text-slate-900">6 Vân Sơn</p>
                 <p class="text-[11px] text-amber-800/80">HSK 1 ➔ HSK 6</p>
             </div>
             <div class="rounded-2xl border border-amber-900/10 bg-white/70 p-3.5 backdrop-blur-sm shadow-sm">
@@ -69,7 +71,7 @@
             </div>
             <div class="rounded-2xl border border-amber-900/10 bg-white/70 p-3.5 backdrop-blur-sm shadow-sm">
                 <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Dấu Chân Bạn</p>
-                <p class="mt-0.5 text-xl font-black text-[#991b1b] font-serif">{{ $totalCompletedLessons }}/{{ $totalCurriculumLessons }}</p>
+                <p class="mt-0.5 text-xl font-black text-[#991b1b]">{{ $totalCompletedLessons }}/{{ $totalCurriculumLessons }}</p>
                 <p class="text-[11px] font-semibold text-emerald-700">Đã thông {{ $overallProgressPct }}%</p>
             </div>
         </div>
@@ -169,7 +171,7 @@
             <div class="absolute inset-x-0 top-0 h-1.5" style="background: {{ $data['color'] }}"></div>
 
             {{-- Giant Background Calligraphic Watermark Character --}}
-            <div class="pointer-events-none absolute -right-2 -top-4 font-serif text-8xl font-black leading-none opacity-5 transition-opacity duration-300 group-hover:opacity-10 select-none"
+            <div class="pointer-events-none absolute -right-2 -top-4 font-chinese text-8xl font-black leading-none opacity-5 transition-opacity duration-300 group-hover:opacity-10 select-none"
                  style="color: {{ $data['color'] }}">
                 {{ $chineseDigit }}
             </div>
@@ -181,13 +183,13 @@
                         <span class="rounded-full px-3 py-1 text-xs font-black uppercase tracking-wider {{ $data['badge'] }}">
                             {{ $data['label'] }}
                         </span>
-                        <span class="text-[11px] font-serif font-bold text-slate-400">{{ $levelOrdinal }}</span>
+                        <span class="text-[11px] font-bold text-slate-400 font-serif">{{ $levelOrdinal }}</span>
                     </div>
 
                     {{-- Visual Journey State --}}
                     @if($isDone)
                         {{-- Chu Sa Triện: Đã Thông Núi Này --}}
-                        <div class="seal-yitong-mini" title="Đã hoàn thành toàn bộ bài học của cấp độ này!">
+                        <div class="seal-yitong-mini font-chinese" title="Đã hoàn thành toàn bộ bài học của cấp độ này!">
                             已通此山
                         </div>
                     @elseif($isInProgress)
@@ -208,10 +210,10 @@
                 {{-- Mountain Title & Poetic Narrative --}}
                 <div class="mt-4">
                     <div class="flex items-baseline gap-2">
-                        <h3 class="text-2xl font-black text-slate-900 font-serif tracking-tight">
+                        <h3 class="text-2xl font-black text-slate-900 font-chinese tracking-tight">
                             {{ $data['mountain_cn'] }}
                         </h3>
-                        <span class="text-sm font-semibold text-slate-500 font-serif">· {{ $data['mountain_vi'] }}</span>
+                        <span class="text-sm font-semibold text-slate-600 font-serif">· {{ $data['mountain_vi'] }}</span>
                     </div>
 
                     <p class="mt-1 text-xs font-medium text-amber-800/80">
@@ -220,7 +222,7 @@
 
                     {{-- Poetic Couplet --}}
                     <div class="mt-2.5 border-l-2 border-amber-500/40 pl-2.5 py-0.5">
-                        <p class="text-xs italic text-slate-600 font-serif">
+                        <p class="text-xs italic text-slate-600 font-chinese">
                             “{{ $data['mountain_quote'] }}”
                         </p>
                     </div>
@@ -279,7 +281,7 @@
 
 {{-- HSK Mock Exam Callout Banner (Khoa Cử Trường Thi) --}}
 <section class="mb-10 rounded-[2.5rem] bg-gradient-to-r from-[#991b1b] via-[#7f1d1d] to-slate-950 p-8 sm:p-10 text-white shadow-2xl shadow-red-950/20 relative overflow-hidden">
-    <div class="pointer-events-none absolute -right-6 -bottom-10 opacity-10 font-serif text-[12rem] font-black select-none text-white leading-none">
+    <div class="pointer-events-none absolute -right-6 -bottom-10 opacity-10 font-chinese text-[12rem] font-black select-none text-white leading-none">
         科举
     </div>
     <div class="relative z-10 grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
@@ -305,7 +307,7 @@
 
 {{-- Info banner: Triết lý học HSK --}}
 <section class="rounded-[2rem] bg-slate-950 p-8 text-white shadow-2xl shadow-slate-950/20 relative overflow-hidden">
-    <div class="pointer-events-none absolute -right-4 -bottom-6 opacity-10 font-serif text-[9rem] font-black select-none text-white leading-none">
+    <div class="pointer-events-none absolute -right-4 -bottom-6 opacity-10 font-chinese text-[9rem] font-black select-none text-white leading-none">
         问道
     </div>
     <div class="relative z-10 grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
