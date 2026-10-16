@@ -6,10 +6,10 @@
  *   🍃 Hạ (Summer): Jade Bamboo leaves & Bioluminescent Fireflies (Trúc lâm dạ huỳnh)
  *   🍁 Thu (Autumn): Golden Ginkgo fans & Crimson Maple leaves (Kim ngân phong diệp)
  *   ❄️ Đông (Winter): Hexagonal Crystal Snowflakes & Cold Plum petals (Thụy tuyết hàn mai)
- * - Auto Calendar Detection based on real-time month or manual selection
+ * - Auto Calendar Detection based on real-time month (locked to seasonal flow)
  * - Interactive Mouse Breeze Dynamics (repulsion physics)
  * - Learning Milestone Celebration Shower (Radial Blossom Burst)
- * - "Tứ Quý Trà Phổ" Jade-tablet Popover Menu (四季茶谱)
+ * - Managed directly within Student Profile (no floating UI conflict with Pet Mascot)
  * - Persistent configuration in localStorage
  * - Ink-wash click ripple (水墨涟漪)
  */
@@ -21,7 +21,8 @@ const SEASONS_DATA = {
         cnName: '春·桃李春风',
         icon: '🌸',
         badge: 'Đào Hoa',
-        desc: 'Cánh đào hồng phớt & mai đỏ chu sa bồng bềnh',
+        period: 'Tháng 2 – 4',
+        desc: 'Cánh đào hồng phớt & mai đỏ chu sa bồng bềnh 3D',
         quoteCn: '等闲识得东风面，万紫千红总是春',
         quotePinyin: 'Děng xián shí dé dōng fēng miàn, wàn zǐ qiān hóng zǒng shì chūn',
         quoteVi: 'Nhận ra mặt gió đông quen thuộc, muôn tía nghìn hồng thảy đều xuân.',
@@ -33,6 +34,7 @@ const SEASONS_DATA = {
         cnName: '夏·竹林夜萤',
         icon: '🍃',
         badge: 'Trúc Huỳnh',
+        period: 'Tháng 5 – 7',
         desc: 'Lá trúc ngọc bích & đom đóm dạ quang lấp lánh',
         quoteCn: '竹深树密虫虫绿，蝉噪声中带小凉',
         quotePinyin: 'Zhú shēn shù mì chóng chóng lǜ, chán zào shēng zhōng dài xiǎo liáng',
@@ -45,6 +47,7 @@ const SEASONS_DATA = {
         cnName: '秋·金叶知秋',
         icon: '🍁',
         badge: 'Kim Ngân',
+        period: 'Tháng 8 – 10',
         desc: 'Lá ngân hạnh vàng óng & lá phong đỏ thắm xoay tít',
         quoteCn: '停车坐爱枫林晚，霜叶红于二月花',
         quotePinyin: 'Tíng chē zuò ài fēng lín wǎn, shuāng yè hóng yú èr yuè huā',
@@ -57,6 +60,7 @@ const SEASONS_DATA = {
         cnName: '冬·瑞雪寒梅',
         icon: '❄️',
         badge: 'Hàn Mai',
+        period: 'Tháng 11 – 1',
         desc: 'Bông tuyết pha lê lục giác & hàn mai trong sương',
         quoteCn: '忽如一夜春风来，千树万树梨花开',
         quotePinyin: 'Hū rú yí yè chūn fēng lái, qiān shù wàn shù lí huā kāi',
@@ -68,7 +72,6 @@ const SEASONS_DATA = {
 class ChineseAmbianceEngine {
     constructor() {
         this.enabled = localStorage.getItem('chinese_ambiance_enabled') !== 'false';
-        this.seasonSetting = localStorage.getItem('chinese_ambiance_season') || 'auto';
         this.mouseBreezeEnabled = localStorage.getItem('chinese_ambiance_breeze') !== 'false';
 
         this.canvas = null;
@@ -84,17 +87,17 @@ class ChineseAmbianceEngine {
         this.mouseActive = false;
         this.mouseTimeout = null;
 
-        // Popover state
-        this.isMenuOpen = false;
-
         this.init();
     }
 
+    /**
+     * Season is locked to real-time calendar cycle (Theo thời gian mùa trong năm):
+     * Tháng 2 - 4: Xuân (Đào hoa & Mai đỏ)
+     * Tháng 5 - 7: Hạ (Trúc lâm & Đom đóm)
+     * Tháng 8 - 10: Thu (Kim ngân & Lá phong)
+     * Tháng 11 - 1: Đông (Tuyết lục giác & Hàn mai)
+     */
     getEffectiveSeason() {
-        if (this.seasonSetting && this.seasonSetting !== 'auto' && SEASONS_DATA[this.seasonSetting]) {
-            return this.seasonSetting;
-        }
-        // Auto: 2-4: Spring | 5-7: Summer | 8-10: Autumn | 11-1: Winter
         const month = new Date().getMonth() + 1;
         if (month >= 2 && month <= 4) return 'spring';
         if (month >= 5 && month <= 7) return 'summer';
@@ -102,11 +105,14 @@ class ChineseAmbianceEngine {
         return 'winter';
     }
 
+    getSeasonData(seasonKey) {
+        return SEASONS_DATA[seasonKey] || SEASONS_DATA.autumn;
+    }
+
     init() {
         if (typeof window === 'undefined') return;
 
         this.createCanvas();
-        this.createControlUI();
         this.setupInkRipple();
         this.setupMouseTracking();
         this.setupEventListeners();
@@ -134,7 +140,7 @@ class ChineseAmbianceEngine {
         this.canvas.style.width = '100vw';
         this.canvas.style.height = '100vh';
         this.canvas.style.pointerEvents = 'none';
-        this.canvas.style.zIndex = '35'; // Sits above background, below modals and navigation
+        this.canvas.style.zIndex = '35'; // Sits above background, below modals, companion and navigation
         this.canvas.style.transition = 'opacity 0.6s ease';
         this.canvas.style.opacity = this.enabled ? '1' : '0';
         document.body.appendChild(this.canvas);
@@ -265,7 +271,6 @@ class ChineseAmbianceEngine {
 
             // Apply movement
             if (p.type === 'firefly') {
-                // Firefly wandering path
                 p.x += p.speedX + Math.sin(time * 0.0015 + p.swingOffset) * 0.7 + p.vx;
                 p.y += p.speedY + Math.cos(time * 0.0012 + p.swingOffset) * 0.5 + p.vy;
             } else {
@@ -349,7 +354,7 @@ class ChineseAmbianceEngine {
      * 🌸 Peach Blossom Petal (Hồng đào phơi phới)
      */
     drawPeachPetal(p) {
-        this.ctx.scale(Math.cos(p.flipProgress), 1); // 3D tumbling
+        this.ctx.scale(Math.cos(p.flipProgress), 1);
         const grad = this.ctx.createRadialGradient(0, 0, 1, 0, 0, p.size);
         grad.addColorStop(0, `rgba(254, 205, 211, ${p.opacity})`);
         grad.addColorStop(0.7, `rgba(251, 113, 133, ${p.opacity * 0.85})`);
@@ -396,7 +401,6 @@ class ChineseAmbianceEngine {
         grad.addColorStop(1, `rgba(4, 120, 87, ${p.opacity * 0.7})`);
         this.ctx.fillStyle = grad;
 
-        // Slender curved bamboo blade
         this.ctx.beginPath();
         this.ctx.moveTo(0, -p.size * 1.4);
         this.ctx.quadraticCurveTo(p.size * 0.38, 0, 0, p.size * 1.4);
@@ -447,16 +451,15 @@ class ChineseAmbianceEngine {
         grad.addColorStop(1, `rgba(251, 191, 36, ${p.opacity * 0.8})`);
         this.ctx.fillStyle = grad;
 
-        // Fan shape with center notch
         this.ctx.beginPath();
-        this.ctx.moveTo(0, 0); // leaf base
+        this.ctx.moveTo(0, 0);
         this.ctx.bezierCurveTo(-p.size * 0.8, -p.size * 0.2, -p.size, -p.size * 0.8, -p.size * 0.25, -p.size);
-        this.ctx.lineTo(0, -p.size * 0.75); // notch
+        this.ctx.lineTo(0, -p.size * 0.75);
         this.ctx.lineTo(p.size * 0.25, -p.size);
         this.ctx.bezierCurveTo(p.size, -p.size * 0.8, p.size * 0.8, -p.size * 0.2, 0, 0);
         this.ctx.fill();
 
-        // Delicate slender petiole (stem)
+        // Slender petiole (stem)
         this.ctx.strokeStyle = `rgba(180, 83, 9, ${p.opacity * 0.7})`;
         this.ctx.lineWidth = 1;
         this.ctx.beginPath();
@@ -476,9 +479,8 @@ class ChineseAmbianceEngine {
         grad.addColorStop(1, `rgba(234, 88, 12, ${p.opacity * 0.6})`);
         this.ctx.fillStyle = grad;
 
-        // Draw stylized 5-lobed maple leaf
         this.ctx.beginPath();
-        this.ctx.moveTo(0, p.size * 0.6); // stem
+        this.ctx.moveTo(0, p.size * 0.6);
         this.ctx.lineTo(0, 0);
 
         // Center lobe
@@ -486,24 +488,20 @@ class ChineseAmbianceEngine {
         this.ctx.lineTo(0, -p.size);
         this.ctx.lineTo(p.size * 0.2, -p.size * 0.5);
 
-        // Right high lobe
+        // Right lobes
         this.ctx.lineTo(p.size * 0.55, -p.size * 0.4);
         this.ctx.lineTo(p.size * 0.9, -p.size * 0.35);
         this.ctx.lineTo(p.size * 0.55, -p.size * 0.1);
-
-        // Right low lobe
         this.ctx.lineTo(p.size * 0.75, p.size * 0.2);
         this.ctx.lineTo(p.size * 0.4, p.size * 0.15);
 
         // Base connection
         this.ctx.lineTo(0, 0);
 
-        // Left low lobe
+        // Left lobes
         this.ctx.lineTo(-p.size * 0.4, p.size * 0.15);
         this.ctx.lineTo(-p.size * 0.75, p.size * 0.2);
         this.ctx.lineTo(-p.size * 0.55, -p.size * 0.1);
-
-        // Left high lobe
         this.ctx.lineTo(-p.size * 0.9, -p.size * 0.35);
         this.ctx.lineTo(-p.size * 0.55, -p.size * 0.4);
         this.ctx.closePath();
@@ -567,7 +565,7 @@ class ChineseAmbianceEngine {
                 x: startX,
                 y: startY,
                 vx: Math.cos(angle) * speed,
-                vy: Math.sin(angle) * speed - 2.5, // initial upward lift
+                vy: Math.sin(angle) * speed - 2.5,
                 type: particleType,
                 size: 8 + Math.random() * 8,
                 rotation: Math.random() * Math.PI * 2,
@@ -580,18 +578,8 @@ class ChineseAmbianceEngine {
         }
     }
 
-    setSeason(seasonKey) {
-        if (seasonKey !== 'auto' && !SEASONS_DATA[seasonKey]) return;
-        this.seasonSetting = seasonKey;
-        localStorage.setItem('chinese_ambiance_season', seasonKey);
-
-        // Re-seed particles smoothly
-        this.initParticles();
-        this.updateControlUI();
-    }
-
-    toggle() {
-        this.enabled = !this.enabled;
+    setEnabled(enabled) {
+        this.enabled = !!enabled;
         localStorage.setItem('chinese_ambiance_enabled', this.enabled ? 'true' : 'false');
         if (this.canvas) {
             this.canvas.style.opacity = this.enabled ? '1' : '0';
@@ -602,13 +590,15 @@ class ChineseAmbianceEngine {
         } else {
             this.stopAnimation();
         }
-        this.updateControlUI();
+    }
+
+    toggle() {
+        this.setEnabled(!this.enabled);
     }
 
     toggleMouseBreeze() {
         this.mouseBreezeEnabled = !this.mouseBreezeEnabled;
         localStorage.setItem('chinese_ambiance_breeze', this.mouseBreezeEnabled ? 'true' : 'false');
-        this.updateControlUI();
     }
 
     setupMouseTracking() {
@@ -632,215 +622,9 @@ class ChineseAmbianceEngine {
             this.celebrate(count, x, y);
         });
 
-        // Click outside to close popover
-        document.addEventListener('click', (e) => {
-            if (!this.isMenuOpen) return;
-            const container = document.getElementById('chinese-ambiance-container');
-            if (container && !container.contains(e.target)) {
-                this.closeMenu();
-            }
-        });
-
-        // Escape key to close popover
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.isMenuOpen) {
-                this.closeMenu();
-            }
-        });
-    }
-
-    toggleMenu() {
-        this.isMenuOpen = !this.isMenuOpen;
-        const popover = document.getElementById('chinese-ambiance-popover');
-        if (popover) {
-            if (this.isMenuOpen) {
-                popover.classList.remove('hidden');
-                // Trigger reflow for transition
-                requestAnimationFrame(() => {
-                    popover.classList.remove('opacity-0', 'scale-95', 'translate-y-2');
-                    popover.classList.add('opacity-100', 'scale-100', 'translate-y-0');
-                });
-            } else {
-                popover.classList.remove('opacity-100', 'scale-100', 'translate-y-0');
-                popover.classList.add('opacity-0', 'scale-95', 'translate-y-2');
-                setTimeout(() => {
-                    if (!this.isMenuOpen) popover.classList.add('hidden');
-                }, 200);
-            }
-        }
-    }
-
-    closeMenu() {
-        this.isMenuOpen = false;
-        const popover = document.getElementById('chinese-ambiance-popover');
-        if (popover) {
-            popover.classList.remove('opacity-100', 'scale-100', 'translate-y-0');
-            popover.classList.add('opacity-0', 'scale-95', 'translate-y-2');
-            setTimeout(() => {
-                if (!this.isMenuOpen) popover.classList.add('hidden');
-            }, 200);
-        }
-    }
-
-    createControlUI() {
-        const container = document.createElement('div');
-        container.id = 'chinese-ambiance-container';
-        container.className = 'fixed bottom-5 right-5 z-40 select-none font-sans';
-
-        // Trigger Button (Pill with current season badge)
-        const btn = document.createElement('button');
-        btn.id = 'chinese-ambiance-trigger';
-        btn.type = 'button';
-        btn.setAttribute('aria-label', 'Mở bảng điều khiển Bốn Mùa Cổ Phong');
-        btn.className = 'flex items-center gap-2 rounded-full border border-amber-900/20 bg-white/95 dark:bg-slate-900/95 px-3.5 py-1.5 text-xs font-bold text-amber-950 dark:text-amber-100 shadow-lg shadow-amber-950/10 backdrop-blur transition-all hover:scale-105 active:scale-95 hover:bg-amber-50 dark:hover:bg-slate-800 cursor-pointer';
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.toggleMenu();
-        });
-
-        // Popover Menu (Tứ Quý Trà Phổ Jade-tablet Card)
-        const popover = document.createElement('div');
-        popover.id = 'chinese-ambiance-popover';
-        popover.className = 'hidden absolute bottom-full right-0 mb-3 w-80 rounded-2xl border border-amber-900/25 bg-[#fffdfa]/98 dark:bg-slate-900/98 p-4 shadow-2xl shadow-amber-950/20 backdrop-blur-md transition-all duration-200 opacity-0 scale-95 translate-y-2 origin-bottom-right z-50';
-
-        container.appendChild(popover);
-        container.appendChild(btn);
-        document.body.appendChild(container);
-
-        this.updateControlUI();
-    }
-
-    updateControlUI() {
-        const trigger = document.getElementById('chinese-ambiance-trigger');
-        const popover = document.getElementById('chinese-ambiance-popover');
-        if (!trigger || !popover) return;
-
-        const effectiveKey = this.getEffectiveSeason();
-        const effectiveSeason = SEASONS_DATA[effectiveKey];
-        const isAuto = this.seasonSetting === 'auto';
-        const currentMonth = new Date().getMonth() + 1;
-
-        // 1. Update trigger button label
-        if (!this.enabled) {
-            trigger.innerHTML = `
-                <span class="text-sm grayscale opacity-50">🌸</span>
-                <span class="hidden sm:inline">Cổ phong:</span>
-                <span class="text-slate-400 font-medium">Tắt</span>
-                <svg class="h-3.5 w-3.5 text-slate-400 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            `;
-        } else {
-            trigger.innerHTML = `
-                <span class="text-sm">${effectiveSeason.icon}</span>
-                <span class="hidden sm:inline">Cổ phong:</span>
-                <span class="text-amber-700 dark:text-amber-400 font-extrabold">${isAuto ? 'Tự động' : effectiveSeason.name}</span>
-                <svg class="h-3.5 w-3.5 text-amber-800 dark:text-amber-400 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            `;
-        }
-
-        // 2. Render popover content
-        popover.innerHTML = `
-            <!-- Header -->
-            <div class="flex items-center justify-between pb-3 border-b border-amber-900/10 dark:border-amber-100/10 mb-3">
-                <div class="flex items-center gap-2">
-                    <span class="flex h-6 w-6 items-center justify-center rounded-md bg-gradient-to-br from-red-700 to-amber-700 text-white text-xs font-serif font-bold shadow-sm">
-                        令
-                    </span>
-                    <div>
-                        <h4 class="text-sm font-bold text-amber-950 dark:text-amber-100 leading-tight">Tứ Quý Trà Phổ</h4>
-                        <p class="text-[10px] text-amber-800/70 dark:text-amber-300/70 font-serif">四季时令 · Không Gian Cổ Phong</p>
-                    </div>
-                </div>
-                <button type="button" id="ambiance-close-btn" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg leading-none p-1 rounded-md transition-colors" aria-label="Đóng">
-                    ×
-                </button>
-            </div>
-
-            <!-- Master Toggle -->
-            <div class="flex items-center justify-between bg-amber-50/70 dark:bg-slate-800/60 rounded-xl p-2.5 mb-3 border border-amber-900/10 dark:border-amber-100/10">
-                <div class="flex items-center gap-2">
-                    <span class="text-base">✨</span>
-                    <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">Hiệu ứng rơi mỹ thuật</span>
-                </div>
-                <button type="button" id="ambiance-master-toggle" class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${this.enabled ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-600'}">
-                    <span class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${this.enabled ? 'translate-x-4' : 'translate-x-0'}"></span>
-                </button>
-            </div>
-
-            ${this.enabled ? `
-            <!-- Season Mode Selector -->
-            <div class="space-y-1.5 mb-3">
-                <p class="text-[10px] uppercase tracking-wider font-bold text-amber-900/60 dark:text-amber-200/60 px-1">Chọn Mùa Không Gian</p>
-
-                <!-- Auto Button -->
-                <button type="button" data-season="auto" class="ambiance-season-option w-full flex items-center justify-between p-2 rounded-xl text-left text-xs transition-all ${isAuto ? 'bg-amber-100/80 dark:bg-amber-950/40 text-amber-950 dark:text-amber-100 font-bold border border-amber-900/20' : 'hover:bg-amber-50/60 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-300'}">
-                    <div class="flex items-center gap-2.5">
-                        <span class="text-sm">🗓️</span>
-                        <div>
-                            <p class="leading-none">Tự động theo ngày thực</p>
-                            <p class="text-[10px] text-amber-700 dark:text-amber-400 font-normal mt-0.5">Hiện tại: Tháng ${currentMonth} (${effectiveSeason.name})</p>
-                        </div>
-                    </div>
-                    ${isAuto ? '<span class="text-emerald-700 dark:text-emerald-400 text-xs font-bold">✓</span>' : ''}
-                </button>
-
-                <!-- 4 Seasons List -->
-                <div class="grid grid-cols-2 gap-1.5 pt-1">
-                    ${Object.values(SEASONS_DATA).map(s => {
-                        const isSelected = !isAuto && this.seasonSetting === s.id;
-                        return `
-                            <button type="button" data-season="${s.id}" class="ambiance-season-option flex items-center gap-2 p-2 rounded-xl text-left text-xs transition-all ${isSelected ? 'bg-gradient-to-r from-red-50 to-amber-50 dark:from-red-950/40 dark:to-amber-950/40 text-red-950 dark:text-red-100 font-bold border border-red-700/30' : 'hover:bg-amber-50/60 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-300 border border-transparent'}">
-                                <span class="text-base">${s.icon}</span>
-                                <div class="overflow-hidden">
-                                    <p class="leading-tight truncate">${s.name}</p>
-                                    <p class="text-[9px] text-slate-400 truncate">${s.badge}</p>
-                                </div>
-                            </button>
-                        `;
-                    }).join('')}
-                </div>
-            </div>
-
-            <!-- Mouse Breeze Option -->
-            <div class="flex items-center justify-between py-2 px-1 border-t border-amber-900/10 dark:border-amber-100/10 text-xs text-slate-600 dark:text-slate-300">
-                <div class="flex items-center gap-1.5">
-                    <span>💨</span>
-                    <span>Làn gió theo trỏ chuột</span>
-                </div>
-                <button type="button" id="ambiance-breeze-toggle" class="relative inline-flex h-4 w-7 shrink-0 cursor-pointer rounded-full border border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${this.mouseBreezeEnabled ? 'bg-amber-600' : 'bg-slate-300 dark:bg-slate-600'}">
-                    <span class="pointer-events-none inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${this.mouseBreezeEnabled ? 'translate-x-3' : 'translate-x-0'}"></span>
-                </button>
-            </div>
-
-            <!-- Classical Poetry Card -->
-            <div class="mt-2.5 rounded-xl bg-gradient-to-br from-amber-50/90 to-red-50/60 dark:from-slate-800/80 dark:to-slate-850/80 p-2.5 border border-amber-900/15 dark:border-amber-100/15 text-center">
-                <p class="text-xs font-serif font-bold text-amber-950 dark:text-amber-100 tracking-wide">${effectiveSeason.quoteCn}</p>
-                <p class="text-[9px] font-sans text-amber-800/70 dark:text-amber-300/70 italic mt-0.5">${effectiveSeason.quotePinyin}</p>
-                <p class="text-[10px] text-slate-600 dark:text-slate-300 mt-1 border-t border-amber-900/10 dark:border-amber-100/10 pt-1 leading-snug">"${effectiveSeason.quoteVi}"</p>
-            </div>
-            ` : `
-            <div class="text-center py-4 text-xs text-slate-400">
-                Hiệu ứng rơi đang tắt. Bật công tắc trên để cảm nhận không gian bốn mùa cổ phong nhé!
-            </div>
-            `}
-        `;
-
-        // Bind interactive events in popover
-        const closeBtn = document.getElementById('ambiance-close-btn');
-        if (closeBtn) closeBtn.onclick = () => this.closeMenu();
-
-        const masterToggle = document.getElementById('ambiance-master-toggle');
-        if (masterToggle) masterToggle.onclick = () => this.toggle();
-
-        const breezeToggle = document.getElementById('ambiance-breeze-toggle');
-        if (breezeToggle) breezeToggle.onclick = () => this.toggleMouseBreeze();
-
-        popover.querySelectorAll('.ambiance-season-option').forEach(btn => {
-            btn.onclick = (e) => {
-                const season = e.currentTarget.getAttribute('data-season');
-                this.setSeason(season);
-                // Trigger subtle celebration burst on season switch
-                this.celebrate(15);
-            };
+        // Listen to cross-component toggle events
+        window.addEventListener('ambiance:set-enabled', (e) => {
+            this.setEnabled(e.detail?.enabled);
         });
     }
 

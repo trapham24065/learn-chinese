@@ -638,8 +638,3 @@
     animation: tasselSway 4s ease-in-out infinite;
 }
 
-/* Four Seasons Jade-tablet Popover Styling (四季茶谱) */
-#chinese-ambiance-popover {
-    box-shadow: 0 12px 36px -4px rgba(69, 26, 3, 0.2), 0 0 0 1px rgba(180, 83, 9, 0.12);
-}
-
