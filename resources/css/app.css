@@ -868,3 +868,167 @@
     transform: rotate(-2deg);
 }
 
+/* ==============================================================
+   KHOA CỬ TRƯỜNG THI · 科举殿试 (Quiz Exam & Result) DESIGN TOKENS
+   ============================================================== */
+
+/* 1. Thi Án Card (Thư Án Tĩnh Lặng - Scholar Desk Card) */
+.thi-an-card {
+    position: relative;
+    border-radius: 1.75rem;
+    background-color: #faf8f5;
+    background-image: 
+        radial-gradient(ellipse at 50% 0%, rgba(254, 243, 199, 0.4) 0%, rgba(250, 248, 245, 0.98) 75%),
+        linear-gradient(to bottom, rgba(180, 83, 9, 0.02) 0%, transparent 100%);
+    border: 1.5px solid rgba(180, 83, 9, 0.18);
+    box-shadow: 
+        0 4px 6px -1px rgba(69, 26, 3, 0.04),
+        0 16px 32px -8px rgba(69, 26, 3, 0.07),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* 2. Cuộn Đề Trục Giản (Scroll Paper Progress Track) */
+.cuon-de-scroll {
+    position: relative;
+    border-radius: 1.25rem;
+    background: #fbf7ee;
+    border: 1px solid rgba(180, 83, 9, 0.22);
+    box-shadow: 
+        inset 0 2px 4px rgba(69, 26, 3, 0.05),
+        0 1px 2px rgba(69, 26, 3, 0.05);
+}
+
+.cuon-de-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #b91c1c 0%, #d97706 70%, #f59e0b 100%);
+    border-radius: 9999px;
+    transition: width 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 4px rgba(185, 28, 28, 0.35);
+}
+
+/* 3. Ngọc Bài / Mộc Bài Options (Answer Plaques) */
+.plaque-option {
+    position: relative;
+    border-radius: 1.15rem;
+    background: #ffffff;
+    border: 1.5px solid #e5e7eb;
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.plaque-option:hover:not(:disabled) {
+    border-color: #d97706;
+    background-color: #fffdfa;
+    transform: translateY(-1.5px);
+    box-shadow: 0 6px 16px -4px rgba(180, 83, 9, 0.12);
+}
+
+.plaque-option.selected {
+    border-color: #b91c1c;
+    background: linear-gradient(135deg, #fef2f2 0%, #fff7ed 100%);
+    box-shadow: 0 0 0 1px #b91c1c, 0 4px 12px rgba(185, 28, 28, 0.12);
+}
+
+/* 4. Chu Sa Ấn '准' (Vermilion Seal on Correct) */
+@keyframes stampZhunPop {
+    0% {
+        opacity: 0;
+        transform: scale(1.35) rotate(-6deg);
+    }
+    60% {
+        opacity: 1;
+        transform: scale(0.96) rotate(-2deg);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) rotate(-3deg);
+    }
+}
+
+.seal-stamp-zhun {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border: 2.5px solid #b91c1c;
+    border-radius: 8px;
+    padding: 3px 10px;
+    color: #b91c1c;
+    background: radial-gradient(circle, rgba(185, 28, 28, 0.1) 0%, rgba(254, 242, 242, 0.95) 100%);
+    box-shadow: 
+        0 0 0 1px rgba(185, 28, 28, 0.25),
+        inset 0 0 6px rgba(185, 28, 28, 0.2),
+        2px 3px 6px rgba(185, 28, 28, 0.18);
+    font-family: "STKaiti", "KaiTi", "Noto Serif SC", serif;
+    font-weight: 900;
+    line-height: 1.1;
+    user-select: none;
+    animation: stampZhunPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* 5. Mặc Ấn '未准' (Ink Seal on Incorrect) */
+@keyframes stampWeiZhunFade {
+    0% {
+        opacity: 0;
+        transform: scale(1.2) rotate(4deg);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) rotate(1deg);
+    }
+}
+
+.seal-stamp-weizhun {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border: 2px solid #475569;
+    border-radius: 8px;
+    padding: 3px 8px;
+    color: #334155;
+    background: rgba(241, 245, 249, 0.9);
+    box-shadow: 
+        inset 0 0 4px rgba(71, 85, 105, 0.2),
+        1px 2px 4px rgba(0, 0, 0, 0.08);
+    font-family: "STKaiti", "KaiTi", "Noto Serif SC", serif;
+    font-weight: 800;
+    line-height: 1.1;
+    user-select: none;
+    animation: stampWeiZhunFade 0.28s ease-out forwards;
+}
+
+/* 6. Kim Bảng (Bảng Vàng Vinh Danh - Imperial Gold Honor Scroll) */
+.kimbang-scroll {
+    position: relative;
+    border-radius: 2.25rem;
+    background: #faf6eb;
+    background-image: 
+        radial-gradient(circle at 50% 15%, rgba(253, 230, 138, 0.45) 0%, rgba(250, 246, 235, 0.98) 70%),
+        linear-gradient(to bottom, rgba(180, 83, 9, 0.04) 0%, transparent 100%);
+    border: 2px solid rgba(217, 119, 6, 0.35);
+    box-shadow: 
+        0 10px 30px -10px rgba(180, 83, 9, 0.2),
+        0 25px 50px -12px rgba(69, 26, 3, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.kimbang-seal-header {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 3px double #b91c1c;
+    border-radius: 14px;
+    padding: 6px 18px;
+    color: #b91c1c;
+    background: radial-gradient(circle, rgba(185, 28, 28, 0.08) 0%, rgba(254, 242, 242, 0.7) 100%);
+    box-shadow: 
+        0 0 0 1px rgba(185, 28, 28, 0.25),
+        inset 0 0 10px rgba(185, 28, 28, 0.15);
+    font-family: "STKaiti", "KaiTi", "Noto Serif SC", serif;
+    letter-spacing: 0.2em;
+    user-select: none;
+}
+
+

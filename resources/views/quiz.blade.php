@@ -1,108 +1,139 @@
 @extends('layouts.app')
 
-@section('title', 'Luyện tập nhanh theo bài học | Chinese Deck')
+@section('title', 'Khoa Cử Trường Thi · 科举殿试 | Chinese Deck')
 
 @section('content')
-<div x-data="quizApp()" x-init="initQuiz()" class="space-y-8">
-    {{-- Header & Stats Summary --}}
-    <section class="grid gap-6 py-2 lg:grid-cols-[1fr_0.9fr] lg:py-4">
-        <div>
-            <div class="flex flex-wrap items-center gap-2">
-                <span class="inline-flex items-center rounded-full bg-red-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.24em] text-[#991b1b]">
-                    Luyện tập nhanh
-                </span>
-                @if ($selectedLesson)
-                    <span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900">
-                        {{ $selectedLesson->title }}
-                    </span>
-                @endif
-                <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                    <i data-lucide="shuffle" class="h-3 w-3"></i>
-                    {{ count($questions) }} câu ngẫu nhiên / {{ $totalPoolCount }} câu
-                </span>
-            </div>
+<div x-data="quizApp()" x-init="initQuiz()" class="space-y-8 pb-16 font-serif-custom">
 
-            <h1 class="mt-3 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">
-                Luyện tập trắc nghiệm bài học
-            </h1>
-            <p class="mt-3 max-w-2xl text-base leading-7 text-slate-700 sm:text-lg">
-                Làm nhanh 5–10 câu hỏi ngắn để củng cố ngay từ vựng, pinyin, chữ Hán và ngữ nghĩa vừa học theo từng chủ đề bài học.
-            </p>
-            <div class="mt-4 flex flex-wrap items-center gap-2.5">
-                <a href="{{ request()->fullUrl() }}"
-                   class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-[#991b1b] hover:text-[#991b1b]">
-                    <i data-lucide="refresh-cw" class="h-3.5 w-3.5"></i>
-                    Đổi bộ câu hỏi mới
-                </a>
-                <div x-data="{ sfx: window.soundEngine?.isSfxEnabled() ?? true }">
-                    <button type="button" @click="sfx = window.soundEngine?.toggleSfx()" 
-                            class="inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-bold transition shadow-xs"
-                            :class="sfx ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-white text-slate-400 border-slate-200'"
-                            title="Bật/Tắt âm thanh tương tác">
-                        <i data-lucide="volume-2" class="h-3.5 w-3.5"></i>
-                        <span x-text="sfx ? 'SFX Bật' : 'SFX Tắt'"></span>
-                    </button>
-                </div>
-            </div>
+    {{-- Top Ambience Banner & Toolbar --}}
+    <section class="relative overflow-hidden rounded-[2.25rem] border border-amber-900/20 bg-gradient-to-br from-[#faf7f0] via-[#f7f2e7] to-[#f4ebe1] p-6 sm:p-8 shadow-xl shadow-amber-950/5">
+        {{-- Subtle Chinese Watermark --}}
+        <div class="pointer-events-none absolute -right-6 -bottom-8 select-none text-[9rem] font-serif font-black leading-none text-amber-900/[0.04]">
+            科举
         </div>
 
-        {{-- Dynamic Live Stats Panel --}}
-        <div class="rounded-[2rem] bg-slate-950 p-6 text-white shadow-2xl shadow-slate-950/20">
-            <div class="flex items-center justify-between">
-                <p class="text-xs font-semibold uppercase tracking-[0.28em] text-amber-200/80">Tiến độ bài làm</p>
-                <span x-show="!isSubmitted" class="text-xs text-slate-400">
-                    <span x-text="answeredCount">0</span> / {{ count($questions) }} câu đã chọn
-                </span>
-                <span x-show="isSubmitted" class="rounded-full bg-emerald-500/20 px-3 py-0.5 text-xs font-bold text-emerald-300">
-                    Đã nộp bài
-                </span>
+        <div class="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div class="max-w-2xl">
+                {{-- Breadcrumb / Topic Tag --}}
+                <div class="flex flex-wrap items-center gap-2 mb-3">
+                    <span class="seal-zhusha-round text-xs font-bold tracking-widest">
+                        科 举 · 殿 试
+                    </span>
+                    @if ($selectedLesson)
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-100/80 border border-amber-300/60 px-3 py-1 text-xs font-semibold text-amber-900">
+                            <i data-lucide="book-open" class="h-3 w-3 text-amber-800"></i>
+                            <span>{{ $selectedLesson->title }}</span>
+                        </span>
+                    @elseif ($selectedLevel)
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-100/80 border border-amber-300/60 px-3 py-1 text-xs font-semibold text-amber-900">
+                            <span>HSK {{ $selectedLevel }} · Quyển Khảo Thí</span>
+                        </span>
+                    @else
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-100/80 border border-amber-300/60 px-3 py-1 text-xs font-semibold text-amber-900">
+                            <span>Toàn Thư Quán · Tổng hợp</span>
+                        </span>
+                    @endif
+
+                    <span class="inline-flex items-center gap-1.5 rounded-full bg-white/80 border border-amber-900/10 px-3 py-1 text-xs font-medium text-slate-700 shadow-2xs">
+                        <i data-lucide="scroll" class="h-3 w-3 text-amber-800"></i>
+                        <span>{{ count($questions) }} đạo thi đề / {{ $totalPoolCount }} câu</span>
+                    </span>
+                </div>
+
+                <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 font-serif">
+                    Khoa Cử Trường Thi · 科举殿试
+                </h1>
+                <p class="mt-2.5 text-sm sm:text-base leading-relaxed text-slate-700">
+                    <span class="italic text-amber-950 font-medium">"Tĩnh tâm · Hạ bút · Giải đề · Đề danh"</span> — Rời xa xô bồ, ngồi trước thư án tĩnh lặng, lần lượt hoá giải từng đạo đề thi để thấu tỏ Hán tự và văn nghĩa.
+                </p>
+
+                {{-- Action Quick-bar --}}
+                <div class="mt-4 flex flex-wrap items-center gap-2.5">
+                    <a href="{{ request()->fullUrl() }}"
+                       class="inline-flex items-center gap-2 rounded-full border border-amber-900/20 bg-white/90 px-4 py-2 text-xs sm:text-sm font-semibold text-slate-700 shadow-2xs transition hover:border-[#991b1b] hover:text-[#991b1b] hover:bg-white active:scale-95">
+                        <i data-lucide="refresh-cw" class="h-3.5 w-3.5"></i>
+                        <span>Đổi bộ đề thi mới</span>
+                    </a>
+                    
+                    <div x-data="{ sfx: window.soundEngine?.isSfxEnabled() ?? true }">
+                        <button type="button" @click="sfx = window.soundEngine?.toggleSfx()" 
+                                class="inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-bold transition shadow-2xs"
+                                :class="sfx ? 'bg-amber-100/90 text-amber-900 border-amber-300' : 'bg-white text-slate-400 border-slate-200'"
+                                title="Bật/Tắt chuông khánh & âm thanh bút mực">
+                            <i data-lucide="volume-2" class="h-3.5 w-3.5"></i>
+                            <span x-text="sfx ? 'Âm thanh: Bật' : 'Âm thanh: Tắt'"></span>
+                        </button>
+                    </div>
+
+                    <a href="{{ route('flashcards', $selectedLesson ? ['lesson' => $selectedLesson->slug] : []) }}"
+                       class="inline-flex items-center gap-1.5 rounded-full border border-amber-900/15 bg-amber-50/60 px-3.5 py-2 text-xs font-semibold text-amber-950 hover:bg-amber-100 transition">
+                        <i data-lucide="bookmark" class="h-3.5 w-3.5 text-amber-800"></i>
+                        <span>Xem Thư Thiêm trước</span>
+                    </a>
+                </div>
             </div>
 
-            <div class="mt-4 grid grid-cols-3 gap-3">
-                <div class="rounded-2xl border border-white/10 bg-white/5 p-3 text-center sm:p-4">
-                    <p class="text-xs text-slate-400">Tổng câu</p>
-                    <p class="mt-1 text-2xl font-black sm:text-3xl">{{ count($questions) }}</p>
+            {{-- Thư Án Tiến Độ (Cuộn Đề Tổng Thể) --}}
+            <div class="w-full lg:w-80 shrink-0 rounded-3xl border border-amber-900/20 bg-[#faf6ed] p-5 shadow-lg shadow-amber-950/5">
+                <div class="flex items-center justify-between border-b border-amber-900/10 pb-3">
+                    <span class="text-xs font-bold uppercase tracking-widest text-amber-900 flex items-center gap-1.5 font-serif">
+                        <i data-lucide="scroll" class="h-3.5 w-3.5 text-[#991b1b]"></i>
+                        <span>Tiến trình giải đề</span>
+                    </span>
+                    <span x-show="!isSubmitted" class="text-xs font-semibold text-slate-600">
+                        <span x-text="answeredCount" class="font-bold text-[#991b1b]">0</span> / {{ count($questions) }} đề
+                    </span>
+                    <span x-show="isSubmitted" class="seal-zhusha-round text-[10px]">
+                        Đã Khảo Thí
+                    </span>
                 </div>
-                <div class="rounded-2xl border border-white/10 bg-white/5 p-3 text-center sm:p-4">
-                    <p class="text-xs text-slate-400" x-text="isSubmitted ? 'Đúng' : 'Đã làm'"></p>
-                    <p class="mt-1 text-2xl font-black sm:text-3xl text-amber-300">
-                        <span x-text="isSubmitted ? (results?.correct_count ?? 0) : answeredCount">0</span>
-                    </p>
-                </div>
-                <div class="rounded-2xl border border-white/10 bg-white/5 p-3 text-center sm:p-4">
-                    <p class="text-xs text-slate-400">Điểm số</p>
-                    <p class="mt-1 text-2xl font-black sm:text-3xl text-emerald-400">
-                        <span x-text="isSubmitted ? (results?.score + '%') : '--'">--</span>
-                    </p>
-                </div>
-            </div>
 
-            <div class="mt-4">
-                <div class="flex items-center justify-between text-xs text-slate-400 mb-1.5">
-                    <span>Mức độ hoàn thành</span>
-                    <span x-text="progressPercentage + '%'">0%</span>
+                {{-- Stats Grid --}}
+                <div class="mt-3.5 grid grid-cols-3 gap-2 text-center">
+                    <div class="rounded-2xl border border-amber-900/10 bg-white/70 p-2.5">
+                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tổng Đề</p>
+                        <p class="mt-0.5 text-xl font-black text-slate-900 font-serif">{{ count($questions) }}</p>
+                    </div>
+                    <div class="rounded-2xl border border-amber-900/10 bg-white/70 p-2.5">
+                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider" x-text="isSubmitted ? 'Đắc Chuẩn' : 'Đã Hạ Bút'"></p>
+                        <p class="mt-0.5 text-xl font-black text-[#991b1b] font-serif">
+                            <span x-text="isSubmitted ? (results?.correct_count ?? 0) : answeredCount">0</span>
+                        </p>
+                    </div>
+                    <div class="rounded-2xl border border-amber-900/10 bg-white/70 p-2.5">
+                        <p class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Điểm Số</p>
+                        <p class="mt-0.5 text-xl font-black text-emerald-700 font-serif">
+                            <span x-text="isSubmitted ? (results?.score + '%') : '--'">--</span>
+                        </p>
+                    </div>
                 </div>
-                <div class="h-2 w-full overflow-hidden rounded-full bg-white/10">
-                    <div class="h-full bg-gradient-to-r from-amber-400 to-[#991b1b] transition-all duration-300"
-                         :style="'width: ' + progressPercentage + '%'"></div>
+
+                {{-- Scroll Progress Bar --}}
+                <div class="mt-4">
+                    <div class="flex items-center justify-between text-xs text-slate-600 mb-1.5 font-medium">
+                        <span>Cuộn đề mở ra</span>
+                        <span x-text="progressPercentage + '%'" class="font-bold text-amber-950">0%</span>
+                    </div>
+                    <div class="cuon-de-scroll h-2.5 w-full overflow-hidden p-0.5">
+                        <div class="cuon-de-bar" :style="'width: ' + progressPercentage + '%'"></div>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
     {{-- Filter Toolbar: HSK Level Tabs + Lesson Selector + Count Picker --}}
-    <section class="space-y-3 border-b border-slate-200/80 pb-5">
-
+    <section class="space-y-3 rounded-2xl border border-amber-900/15 bg-white/70 p-4 shadow-sm backdrop-blur">
         {{-- Row 1: HSK Level quick-filter tabs --}}
         <div class="flex flex-wrap items-center gap-2">
-            <span class="mr-1 text-xs font-bold uppercase tracking-wider text-slate-500">Cấp độ:</span>
+            <span class="mr-1 text-xs font-bold uppercase tracking-wider text-amber-950 font-serif">Khoa Mục:</span>
 
             {{-- All --}}
             <a href="{{ route('quiz') }}"
-               class="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition
-                      {{ !$selectedLevel && $selectedLessonSlug === 'all' ? 'bg-slate-950 text-white shadow-md' : 'bg-white border border-slate-200 text-slate-700 hover:border-slate-400' }}">
+               class="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs sm:text-sm font-semibold transition
+                      {{ !$selectedLevel && $selectedLessonSlug === 'all' ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/20' : 'bg-white border border-amber-900/20 text-slate-700 hover:border-[#991b1b] hover:text-[#991b1b]' }}">
                 <span>Tất cả</span>
-                <span class="rounded-full px-1.5 py-0.5 text-xs {{ !$selectedLevel && $selectedLessonSlug === 'all' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600' }}">
+                <span class="rounded-full px-1.5 py-0.2 text-xs {{ !$selectedLevel && $selectedLessonSlug === 'all' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600' }}">
                     {{ $totalActiveQuestions }}
                 </span>
             </a>
@@ -110,22 +141,14 @@
             {{-- HSK 1-6 tabs --}}
             @foreach([1,2,3,4,5,6] as $lvl)
                 @php
-                    $lvlColors = [
-                        1 => ['active' => 'bg-red-700 text-white shadow-md shadow-red-900/20', 'badge' => 'bg-white/20 text-white', 'inactive' => 'bg-red-50 border border-red-200 text-red-800 hover:bg-red-100'],
-                        2 => ['active' => 'bg-orange-600 text-white shadow-md shadow-orange-900/20', 'badge' => 'bg-white/20 text-white', 'inactive' => 'bg-orange-50 border border-orange-200 text-orange-800 hover:bg-orange-100'],
-                        3 => ['active' => 'bg-amber-600 text-white shadow-md shadow-amber-900/20', 'badge' => 'bg-white/20 text-white', 'inactive' => 'bg-amber-50 border border-amber-200 text-amber-800 hover:bg-amber-100'],
-                        4 => ['active' => 'bg-emerald-700 text-white shadow-md shadow-emerald-900/20', 'badge' => 'bg-white/20 text-white', 'inactive' => 'bg-emerald-50 border border-emerald-200 text-emerald-800 hover:bg-emerald-100'],
-                        5 => ['active' => 'bg-blue-700 text-white shadow-md shadow-blue-900/20', 'badge' => 'bg-white/20 text-white', 'inactive' => 'bg-blue-50 border border-blue-200 text-blue-800 hover:bg-blue-100'],
-                        6 => ['active' => 'bg-purple-700 text-white shadow-md shadow-purple-900/20', 'badge' => 'bg-white/20 text-white', 'inactive' => 'bg-purple-50 border border-purple-200 text-purple-800 hover:bg-purple-100'],
-                    ];
                     $isActive = $selectedLevel === $lvl && $selectedLessonSlug === 'all';
                     $lvlCount = $questionCountsByLevel[$lvl] ?? 0;
                 @endphp
                 <a href="{{ route('quiz', ['level' => $lvl]) }}"
-                   class="inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition
-                          {{ $isActive ? $lvlColors[$lvl]['active'] : $lvlColors[$lvl]['inactive'] }}">
+                   class="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs sm:text-sm font-semibold transition
+                          {{ $isActive ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/20' : 'bg-white border border-amber-900/20 text-slate-700 hover:border-[#991b1b] hover:text-[#991b1b]' }}">
                     <span>HSK {{ $lvl }}</span>
-                    <span class="rounded-full px-1.5 py-0.5 text-xs {{ $isActive ? $lvlColors[$lvl]['badge'] : 'bg-white/60 text-slate-600' }}">
+                    <span class="rounded-full px-1.5 py-0.2 text-xs {{ $isActive ? 'bg-white/20 text-white' : 'bg-amber-100/70 text-amber-900' }}">
                         {{ $lvlCount }}
                     </span>
                 </a>
@@ -133,13 +156,13 @@
         </div>
 
         {{-- Row 2: Lesson dropdown + count selector --}}
-        <div class="flex flex-wrap items-center gap-3">
+        <div class="flex flex-wrap items-center gap-3 pt-1 border-t border-amber-900/10">
             {{-- Lesson dropdown --}}
             <div class="relative inline-flex items-center">
                 <select onchange="if(this.value){ window.location.href = this.value; }"
-                    class="appearance-none rounded-full border border-slate-200 bg-white/90 py-2 pl-4 pr-9 text-sm font-semibold text-slate-700 shadow-xs outline-none transition hover:border-[#991b1b] focus:border-[#991b1b] focus:ring-1 focus:ring-[#991b1b] cursor-pointer max-w-[280px] sm:max-w-xs truncate">
+                    class="appearance-none rounded-full border border-amber-900/20 bg-white py-2 pl-4 pr-9 text-xs sm:text-sm font-semibold text-slate-800 shadow-2xs outline-none transition hover:border-[#991b1b] focus:border-[#991b1b] focus:ring-1 focus:ring-[#991b1b] cursor-pointer max-w-[280px] sm:max-w-xs truncate">
                     <option value="{{ route('quiz', $selectedLevel ? ['level' => $selectedLevel] : []) }}">
-                        📖 Chọn bài học cụ thể...
+                        📜 Chọn thiên chương bài học...
                     </option>
                     @foreach($lessonsByLevel as $lvl => $lvlLessons)
                         <optgroup label="── HSK {{ $lvl }} ──">
@@ -152,12 +175,12 @@
                         </optgroup>
                     @endforeach
                 </select>
-                <i data-lucide="chevron-down" class="pointer-events-none absolute right-3 top-2.5 h-4 w-4 text-slate-400"></i>
+                <i data-lucide="chevron-down" class="pointer-events-none absolute right-3 top-2.5 h-4 w-4 text-amber-800"></i>
             </div>
 
             {{-- Question count picker --}}
             <div class="flex items-center gap-1.5">
-                <span class="text-xs font-semibold text-slate-500">Số câu:</span>
+                <span class="text-xs font-semibold text-amber-950 font-serif">Số lượng đề:</span>
                 @foreach($validCounts as $cnt)
                     @php
                         $cntParams = array_filter([
@@ -167,8 +190,8 @@
                         ]);
                     @endphp
                     <a href="{{ route('quiz', $cntParams) }}"
-                       class="inline-flex h-8 w-10 items-center justify-center rounded-full text-xs font-bold transition
-                              {{ $perSession === $cnt ? 'bg-slate-950 text-white shadow-sm' : 'bg-white border border-slate-200 text-slate-600 hover:border-slate-400' }}">
+                       class="inline-flex h-7 w-9 items-center justify-center rounded-full text-xs font-bold transition
+                              {{ $perSession === $cnt ? 'bg-[#991b1b] text-white shadow-xs' : 'bg-white border border-amber-900/20 text-slate-700 hover:border-[#991b1b]' }}">
                         {{ $cnt }}
                     </a>
                 @endforeach
@@ -176,49 +199,15 @@
 
             {{-- Active lesson badge + clear button --}}
             @if($selectedLesson)
-                <span class="inline-flex items-center gap-1.5 rounded-full bg-red-50 border border-red-200 px-3.5 py-1.5 text-xs font-semibold text-[#991b1b]">
-                    <i data-lucide="book-open" class="h-3.5 w-3.5"></i>
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-red-50 border border-red-200 px-3 py-1 text-xs font-semibold text-[#991b1b]">
+                    <i data-lucide="book-open" class="h-3 w-3"></i>
                     <span>{{ $selectedLesson->title }}</span>
                     <a href="{{ route('quiz', $selectedLevel ? ['level' => $selectedLevel] : []) }}"
-                       class="ml-1 rounded-full p-0.5 hover:bg-red-200/60 transition text-red-600" title="Bỏ lọc bài học">
+                       class="ml-1 rounded-full p-0.5 hover:bg-red-200/60 transition text-red-700" title="Bỏ lọc bài học">
                         <i data-lucide="x" class="h-3 w-3"></i>
                     </a>
                 </span>
             @endif
-        </div>
-    </section>
-
-
-    {{-- Result Banner when Submitted --}}
-    <section x-show="isSubmitted" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="rounded-[2rem] bg-gradient-to-br from-slate-950 via-slate-900 to-[#991b1b] p-6 text-white shadow-2xl shadow-red-950/20 sm:p-8">
-        <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div class="space-y-2">
-                <div class="inline-flex items-center gap-2 rounded-full bg-amber-400/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-amber-200">
-                    <span>Kết quả bài làm</span>
-                </div>
-                <h2 class="text-3xl font-black tracking-tight sm:text-4xl" x-text="results?.message">
-                    Hoàn thành bài kiểm tra!
-                </h2>
-                <p class="text-sm text-slate-300 sm:text-base">
-                    Bạn đã trả lời đúng <strong class="text-amber-300 font-bold" x-text="results?.correct_count">0</strong> /
-                    <span x-text="results?.total_questions">0</span> câu hỏi
-                    (Đạt <strong class="text-emerald-400 font-bold" x-text="results?.score + '%'">0%</strong>).
-                    @auth
-                        Kết quả đã được cập nhật vào tiến độ học tập của bạn!
-                    @endauth
-                </p>
-            </div>
-
-            <div class="flex flex-wrap items-center gap-3">
-                <button type="button" @click="resetQuiz()" class="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-bold text-slate-950 shadow-lg transition hover:bg-amber-100 hover:scale-105 active:scale-95">
-                    <i data-lucide="rotate-ccw" class="h-4 w-4"></i>
-                    <span>Làm lại bài này</span>
-                </button>
-                <a href="{{ route('flashcards') }}" class="inline-flex items-center gap-2 rounded-full bg-amber-300 px-5 py-3 text-sm font-bold text-slate-950 shadow-lg transition hover:bg-amber-200 hover:scale-105 active:scale-95">
-                    <i data-lucide="layers" class="h-4 w-4"></i>
-                    <span>Ôn Flashcard</span>
-                </a>
-            </div>
         </div>
     </section>
 
@@ -229,207 +218,295 @@
             $petDefaultName = $userPet?->name ?? 'Tiểu Long';
         @endphp
 
-        {{-- Pet Co-op Assistant & Live Combo Bar --}}
-        <div class="relative overflow-hidden rounded-[2rem] border border-amber-200/90 bg-gradient-to-r from-amber-50 via-orange-50/50 to-red-50 p-4 sm:p-5 shadow-lg shadow-amber-950/5 mb-6">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                {{-- Left: Pet Avatar & Dynamic Speech --}}
-                <div class="flex items-center gap-3.5">
-                    <div class="relative grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-white shadow-md border border-amber-200/80 transition-transform duration-300 hover:scale-105">
-                        <span class="text-3xl select-none" x-text="petEmoji || '{{ $petDefaultEmoji }}'"></span>
-                        <span class="absolute -top-1 -right-1 flex h-4 w-4">
-                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-4 w-4 bg-amber-500 text-[9px] font-black text-white items-center justify-center">★</span>
-                        </span>
+        {{-- 1. EXAM GATE · 展卷 Mở Đề (Gọn Gàng & Thanh Nhã) --}}
+        <section x-show="!isUnrolled && !isSubmitted"
+                 x-transition:enter="transition ease-out duration-400"
+                 x-transition:leave="transition ease-in duration-300"
+                 class="relative overflow-hidden rounded-[2.5rem] border-2 border-amber-900/30 bg-[#faf6ed] p-8 sm:p-12 text-center shadow-xl shadow-amber-950/10">
+            <div class="pointer-events-none absolute inset-0 opacity-[0.03] select-none text-[16rem] font-serif font-black flex items-center justify-center">
+                试
+            </div>
+            
+            <div class="relative z-10 max-w-xl mx-auto space-y-4">
+                <div class="inline-flex items-center justify-center">
+                    <span class="seal-zhusha-round text-sm font-black tracking-widest px-4 py-1">
+                        科 举 · 试 卷
+                    </span>
+                </div>
+
+                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 font-serif">
+                    {{ $selectedLesson ? $selectedLesson->title : ($selectedLevel ? 'HSK ' . $selectedLevel . ' · Khảo Thí' : 'Trắc Nghiệm Tổng Hợp') }}
+                </h2>
+
+                <p class="text-sm text-slate-600 leading-relaxed font-serif">
+                    Đề thi gồm <strong class="text-[#991b1b] font-bold">{{ count($questions) }} đạo thi đề</strong>. 
+                    Thời gian làm bài ước tính <strong class="text-amber-950 font-bold">~{{ max(3, round(count($questions) * 0.8)) }} phút</strong>. 
+                    Tĩnh tâm hạ bút, mỗi câu hỏi là một bước tiến trên con đường đăng khoa.
+                </p>
+
+                <div class="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
+                    <button type="button"
+                            @click="unrollExam()"
+                            class="inline-flex items-center justify-center gap-2.5 rounded-full bg-[#991b1b] hover:bg-red-800 text-white px-8 py-3.5 text-base font-bold shadow-lg shadow-red-950/20 hover:scale-105 active:scale-95 transition">
+                        <i data-lucide="scroll" class="h-5 w-5"></i>
+                        <span>展 卷 · Mở Đề Bắt Đầu</span>
+                    </button>
+                    <a href="{{ route('flashcards', $selectedLesson ? ['lesson' => $selectedLesson->slug] : []) }}"
+                       class="inline-flex items-center justify-center gap-2 rounded-full border border-amber-900/20 bg-white/80 hover:bg-white text-slate-700 px-6 py-3.5 text-sm font-semibold shadow-2xs transition">
+                        <i data-lucide="bookmark" class="h-4 w-4 text-amber-800"></i>
+                        <span>Ôn Thư Thiêm trước</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        {{-- 2. KIM BẢNG (金榜 · Bảng Vàng Vinh Danh Cá Nhân khi đã Submit) --}}
+        <section x-show="isSubmitted"
+                 x-transition:enter="transition ease-out duration-500"
+                 x-transition:enter-start="opacity-0 translate-y-4"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 class="kimbang-scroll p-6 sm:p-10 mb-8 text-slate-900">
+            <div class="relative z-10">
+                {{-- Header Seal --}}
+                <div class="text-center mb-6">
+                    <div class="kimbang-seal-header inline-flex">
+                        <span class="text-xs font-black tracking-[0.3em] uppercase text-red-900">HOÀNG TRIỀU KHOA CỬ</span>
+                        <span class="text-2xl sm:text-3xl font-black mt-0.5">金 榜 · 题 名</span>
                     </div>
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs font-black uppercase tracking-wider text-amber-800">Trợ giảng {{ $petDefaultName }}</span>
-                            <span class="rounded-full bg-amber-200/80 px-2 py-0.2 text-[10px] font-bold text-amber-900">
-                                Cấp {{ $userPet?->stage ?? 1 }}: {{ $petStageObj?->name ?? 'Bạn đồng hành' }}
-                            </span>
-                        </div>
-                        <p class="text-sm font-semibold text-slate-800 mt-0.5 leading-snug" x-text="petSpeech">
-                            "Cùng tớ tập trung cao độ để hoàn thành xuất sắc bài quiz này nhé! 🎯"
+                    <p class="mt-2 text-xs uppercase tracking-widest text-amber-900/80 font-bold font-serif">
+                        此 卷 · 已 成 — THỬ QUYỂN DĨ THÀNH
+                    </p>
+                    <h2 class="mt-2 text-2xl sm:text-4xl font-black text-slate-950 font-serif" x-text="honorTitle.title">
+                        Kim Bảng Đề Danh · 金榜题名
+                    </h2>
+                    <p class="mt-1 text-sm text-amber-950 max-w-lg mx-auto" x-text="honorTitle.desc"></p>
+                </div>
+
+                {{-- 4 Thẻ Ngọc Thống Kê Thành Tích --}}
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 my-6">
+                    {{-- 1. Tổng đề --}}
+                    <div class="rounded-2xl border border-amber-900/20 bg-white/80 p-4 text-center shadow-2xs">
+                        <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-serif">Tổng Thí Đề</p>
+                        <p class="text-2xl sm:text-3xl font-black text-slate-900 mt-1 font-serif">
+                            <span x-text="totalCount"></span> <span class="text-xs font-normal text-slate-500">câu</span>
+                        </p>
+                    </div>
+
+                    {{-- 2. Đắc chuẩn --}}
+                    <div class="rounded-2xl border border-amber-900/20 bg-white/80 p-4 text-center shadow-2xs">
+                        <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-serif">Đắc Chuẩn (Đúng)</p>
+                        <p class="text-2xl sm:text-3xl font-black text-[#991b1b] mt-1 font-serif">
+                            <span x-text="results?.correct_count ?? 0"></span> <span class="text-xs font-normal text-slate-500">câu</span>
+                        </p>
+                    </div>
+
+                    {{-- 3. Thời gian --}}
+                    <div class="rounded-2xl border border-amber-900/20 bg-white/80 p-4 text-center shadow-2xs">
+                        <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-serif">Thời Gian Hạ Bút</p>
+                        <p class="text-xl sm:text-2xl font-black text-amber-900 mt-1 font-serif" x-text="formattedDuration">
+                            --
+                        </p>
+                    </div>
+
+                    {{-- 4. Điểm số --}}
+                    <div class="rounded-2xl border border-amber-900/20 bg-white/80 p-4 text-center shadow-2xs">
+                        <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-serif">Khảo Điểm</p>
+                        <p class="text-2xl sm:text-3xl font-black text-emerald-700 mt-1 font-serif">
+                            <span x-text="results?.score + '%'">0%</span>
                         </p>
                     </div>
                 </div>
 
-                {{-- Right: Live Streak / Combo Status --}}
-                <div class="flex items-center gap-3 self-end sm:self-center">
-                    {{-- Dynamic Combo Streak Pill --}}
-                    <div x-show="maxComboStreak >= 2 || isSubmitted"
-                         x-transition:enter="transition ease-out duration-300"
-                         x-transition:enter-start="opacity-0 scale-90"
-                         x-transition:enter-end="opacity-100 scale-100"
-                         class="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-red-600 to-amber-500 px-3.5 py-2 text-white shadow-md shadow-red-600/20">
-                        <i data-lucide="flame" class="h-4 w-4 text-yellow-200 animate-bounce"></i>
+                {{-- Thư Đồng Đồng Viện Vinh Danh (Pet Reward) --}}
+                <div x-show="petReward" class="rounded-2xl border border-amber-400/40 bg-gradient-to-r from-amber-100/70 via-orange-50/60 to-red-50/70 p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-3.5">
+                        <div class="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-white shadow-sm border border-amber-300 text-3xl">
+                            <span x-text="petReward?.emoji || '{{ $petDefaultEmoji }}'"></span>
+                        </div>
                         <div>
-                            <p class="text-[9px] font-bold uppercase tracking-widest text-yellow-100 leading-none">Max Combo</p>
-                            <p class="text-sm font-black leading-tight">
-                                <span x-text="'x' + maxComboStreak"></span>
-                                <span x-show="maxComboStreak >= 5" class="text-[10px] text-yellow-200">🔥 Bùng nổ!</span>
-                            </p>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold text-amber-900 uppercase tracking-wide">Thư đồng dâng lễ</span>
+                                <span class="seal-zhusha-round text-[10px]">Tặng Thưởng</span>
+                            </div>
+                            <p class="text-sm font-semibold text-slate-900 mt-0.5" x-text="petSpeech"></p>
                         </div>
                     </div>
-
-                    <div x-show="!isSubmitted" class="rounded-xl bg-white/80 border border-amber-200/80 px-3 py-1.5 text-xs text-amber-900 font-medium hidden sm:block">
-                        <span>Thưởng hoàn thành: <strong class="font-bold text-amber-800">+15~25 EXP cho Pet</strong> 🐉</span>
+                    <div class="flex items-center gap-3 shrink-0">
+                        <div class="rounded-xl bg-white/90 border border-amber-200 px-3 py-1.5 text-center">
+                            <p class="text-[10px] text-slate-500 font-bold uppercase">EXP Pet</p>
+                            <p class="text-base font-black text-amber-700" x-text="'+' + (petReward?.exp_bonus || 0) + ' EXP'"></p>
+                        </div>
+                        <div class="rounded-xl bg-white/90 border border-amber-200 px-3 py-1.5 text-center">
+                            <p class="text-[10px] text-slate-500 font-bold uppercase">Vật Phẩm</p>
+                            <p class="text-xs font-bold text-rose-700 mt-0.5" x-text="petReward?.gift_item || '🍎 Táo ngọt'"></p>
+                        </div>
                     </div>
+                </div>
+
+                {{-- Action Buttons on Kim Bảng --}}
+                <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
+                    <button type="button"
+                            @click="resetQuiz()"
+                            class="inline-flex items-center gap-2 rounded-full border border-amber-900/20 bg-white hover:bg-amber-50 px-5 py-2.5 text-sm font-bold text-slate-800 shadow-2xs transition active:scale-95">
+                        <i data-lucide="rotate-ccw" class="h-4 w-4"></i>
+                        <span>Tái Khảo · Làm lại đề này</span>
+                    </button>
+                    <a href="{{ route('flashcards', $selectedLesson ? ['lesson' => $selectedLesson->slug] : []) }}"
+                       class="inline-flex items-center gap-2 rounded-full bg-[#991b1b] hover:bg-red-800 text-white px-6 py-2.5 text-sm font-bold shadow-md shadow-red-950/20 transition hover:scale-105 active:scale-95">
+                        <i data-lucide="bookmark" class="h-4 w-4"></i>
+                        <span>🎴 Mở Thư Thiêm Flashcard ôn tập</span>
+                    </a>
+                    <a href="{{ route('dashboard') }}"
+                       class="inline-flex items-center gap-2 rounded-full border border-amber-900/15 bg-white/70 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-white transition">
+                        <i data-lucide="home" class="h-4 w-4"></i>
+                        <span>Về Nhã Trai (Dashboard)</span>
+                    </a>
                 </div>
             </div>
+        </section>
 
-            {{-- Big Explosive Combo Celebration Banner --}}
-            <div x-show="showComboCelebration"
-                 x-transition:enter="transition cubic-bezier(0.34, 1.56, 0.64, 1) duration-500"
-                 x-transition:enter-start="opacity-0 scale-50 translate-y-4"
-                 x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                 x-transition:leave="transition ease-in duration-300"
-                 x-transition:leave-start="opacity-100 scale-100"
-                 x-transition:leave-end="opacity-0 scale-95"
-                 class="mt-3 flex items-center justify-between rounded-2xl bg-gradient-to-r from-amber-500 via-red-600 to-purple-600 p-3 text-white shadow-xl animate-pulse">
-                <div class="flex items-center gap-2.5">
-                    <span class="text-2xl animate-spin">🔥</span>
-                    <div>
-                        <p class="text-xs font-black uppercase tracking-wider text-yellow-200" x-text="comboNotice"></p>
-                        <p class="text-xs text-white/90">Chuỗi câu trả lời đúng liên tiếp siêu chuẩn xác!</p>
+        {{-- 3. MỰC CHẤM BÀI & THƯ ĐỒNG ĐỒNG VIỆN (Navigation Track & Scholar Companion) --}}
+        <section x-show="isUnrolled"
+                 class="sticky top-4 z-20 rounded-2xl border border-amber-900/20 bg-[#faf6ed]/95 p-3.5 shadow-lg shadow-amber-950/5 backdrop-blur-md">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                {{-- Left: Companion Voice --}}
+                <div class="flex items-center gap-3">
+                    <div class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white border border-amber-300 shadow-2xs text-2xl select-none">
+                        <span x-text="petEmoji || '{{ $petDefaultEmoji }}'"></span>
                     </div>
-                </div>
-                <span class="rounded-full bg-white/20 px-3 py-1 text-xs font-black text-white">
-                    +Thưởng Pet EXP!
-                </span>
-            </div>
-        </div>
-
-        {{-- Post-Submit Pet Reward & Victory Banner --}}
-        <div x-show="isSubmitted && petReward"
-             x-transition:enter="transition ease-out duration-400"
-             x-transition:enter-start="opacity-0 translate-y-4"
-             x-transition:enter-end="opacity-100 translate-y-0"
-             class="rounded-[2.5rem] bg-gradient-to-br from-slate-950 via-slate-900 to-red-950 p-6 sm:p-8 text-white shadow-2xl border border-red-500/20 relative overflow-hidden mb-6">
-            <div class="absolute -right-10 -top-10 h-48 w-48 rounded-full bg-amber-500/10 blur-3xl pointer-events-none"></div>
-            <div class="absolute -left-10 -bottom-10 h-48 w-48 rounded-full bg-red-600/10 blur-3xl pointer-events-none"></div>
-
-            <div class="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-                <div class="flex items-center gap-4">
-                    <div class="grid h-20 w-20 shrink-0 place-items-center rounded-3xl bg-white/10 border border-white/10 text-5xl shadow-xl animate-bounce">
-                        <span x-text="petReward?.emoji || '{{ $petDefaultEmoji }}'"></span>
-                    </div>
-                    <div>
-                        <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-400/20 px-3 py-0.5 text-xs font-bold text-amber-300">
-                            <i data-lucide="sparkles" class="h-3 w-3"></i>
-                            <span>Phần thưởng bạn đồng hành</span>
-                        </span>
-                        <h3 class="text-2xl font-black mt-1">
-                            <span x-text="petReward?.pet_name || '{{ $petDefaultName }}'"></span> đã nhận được quà!
-                        </h3>
-                        <p class="text-sm text-slate-300 mt-1 max-w-lg" x-text="petSpeech"></p>
+                    <div class="min-w-0">
+                        <p class="text-[11px] font-bold uppercase tracking-wider text-amber-900 font-serif">
+                            Thư Đồng {{ $petDefaultName }} nhắc nhở:
+                        </p>
+                        <p class="text-xs sm:text-sm font-medium text-slate-800 truncate max-w-md" x-text="petSpeech">
+                            "Tĩnh tâm hạ bút, từng nét chữ đều là tích lũy tri thức."
+                        </p>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 shrink-0">
-                    <div class="rounded-2xl border border-white/10 bg-white/5 p-3 text-center">
-                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">EXP cho Pet</p>
-                        <p class="text-xl font-black text-amber-300 mt-0.5" x-text="'+' + (petReward?.exp_bonus || 0) + ' EXP'"></p>
-                    </div>
-                    <div class="rounded-2xl border border-white/10 bg-white/5 p-3 text-center">
-                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Độ no tăng</p>
-                        <p class="text-xl font-black text-emerald-400 mt-0.5" x-text="'+' + (petReward?.hunger_gain || 0) + ' No'"></p>
-                    </div>
-                    <div class="col-span-2 sm:col-span-1 rounded-2xl border border-white/10 bg-white/5 p-3 text-center">
-                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Vật phẩm</p>
-                        <p class="text-xs font-black text-rose-300 mt-1 truncate" x-text="petReward?.gift_item || '🍎 Táo ngọt'"></p>
-                    </div>
+                {{-- Right: Question Ink Track (Dải Mực Chấm Bài) --}}
+                <div class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 max-w-full">
+                    <span class="text-[11px] font-bold text-amber-900 shrink-0 mr-1 font-serif">Đề thi:</span>
+                    @foreach ($questions as $idx => $q)
+                        @php $qIdx = $idx + 1; $qid = $q->id; @endphp
+                        <button type="button"
+                                @click="scrollToQuestion({{ $qid }})"
+                                title="Đến đề {{ $qIdx }}"
+                                class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border text-xs font-bold transition font-serif"
+                                :class="{
+                                    'border-emerald-600 bg-emerald-50 text-emerald-800 font-black ring-1 ring-emerald-500': isSubmitted && results?.details?.[{{ $qid }}]?.is_correct,
+                                    'border-slate-400 bg-slate-100 text-slate-600 font-black': isSubmitted && !results?.details?.[{{ $qid }}]?.is_correct,
+                                    'border-[#991b1b] bg-red-50 text-[#991b1b] shadow-2xs font-black': !isSubmitted && answers[{{ $qid }}] !== undefined,
+                                    'border-amber-900/15 bg-white/70 text-slate-500 hover:border-amber-400': !isSubmitted && answers[{{ $qid }}] === undefined
+                                }">
+                            <template x-if="isSubmitted && results?.details?.[{{ $qid }}]?.is_correct">
+                                <span>准</span>
+                            </template>
+                            <template x-if="isSubmitted && !results?.details?.[{{ $qid }}]?.is_correct">
+                                <span>×</span>
+                            </template>
+                            <template x-if="!isSubmitted">
+                                <span>{{ $qIdx }}</span>
+                            </template>
+                        </button>
+                    @endforeach
                 </div>
             </div>
+        </section>
 
-            <template x-if="petReward?.stage_up">
-                <div class="mt-4 rounded-2xl bg-amber-500/20 border border-amber-400/40 p-3 text-center text-amber-200 text-sm font-black animate-pulse">
-                    🎉 CHÚC MỪNG! Pet của bạn đã đủ điều kiện TIẾN HÓA lên cấp mới!
-                </div>
-            </template>
-        </div>
+        {{-- 4. DANH SÁCH THI ĐỀ (THI ÁN · 考案) --}}
+        <div x-show="isUnrolled" class="space-y-6">
+            @php
+                $chineseNumerals = [1 => '一', 2 => '二', 3 => '三', 4 => '四', 5 => '五', 6 => '六', 7 => '七', 8 => '八', 9 => '九', 10 => '十',
+                                    11 => '十一', 12 => '十二', 13 => '十三', 14 => '十四', 15 => '十五', 16 => '十六', 17 => '十七', 18 => '十八', 19 => '十九', 20 => '二十',
+                                    21 => '二十一', 22 => '二十二', 23 => '二十三', 24 => '二十四', 25 => '二十五', 26 => '二十六', 27 => '二十七', 28 => '二十八', 29 => '二十九', 30 => '三十'];
+            @endphp
 
-        {{-- Questions List --}}
-        <div class="space-y-6">
             @foreach ($questions as $index => $question)
+                @php
+                    $qNum = $index + 1;
+                    $hanziNum = $chineseNumerals[$qNum] ?? $qNum;
+                @endphp
+
                 <article id="question-card-{{ $question->id }}"
-                         class="group relative overflow-hidden rounded-[2rem] border bg-white p-6 shadow-xl shadow-slate-900/5 transition sm:p-8"
+                         class="thi-an-card p-6 sm:p-8 transition-all duration-300"
                          :class="{
-                             'border-emerald-300 ring-2 ring-emerald-400/30': isSubmitted && results?.details?.[{{ $question->id }}]?.is_correct,
-                             'border-rose-300 ring-2 ring-rose-400/30': isSubmitted && !results?.details?.[{{ $question->id }}]?.is_correct,
-                             'border-white/80 hover:border-amber-200': !isSubmitted
+                             'ring-2 ring-emerald-500/40 bg-emerald-50/20': isSubmitted && results?.details?.[{{ $question->id }}]?.is_correct,
+                             'ring-1 ring-slate-400/50 bg-slate-50/40': isSubmitted && !results?.details?.[{{ $question->id }}]?.is_correct
                          }">
                     
-                    {{-- Card Header --}}
-                    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                    {{-- Thi Án Header --}}
+                    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-amber-900/10 pb-4">
                         <div class="flex items-center gap-3">
-                            <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900 text-xs font-black text-white">
-                                {{ $index + 1 }}
+                            <span class="inline-flex items-center justify-center rounded-xl bg-amber-950 text-amber-100 px-3 py-1 text-xs font-bold font-serif tracking-wider">
+                                第 {{ $hanziNum }} 题 · Đề {{ $qNum }}
                             </span>
-                            <div>
-                                <span class="text-xs font-bold uppercase tracking-wider text-[#991b1b]">Câu {{ $index + 1 }}</span>
-                                @if ($question->lesson)
-                                    <span class="ml-2 text-xs text-slate-400">• {{ $question->lesson->title }}</span>
-                                @endif
-                            </div>
+                            @if ($question->lesson)
+                                <span class="text-xs text-amber-900/70 font-medium font-serif">
+                                    • {{ $question->lesson->title }}
+                                </span>
+                            @endif
                         </div>
 
                         <div class="flex items-center gap-2">
                             @if ($question->pinyin)
-                                <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold">
+                                <span class="rounded-full bg-white/80 border border-amber-900/10 px-3 py-1 text-xs font-semibold text-slate-800 shadow-2xs">
                                     <x-tone-pinyin :text="$question->pinyin" />
                                 </span>
                             @endif
 
-                            {{-- Status Badge on Submit --}}
+                            {{-- Seal Stamp after Submission --}}
                             <template x-if="isSubmitted">
-                                <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold"
-                                      :class="results?.details?.[{{ $question->id }}]?.is_correct ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'">
-                                    <span x-text="results?.details?.[{{ $question->id }}]?.is_correct ? '✓ Chính xác' : '✗ Chưa đúng'"></span>
+                                <span>
+                                    <template x-if="results?.details?.[{{ $question->id }}]?.is_correct">
+                                        <span class="seal-stamp-zhun text-xs">
+                                            <span>✓</span>
+                                            <span>准 · Đắc Chuẩn</span>
+                                        </span>
+                                    </template>
+                                    <template x-if="!results?.details?.[{{ $question->id }}]?.is_correct">
+                                        <span class="seal-stamp-weizhun text-xs">
+                                            <span>✗</span>
+                                            <span>未准 · Cần Thâm Tu</span>
+                                        </span>
+                                    </template>
                                 </span>
                             </template>
                         </div>
                     </div>
 
-                    {{-- Question Content --}}
+                    {{-- Question Content (Serif Typography & Traditional Balance) --}}
                     <div class="mt-5">
-                        <h2 class="text-xl font-bold text-slate-950 sm:text-2xl">
+                        <h2 class="text-xl sm:text-2xl font-bold text-slate-900 font-serif leading-relaxed tracking-wide">
                             {{ $question->question }}
                         </h2>
                     </div>
 
-                    {{-- Listening Audio Player (only for listening questions with audio_text) --}}
+                    {{-- Listening Audio Player --}}
                     @if ($question->skill_type === 'listening' && $question->audio_text)
-                        <div class="mt-4 flex items-center gap-4 rounded-2xl border border-blue-200 bg-blue-50/70 px-5 py-4">
-                            {{-- Skill badge --}}
-                            <span class="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-800">
-                                <i data-lucide="headphones" class="h-3.5 w-3.5"></i>
-                                Câu nghe
+                        <div class="mt-4 flex items-center gap-4 rounded-2xl border border-amber-900/20 bg-amber-50/80 px-5 py-4">
+                            <span class="seal-zhusha text-xs">
+                                听音 · Thính Âm
                             </span>
 
-                            {{-- Audio text preview (the Chinese text to be read) --}}
-                            <span class="flex-1 font-mono text-lg font-bold text-slate-900 tracking-wide">
+                            <span class="flex-1 font-serif text-lg font-bold text-slate-900 tracking-wider">
                                 {{ $question->audio_text }}
                             </span>
 
-                            {{-- Play button (Web Speech API TTS) - use data-audio to avoid inline JS escaping issues --}}
                             <button type="button"
                                     data-audio="{{ $question->audio_text }}"
                                     onclick="playQuizAudio(this, this.dataset.audio)"
-                                    title="Nghe đoạn âm thanh"
-                                    class="tts-btn inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg shadow-blue-500/30 transition hover:bg-blue-700 active:scale-95">
-                                <i data-lucide="play" class="h-5 w-5 tts-play-icon"></i>
+                                    title="Nghe đoạn âm thanh thi đề"
+                                    class="tts-btn inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#991b1b] text-white shadow-md shadow-red-950/20 transition hover:bg-red-800 active:scale-95">
+                                <i data-lucide="volume-2" class="h-5 w-5 tts-play-icon"></i>
                                 <i data-lucide="square" class="h-5 w-5 tts-stop-icon hidden"></i>
                             </button>
 
-                            {{-- Replay hint --}}
-                            <span class="hidden text-xs text-blue-600 sm:block">Nhấn để nghe lại</span>
+                            <span class="hidden text-xs text-amber-900/70 sm:block font-serif">Nhấn để nghe phát âm</span>
                         </div>
                     @endif
 
-
-                    {{-- Options List --}}
-
+                    {{-- Ngọc Bài / Mộc Bài Options (Answer Plaques) --}}
                     <div class="mt-6 grid gap-3 sm:grid-cols-2">
                         @php
                             $optionLetters = ['A', 'B', 'C', 'D', 'E', 'F'];
@@ -442,10 +519,10 @@
                             <button type="button"
                                     @click="selectOption({{ $qidJs }}, {{ $optJs }})"
                                     :disabled="isSubmitted"
-                                    class="relative flex items-center justify-between rounded-2xl border p-4 text-left font-medium transition"
+                                    class="plaque-option flex items-center justify-between p-4 text-left font-serif transition"
                                     :class="getOptionClass({{ $qidJs }}, {{ $optJs }})">
                                 <span class="flex items-center gap-3">
-                                    <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-xl border text-xs font-black transition"
+                                    <span class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border text-xs font-black transition font-serif"
                                           :class="getOptionRadioClass({{ $qidJs }}, {{ $optJs }})">
                                         {{ $optionLetters[$optIdx] ?? ($optIdx + 1) }}
                                     </span>
@@ -458,10 +535,10 @@
                                 <template x-if="isSubmitted">
                                     <span>
                                         <template x-if="isCorrectOption({{ $qidJs }}, {{ $optJs }})">
-                                            <i data-lucide="circle-check-big" class="h-5 w-5 text-emerald-600"></i>
+                                            <span class="seal-zhusha text-[10px]">准</span>
                                         </template>
                                         <template x-if="isUserWrongOption({{ $qidJs }}, {{ $optJs }})">
-                                            <i data-lucide="circle-x" class="h-5 w-5 text-rose-600"></i>
+                                            <span class="text-xs text-slate-500 font-bold">未准</span>
                                         </template>
                                     </span>
                                 </template>
@@ -469,23 +546,22 @@
                         @endforeach
                     </div>
 
-
-                    {{-- Explanation Box (Revealed after Submit) --}}
+                    {{-- Phản Hồi Học Thuật (Lời Phê Giám Khảo & Mẹo Nhớ) --}}
                     <div x-show="isSubmitted"
                          x-transition:enter="transition ease-out duration-300"
                          x-transition:enter-start="opacity-0 translate-y-2"
                          x-transition:enter-end="opacity-100 translate-y-0"
-                         class="mt-6 rounded-2xl border p-4 sm:p-5"
-                         :class="results?.details?.[{{ $question->id }}]?.is_correct ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950' : 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-300 text-amber-950 shadow-sm'">
+                         class="mt-6 rounded-2xl border p-4 sm:p-5 font-serif"
+                         :class="results?.details?.[{{ $question->id }}]?.is_correct ? 'bg-emerald-50/60 border-emerald-300 text-emerald-950' : 'bg-amber-50/80 border-amber-300 text-amber-950'">
                         <div class="flex items-start gap-3.5">
                             <template x-if="results?.details?.[{{ $question->id }}]?.is_correct">
-                                <div class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-800">
-                                    <i data-lucide="circle-check-big" class="h-5 w-5"></i>
+                                <div class="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-800">
+                                    <i data-lucide="check" class="h-4 w-4"></i>
                                 </div>
                             </template>
                             <template x-if="!results?.details?.[{{ $question->id }}]?.is_correct">
-                                <div class="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-amber-200/80 text-xl shadow-xs">
-                                    <span>{{ $petDefaultEmoji }}</span>
+                                <div class="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-amber-200/80 text-amber-900 text-base">
+                                    <span>💡</span>
                                 </div>
                             </template>
 
@@ -493,13 +569,13 @@
                                 <template x-if="results?.details?.[{{ $question->id }}]?.is_correct">
                                     <div>
                                         <p class="text-xs font-bold uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
-                                            <span>✓ Chuẩn xác! Trợ giảng {{ $petDefaultName }} tặng bạn 10 điểm! ✨</span>
+                                            <span>「 审题精当 · Đắc Chuẩn 」</span>
                                         </p>
                                         <p class="text-sm font-semibold pt-1">
-                                            Đáp án: <span class="text-emerald-700 font-bold">{{ $question->correct_answer }}</span>
+                                            Đáp án chuẩn xác: <span class="text-emerald-800 font-bold">{{ $question->correct_answer }}</span>
                                         </p>
                                         @if ($question->explanation)
-                                            <p class="text-sm text-slate-700 leading-relaxed pt-1">
+                                            <p class="text-xs sm:text-sm text-slate-700 leading-relaxed pt-1">
                                                 {{ $question->explanation }}
                                             </p>
                                         @endif
@@ -508,39 +584,34 @@
 
                                 <template x-if="!results?.details?.[{{ $question->id }}]?.is_correct">
                                     <div>
-                                        <div class="flex items-center justify-between">
-                                            <p class="text-xs font-black uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
-                                                <span>💡 Trợ giảng {{ $petDefaultName }} mách nước:</span>
-                                            </p>
-                                            <span class="rounded-full bg-amber-200/80 px-2.5 py-0.5 text-[10px] font-bold text-amber-900 shadow-2xs">
-                                                Ghi nhớ mẹo
-                                            </span>
-                                        </div>
-                                        <div class="flex items-baseline gap-2 pt-1">
+                                        <p class="text-xs font-black uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+                                            <span>「 沉思再悟 · Mẹo Ghi Nhớ 」</span>
+                                        </p>
+                                        <div class="flex items-baseline gap-2 pt-1 flex-wrap">
                                             <p class="text-sm font-semibold text-slate-900">
-                                                Đáp án đúng: <span class="text-emerald-700 font-black text-base">{{ $question->correct_answer }}</span>
+                                                Đáp án đúng: <span class="text-[#991b1b] font-black text-base">{{ $question->correct_answer }}</span>
                                                 @if ($question->pinyin)
-                                                    <span class="text-xs font-mono text-slate-500">[{{ $question->pinyin }}]</span>
+                                                    <span class="text-xs font-mono text-slate-600">[{{ $question->pinyin }}]</span>
                                                 @endif
                                             </p>
                                             @if ($question->audio_text)
                                                 <button type="button"
                                                         data-audio="{{ $question->audio_text }}"
                                                         onclick="playQuizAudio(this, this.dataset.audio)"
-                                                        class="tts-btn inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-800 hover:underline">
-                                                    <i data-lucide="volume-2" class="h-3.5 w-3.5 tts-play-icon"></i>
-                                                    <i data-lucide="square" class="h-3.5 w-3.5 tts-stop-icon hidden"></i>
-                                                    <span>Nghe phát âm</span>
+                                                        class="tts-btn inline-flex items-center gap-1 text-[11px] font-bold text-[#991b1b] hover:underline">
+                                                    <i data-lucide="volume-2" class="h-3 w-3 tts-play-icon"></i>
+                                                    <i data-lucide="square" class="h-3 w-3 tts-stop-icon hidden"></i>
+                                                    <span>Nghe lại phát âm</span>
                                                 </button>
                                             @endif
                                         </div>
                                         @if ($question->explanation)
-                                            <p class="text-xs sm:text-sm text-slate-800 leading-relaxed bg-white/80 p-2.5 rounded-xl border border-amber-200/70 mt-1.5">
+                                            <p class="text-xs sm:text-sm text-slate-800 leading-relaxed bg-white/70 p-2.5 rounded-xl border border-amber-200/80 mt-1.5">
                                                 {{ $question->explanation }}
                                             </p>
                                         @endif
-                                        <p class="text-[11px] text-amber-800 font-medium italic pt-1 flex items-center gap-1">
-                                            <span>💬 "Đừng nản nhé! Càng sai thì càng nhớ sâu, lần sau gặp lại câu này chắc chắn cậu sẽ chọn đúng ngay! ✨"</span>
+                                        <p class="text-[11px] text-amber-900/80 italic pt-1">
+                                            💬 "Sai là thông tin để thấu suốt sâu hơn, không phải thất bại. Lần sau gặp lại câu này nhất định sẽ đắc chuẩn!"
                                         </p>
                                     </div>
                                 </template>
@@ -551,20 +622,64 @@
             @endforeach
         </div>
 
-        {{-- Bottom Submission Bar --}}
-        <section class="sticky bottom-6 z-30 rounded-[2rem] border border-white/60 bg-white/90 p-4 shadow-2xl shadow-slate-900/10 backdrop-blur-lg sm:p-6">
+        {{-- 5. VÒNG LẶP HỌC TẬP: ÔN LUYỆN LẠI CÁC CÂU CHƯA ĐẮC CHUẨN --}}
+        <section x-show="isSubmitted && (results?.score < 100)"
+                 x-transition:enter="transition ease-out duration-400"
+                 class="rounded-[2.25rem] border border-amber-900/20 bg-[#faf8f5] p-6 sm:p-8 shadow-md">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-amber-900/10 pb-4">
+                <div>
+                    <span class="seal-zhusha text-xs">考后温习 · ÔN TẬP SAU THI</span>
+                    <h3 class="text-xl sm:text-2xl font-black text-slate-900 font-serif mt-1">
+                        Củng cố các điểm chưa đắc chuẩn
+                    </h3>
+                    <p class="text-xs sm:text-sm text-slate-600 font-serif mt-0.5">
+                        Thư phòng đã tổng hợp các câu bạn đã bỏ sót hoặc chọn chưa đúng để ôn sâu bằng Thư Thiêm.
+                    </p>
+                </div>
+
+                <a href="{{ route('flashcards', $selectedLesson ? ['lesson' => $selectedLesson->slug] : []) }}"
+                   class="inline-flex items-center justify-center gap-2 rounded-full bg-[#991b1b] hover:bg-red-800 text-white px-6 py-3 text-sm font-bold shadow-md shadow-red-950/20 transition hover:scale-105 active:scale-95 shrink-0">
+                    <i data-lucide="bookmark" class="h-4 w-4"></i>
+                    <span>🎴 Ôn ngay với Thư Thiêm</span>
+                </a>
+            </div>
+
+            <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                @foreach ($questions as $q)
+                    <div x-show="isSubmitted && !results?.details?.[{{ $q->id }}]?.is_correct"
+                         class="rounded-2xl border border-amber-900/15 bg-white/80 p-4 shadow-2xs font-serif">
+                        <div class="flex items-start justify-between gap-2">
+                            <span class="text-xs font-bold text-slate-500">Đề: {{ $loop->iteration }}</span>
+                            <span class="text-[11px] font-bold text-amber-900 bg-amber-100/70 px-2 py-0.5 rounded-full">
+                                Cần ôn
+                            </span>
+                        </div>
+                        <p class="text-sm font-bold text-slate-900 mt-1 line-clamp-2">
+                            {{ $q->question }}
+                        </p>
+                        <p class="text-xs text-emerald-800 font-bold mt-2">
+                            Đáp án chuẩn: <span class="underline">{{ $q->correct_answer }}</span>
+                        </p>
+                    </div>
+                @endforeach
+            </div>
+        </section>
+
+        {{-- 6. THANH ĐỀ BÚT & NỘP BÀI (STICKY BOTTOM SUBMISSION BAR) --}}
+        <section x-show="isUnrolled"
+                 class="sticky bottom-6 z-30 rounded-[2rem] border border-amber-900/20 bg-[#faf6ed]/95 p-4 sm:p-5 shadow-2xl shadow-amber-950/15 backdrop-blur-md">
             <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <p class="text-xs font-bold uppercase tracking-wider text-[#991b1b]">Trạng thái bài làm</p>
-                    <p class="text-sm text-slate-700">
+                    <p class="text-xs font-bold uppercase tracking-wider text-amber-900 font-serif">Trạng thái bài khảo thí</p>
+                    <p class="text-sm text-slate-700 font-serif">
                         <span x-show="!isSubmitted">
-                            Đã chọn <strong class="font-bold text-slate-950" x-text="answeredCount">0</strong> / {{ count($questions) }} câu hỏi.
-                            <span x-show="answeredCount < {{ count($questions) }}" class="text-amber-700 font-medium">
+                            Đã hạ bút <strong class="font-bold text-[#991b1b]" x-text="answeredCount">0</strong> / {{ count($questions) }} đạo đề.
+                            <span x-show="answeredCount < {{ count($questions) }}" class="text-amber-800 font-medium">
                                 (Còn <span x-text="{{ count($questions) }} - answeredCount"></span> câu chưa chọn)
                             </span>
                         </span>
                         <span x-show="isSubmitted">
-                            Hoàn thành với điểm số <strong class="font-bold text-emerald-600" x-text="results?.score + '%'"></strong>.
+                            Khảo thí hoàn tất. Điểm số: <strong class="font-bold text-emerald-700" x-text="results?.score + '%'"></strong>.
                         </span>
                     </p>
                 </div>
@@ -574,11 +689,11 @@
                         <button type="button"
                                 @click="submitQuiz()"
                                 :disabled="isSubmitting || answeredCount === 0"
-                                class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#991b1b] px-8 py-3.5 text-base font-bold text-white shadow-xl shadow-red-950/20 transition hover:bg-red-800 hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">
+                                class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#991b1b] px-8 py-3.5 text-base font-bold text-white shadow-xl shadow-red-950/20 transition hover:bg-red-800 hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto font-serif">
                             <svg x-show="isSubmitting" class="h-5 w-5 animate-spin text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
-                            <span x-text="isSubmitting ? 'Đang chấm điểm...' : 'Nộp bài & Chấm điểm'"></span>
+                            <span x-text="isSubmitting ? 'Đang chấm điểm bài thi...' : '落笔 · Nộp Bài Khảo Thí'"></span>
                             <span x-show="!isSubmitting" class="inline-flex">
-                                <i data-lucide="target" class="h-5 w-5"></i>
+                                <i data-lucide="check" class="h-5 w-5"></i>
                             </span>
                         </button>
                     </template>
@@ -587,24 +702,19 @@
                         <div class="flex flex-wrap items-center gap-2">
                             <button type="button"
                                     @click="resetQuiz()"
-                                    class="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-800 shadow transition hover:bg-slate-50">
+                                    class="inline-flex items-center justify-center gap-2 rounded-full border border-amber-900/20 bg-white px-5 py-3 text-sm font-bold text-slate-800 shadow transition hover:bg-amber-50">
                                 <i data-lucide="rotate-ccw" class="h-4 w-4"></i>
                                 <span>Làm lại</span>
                             </button>
-                            <a href="{{ route('pet.index') }}"
-                               class="inline-flex items-center justify-center gap-2 rounded-full border border-amber-300 bg-amber-50 px-5 py-3 text-sm font-bold text-amber-900 shadow-sm transition hover:bg-amber-100 hover:scale-105 active:scale-95">
-                                <span>Thăm phòng Pet</span>
-                                <span class="text-base select-none">🥟</span>
-                            </a>
                             <a href="{{ route('flashcards', $selectedLesson ? ['lesson' => $selectedLesson->slug] : []) }}"
                                class="inline-flex items-center justify-center gap-2 rounded-full bg-[#991b1b] px-5 py-3 text-sm font-bold text-white shadow-md shadow-red-950/20 transition hover:bg-red-800 hover:scale-105 active:scale-95">
-                                <i data-lucide="layers" class="h-4 w-4"></i>
-                                <span>Ôn Flashcard bài này</span>
+                                <i data-lucide="bookmark" class="h-4 w-4"></i>
+                                <span>Ôn Thư Thiêm</span>
                             </a>
                             <a href="{{ route('dashboard') }}"
-                               class="inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white shadow transition hover:bg-slate-800">
-                                <i data-lucide="layout-dashboard" class="h-4 w-4"></i>
-                                <span class="hidden sm:inline">Về Dashboard</span>
+                               class="inline-flex items-center justify-center gap-2 rounded-full border border-amber-900/20 bg-white px-5 py-3 text-sm font-bold text-slate-800 shadow transition hover:bg-amber-50">
+                                <i data-lucide="home" class="h-4 w-4"></i>
+                                <span class="hidden sm:inline">Về Nhã Trai</span>
                             </a>
                         </div>
                     </template>
@@ -612,32 +722,33 @@
             </div>
         </section>
 
-        {{-- New set hint --}}
-        <p class="text-center text-xs text-slate-400">
-            Bộ {{ count($questions) }} câu được chọn ngẫu nhiên từ {{ $totalPoolCount }} câu.
+        {{-- Footer Refresh Note --}}
+        <p class="text-center text-xs text-slate-500 font-serif">
+            Bộ {{ count($questions) }} đề được chọn ngẫu nhiên từ kho {{ $totalPoolCount }} câu.
             <a href="{{ request()->fullUrl() }}" class="font-semibold text-[#991b1b] hover:underline inline-flex items-center gap-1">
-                <span>Tải bộ câu mới</span>
+                <span>Khởi tạo bộ đề khác</span>
                 <i data-lucide="arrow-right" class="h-3 w-3 inline"></i>
             </a>
         </p>
+
     @else
-        {{-- Empty State --}}
-        <section class="flex flex-col items-center justify-center rounded-[2.5rem] border border-dashed border-slate-300 bg-white/60 p-12 text-center shadow-sm backdrop-blur sm:p-16">
-            <div class="grid h-16 w-16 place-items-center rounded-3xl bg-amber-50 text-amber-600">
-                <i data-lucide="circle-help" class="h-8 w-8"></i>
+        {{-- Empty State (Nhã Trai Tĩnh Lặng) --}}
+        <section class="flex flex-col items-center justify-center rounded-[2.5rem] border border-dashed border-amber-900/25 bg-[#faf8f5] p-12 text-center shadow-2xs sm:p-16 font-serif">
+            <div class="grid h-16 w-16 place-items-center rounded-3xl bg-amber-100/80 text-amber-900">
+                <i data-lucide="scroll" class="h-8 w-8"></i>
             </div>
-            <h2 class="mt-4 text-2xl font-bold text-slate-900">Chưa có câu hỏi nào cho chủ đề này</h2>
-            <p class="mt-2 max-w-md text-sm text-slate-500">
-                Hiện tại chưa có câu hỏi quiz nào được tạo cho bài học này. Bạn có thể chọn chủ đề khác hoặc luyện tập từ vựng bằng flashcard trước.
+            <h2 class="mt-4 text-2xl font-bold text-slate-900">Chưa có đề thi nào trong thiên này</h2>
+            <p class="mt-2 max-w-md text-sm text-slate-600">
+                Thư phòng hiện chưa biên soạn câu hỏi cho bài học này. Bạn có thể chọn chủ đề khác hoặc chuyển sang ôn luyện từ vựng bằng Thư Thiêm trước.
             </p>
             <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
                 <a href="{{ route('quiz') }}" class="inline-flex items-center gap-2 rounded-full bg-[#991b1b] px-6 py-3 text-sm font-bold text-white shadow-md transition hover:bg-red-800">
                     <i data-lucide="layers" class="h-4 w-4"></i>
-                    <span>Xem tất cả câu hỏi</span>
+                    <span>Xem toàn bộ thi đề</span>
                 </a>
-                <a href="{{ route('flashcards') }}" class="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
-                    <i data-lucide="book-open" class="h-4 w-4"></i>
-                    <span>Ôn Flashcard trước</span>
+                <a href="{{ route('flashcards') }}" class="inline-flex items-center gap-2 rounded-full border border-amber-900/20 bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow-2xs transition hover:bg-amber-50">
+                    <i data-lucide="bookmark" class="h-4 w-4"></i>
+                    <span>Ôn Thư Thiêm trước</span>
                 </a>
             </div>
         </section>
@@ -662,10 +773,8 @@ function playQuizAudio(btn, text) {
     if (_activeTtsBtn === btn) {
         window.speechSynthesis.cancel();
         _activeTtsBtn = null;
-        playIcon.classList.remove('hidden');
-        stopIcon.classList.add('hidden');
-        btn.classList.remove('bg-rose-600', 'hover:bg-rose-700');
-        btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+        playIcon?.classList.remove('hidden');
+        stopIcon?.classList.add('hidden');
         return;
     }
 
@@ -676,8 +785,6 @@ function playQuizAudio(btn, text) {
         const prevStop = _activeTtsBtn.querySelector('.tts-stop-icon');
         if (prevPlay) prevPlay.classList.remove('hidden');
         if (prevStop) prevStop.classList.add('hidden');
-        _activeTtsBtn.classList.remove('bg-rose-600', 'hover:bg-rose-700');
-        _activeTtsBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
     }
 
     // Start new speech
@@ -691,65 +798,63 @@ function playQuizAudio(btn, text) {
     const zhVoice = voices.find(v => v.lang.startsWith('zh'));
     if (zhVoice) utterance.voice = zhVoice;
 
-    // UI: switch to stop state
     _activeTtsBtn = btn;
-    playIcon.classList.add('hidden');
-    stopIcon.classList.remove('hidden');
-    btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-    btn.classList.add('bg-rose-600', 'hover:bg-rose-700');
+    playIcon?.classList.add('hidden');
+    stopIcon?.classList.remove('hidden');
 
-    utterance.onend = () => {
+    const resetBtn = () => {
         if (_activeTtsBtn === btn) {
             _activeTtsBtn = null;
-            playIcon.classList.remove('hidden');
-            stopIcon.classList.add('hidden');
-            btn.classList.remove('bg-rose-600', 'hover:bg-rose-700');
-            btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+            playIcon?.classList.remove('hidden');
+            stopIcon?.classList.add('hidden');
         }
     };
 
-    utterance.onerror = () => {
-        if (_activeTtsBtn === btn) {
-            _activeTtsBtn = null;
-            playIcon.classList.remove('hidden');
-            stopIcon.classList.add('hidden');
-            btn.classList.remove('bg-rose-600', 'hover:bg-rose-700');
-            btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
-        }
-    };
+    utterance.onend = resetBtn;
+    utterance.onerror = resetBtn;
 
     window.speechSynthesis.speak(utterance);
 }
 
-// Pre-load voices when page loads (required by some browsers)
+// Pre-load voices when page loads
 if ('speechSynthesis' in window) {
     window.speechSynthesis.getVoices();
     window.speechSynthesis.addEventListener('voiceschanged', () => {
         window.speechSynthesis.getVoices();
     });
 }
-// ─────────────────────────────────────────────────────────────────────────────
 
 function quizApp() {
     return {
         answers: {},
         isSubmitted: false,
         isSubmitting: false,
+        isUnrolled: true, // Auto-unroll or toggleable via Exam Gate
         results: null,
         startTime: null,
+        endTime: null,
         totalCount: {{ count($questions) }},
 
-        // Pet Co-op Assistant State
+        // Scholar Companion Voice
         petName: '{{ $petDefaultName }}',
         petEmoji: '{{ $petDefaultEmoji }}',
-        petSpeech: 'Chào bạn! Cùng tớ hoàn thành thật xuất sắc bài quiz này nhé! 🎯',
+        petSpeech: 'Tĩnh tâm hạ bút, từng nét chữ đều là tích lũy tri thức.',
         petReward: null,
-        maxComboStreak: 0,
-        showComboCelebration: false,
-        comboNotice: '',
 
         initQuiz() {
             this.startTime = Date.now();
+        },
+
+        unrollExam() {
+            this.isUnrolled = true;
+            this.startTime = Date.now();
+            window.soundEngine?.play('open');
+            this.$nextTick(() => {
+                const firstCard = document.querySelector('.thi-an-card');
+                if (firstCard) {
+                    firstCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
         },
 
         get answeredCount() {
@@ -761,25 +866,68 @@ function quizApp() {
             return Math.round((this.answeredCount / this.totalCount) * 100);
         },
 
+        get formattedDuration() {
+            const start = this.startTime || Date.now();
+            const end = this.endTime || Date.now();
+            const sec = Math.max(1, Math.round((end - start) / 1000));
+            const m = Math.floor(sec / 60);
+            const s = sec % 60;
+            if (m === 0) return `${s} giây`;
+            return `${m} phút ${s < 10 ? '0' : ''}${s} giây`;
+        },
+
+        get honorTitle() {
+            const score = this.results?.score ?? 0;
+            if (score === 100) {
+                return {
+                    title: 'Kim Bảng Đề Danh · 金榜题名',
+                    desc: 'Thấu suốt toàn văn, bút nở hoa gấm, tài học quán thông muôn người kính phục!'
+                };
+            }
+            if (score >= 80) {
+                return {
+                    title: 'Đăng Khoa Cập Đệ · 登科及第',
+                    desc: 'Nền tảng vững vàng, văn phong chuẩn xác, xứng đáng đề danh bảng vàng!'
+                };
+            }
+            if (score >= 60) {
+                return {
+                    title: 'Cập Đệ Nhập Hàng · 及第入行',
+                    desc: 'Hạ bút mạch lạc, đã nắm được tinh hoa trọng tâm của thiên sách!'
+                };
+            }
+            return {
+                title: 'Tích Lũy Thâm Tu · 再试深修',
+                desc: 'Học đạo cần kiên trì, từng câu chưa đắc chuẩn đều là hạt mầm cho sự thấu tỏ mai sau.'
+            };
+        },
+
         selectOption(qId, option) {
             if (this.isSubmitted) return;
             this.answers[+qId] = option;
             window.soundEngine?.play('tap');
 
-            // Pet companion co-op micro-reaction
+            // Scholar Companion micro-reaction
             const remaining = this.totalCount - this.answeredCount;
             if (remaining === 0) {
-                this.petSpeech = 'Đã chọn đủ tất cả câu hỏi! Nhấn "Nộp bài & Chấm điểm" bên dưới để cùng xem kết quả nhé! 🚀';
+                this.petSpeech = 'Đã hạ bút đủ toàn bộ thi đề! Hãy kiểm tra lại hoặc nhấn "Nộp Bài Khảo Thí" bên dưới nhé! 📜✨';
             } else if (remaining === 1) {
-                this.petSpeech = 'Chỉ còn đúng 1 câu nữa thôi! Cố lên bạn ơi! 🔥';
+                this.petSpeech = 'Chỉ còn đúng 1 đạo đề nữa thôi! Giữ vững tâm trí nào! 💡';
             } else {
                 const phrases = [
-                    'Ghi nhận đáp án! Chăm chú quan sát tiếp nào! 👀',
-                    'Rất tự tin! Cùng tiếp tục nhé! 💡',
-                    'Đúng đắn lắm, câu này tớ cũng thấy hay! ✨',
-                    'Tập trung cao độ, điểm cao trong tầm tay! 🎯'
+                    'Ghi nhận nét mực! Quan sát tiếp đề kế bên nhé! 👀',
+                    'Bút lực tự tin, tĩnh tâm giải đề! ✍️',
+                    'Đạo lý trong câu này rất thâm sâu, hãy kiên trì! 🌿',
+                    'Tập trung cao độ, điểm lành trên bảng vàng! 🎯'
                 ];
                 this.petSpeech = phrases[Math.floor(Math.random() * phrases.length)];
+            }
+        },
+
+        scrollToQuestion(qId) {
+            const el = document.getElementById('question-card-' + qId);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         },
 
@@ -801,44 +949,44 @@ function quizApp() {
         getOptionClass(qId, option) {
             if (!this.isSubmitted) {
                 if (this.isOptionSelected(qId, option)) {
-                    return 'border-[#991b1b] bg-red-50/60 text-[#991b1b] shadow-md';
+                    return 'selected';
                 }
-                return 'border-slate-200 bg-slate-50 hover:border-amber-300 hover:bg-white text-slate-700';
+                return '';
             }
 
             if (this.isCorrectOption(qId, option)) {
-                return 'border-emerald-500 bg-emerald-50 text-emerald-950 font-bold ring-1 ring-emerald-500';
+                return 'border-emerald-600 bg-emerald-50/70 text-emerald-950 ring-1 ring-emerald-500 font-bold';
             }
 
             if (this.isUserWrongOption(qId, option)) {
-                return 'border-rose-500 bg-rose-50 text-rose-950 ring-1 ring-rose-500 line-through opacity-90';
+                return 'border-slate-400 bg-slate-100/80 text-slate-600 line-through opacity-85';
             }
 
-            return 'border-slate-200 bg-slate-50/50 text-slate-400 opacity-60';
+            return 'border-amber-900/10 bg-white/50 text-slate-400 opacity-60';
         },
 
         getOptionRadioClass(qId, option) {
             if (!this.isSubmitted) {
                 if (this.isOptionSelected(qId, option)) {
-                    return 'border-[#991b1b] bg-[#991b1b] text-white shadow-sm';
+                    return 'border-[#991b1b] bg-[#991b1b] text-white shadow-xs';
                 }
-                return 'border-slate-300 bg-slate-100 text-slate-700 font-black';
+                return 'border-amber-900/20 bg-[#faf6ed] text-slate-700 font-bold';
             }
 
             if (this.isCorrectOption(qId, option)) {
-                return 'border-emerald-600 bg-emerald-600 text-white shadow-sm font-black';
+                return 'border-emerald-600 bg-emerald-600 text-white font-black';
             }
 
             if (this.isUserWrongOption(qId, option)) {
-                return 'border-rose-600 bg-rose-600 text-white shadow-sm font-black';
+                return 'border-slate-500 bg-slate-500 text-white font-bold';
             }
 
-            return 'border-slate-200 bg-slate-100 text-slate-400 font-bold';
+            return 'border-amber-900/15 bg-white text-slate-400';
         },
 
         getOptionTextClass(qId, option) {
             if (!this.isSubmitted) {
-                return this.isOptionSelected(qId, option) ? 'font-bold text-[#991b1b]' : 'text-slate-700';
+                return this.isOptionSelected(qId, option) ? 'font-bold text-[#991b1b]' : 'text-slate-800';
             }
 
             if (this.isCorrectOption(qId, option)) {
@@ -846,7 +994,7 @@ function quizApp() {
             }
 
             if (this.isUserWrongOption(qId, option)) {
-                return 'text-rose-900';
+                return 'text-slate-500';
             }
 
             return 'text-slate-400';
@@ -854,24 +1002,25 @@ function quizApp() {
 
         async submitQuiz() {
             if (this.answeredCount === 0) {
-                window.toast.warning('Vui lòng chọn ít nhất một đáp án trước khi nộp bài!');
+                window.toast?.warning('Vui lòng hạ bút chọn ít nhất một đáp án trước khi nộp bài!');
                 return;
             }
 
             if (this.answeredCount < this.totalCount) {
                 const remaining = this.totalCount - this.answeredCount;
-                const proceed = await window.dialog.confirm({
-                    title: 'Chưa hoàn thành tất cả câu hỏi',
-                    text: `Bạn còn ${remaining} câu chưa trả lời. Bạn có chắc chắn muốn nộp bài luôn không?`,
+                const proceed = await window.dialog?.confirm({
+                    title: 'Chưa hoàn thành tất cả thi đề',
+                    text: `Còn ${remaining} câu chưa hạ bút. Bạn có chắc chắn muốn kết thúc bài thi luôn không?`,
                     confirmText: 'Nộp bài ngay',
-                    cancelText: 'Tiếp tục làm',
+                    cancelText: 'Tiếp tục làm bài',
                     icon: 'question',
                 });
                 if (!proceed) return;
             }
 
             this.isSubmitting = true;
-            const durationSeconds = Math.max(1, Math.round((Date.now() - this.startTime) / 1000));
+            this.endTime = Date.now();
+            const durationSeconds = Math.max(1, Math.round((this.endTime - this.startTime) / 1000));
 
             try {
                 const response = await fetch("{{ route('quiz.submit') }}", {
@@ -889,7 +1038,7 @@ function quizApp() {
                 });
 
                 if (!response.ok) {
-                    throw new Error("Không thể gửi bài kiểm tra.");
+                    throw new Error("Không thể gửi bài thi.");
                 }
 
                 const data = await response.json();
@@ -897,46 +1046,18 @@ function quizApp() {
                 this.isSubmitted = true;
                 this.petReward = data.pet_reward;
 
-                // Calculate max combo streak (consecutive correct answers)
-                let curCombo = 0;
-                let maxCombo = 0;
-                if (data.details) {
-                    for (const qId in data.details) {
-                        if (data.details[qId].is_correct) {
-                            curCombo++;
-                            if (curCombo > maxCombo) maxCombo = curCombo;
-                        } else {
-                            curCombo = 0;
-                        }
-                    }
-                }
-                this.maxComboStreak = maxCombo;
-
-                // Trigger Combo Celebration if >= 3
-                if (maxCombo >= 3) {
-                    this.showComboCelebration = true;
-                    if (maxCombo >= 8) {
-                        this.comboNotice = '⚡ RỒNG THẦN BÙNG NỔ! COMBO x' + maxCombo + ' LIÊN HOÀN CƯỚC!';
-                    } else if (maxCombo >= 5) {
-                        this.comboNotice = '🔥 THẦN TỐC x' + maxCombo + '! CHUỖI ĐÚNG SIÊU ĐẲNG!';
-                    } else {
-                        this.comboNotice = '🔥 COMBO x' + maxCombo + '! TRÍ NHỚ XUẤT SẮC!';
-                    }
-                    setTimeout(() => { this.showComboCelebration = false; }, 4500);
-                }
-
-                // Dynamic Pet Speech & Reaction based on score
+                // Sound & Scholar Speech feedback
                 if (data.score === 100) {
-                    this.petSpeech = `🎉 TUYỆT ĐỐI 100%! Bạn trả lời đúng toàn bộ ${data.total_questions} câu! Tớ tự hào về bạn vô cùng! 🏆✨`;
+                    this.petSpeech = `🎉 TUYỆT ĐỐI 100%! Bút nở hoa gấm, đúng trọn vẹn ${data.total_questions} đạo đề! Kim Bảng Đề Danh! 🏆✨`;
                     window.soundEngine?.play('fanfare');
                 } else if (data.score >= 80) {
-                    this.petSpeech = `Đỉnh chóp! Đúng ${data.correct_count}/${data.total_questions} câu! Tớ vừa được no bụng và nhận thêm EXP rồi nè! 🐉❤️`;
+                    this.petSpeech = `Đăng Khoa Cập Đệ! Đúng ${data.correct_count}/${data.total_questions} câu! Thư đồng đã dâng trà mừng bạn! 🍵❤️`;
                     window.soundEngine?.play('fanfare');
-                } else if (data.score >= 50) {
-                    this.petSpeech = `Làm tốt lắm! Đúng ${data.correct_count}/${data.total_questions} câu. Hãy xem kỹ những câu sai có gợi ý của tớ nhé! 💡`;
+                } else if (data.score >= 60) {
+                    this.petSpeech = `Làm tốt lắm! Đúng ${data.correct_count}/${data.total_questions} câu. Hãy xem kỹ những câu chưa đắc chuẩn để thấu hiểu sâu hơn nhé! 💡`;
                     window.soundEngine?.play('milestone');
                 } else {
-                    this.petSpeech = `Không sao cả nè! Vạn sự khởi đầu nan. Hãy xem phần mách nước chi tiết của tớ ở từng câu để nhớ sâu hơn nhé! 🌸`;
+                    this.petSpeech = `Vạn sự khởi đầu nan. Hãy xem phần mách nước chi tiết của thư đồng ở từng câu để ghi nhớ bền lâu nhé! 🌸`;
                     window.soundEngine?.play('ding');
                 }
 
@@ -974,11 +1095,11 @@ function quizApp() {
 
                 setTimeout(() => window.refreshIcons?.(), 50);
 
-                // Smooth scroll to top to see score
+                // Smooth scroll to Kim Bảng
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } catch (err) {
                 console.error(err);
-                window.toast.error('Đã xảy ra lỗi khi chấm điểm', 'Vui lòng kiểm tra lại kết nối và thử lại!');
+                window.toast?.error('Đã xảy ra lỗi khi chấm điểm', 'Vui lòng kiểm tra lại kết nối và thử lại!');
             } finally {
                 this.isSubmitting = false;
             }
@@ -989,10 +1110,9 @@ function quizApp() {
             this.isSubmitted = false;
             this.results = null;
             this.petReward = null;
-            this.maxComboStreak = 0;
-            this.showComboCelebration = false;
-            this.petSpeech = 'Chào bạn! Cùng tớ hoàn thành thật xuất sắc bài quiz này nhé! 🎯';
+            this.petSpeech = 'Tĩnh tâm hạ bút, từng nét chữ đều là tích lũy tri thức.';
             this.startTime = Date.now();
+            this.endTime = null;
             setTimeout(() => window.refreshIcons?.(), 50);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }

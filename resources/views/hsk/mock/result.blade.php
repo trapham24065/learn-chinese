@@ -20,10 +20,15 @@
 
     <div class="relative grid gap-8 lg:grid-cols-[1.4fr_1fr] items-center">
         <div>
-            {{-- Status Pill --}}
-            <div class="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-black uppercase tracking-widest backdrop-blur border {{ $test->passed ? 'bg-emerald-400/20 border-emerald-300/30 text-emerald-300' : 'bg-red-400/20 border-red-300/30 text-red-300' }}">
-                <i data-lucide="{{ $test->passed ? 'check-circle' : 'alert-circle' }}" class="h-4 w-4"></i>
-                <span>{{ $test->passed ? 'ĐẠT CHỨNG NHẬN (合格)' : 'CHƯA ĐẠT CHUẨN (不合格)' }}</span>
+            {{-- Status Pill & Kim Bảng Seal --}}
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="seal-zhusha text-xs font-serif {{ $test->passed ? 'bg-amber-100 text-[#991b1b] border-[#991b1b]' : 'bg-slate-800 text-slate-300 border-slate-600' }}">
+                    {{ $test->passed ? '金榜 · 及第登科' : '再试 · 积厚流光' }}
+                </span>
+                <div class="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-black uppercase tracking-widest backdrop-blur border {{ $test->passed ? 'bg-emerald-400/20 border-emerald-300/30 text-emerald-300' : 'bg-red-400/20 border-red-300/30 text-red-300' }}">
+                    <i data-lucide="{{ $test->passed ? 'check-circle' : 'alert-circle' }}" class="h-4 w-4"></i>
+                    <span>{{ $test->passed ? 'ĐẠT CHỨNG NHẬN (合格)' : 'CHƯA ĐẠT CHUẨN (不合格)' }}</span>
+                </div>
             </div>
 
             <h1 class="mt-4 text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight">
@@ -271,12 +276,14 @@
 
                 <div>
                     @if($isCorrect)
-                    <span class="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full">
-                        <i data-lucide="check" class="h-3.5 w-3.5"></i> Chính xác
+                    <span class="seal-stamp-zhun text-xs">
+                        <span>✓</span>
+                        <span>准 · Đắc Chuẩn</span>
                     </span>
                     @else
-                    <span class="inline-flex items-center gap-1 text-xs font-bold text-red-700 bg-red-100 px-3 py-1 rounded-full">
-                        <i data-lucide="x" class="h-3.5 w-3.5"></i> Chưa đúng
+                    <span class="seal-stamp-weizhun text-xs">
+                        <span>✗</span>
+                        <span>未准 · Cần Thâm Tu</span>
                     </span>
                     @endif
                 </div>
