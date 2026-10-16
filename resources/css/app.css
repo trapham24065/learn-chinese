@@ -1031,4 +1031,154 @@
     user-select: none;
 }
 
+/* ==============================================================
+   Ý TƯỞNG 4 — NHÃ TRAI · LƯ TRẦM (雅斋 · 香炉) DESIGN TOKENS
+   ============================================================== */
+
+/* 1. Nhã Trai Thư Phòng Room Frame */
+.nha-trai-room {
+    position: relative;
+    border-radius: 2.25rem;
+    background-color: #faf7f0;
+    background-image: 
+        radial-gradient(ellipse at 50% 0%, rgba(254, 243, 199, 0.5) 0%, rgba(250, 247, 240, 0.98) 75%),
+        linear-gradient(to bottom, rgba(180, 83, 9, 0.03) 0%, transparent 100%);
+    border: 1.5px solid rgba(180, 83, 9, 0.2);
+    box-shadow: 
+        0 4px 6px -1px rgba(69, 26, 3, 0.04),
+        0 20px 40px -12px rgba(69, 26, 3, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+/* 2. Lư Trầm (Incense Burner) Centerpiece & Glow */
+.incense-burner-altar {
+    position: relative;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+@keyframes burnerWarmGlow {
+    0%, 100% {
+        filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.35)) drop-shadow(0 0 18px rgba(185, 28, 28, 0.2));
+    }
+    50% {
+        filter: drop-shadow(0 0 16px rgba(245, 158, 11, 0.6)) drop-shadow(0 0 28px rgba(185, 28, 28, 0.35));
+    }
+}
+
+.burner-glow-active {
+    animation: burnerWarmGlow 5.5s ease-in-out infinite;
+}
+
+/* 3. Làn Khói Trầm Uyển Chuyển (Serene Incense Smoke Streams) */
+@keyframes incenseSmoke1 {
+    0% {
+        transform: translateY(4px) scaleX(0.75) translateX(0);
+        opacity: 0;
+    }
+    18% {
+        opacity: 0.7;
+        transform: translateY(-10px) scaleX(1.05) translateX(3px);
+    }
+    45% {
+        opacity: 0.5;
+        transform: translateY(-28px) scaleX(1.25) translateX(-5px);
+    }
+    75% {
+        opacity: 0.25;
+        transform: translateY(-48px) scaleX(1.45) translateX(6px);
+    }
+    100% {
+        transform: translateY(-68px) scaleX(1.7) translateX(-3px);
+        opacity: 0;
+    }
+}
+
+@keyframes incenseSmoke2 {
+    0% {
+        transform: translateY(2px) scaleX(0.85) translateX(0);
+        opacity: 0;
+    }
+    22% {
+        opacity: 0.6;
+        transform: translateY(-12px) scaleX(1.1) translateX(-4px);
+    }
+    52% {
+        opacity: 0.4;
+        transform: translateY(-32px) scaleX(1.3) translateX(5px);
+    }
+    80% {
+        opacity: 0.2;
+        transform: translateY(-54px) scaleX(1.5) translateX(-5px);
+    }
+    100% {
+        transform: translateY(-74px) scaleX(1.75) translateX(2px);
+        opacity: 0;
+    }
+}
+
+.smoke-stream-1 {
+    animation: incenseSmoke1 7.8s ease-in-out infinite;
+    transform-origin: bottom center;
+    filter: blur(0.75px);
+}
+
+.smoke-stream-2 {
+    animation: incenseSmoke2 9.2s ease-in-out infinite 3.8s;
+    transform-origin: bottom center;
+    filter: blur(0.85px);
+}
+
+/* 4. Tam Đại Công Phu Cards (三大功夫) */
+.tam-dai-card {
+    position: relative;
+    border-radius: 1.5rem;
+    background: #ffffff;
+    border: 1.5px solid rgba(180, 83, 9, 0.16);
+    box-shadow: 0 2px 8px -2px rgba(69, 26, 3, 0.05);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tam-dai-card:hover {
+    border-color: rgba(185, 28, 28, 0.4);
+    background: linear-gradient(135deg, #ffffff 0%, #fffdfa 100%);
+    transform: translateY(-2px);
+    box-shadow: 
+        0 4px 6px -1px rgba(185, 28, 28, 0.05),
+        0 14px 24px -6px rgba(180, 83, 9, 0.12);
+}
+
+/* 5. Học Tịch Triện Son (学籍 · Scholar Rank Seal) */
+.hoc-tich-seal {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border: 2px solid #b91c1c;
+    border-radius: 8px;
+    padding: 2px 8px;
+    color: #b91c1c;
+    background: radial-gradient(circle, rgba(185, 28, 28, 0.08) 0%, rgba(254, 242, 242, 0.8) 100%);
+    box-shadow: 
+        0 0 0 1px rgba(185, 28, 28, 0.25),
+        inset 0 0 4px rgba(185, 28, 28, 0.15);
+    font-family: "STKaiti", "KaiTi", "Noto Serif SC", serif;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    user-select: none;
+}
+
+/* 6. Tiểu Ký Hoạt Động (学习小记 Dot Timeline) */
+.tieu-ky-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 9999px;
+    border: 2px solid #b91c1c;
+    background-color: #fef2f2;
+    flex-shrink: 0;
+}
+
+
 
