@@ -748,7 +748,7 @@
                  @click="flip()">
                 <div class="flip-card-inner" :class="{ flipped }">
                     {{-- Front: Hanzi + Lesson label + Star button --}}
-                    <div class="flip-card-front relative flex flex-col items-center justify-center gap-3 bg-slate-950 p-8 text-white shadow-2xl shadow-slate-950/20 overflow-hidden chinese-frame-corners">
+                    <div class="flip-card-front relative flex flex-col items-center justify-center gap-3 bg-slate-950 p-8 text-white shadow-2xl shadow-slate-950/20 overflow-hidden">
                         {{-- Subtle Chinese Watermark Motif --}}
                         <span class="chinese-watermark right-6 top-1/2 -translate-y-1/2 text-9xl text-white/5 select-none pointer-events-none">学</span>
 
@@ -984,7 +984,7 @@
 
 {{-- Vocabulary Catalog Modal Trigger Section --}}
 <section x-data class="mt-12 flex flex-col items-center justify-center text-center">
-    <div class="relative overflow-hidden rounded-[2.5rem] border border-amber-900/15 bg-white/90 p-8 shadow-sm backdrop-blur max-w-2xl w-full chinese-frame-corners">
+    <div class="relative overflow-hidden rounded-[2.5rem] border border-amber-900/15 bg-white/90 p-8 shadow-sm backdrop-blur max-w-2xl w-full">
         {{-- Decorative traditional seal & title --}}
         <div class="flex items-center justify-center gap-2">
             <span class="chinese-seal px-2 py-0.5 text-xs font-bold">【词汇全表】</span>
@@ -1037,7 +1037,7 @@
          x-transition:leave="transition ease-in duration-200 transform"
          x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
          x-transition:leave-end="opacity-0 translate-y-4 sm:scale-95"
-         class="relative flex flex-col w-full max-w-5xl max-h-[92vh] rounded-[2.5rem] bg-[#fcf8f2] border border-amber-900/15 shadow-2xl overflow-hidden z-10 chinese-frame-corners paper-warm-texture">
+         class="relative flex flex-col w-full max-w-5xl max-h-[92vh] rounded-[2.5rem] bg-[#fcf8f2] border border-amber-900/15 shadow-2xl overflow-hidden z-10 paper-warm-texture">
 
         {{-- Header: Chinese Style with Seal Stamp --}}
         <div class="relative shrink-0 border-b border-amber-900/10 bg-white/95 px-6 py-5 sm:px-8">
@@ -1188,8 +1188,9 @@
                 <button type="button"
                     @click="goToPage(currentPage - 1)"
                     :disabled="currentPage <= 1 || loading"
-                    class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-xs transition hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
-                    <i data-lucide="chevron-left" class="h-4 w-4"></i>
+                    title="Trang trước"
+                    class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-xs transition hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
                 </button>
 
                 {{-- Page range --}}
@@ -1201,7 +1202,7 @@
                 })" :key="p">
                     <button type="button"
                         @click="goToPage(p)"
-                        class="inline-flex h-9 w-9 items-center justify-center rounded-xl text-xs font-bold transition shadow-xs"
+                        class="inline-flex h-9 w-9 items-center justify-center rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
                         :class="currentPage === p ? 'bg-[#991b1b] text-white shadow-md' : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'">
                         <span x-text="p"></span>
                     </button>
@@ -1211,8 +1212,9 @@
                 <button type="button"
                     @click="goToPage(currentPage + 1)"
                     :disabled="currentPage >= lastPage || loading"
-                    class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-xs transition hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
-                    <i data-lucide="chevron-right" class="h-4 w-4"></i>
+                    title="Trang sau"
+                    class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-xs transition hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
                 </button>
             </div>
         </div>
@@ -1383,10 +1385,10 @@ function vocabularyModal() {
         isOpen: false,
         loading: false,
         cards: @json($flashcards->items() ?? []),
-        currentPage: {{ $flashcards->currentPage() ?? 1 }},
-        lastPage: {{ $flashcards->lastPage() ?? 1 }},
+        currentPage: 1,
         total: {{ $deckTotal ?? 0 }},
         perPage: 12,
+        lastPage: {{ max(1, (int) ceil(($deckTotal ?? 0) / 12)) }},
         searchTerm: '',
         filterStarredOnly: false,
         lessonSlug: '{{ $lessonSlug ?? '' }}',
@@ -1418,7 +1420,9 @@ function vocabularyModal() {
                 if (res.ok) {
                     const data = await res.json();
                     this.cards = data.cards || [];
-                    this.total = data.total || 0;
+                    if (typeof data.total === 'number' && data.total > 0) {
+                        this.total = data.total;
+                    }
                     this.currentPage = page;
                     this.lastPage = Math.max(1, Math.ceil(this.total / this.perPage));
                     const scrollEl = document.getElementById('vocab-modal-scroll');
@@ -1445,7 +1449,7 @@ function vocabularyModal() {
                 if (res.ok) {
                     const data = await res.json();
                     this.cards = data.cards || [];
-                    this.total = data.total || 0;
+                    this.total = (typeof data.total === 'number') ? data.total : (data.cards?.length || 0);
                     this.currentPage = 1;
                     this.lastPage = Math.max(1, Math.ceil(this.total / this.perPage));
                 }

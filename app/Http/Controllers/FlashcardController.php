@@ -198,6 +198,7 @@ class FlashcardController extends Controller
             });
         }
 
+        $total        = (clone $query)->count();
         $limit        = min(50, max(1, (int) $request->query('limit', self::PER_PAGE_DECK)));
 
         $cards = $query->skip($offset)->take($limit)->get()
@@ -219,7 +220,7 @@ class FlashcardController extends Controller
 
         return response()->json([
             'cards'   => $cards,
-            'total'   => $query->count(),
+            'total'   => $total,
             'offset'  => $offset,
             'limit'   => $limit,
         ]);

@@ -580,38 +580,6 @@
     animation: pulseGlow 2.5s infinite;
 }
 
-/* Classical Chinese Corner Ornament Frame (回纹四角) */
-.chinese-frame-corners {
-    position: relative;
-}
-.chinese-frame-corners::before,
-.chinese-frame-corners::after {
-    content: "";
-    position: absolute;
-    width: 14px;
-    height: 14px;
-    pointer-events: none;
-    border-color: rgba(153, 27, 27, 0.45);
-    border-style: solid;
-    transition: all 0.3s ease;
-}
-.chinese-frame-corners::before {
-    top: 10px;
-    left: 10px;
-    border-width: 2px 0 0 2px;
-}
-.chinese-frame-corners::after {
-    bottom: 10px;
-    right: 10px;
-    border-width: 0 2px 2px 0;
-}
-.chinese-frame-corners:hover::before,
-.chinese-frame-corners:hover::after {
-    border-color: #991b1b;
-    width: 18px;
-    height: 18px;
-}
-
 /* Chinese Calligraphy Brush Underline (毛笔横批) */
 .brush-underline {
     position: relative;
