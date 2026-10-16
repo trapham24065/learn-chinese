@@ -467,10 +467,12 @@
                 this.petSpeech = `⚡ SIÊU PHÀM! Chuỗi x${this.streakCount}! Trí nhớ đỉnh nóc kịch trần luôn! 🔥`;
                 this.triggerComboNotice(`🔥 THẦN TỐC x${this.streakCount}! BÙNG NỔ!`);
                 window.soundEngine?.play('milestone');
+                window.chineseAmbiance?.celebrate(25);
             } else if (this.streakCount >= 3) {
                 this.petSpeech = `🔥 Xuất sắc! Chuỗi x${this.streakCount} rồi, tiến bộ nhanh thật đấy!`;
                 this.triggerComboNotice(`🔥 COMBO x${this.streakCount}!`);
                 window.soundEngine?.play('milestone');
+                window.chineseAmbiance?.celebrate(15);
             } else {
                 this.petSpeech = `Đỉnh quá! Đã thuộc từ 「${currentHanzi}」rồi nè! 🎉`;
                 window.soundEngine?.play('ding');
@@ -595,6 +597,7 @@
             if (data?.pet_reward) {
                 this.petReward = data.pet_reward;
                 this.petSpeech = `Oa! Cậu đã hoàn thành ${this.cards.length} thẻ rồi! Tớ được thưởng +${data.pet_reward.exp_bonus} EXP và ăn no nê! 💖`;
+                window.chineseAmbiance?.celebrate(35);
             }
         } catch(e) {}
     },
