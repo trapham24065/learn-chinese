@@ -15,7 +15,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body class="min-h-screen bg-[#f4ede3] text-slate-950 antialiased lg:pl-72">
+<body class="min-h-screen bg-[#f4ede3] text-slate-950 antialiased lg:pl-72 paper-warm-texture">
     <aside class="fixed inset-y-0 left-0 z-40 hidden w-72 border-r border-slate-200/80 bg-white/95 px-5 py-5 shadow-2xl shadow-slate-950/10 backdrop-blur lg:flex lg:flex-col justify-between overflow-hidden">
         
         {{-- 1. Pinned Top: Brand Logo --}}
@@ -39,7 +39,7 @@
                 {{-- Group 1: HỌC TẬP TRỌNG TÂM --}}
                 <div class="space-y-1">
                     <p class="px-3 pt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
-                        <span>Học tập trọng tâm</span>
+                        <span class="flex items-center gap-1.5"><span class="chinese-seal text-[9px] px-1 py-0.5">学</span><span>Học tập trọng tâm</span></span>
                         <i data-lucide="book-open" class="h-3 w-3 text-slate-400"></i>
                     </p>
 
@@ -82,7 +82,7 @@
                 {{-- Group 2: LUYỆN TẬP & TRẢI NGHIỆM --}}
                 <div class="space-y-1">
                     <p class="px-3 pt-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
-                        <span>Luyện tập & Thực hành</span>
+                        <span class="flex items-center gap-1.5"><span class="chinese-seal text-[9px] px-1 py-0.5">练</span><span>Luyện tập & Thực hành</span></span>
                         <i data-lucide="swords" class="h-3 w-3 text-slate-400"></i>
                     </p>
 
@@ -143,7 +143,7 @@
                 {{-- Group 3: TRA CỨU & CÔNG CỤ --}}
                 <div class="space-y-1">
                     <p class="px-3 pt-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
-                        <span>Tra cứu & Công cụ</span>
+                        <span class="flex items-center gap-1.5"><span class="chinese-seal text-[9px] px-1 py-0.5">查</span><span>Tra cứu & Công cụ</span></span>
                         <i data-lucide="compass" class="h-3 w-3 text-slate-400"></i>
                     </p>
 
@@ -189,7 +189,7 @@
                 {{-- Group 4: BẠN ĐỒNG HÀNH & KHÓA HỌC --}}
                 <div class="space-y-1">
                     <p class="px-3 pt-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
-                        <span>Bạn đồng hành</span>
+                        <span class="flex items-center gap-1.5"><span class="chinese-seal text-[9px] px-1 py-0.5">伴</span><span>Bạn đồng hành</span></span>
                         <i data-lucide="sparkles" class="h-3 w-3 text-slate-400"></i>
                     </p>
 
@@ -399,7 +399,10 @@
                     <nav class="flex-1 overflow-y-auto px-4 py-4 space-y-3">
                         {{-- Hub 1: Học tập --}}
                         <div class="space-y-1">
-                            <p class="px-2 pb-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">Học tập trọng tâm</p>
+                            <p class="px-2 pb-1 text-[10px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                                <span class="chinese-seal text-[9px] px-1 py-0.5">学</span>
+                                <span>Học tập trọng tâm</span>
+                            </p>
 
                             <a href="{{ auth()->check() ? route('dashboard') : route('home') }}"
                                @click="mobileMenuOpen = false"
@@ -427,7 +430,10 @@
 
                         {{-- Hub 2: Luyện tập & Thực hành --}}
                         <div class="space-y-1">
-                            <p class="px-2 pb-1 pt-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">Luyện tập &amp; Thực hành</p>
+                            <p class="px-2 pb-1 pt-1 text-[10px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                                <span class="chinese-seal text-[9px] px-1 py-0.5">练</span>
+                                <span>Luyện tập &amp; Thực hành</span>
+                            </p>
 
                             @if(!function_exists('setting_bool') || setting_bool('feature_quiz', true))
                             <a href="{{ route('quiz') }}"
@@ -476,7 +482,10 @@
 
                         {{-- Hub 3: Tra cứu & Công cụ --}}
                         <div class="space-y-1">
-                            <p class="px-2 pb-1 pt-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">Tra cứu &amp; Công cụ</p>
+                            <p class="px-2 pb-1 pt-1 text-[10px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                                <span class="chinese-seal text-[9px] px-1 py-0.5">查</span>
+                                <span>Tra cứu &amp; Công cụ</span>
+                            </p>
 
                             @if(!function_exists('setting_bool') || setting_bool('feature_dictionary', true))
                             <a href="{{ route('dictionary.index') }}"
@@ -513,7 +522,10 @@
 
                         {{-- Hub 4: Bạn đồng hành & Khóa học --}}
                         <div class="space-y-1">
-                            <p class="px-2 pb-1 pt-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">Bạn đồng hành</p>
+                            <p class="px-2 pb-1 pt-1 text-[10px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                                <span class="chinese-seal text-[9px] px-1 py-0.5">伴</span>
+                                <span>Bạn đồng hành</span>
+                            </p>
 
                             @auth
                             <a href="{{ route('pet.index') }}"

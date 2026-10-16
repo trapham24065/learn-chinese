@@ -198,7 +198,9 @@ class FlashcardController extends Controller
             });
         }
 
-        $cards = $query->skip($offset)->take(self::PER_PAGE_DECK)->get()
+        $limit        = min(50, max(1, (int) $request->query('limit', self::PER_PAGE_DECK)));
+
+        $cards = $query->skip($offset)->take($limit)->get()
             ->map(fn ($f) => [
                 'id'              => $f->id,
                 'hanzi'           => $f->hanzi,
@@ -219,6 +221,7 @@ class FlashcardController extends Controller
             'cards'   => $cards,
             'total'   => $query->count(),
             'offset'  => $offset,
+            'limit'   => $limit,
         ]);
     }
 

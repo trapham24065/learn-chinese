@@ -657,7 +657,7 @@ class PetDialogueService
         }
 
         // 7. Late night (hour >= 23 or hour < 5)
-        $hour = (int) now()->format('H');
+        $hour = (int) Carbon::now(config('app.timezone', 'Asia/Ho_Chi_Minh'))->format('H');
         if ($hour >= 23 || $hour < 5) {
             $pool = [
                 "夜深了，注意休息哦。(Yè shēn le, zhùyì xiūxi ó.) Khuya lắm rồi... học bài xong nhớ ngủ sớm giữ gìn sức khỏe nhé, mai gặp lại! 🌙",

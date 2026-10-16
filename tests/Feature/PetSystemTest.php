@@ -13,6 +13,7 @@ use App\Services\Pet\PetFeedingService;
 use App\Services\Pet\PetGrowthService;
 use App\Services\Pet\PetHungerService;
 use App\Services\Pet\PetService;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -857,6 +858,7 @@ class PetSystemTest extends TestCase
 
     public function test_interaction_api_records_and_returns_dialogue(): void
     {
+        Carbon::setTestNow(Carbon::create(2026, 10, 16, 14, 0, 0, 'Asia/Ho_Chi_Minh'));
         $petService = app(PetService::class);
         $userPet = $petService->createInitialPet($this->user);
 

@@ -584,17 +584,27 @@
                     </template>
 
                     <template x-if="isSubmitted">
-                        <div class="flex items-center gap-2">
+                        <div class="flex flex-wrap items-center gap-2">
                             <button type="button"
                                     @click="resetQuiz()"
-                                    class="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-bold text-slate-800 shadow transition hover:bg-slate-50">
+                                    class="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-800 shadow transition hover:bg-slate-50">
                                 <i data-lucide="rotate-ccw" class="h-4 w-4"></i>
                                 <span>Làm lại</span>
                             </button>
+                            <a href="{{ route('pet.index') }}"
+                               class="inline-flex items-center justify-center gap-2 rounded-full border border-amber-300 bg-amber-50 px-5 py-3 text-sm font-bold text-amber-900 shadow-sm transition hover:bg-amber-100 hover:scale-105 active:scale-95">
+                                <span>Thăm phòng Pet</span>
+                                <span class="text-base select-none">🥟</span>
+                            </a>
+                            <a href="{{ route('flashcards', $selectedLesson ? ['lesson' => $selectedLesson->slug] : []) }}"
+                               class="inline-flex items-center justify-center gap-2 rounded-full bg-[#991b1b] px-5 py-3 text-sm font-bold text-white shadow-md shadow-red-950/20 transition hover:bg-red-800 hover:scale-105 active:scale-95">
+                                <i data-lucide="layers" class="h-4 w-4"></i>
+                                <span>Ôn Flashcard bài này</span>
+                            </a>
                             <a href="{{ route('dashboard') }}"
-                               class="inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white shadow transition hover:bg-slate-800">
+                               class="inline-flex items-center justify-center gap-2 rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white shadow transition hover:bg-slate-800">
                                 <i data-lucide="layout-dashboard" class="h-4 w-4"></i>
-                                <span>Về Dashboard</span>
+                                <span class="hidden sm:inline">Về Dashboard</span>
                             </a>
                         </div>
                     </template>

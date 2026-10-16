@@ -496,3 +496,87 @@
 .cozy-rain-drop {
     animation: cozyRain 1.1s linear infinite;
 }
+
+/* ─────────────────────────────────────────────────────────────
+   CHINESE CULTURAL AESTHETIC & DYNAMISM (TÂN TRUNG HOA / QUỐC PHONG)
+   ───────────────────────────────────────────────────────────── */
+
+/* Chinese Classical & Calligraphy Fonts */
+.font-chinese {
+    font-family: "Noto Serif SC", "Source Han Serif SC", "STKaiti", "KaiTi", "Songti SC", "SimSun", serif;
+}
+
+.font-calligraphy {
+    font-family: "STKaiti", "KaiTi", "Ma Shan Zheng", "Noto Serif SC", "SimSun", cursive, serif;
+}
+
+/* Vermilion Seal Stamp (印章 Con dấu triện chu sa) */
+.chinese-seal {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid #991b1b;
+    background: rgba(153, 27, 27, 0.06);
+    color: #991b1b;
+    font-family: "STKaiti", "KaiTi", "Noto Serif SC", serif;
+    font-weight: 900;
+    border-radius: 4px;
+    line-height: 1;
+    text-shadow: 0 0.5px 1px rgba(153, 27, 27, 0.2);
+    box-shadow: inset 0 0 0 1px rgba(153, 27, 27, 0.15);
+    letter-spacing: 0.05em;
+    user-select: none;
+}
+
+.chinese-seal-gold {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1.5px solid #b45309;
+    background: rgba(245, 158, 11, 0.08);
+    color: #b45309;
+    font-family: "STKaiti", "KaiTi", "Noto Serif SC", serif;
+    font-weight: 900;
+    border-radius: 4px;
+    line-height: 1;
+    box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.2);
+    user-select: none;
+}
+
+/* Xuan Paper / Traditional Rice Paper Subtle Background Pattern */
+.paper-warm-texture {
+    background-color: #fcf8f2;
+    background-image: radial-gradient(rgba(180, 83, 9, 0.035) 1px, transparent 0);
+    background-size: 20px 20px;
+}
+
+/* Watermark Chinese Character Decorative Layer */
+.chinese-watermark {
+    position: absolute;
+    font-family: "STKaiti", "KaiTi", "Noto Serif SC", serif;
+    font-weight: 900;
+    color: rgba(153, 27, 27, 0.035);
+    pointer-events: none;
+    user-select: none;
+    line-height: 1;
+}
+
+/* Micro-animations */
+@keyframes gentleFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+}
+
+.animate-gentle-float {
+    animation: gentleFloat 3s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(153, 27, 27, 0.15); }
+    50% { box-shadow: 0 0 0 8px rgba(153, 27, 27, 0); }
+}
+
+.animate-pulse-glow {
+    animation: pulseGlow 2.5s infinite;
+}
+

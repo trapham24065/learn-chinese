@@ -737,8 +737,12 @@
                  @click="flip()">
                 <div class="flip-card-inner" :class="{ flipped }">
                     {{-- Front: Hanzi + Lesson label + Star button --}}
-                    <div class="flip-card-front relative flex flex-col items-center justify-center gap-3 bg-slate-950 p-8 text-white shadow-2xl shadow-slate-950/20">
-                        <div class="flex flex-wrap items-center justify-center gap-1.5">
+                    <div class="flip-card-front relative flex flex-col items-center justify-center gap-3 bg-slate-950 p-8 text-white shadow-2xl shadow-slate-950/20 overflow-hidden">
+                        {{-- Subtle Chinese Watermark Motif --}}
+                        <span class="chinese-watermark right-6 top-1/2 -translate-y-1/2 text-9xl text-white/5 select-none pointer-events-none">学</span>
+
+                        <div class="flex flex-wrap items-center justify-center gap-1.5 z-10">
+                            <span class="chinese-seal px-1.5 py-0.5 text-[10px] font-bold border-red-400/40 text-red-300 bg-red-950/40">【字】</span>
                             <template x-if="card.hsk_level || card.hsk2_level || card.hsk3_level">
                                 <span class="rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold text-slate-300"
                                       x-text="'HSK ' + (card.hsk_level || card.hsk2_level || card.hsk3_level)"></span>
@@ -748,8 +752,8 @@
                                       x-text="card.lesson"></span>
                             </template>
                         </div>
-                        <p class="text-8xl font-black leading-none tracking-tight" x-text="card.hanzi"></p>
-                        <p class="mt-2 text-sm text-slate-400">Bấm để xem nghĩa 👆</p>
+                        <p class="font-chinese text-8xl font-black leading-none tracking-tight select-none z-10" x-text="card.hanzi"></p>
+                        <p class="mt-2 text-sm text-slate-400 z-10">Bấm để xem nghĩa 👆</p>
 
                         {{-- Star / Bookmark Button (Top Right) --}}
                         <button @click.stop="toggleStar(card.id)" 
@@ -958,179 +962,241 @@
     </div>
 </div>
 
-{{-- Static card grid with pagination (Collapsible to keep focus on 3D card) --}}
-<section class="mt-12" x-data="{ showList: false }">
-    <div class="flex flex-col items-center justify-center gap-3">
-        <button type="button" @click="showList = !showList; setTimeout(() => window.refreshIcons?.(), 50)"
-            class="inline-flex items-center gap-2 rounded-2xl border border-slate-200/90 bg-white px-6 py-3 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50 hover:border-slate-300 transition active:scale-[0.98]">
-            <i data-lucide="list" class="h-4 w-4 text-[#991b1b]"></i>
-            <span x-text="showList ? 'Thu gọn danh sách từ vựng' : 'Xem toàn bộ {{ $deckTotal }} từ vựng trong bộ này'"></span>
-            <i data-lucide="chevron-down" class="h-4 w-4 text-slate-400 transition-transform duration-200" :class="showList ? 'rotate-180' : ''"></i>
-        </button>
-        <p x-show="!showList" class="text-xs text-slate-500">
-            Mặc định tập trung vào một thẻ tại một thời điểm. Mở danh sách khi cần tra cứu nhanh.
-        </p>
-    </div>
-
-    <div x-show="showList" x-transition class="mt-8 space-y-6">
-        <div class="flex items-center justify-between flex-wrap gap-3">
-            <p class="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">
-                Toàn bộ {{ $deckTotal }} thẻ trong bộ này
-            </p>
-            <p class="text-sm text-slate-400">
-                Trang {{ $flashcards->currentPage() }} / {{ $flashcards->lastPage() }}
-            </p>
+{{-- Vocabulary Catalog Modal Trigger Section --}}
+<section class="mt-12 flex flex-col items-center justify-center text-center">
+    <div class="relative overflow-hidden rounded-[2.5rem] border border-amber-900/15 bg-white/90 p-8 shadow-sm backdrop-blur max-w-2xl w-full">
+        {{-- Decorative traditional seal & title --}}
+        <div class="flex items-center justify-center gap-2">
+            <span class="chinese-seal px-2 py-0.5 text-xs font-bold">【词汇全表】</span>
+            <span class="text-xs font-bold uppercase tracking-[0.2em] text-[#991b1b]">Tra cứu toàn cảnh</span>
         </div>
+        <h3 class="mt-3 text-2xl sm:text-3xl font-black text-slate-900">
+            Sổ toàn bộ {{ $deckTotal }} từ vựng trong bộ này
+        </h3>
+        <p class="mt-2 text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
+            Mở sổ tra cứu nhanh để xem danh mục từ, nghe phát âm và chọn đưa bất kỳ từ nào lên bảng học 3D mà không làm tải lại trang.
+        </p>
+        <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <button type="button" @click="$dispatch('open-vocab-modal')"
+                class="inline-flex items-center gap-2.5 rounded-full bg-[#991b1b] px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-red-950/20 hover:bg-red-800 transition-all hover:scale-105 active:scale-95">
+                <i data-lucide="book-marked" class="h-4 w-4"></i>
+                <span>Mở Sổ Tra Cứu Toàn Bộ Thẻ</span>
+                <span class="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-black">{{ $deckTotal }}</span>
+            </button>
+        </div>
+    </div>
+</section>
 
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        @foreach($flashcards as $card)
-        @php
-            $cardPayload = [
-                'id'              => $card->id,
-                'hanzi'           => $card->hanzi,
-                'pinyin'          => $card->pinyin,
-                'meaning'         => $card->meaning,
-                'example'         => $card->example,
-                'example_pinyin'  => $card->example_pinyin,
-                'example_meaning' => $card->example_meaning,
-                'lesson'          => $card->lesson?->title ?? 'Chung',
-                'lesson_id'       => $card->lesson_id,
-                'is_starred'      => (bool) ($card->is_starred ?? false),
-                'hsk2_level'      => $card->hsk2Level(),
-                'hsk3_level'      => $card->hsk3Level(),
-                'hsk_level'       => $card->hsk_level,
-            ];
-        @endphp
-        <article 
-            x-data
-            @click="window.selectFlashcard({{ Js::from($cardPayload) }})"
-            onclick="window.selectFlashcard({{ Js::from($cardPayload) }})"
-            class="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-slate-200/70 bg-white/80 p-5 shadow-sm backdrop-blur transition-all duration-200 hover:border-[#991b1b]/50 hover:shadow-xl hover:-translate-y-0.5 cursor-pointer">
-            <div class="flex items-start justify-between gap-3">
-                <div class="flex-1 min-w-0">
+{{-- Interactive Vocabulary Deck Modal (词汇总表) --}}
+<div x-data="vocabularyModal()"
+     @open-vocab-modal.window="open()"
+     @keydown.escape.window="close()"
+     x-show="isOpen"
+     x-cloak
+     style="display: none;"
+     class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6">
+
+    {{-- Dark Backdrop --}}
+    <div x-show="isOpen"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         @click="close()"
+         class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm"></div>
+
+    {{-- Modal Panel Container --}}
+    <div x-show="isOpen"
+         x-transition:enter="transition ease-out duration-300 transform"
+         x-transition:enter-start="opacity-0 translate-y-4 sm:scale-95"
+         x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+         x-transition:leave="transition ease-in duration-200 transform"
+         x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+         x-transition:leave-end="opacity-0 translate-y-4 sm:scale-95"
+         class="relative flex flex-col w-full max-w-5xl max-h-[92vh] rounded-[2.5rem] bg-[#fcf8f2] border border-amber-900/15 shadow-2xl overflow-hidden z-10">
+
+        {{-- Header: Chinese Style with Seal Stamp --}}
+        <div class="relative shrink-0 border-b border-amber-900/10 bg-white/95 px-6 py-5 sm:px-8">
+            <div class="flex items-start justify-between gap-4">
+                <div>
                     <div class="flex items-center gap-2">
-                        <x-tone-pinyin :text="$card->pinyin" class="truncate text-xs font-semibold tracking-wider" />
-                        <button type="button"
-                            onclick="event.stopPropagation(); window.playChineseVoice('{{ addslashes($card->hanzi) }}')"
-                            class="text-slate-300 transition hover:text-blue-500 focus:outline-none"
-                            title="Nghe phát âm">
-                            <i data-lucide="volume-2" class="h-3.5 w-3.5"></i>
-                        </button>
+                        <span class="chinese-seal px-2 py-0.5 text-xs font-bold">【录】</span>
+                        <p class="text-xs font-bold uppercase tracking-[0.2em] text-[#991b1b]">Sổ Từ Vựng Toàn Cầu · 词汇全表</p>
                     </div>
-                    <div class="mt-1 flex items-baseline gap-3">
-                        <h2 class="text-3xl font-black text-slate-800">{{ $card->hanzi }}</h2>
-                    </div>
-                    <p class="mt-2 text-sm font-medium leading-relaxed text-slate-600 line-clamp-2" title="{{ $card->meaning }}">{{ $card->meaning }}</p>
+                    <h2 class="mt-1 text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                        Toàn bộ từ vựng (<span x-text="total"></span> từ)
+                    </h2>
+                    <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
+                        Bấm vào từ bất kỳ để đưa lên bàn học 3D, nghe phát âm chuẩn hoặc lưu vào Sổ tay.
+                    </p>
                 </div>
-                
-                <div class="flex flex-col items-end gap-2 shrink-0">
-                    {{-- Star Button on Grid Card --}}
+
+                {{-- Close Button --}}
+                <button @click="close()" aria-label="Đóng sổ từ vựng"
+                    class="grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-slate-200 bg-white text-slate-500 hover:bg-red-50 hover:text-red-700 hover:border-red-200 transition active:scale-95">
+                    <i data-lucide="x" class="h-5 w-5"></i>
+                </button>
+            </div>
+
+            {{-- Toolbar: Search + Star filter inside Modal --}}
+            <div class="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
+                <div class="relative flex-1 max-w-md">
+                    <input type="text"
+                           x-model="searchTerm"
+                           @input.debounce.350ms="search($event.target.value)"
+                           placeholder="Tra nhanh chữ Hán, pinyin hoặc nghĩa..."
+                           class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 pl-10 pr-9 text-sm text-slate-800 shadow-xs outline-none transition focus:border-[#991b1b] focus:ring-1 focus:ring-[#991b1b]">
+                    <i data-lucide="search" class="absolute left-3.5 top-3 h-4 w-4 text-slate-400"></i>
+                    <template x-if="searchTerm">
+                        <button @click="searchTerm = ''; search('')" class="absolute right-3 top-3 text-slate-400 hover:text-slate-600">
+                            <i data-lucide="x" class="h-4 w-4"></i>
+                        </button>
+                    </template>
+                </div>
+
+                <div class="flex items-center gap-2">
                     <button type="button"
-                            x-data="{ isStarred: {{ ($card->is_starred ?? false) ? 'true' : 'false' }}, loading: false }"
-                            data-id="{{ $card->id }}"
-                            data-hanzi="{{ $card->hanzi }}"
-                            data-pinyin="{{ $card->pinyin }}"
-                            data-meaning="{{ $card->meaning }}"
-                            @click.stop.prevent="window.toggleCardStar($data, $el)"
-                            class="flex h-8 w-8 items-center justify-center rounded-full transition hover:scale-110 active:scale-95"
-                            :class="isStarred ? 'text-amber-500 bg-amber-50 shadow-sm' : 'text-slate-300 hover:text-amber-400 hover:bg-slate-50'"
-                            :title="isStarred ? 'Bỏ lưu khỏi Sổ từ' : 'Lưu vào Sổ từ vựng'">
-                        <span :class="{ 'fill-current': isStarred }" class="inline-flex">
-                            <i data-lucide="star" class="h-4 w-4"></i>
-                        </span>
+                            @click="filterStarredOnly = !filterStarredOnly; search(searchTerm)"
+                            class="inline-flex items-center gap-1.5 rounded-2xl px-4 py-2 text-xs font-bold transition shadow-xs"
+                            :class="filterStarredOnly ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'">
+                        <i data-lucide="star" class="h-3.5 w-3.5" :class="filterStarredOnly ? 'fill-current text-white' : 'text-amber-500 fill-amber-400'"></i>
+                        <span>Chỉ xem từ đã lưu</span>
                     </button>
 
-                    <div class="flex flex-col items-end gap-1">
-                        <div class="flex flex-wrap items-center justify-end gap-1">
-                            @php
-                                $simpleHsk = $card->hsk_level ?? $card->hsk2Level() ?? $card->hsk3Level();
-                            @endphp
-                            @if($simpleHsk)
-                            <span class="shrink-0 rounded-lg bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700 border border-slate-200">
-                                HSK {{ $simpleHsk }}
-                            </span>
-                            @endif
-                        </div>
-                        @if($card->lesson)
-                        <span class="shrink-0 rounded-lg bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-100/80 max-w-[120px] truncate"
-                              title="{{ $card->lesson->title }}">
-                            {{ $card->lesson->title }}
-                        </span>
-                        @endif
-                    </div>
+                    <span class="text-xs text-slate-400 pl-2">
+                        Trang <strong class="text-slate-700" x-text="currentPage"></strong> / <span x-text="lastPage"></span>
+                    </span>
                 </div>
             </div>
+        </div>
 
-            @if($card->example)
-            <div class="mt-4 border-t border-slate-100 pt-3">
-                <p class="text-sm font-medium text-slate-800">{{ $card->example }}</p>
-                @if($card->example_pinyin)
-                <x-tone-pinyin :text="$card->example_pinyin" class="mt-0.5 text-[11px]" />
-                @endif
-                <p class="mt-1 text-xs text-slate-500 line-clamp-2">{{ $card->example_meaning }}</p>
+        {{-- Modal Body: Scrollable Card Grid --}}
+        <div id="vocab-modal-scroll" class="flex-1 overflow-y-auto p-5 sm:p-8 custom-scrollbar">
+            {{-- Loading State --}}
+            <div x-show="loading" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <template x-for="i in 6" :key="i">
+                    <div class="h-36 rounded-3xl border border-slate-200/60 bg-white/60 p-5 skeleton-shimmer"></div>
+                </template>
             </div>
-            @endif
 
-            {{-- Quick action footer --}}
-            <div class="mt-3.5 flex items-center justify-between border-t border-dashed border-slate-200/90 pt-2.5 text-xs">
-                <span class="inline-flex items-center gap-1.5 font-bold text-slate-400 group-hover:text-[#991b1b] transition">
-                    <i data-lucide="layers" class="h-3.5 w-3.5 text-slate-400 group-hover:text-[#991b1b]"></i>
-                    <span>Lật thẻ này trên bảng học</span>
-                </span>
-                <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold text-slate-600 group-hover:bg-[#991b1b] group-hover:text-white transition">
-                    <span>Lên bảng</span>
-                    <i data-lucide="arrow-up" class="h-2.5 w-2.5"></i>
-                </span>
+            {{-- Empty State --}}
+            <div x-show="!loading && cards.length === 0" class="flex flex-col items-center justify-center py-16 text-center">
+                <span class="text-5xl select-none mb-3">🔍</span>
+                <h4 class="text-base font-bold text-slate-800">Không tìm thấy từ vựng nào</h4>
+                <p class="text-xs text-slate-500 mt-1 max-w-sm">Thử gõ từ khóa khác hoặc tắt bộ lọc để xem toàn bộ danh mục từ vựng nhé.</p>
             </div>
-        </article>
-        @endforeach
+
+            {{-- Card Grid --}}
+            <div x-show="!loading && cards.length > 0" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <template x-for="card in cards" :key="card.id">
+                    <article @click="selectAndPlay(card)"
+                        class="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-amber-900/10 bg-white/90 p-5 shadow-xs transition-all duration-200 hover:border-[#991b1b]/60 hover:bg-white hover:shadow-lg hover:-translate-y-0.5 cursor-pointer">
+                        
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2">
+                                    <span class="truncate text-xs font-semibold tracking-wider text-slate-500"
+                                          x-html="window.formatTonePinyin ? window.formatTonePinyin(card.pinyin) : card.pinyin"></span>
+                                    <button type="button"
+                                        @click.stop="window.playChineseVoice(card.hanzi)"
+                                        class="text-slate-300 transition hover:text-[#991b1b] focus:outline-none"
+                                        title="Nghe phát âm">
+                                        <i data-lucide="volume-2" class="h-3.5 w-3.5"></i>
+                                    </button>
+                                </div>
+                                <div class="mt-1 flex items-baseline gap-2">
+                                    <h3 class="font-chinese text-3xl font-black text-slate-900 group-hover:text-[#991b1b] transition-colors" x-text="card.hanzi"></h3>
+                                </div>
+                                <p class="mt-1 text-sm font-medium leading-relaxed text-slate-600 line-clamp-2" :title="card.meaning" x-text="card.meaning"></p>
+                            </div>
+
+                            <div class="flex flex-col items-end gap-2 shrink-0">
+                                {{-- Star Toggle inside Modal --}}
+                                <button type="button"
+                                        @click.stop="toggleStar(card)"
+                                        class="flex h-8 w-8 items-center justify-center rounded-full transition hover:scale-110 active:scale-95"
+                                        :class="card.is_starred ? 'text-amber-500 bg-amber-50 shadow-sm ring-1 ring-amber-200' : 'text-slate-300 hover:text-amber-400 hover:bg-slate-50'"
+                                        :title="card.is_starred ? 'Bỏ lưu' : 'Lưu vào Sổ tay'">
+                                    <span :class="{ 'fill-current': card.is_starred }" class="inline-flex">
+                                        <i data-lucide="star" class="h-4 w-4"></i>
+                                    </span>
+                                </button>
+
+                                <template x-if="card.hsk_level || card.hsk2_level || card.hsk3_level">
+                                    <span class="rounded-lg bg-red-50 border border-red-200/80 px-2 py-0.5 text-[10px] font-bold text-[#991b1b]"
+                                          x-text="'HSK ' + (card.hsk_level || card.hsk2_level || card.hsk3_level)"></span>
+                                </template>
+                            </div>
+                        </div>
+
+                        {{-- Example Sentence (if any) --}}
+                        <template x-if="card.example">
+                            <div class="mt-3 border-t border-slate-100 pt-2.5 text-xs">
+                                <p class="font-medium text-slate-800 truncate" x-text="card.example"></p>
+                                <p class="text-slate-500 italic truncate mt-0.5" x-text="card.example_meaning"></p>
+                            </div>
+                        </template>
+
+                        {{-- Action Footnote --}}
+                        <div class="mt-3 flex items-center justify-between border-t border-dashed border-slate-200/80 pt-2.5 text-[11px]">
+                            <span class="inline-flex items-center gap-1.5 font-bold text-slate-400 group-hover:text-[#991b1b] transition">
+                                <i data-lucide="layers" class="h-3.5 w-3.5"></i>
+                                <span>Lật thẻ này trên bảng học</span>
+                            </span>
+                            <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 font-bold text-slate-600 group-hover:bg-[#991b1b] group-hover:text-white transition">
+                                <span>Lên bảng</span>
+                                <i data-lucide="arrow-up-right" class="h-3 w-3"></i>
+                            </span>
+                        </div>
+                    </article>
+                </template>
+            </div>
+        </div>
+
+        {{-- Modal Footer: AJAX Pagination without page reload! --}}
+        <div class="shrink-0 border-t border-amber-900/10 bg-white/95 px-6 py-4 flex flex-wrap items-center justify-between gap-3">
+            <p class="text-xs text-slate-500">
+                Hiển thị tối đa <span x-text="perPage"></span> từ/trang · Chuyển trang tức thì không tải lại trang
+            </p>
+
+            <div class="flex items-center gap-1.5" x-show="lastPage > 1">
+                {{-- Prev Button --}}
+                <button type="button"
+                    @click="goToPage(currentPage - 1)"
+                    :disabled="currentPage <= 1 || loading"
+                    class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-xs transition hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
+                    <i data-lucide="chevron-left" class="h-4 w-4"></i>
+                </button>
+
+                {{-- Page range --}}
+                <template x-for="p in Array.from({ length: Math.min(5, lastPage) }, (_, i) => {
+                    if (lastPage <= 5) return i + 1;
+                    if (currentPage <= 3) return i + 1;
+                    if (currentPage >= lastPage - 2) return lastPage - 4 + i;
+                    return currentPage - 2 + i;
+                })" :key="p">
+                    <button type="button"
+                        @click="goToPage(p)"
+                        class="inline-flex h-9 w-9 items-center justify-center rounded-xl text-xs font-bold transition shadow-xs"
+                        :class="currentPage === p ? 'bg-[#991b1b] text-white shadow-md' : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'">
+                        <span x-text="p"></span>
+                    </button>
+                </template>
+
+                {{-- Next Button --}}
+                <button type="button"
+                    @click="goToPage(currentPage + 1)"
+                    :disabled="currentPage >= lastPage || loading"
+                    class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-xs transition hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
+                    <i data-lucide="chevron-right" class="h-4 w-4"></i>
+                </button>
+            </div>
+        </div>
+
     </div>
-
-    {{-- Pagination links --}}
-    @if($flashcards->hasPages())
-    <div class="mt-8 flex items-center justify-center gap-2">
-        {{-- Prev --}}
-        @if($flashcards->onFirstPage())
-        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed">
-            <i data-lucide="chevron-left" class="h-4 w-4"></i>
-        </span>
-        @else
-        <a href="{{ $flashcards->previousPageUrl() }}"
-           class="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-[#991b1b] hover:text-[#991b1b]">
-            <i data-lucide="chevron-left" class="h-4 w-4"></i>
-        </a>
-        @endif
-
-        {{-- Page numbers --}}
-        @foreach($flashcards->getUrlRange(max(1, $flashcards->currentPage() - 2), min($flashcards->lastPage(), $flashcards->currentPage() + 2)) as $page => $url)
-        <a href="{{ $url }}"
-           class="inline-flex h-10 w-10 items-center justify-center rounded-2xl text-sm font-bold transition
-                  {{ $page == $flashcards->currentPage()
-                      ? 'bg-[#991b1b] text-white shadow-md shadow-red-900/20'
-                      : 'border border-slate-200 bg-white text-slate-700 hover:border-[#991b1b] hover:text-[#991b1b]' }}">
-            {{ $page }}
-        </a>
-        @endforeach
-
-        {{-- Next --}}
-        @if($flashcards->hasMorePages())
-        <a href="{{ $flashcards->nextPageUrl() }}"
-           class="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-[#991b1b] hover:text-[#991b1b]">
-            <i data-lucide="chevron-right" class="h-4 w-4"></i>
-        </a>
-        @else
-        <span class="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-slate-300 cursor-not-allowed">
-            <i data-lucide="chevron-right" class="h-4 w-4"></i>
-        </span>
-        @endif
-    </div>
-
-    <p class="mt-3 text-center text-xs text-slate-400">
-        Hiển thị {{ $flashcards->firstItem() }}–{{ $flashcards->lastItem() }} trong tổng số {{ $deckTotal }} thẻ
-    </p>
-    @endif
-    </div>{{-- End Collapsible Div --}}
-</section>
+</div>
 @endif
 
 <section class="mt-8 rounded-[2rem] bg-[#991b1b] p-8 text-white shadow-2xl shadow-red-950/15">
@@ -1281,5 +1347,116 @@
         window.dispatchEvent(new CustomEvent('select-card', { detail: cardData }));
     };
 })();
+
+function vocabularyModal() {
+    return {
+        isOpen: false,
+        loading: false,
+        cards: @json($flashcards->items() ?? []),
+        currentPage: {{ $flashcards->currentPage() ?? 1 }},
+        lastPage: {{ $flashcards->lastPage() ?? 1 }},
+        total: {{ $deckTotal ?? 0 }},
+        perPage: 12,
+        searchTerm: '',
+        filterStarredOnly: false,
+        lessonSlug: '{{ $lessonSlug ?? '' }}',
+        hskLevel: '{{ $hskLevel ?? '' }}',
+        standardCode: '{{ $standardCode ?? 'hsk_2_0' }}',
+
+        open() {
+            this.isOpen = true;
+            this.$nextTick(() => window.refreshIcons?.());
+        },
+        close() {
+            this.isOpen = false;
+        },
+        async goToPage(page) {
+            if (page < 1 || page > this.lastPage || page === this.currentPage || this.loading) return;
+            this.loading = true;
+            const offset = (page - 1) * this.perPage;
+            let url = `/flashcards/cards?offset=${offset}&limit=${this.perPage}&standard=${encodeURIComponent(this.standardCode)}`;
+            if (this.lessonSlug) url += `&lesson=${encodeURIComponent(this.lessonSlug)}`;
+            if (this.hskLevel) url += `&hsk=${encodeURIComponent(this.hskLevel)}`;
+            if (this.searchTerm) url += `&q=${encodeURIComponent(this.searchTerm)}`;
+            if (this.filterStarredOnly) url += `&starred=1`;
+
+            try {
+                const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                if (res.ok) {
+                    const data = await res.json();
+                    this.cards = data.cards || [];
+                    this.total = data.total || 0;
+                    this.currentPage = page;
+                    this.lastPage = Math.max(1, Math.ceil(this.total / this.perPage));
+                    const scrollEl = document.getElementById('vocab-modal-scroll');
+                    if (scrollEl) scrollEl.scrollTop = 0;
+                }
+            } catch (e) {
+                console.error('Error fetching cards', e);
+            } finally {
+                this.loading = false;
+                this.$nextTick(() => window.refreshIcons?.());
+            }
+        },
+        async search(val) {
+            this.searchTerm = (val || '').trim();
+            this.loading = true;
+            let url = `/flashcards/cards?offset=0&limit=${this.perPage}&standard=${encodeURIComponent(this.standardCode)}`;
+            if (this.lessonSlug) url += `&lesson=${encodeURIComponent(this.lessonSlug)}`;
+            if (this.hskLevel) url += `&hsk=${encodeURIComponent(this.hskLevel)}`;
+            if (this.searchTerm) url += `&q=${encodeURIComponent(this.searchTerm)}`;
+            if (this.filterStarredOnly) url += `&starred=1`;
+
+            try {
+                const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                if (res.ok) {
+                    const data = await res.json();
+                    this.cards = data.cards || [];
+                    this.total = data.total || 0;
+                    this.currentPage = 1;
+                    this.lastPage = Math.max(1, Math.ceil(this.total / this.perPage));
+                }
+            } catch (e) {
+                console.error('Error searching cards', e);
+            } finally {
+                this.loading = false;
+                this.$nextTick(() => window.refreshIcons?.());
+            }
+        },
+        selectAndPlay(card) {
+            if (!card) return;
+            window.selectFlashcard(card);
+            this.close();
+            if (window.toast && typeof window.toast.info === 'function') {
+                window.toast.info(`Đã đưa từ 「${card.hanzi}」lên bảng học 3D!`);
+            }
+        },
+        async toggleStar(card) {
+            if (!card) return;
+            const prev = card.is_starred;
+            card.is_starred = !prev;
+            try {
+                const res = await fetch('{{ route('flashcards.toggleStar') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ flashcard_id: card.id })
+                });
+                if (!res.ok) {
+                    card.is_starred = prev;
+                } else {
+                    const data = await res.json();
+                    card.is_starred = data.is_starred;
+                }
+            } catch (e) {
+                card.is_starred = prev;
+            }
+            this.$nextTick(() => window.refreshIcons?.());
+        }
+    };
+}
 </script>
 @endsection
