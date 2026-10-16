@@ -314,6 +314,12 @@
     petReward: null,
     floatingXp: null,
     _floatingTimer: null,
+    tasselSway: false,
+
+    triggerTassel() {
+        this.tasselSway = true;
+        setTimeout(() => { this.tasselSway = false; }, 1400);
+    },
 
     triggerComboNotice(text) {
         this.comboNotice = text;
@@ -362,6 +368,7 @@
 
     flip() {
         this.flipped = !this.flipped;
+        this.triggerTassel();
         window.soundEngine?.play('whoosh');
         if (this.flipped) {
             if (this.streakCount >= 3) {
@@ -448,6 +455,7 @@
 
     async submitReview(quality) {
         if (!this.card) return;
+        this.triggerTassel();
 
         // Synchronously capture active card state before any async calls or step transitions
         const currentCard = this.card;
@@ -611,10 +619,10 @@
             <div class="h-2 w-2 rounded-full bg-slate-200 animate-pulse"></div>
             <div class="h-2 w-2 rounded-full bg-slate-200 animate-pulse"></div>
         </div>
-        <div class="w-full max-w-lg rounded-[2rem] bg-slate-900/90 p-8 shadow-2xl h-[320px] flex flex-col items-center justify-center gap-4 skeleton-shimmer">
-            <div class="h-5 w-20 rounded-full bg-white/20"></div>
-            <div class="h-20 w-28 rounded-2xl bg-white/20"></div>
-            <div class="h-4 w-36 rounded-full bg-white/20"></div>
+        <div class="w-full max-w-lg rounded-[2rem] bg-amber-50/70 border border-amber-900/10 p-8 shadow-md h-[350px] flex flex-col items-center justify-center gap-4 skeleton-shimmer">
+            <div class="h-5 w-20 rounded-full bg-amber-900/10"></div>
+            <div class="h-24 w-28 rounded-2xl bg-amber-900/10"></div>
+            <div class="h-4 w-36 rounded-full bg-amber-900/10"></div>
         </div>
         <div class="flex items-center gap-3">
             <div class="h-10 w-24 rounded-full bg-slate-200 skeleton-shimmer"></div>
@@ -746,91 +754,132 @@
             <div class="flex flex-col items-center gap-6">
             {{-- Flip card --}}
             <div class="flip-card w-full max-w-lg cursor-pointer transition-all duration-300 rounded-[2rem]"
-                 :class="justSelected ? 'ring-4 ring-amber-400 ring-offset-4 ring-offset-slate-900 shadow-2xl scale-[1.01]' : ''"
-                 style="height: 320px;" 
+                 :class="justSelected ? 'ring-4 ring-amber-400 ring-offset-4 ring-offset-amber-100 shadow-2xl scale-[1.01]' : ''"
+                 style="height: 350px;" 
+                 @mouseenter="triggerTassel()"
                  @click="flip()">
                 <div class="flip-card-inner" :class="{ flipped }">
-                    {{-- Front: Hanzi + Lesson label + Star button --}}
-                    <div class="flip-card-front relative flex flex-col items-center justify-center gap-3 bg-slate-950 p-8 text-white shadow-2xl shadow-slate-950/20 overflow-hidden">
+                    {{-- Front: Thư Thiêm với Mễ Tự Cách (米字格) + Chữ Hán + Pinyin + Dây Tua Rua --}}
+                    <div class="flip-card-front relative flex flex-col items-center justify-between bg-xuan-paper p-6 sm:p-7 text-slate-900 shadow-xl chinese-bookmark-frame overflow-hidden">
                         {{-- Subtle Chinese Watermark Motif --}}
-                        <span class="chinese-watermark right-6 top-1/2 -translate-y-1/2 text-9xl text-white/5 select-none pointer-events-none">学</span>
+                        <span class="chinese-watermark right-4 top-1/2 -translate-y-1/2 text-9xl text-amber-900/5 select-none pointer-events-none">学</span>
 
-                        <div class="flex flex-wrap items-center justify-center gap-1.5 z-10">
-                            <span class="chinese-seal px-1.5 py-0.5 text-[10px] font-bold border-red-400/40 text-red-300 bg-red-950/40">【字】</span>
-                            <template x-if="card.hsk_level || card.hsk2_level || card.hsk3_level">
-                                <span class="rounded-full bg-white/10 px-2.5 py-0.5 text-[11px] font-semibold text-slate-300"
-                                      x-text="'HSK ' + (card.hsk_level || card.hsk2_level || card.hsk3_level)"></span>
-                            </template>
-                            <template x-if="card.lesson">
-                                <span class="rounded-full bg-white/10 px-3 py-0.5 text-xs font-semibold uppercase tracking-widest text-slate-300"
-                                      x-text="card.lesson"></span>
-                            </template>
+                        {{-- Reactive Silk Tassel on Right Edge (流苏) --}}
+                        <div class="tassel-interactive" :class="{ 'swaying': tasselSway }">
+                            <svg width="22" height="68" viewBox="0 0 22 68" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M11 0V12" stroke="#991b1b" stroke-width="2" stroke-linecap="round"/>
+                                <circle cx="11" cy="14" r="4.5" fill="#059669" stroke="#047857" stroke-width="1"/>
+                                <circle cx="9.5" cy="12.5" r="1.2" fill="#a7f3d0"/>
+                                <rect x="8.5" y="19" width="5" height="2" rx="1" fill="#d97706"/>
+                                <path d="M11 21C8 23 7 26 11 28C15 26 14 23 11 21Z" fill="#b91c1c"/>
+                                <circle cx="11" cy="24.5" r="2" fill="#d97706"/>
+                                <path d="M6 29C6 27.5 16 27.5 16 29L17.5 35H4.5L6 29Z" fill="#991b1b"/>
+                                <line x1="5" y1="34" x2="17" y2="34" stroke="#f59e0b" stroke-width="1.2"/>
+                                <path d="M6 35L4 66M8 35L7 68M10 35L10 67M12 35L12 68M14 35L15 67M16 35L18 66" stroke="#b91c1c" stroke-width="1.4" stroke-linecap="round"/>
+                                <path d="M9 35L9 65M11 35L11 66M13 35L13 65" stroke="#dc2626" stroke-width="1.2" stroke-linecap="round"/>
+                                <path d="M7 64L15 64" stroke="#f59e0b" stroke-width="0.8" stroke-dasharray="1 1"/>
+                            </svg>
                         </div>
-                        <p class="font-chinese hanzi-ink-glow text-8xl font-black leading-none tracking-tight select-none z-10 transition-transform cursor-pointer" x-text="card.hanzi"></p>
-                        <p class="mt-2 text-sm text-slate-400 z-10">Bấm để xem nghĩa 👆</p>
 
-                        {{-- Star / Bookmark Button (Top Right) --}}
-                        <button @click.stop="toggleStar(card.id)" 
-                                class="absolute top-6 right-6 flex h-11 w-11 items-center justify-center rounded-full transition-all duration-300 hover:scale-110 active:scale-95 shadow-md"
-                                :class="card.is_starred ? 'bg-amber-400 text-slate-950 shadow-amber-400/30 ring-2 ring-amber-300' : 'bg-white/10 text-white hover:bg-white/20'"
-                                :title="card.is_starred ? 'Bỏ lưu từ này' : 'Lưu vào Sổ từ vựng'">
-                            <span :class="{ 'fill-current': card.is_starred }" class="inline-flex">
-                                <i data-lucide="star" class="h-5 w-5"></i>
-                            </span>
-                        </button>
+                        {{-- Top Bar: Seal Stamp + Level tags + Star Button --}}
+                        <div class="w-full flex items-center justify-between z-10 px-1">
+                            <div class="flex items-center gap-1.5">
+                                <span class="seal-zhusha text-[10px]">字</span>
+                                <template x-if="card.hsk_level || card.hsk2_level || card.hsk3_level">
+                                    <span class="rounded-full bg-amber-900/10 border border-amber-900/15 px-2.5 py-0.5 text-[10px] font-bold text-amber-950"
+                                          x-text="'HSK ' + (card.hsk_level || card.hsk2_level || card.hsk3_level)"></span>
+                                </template>
+                                <template x-if="card.lesson">
+                                    <span class="rounded-full bg-amber-900/5 px-2.5 py-0.5 text-[10px] font-semibold text-amber-900/70 truncate max-w-[140px]"
+                                          x-text="card.lesson"></span>
+                                </template>
+                            </div>
 
-                        {{-- Actions (Write & Speak) --}}
-                        <div class="absolute bottom-6 right-6 flex items-center gap-3">
-                            <button @click.stop="$dispatch('open-writer', card.hanzi)" class="flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 hover:scale-110 active:scale-95" title="Tập viết chữ">
-                                <i data-lucide="pen-tool" class="h-5 w-5"></i>
+                            {{-- Star / Bookmark Button (Top Right) --}}
+                            <button @click.stop="toggleStar(card.id)" 
+                                    class="flex h-9 w-9 items-center justify-center rounded-full transition-all duration-300 hover:scale-110 active:scale-95 shadow-2xs"
+                                    :class="card.is_starred ? 'bg-amber-400 text-slate-950 shadow-amber-400/30 ring-2 ring-amber-300' : 'bg-amber-900/10 text-amber-900 hover:bg-amber-900/20'"
+                                    :title="card.is_starred ? 'Bỏ lưu từ này' : 'Lưu vào Sổ từ vựng'">
+                                <span :class="{ 'fill-current': card.is_starred }" class="inline-flex">
+                                    <i data-lucide="star" class="h-4 w-4"></i>
+                                </span>
                             </button>
-                            <button @click.stop="speak(card.hanzi)" class="flex h-12 w-12 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 hover:scale-110 active:scale-95" title="Nghe phát âm">
-                                <i data-lucide="volume-2" class="h-5 w-5"></i>
-                            </button>
+                        </div>
+
+                        {{-- Center: Mễ Tự Cách (米字格) with Hanzi & Pinyin --}}
+                        <div class="flex flex-col items-center justify-center z-10 my-auto py-1">
+                            <div class="mizige-box w-36 h-36 sm:w-40 sm:h-40 shadow-inner">
+                                <span class="font-chinese hanzi-ink-glow text-7xl sm:text-8xl font-black text-slate-950 select-none z-10 transition-transform cursor-pointer" x-text="card.hanzi"></span>
+                            </div>
+                            <p class="mt-2 text-sm font-bold tracking-wider" x-html="window.formatTonePinyin ? window.formatTonePinyin(card.pinyin) : card.pinyin"></p>
+                        </div>
+
+                        {{-- Bottom Bar: Hint + Quick Action Buttons --}}
+                        <div class="w-full flex items-center justify-between z-10 px-1 pt-1 border-t border-amber-900/10">
+                            <p class="text-[11px] font-serif text-amber-900/60 flex items-center gap-1 select-none">
+                                <span>👆</span> <span>Chạm để lật thẻ · 翻</span>
+                            </p>
+
+                            <div class="flex items-center gap-2">
+                                <button @click.stop="$dispatch('open-writer', card.hanzi)" class="flex h-8 w-8 items-center justify-center rounded-lg border border-amber-900/20 bg-white/90 text-amber-950 shadow-2xs hover:bg-amber-100 transition active:scale-95" title="Tập viết chữ">
+                                    <i data-lucide="pen-tool" class="h-3.5 w-3.5"></i>
+                                </button>
+                                <button @click.stop="speak(card.hanzi)" class="flex h-8 w-8 items-center justify-center rounded-lg border border-amber-900/20 bg-white/90 text-amber-950 shadow-2xs hover:bg-amber-100 transition active:scale-95" title="Nghe phát âm">
+                                    <i data-lucide="volume-2" class="h-3.5 w-3.5"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    {{-- Back: Meaning + Pinyin + Example + Star button --}}
-                    <div class="flip-card-back relative flex flex-col justify-between overflow-hidden bg-white shadow-2xl shadow-slate-950/10">
-                        <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#991b1b] via-amber-400 to-[#111827]"></div>
-
-                        {{-- Star Button on Back Face --}}
-                        <button @click.stop="toggleStar(card.id)" 
-                                class="absolute top-6 right-6 flex h-10 w-10 items-center justify-center rounded-full transition-all duration-300 hover:scale-110 active:scale-95 shadow-sm"
-                                :class="card.is_starred ? 'bg-amber-100 text-amber-600 ring-1 ring-amber-300' : 'bg-slate-100 text-slate-400 hover:text-amber-500 hover:bg-amber-50'"
-                                :title="card.is_starred ? 'Bỏ lưu từ này' : 'Lưu vào Sổ từ vựng'">
-                            <span :class="{ 'fill-current': card.is_starred }" class="inline-flex">
-                                <i data-lucide="star" class="h-5 w-5"></i>
-                            </span>
-                        </button>
-
-                        <div class="flex flex-1 flex-col justify-center gap-4 p-8 pr-16">
-                            <div>
-                                <div class="flex flex-wrap items-center gap-1.5 mb-2">
-                                    <template x-if="card.hsk2_level">
-                                        <span class="rounded-md bg-slate-100 border border-slate-200 px-2 py-0.5 text-[11px] font-bold text-slate-700"
-                                              x-text="'HSK 2.0: Cấp ' + card.hsk2_level"></span>
-                                    </template>
-                                    <template x-if="card.hsk3_level">
-                                        <span class="rounded-md bg-red-50 border border-red-200 px-2 py-0.5 text-[11px] font-bold text-[#991b1b]"
-                                              x-text="'HSK 3.0: Cấp ' + card.hsk3_level"></span>
-                                    </template>
-                                    <template x-if="!card.hsk2_level && !card.hsk3_level && card.hsk_level">
-                                        <span class="rounded-md bg-red-50 border border-red-200 px-2 py-0.5 text-[11px] font-bold text-[#991b1b]"
-                                              x-text="'HSK ' + card.hsk_level"></span>
-                                    </template>
+                    {{-- Back: Thư Giản / Tuyển Tập (Nghĩa + Câu Ví Dụ Khắc Trực Quan + Dấu Triện Son) --}}
+                    <div class="flip-card-back relative flex flex-col justify-between bg-xuan-paper p-6 sm:p-7 text-slate-900 shadow-xl chinese-bookmark-frame overflow-hidden">
+                        {{-- Top Bar: Hanzi miniature + Pinyin + Star Button --}}
+                        <div class="w-full flex items-center justify-between z-10 border-b border-amber-900/10 pb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="seal-zhusha text-xs">解</span>
+                                <div class="leading-tight">
+                                    <span class="font-chinese text-2xl font-black text-slate-950" x-text="card.hanzi"></span>
+                                    <span class="ml-2 text-xs font-semibold" x-html="window.formatTonePinyin ? window.formatTonePinyin(card.pinyin) : card.pinyin"></span>
                                 </div>
-                                <p class="text-sm font-semibold tracking-wider" x-html="window.formatTonePinyin ? window.formatTonePinyin(card.pinyin) : card.pinyin"></p>
-                                <p class="mt-2 text-4xl font-black tracking-tight text-slate-950" x-text="card.meaning"></p>
                             </div>
+
+                            <button @click.stop="toggleStar(card.id)" 
+                                    class="flex h-8 w-8 items-center justify-center rounded-full transition-all duration-300 hover:scale-110 active:scale-95 shadow-2xs"
+                                    :class="card.is_starred ? 'bg-amber-400 text-slate-950' : 'bg-amber-900/10 text-amber-900 hover:bg-amber-900/20'"
+                                    :title="card.is_starred ? 'Bỏ lưu từ này' : 'Lưu vào Sổ từ vựng'">
+                                <span :class="{ 'fill-current': card.is_starred }" class="inline-flex">
+                                    <i data-lucide="star" class="h-3.5 w-3.5"></i>
+                                </span>
+                            </button>
+                        </div>
+
+                        {{-- Center: Nghĩa + Khung Câu Ví Dụ Khắc Gỗ Cổ Điển --}}
+                        <div class="flex-1 flex flex-col justify-center my-auto py-2 z-10">
+                            <div class="text-center mb-2.5">
+                                <p class="text-3xl sm:text-4xl font-black tracking-tight text-slate-950" x-text="card.meaning"></p>
+                            </div>
+
                             <template x-if="card.example">
-                                <div class="rounded-2xl bg-slate-50 border border-slate-200 p-4">
-                                    <p class="text-sm text-slate-500">Ví dụ</p>
-                                    <p class="mt-1 text-base font-semibold text-slate-900" x-text="card.example"></p>
-                                    <p class="mt-0.5 text-xs text-slate-500" x-html="window.formatTonePinyin ? window.formatTonePinyin(card.example_pinyin) : card.example_pinyin"></p>
-                                    <p class="mt-0.5 text-xs text-slate-600 italic" x-text="card.example_meaning"></p>
+                                <div class="rounded-xl bg-white/70 border border-amber-900/15 p-3 shadow-2xs">
+                                    <div class="flex items-center gap-2 mb-1.5">
+                                        <span class="h-px flex-1 bg-gradient-to-r from-transparent via-amber-900/25 to-transparent"></span>
+                                        <span class="text-[10px] font-serif font-bold text-amber-900/70 uppercase tracking-widest">例句 · Câu Ví Dụ</span>
+                                        <span class="h-px flex-1 bg-gradient-to-r from-transparent via-amber-900/25 to-transparent"></span>
+                                    </div>
+                                    <p class="text-sm sm:text-base font-bold text-slate-900 text-center" x-text="card.example"></p>
+                                    <p class="mt-0.5 text-xs text-center" x-html="window.formatTonePinyin ? window.formatTonePinyin(card.example_pinyin) : card.example_pinyin"></p>
+                                    <p class="mt-1 text-xs text-slate-600 italic text-center" x-text="card.example_meaning"></p>
                                 </div>
                             </template>
+                        </div>
+
+                        {{-- Bottom Bar: Triện son 已通 + Đóng thẻ + Nghe ví dụ --}}
+                        <div class="w-full flex items-center justify-between z-10 pt-2 border-t border-amber-900/10">
+                            <span class="seal-zhusha-round seal-zhusha text-[10px]">已通</span>
+                            <p class="text-[11px] font-serif text-amber-900/60 text-center italic select-none">「 Chạm để đóng thẻ 」</p>
+                            <button @click.stop="speak(card.example || card.hanzi)" class="flex h-7 w-7 items-center justify-center rounded-lg border border-amber-900/20 bg-white/90 text-amber-950 shadow-2xs hover:bg-amber-100 transition active:scale-95" title="Nghe câu ví dụ">
+                                <i data-lucide="volume-2" class="h-3.5 w-3.5"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -843,7 +892,7 @@
                 <button
                     @click="prev()"
                     :disabled="current === 0"
-                    class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-40">
+                    class="inline-flex items-center gap-2 rounded-full border border-amber-900/20 bg-white/90 px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-xs transition hover:-translate-y-0.5 hover:border-amber-900/40 hover:bg-amber-50/50 disabled:cursor-not-allowed disabled:opacity-40">
                     <i data-lucide="arrow-left" class="h-4 w-4"></i>
                     <span class="hidden sm:inline">Trước</span>
                 </button>
@@ -852,17 +901,14 @@
                 <div x-show="!flipped" x-cloak class="flex items-center gap-2">
                     <button
                         @click="flip()"
-                        class="inline-flex items-center gap-2 rounded-full bg-slate-900 px-8 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 active:scale-95">
-                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
-                            <circle cx="12" cy="12" r="3"/>
-                        </svg>
+                        class="inline-flex items-center gap-2 rounded-full bg-slate-950 px-8 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-slate-800 active:scale-95 cursor-pointer">
+                        <span class="seal-zhusha text-[9px] py-0 px-1 border-red-400 text-red-300">翻</span>
                         <span>Xem đáp án</span>
                     </button>
                     <button
                         type="button"
                         onclick="window.openVocabModal?.()"
-                        class="inline-flex items-center gap-1.5 rounded-full border border-amber-900/20 bg-amber-50 px-4 py-2.5 text-sm font-bold text-amber-950 shadow-sm transition hover:bg-amber-100 active:scale-95 cursor-pointer"
+                        class="inline-flex items-center gap-1.5 rounded-full border border-amber-900/20 bg-amber-50/90 px-4 py-2.5 text-sm font-bold text-amber-950 shadow-xs transition hover:bg-amber-100 active:scale-95 cursor-pointer"
                         title="Mở toàn bộ danh mục từ vựng trong sổ tra cứu">
                         <i data-lucide="book-marked" class="h-4 w-4 text-[#991b1b]"></i>
                         <span class="hidden md:inline">Sổ từ vựng</span>
@@ -874,33 +920,28 @@
                 <div x-show="flipped" x-cloak class="flex items-center gap-3">
                     <button
                         @click="submitReview('review')"
-                        class="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-5 py-2.5 text-sm font-bold text-orange-600 shadow-sm transition hover:bg-orange-100 active:scale-95">
-                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-                            <path d="M3 3v5h5"/>
-                        </svg>
+                        class="inline-flex items-center gap-2 rounded-full border border-red-900/25 bg-red-50/90 px-5 sm:px-6 py-2.5 text-sm font-bold text-red-900 shadow-sm transition hover:bg-red-100 hover:border-red-900/40 active:scale-95 cursor-pointer">
+                        <span class="seal-zhusha text-[10px] py-0 px-1 border-red-800 text-red-800 bg-white">需温</span>
                         <span>Cần ôn lại</span>
                     </button>
                     <button
                         @click="submitReview('known')"
-                        class="inline-flex items-center gap-2 rounded-full bg-emerald-500 px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-emerald-500/20 transition hover:-translate-y-0.5 hover:bg-emerald-600 active:scale-95">
+                        class="inline-flex items-center gap-2 rounded-full border border-emerald-900/20 bg-emerald-700 px-6 sm:px-7 py-2.5 text-sm font-bold text-white shadow-md shadow-emerald-950/20 transition hover:-translate-y-0.5 hover:bg-emerald-800 active:scale-95 cursor-pointer">
+                        <span class="rounded-sm bg-white/20 text-white text-[10px] font-serif font-black px-1.5 py-0.5">已通</span>
                         <span>Đã thuộc</span>
-                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M20 6 9 17l-5-5"/>
-                        </svg>
                     </button>
                 </div>
 
                 {{-- Next / Complete --}}
                 <button
                     @click="next()"
-                    class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-40">
+                    class="inline-flex items-center gap-2 rounded-full border border-amber-900/20 bg-white/90 px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-xs transition hover:-translate-y-0.5 hover:border-amber-900/40 hover:bg-amber-50/50 disabled:cursor-not-allowed disabled:opacity-40">
                     <span class="hidden sm:inline" x-text="current === cards.length - 1 ? 'Xong' : 'Tiếp'"></span>
                     <span x-show="current < cards.length - 1" class="inline-flex">
                         <i data-lucide="arrow-right" class="h-4 w-4"></i>
                     </span>
                     <span x-show="current === cards.length - 1" class="inline-flex" style="display: none;">
-                        <i data-lucide="circle-check" class="h-4 w-4"></i>
+                        <i data-lucide="circle-check" class="h-4 w-4 text-emerald-600"></i>
                     </span>
                 </button>
 
