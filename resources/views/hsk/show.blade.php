@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', $meta['label'] . ' | Chinese Deck')
+@section('title', $meta['label'] . ' · ' . $meta['mountain_cn'] . ' | Chinese Deck')
 
 @section('content')
 <style>
@@ -35,33 +35,94 @@
 </style>
 
 {{-- Breadcrumb --}}
-<nav class="mb-6 flex items-center gap-2 text-sm text-slate-500">
-    <a href="{{ route('hsk.overview') }}" class="hover:text-[#991b1b] transition">Lộ trình HSK</a>
-    <span>/</span>
-    <span class="font-semibold text-slate-800">{{ $meta['label'] }}</span>
+<nav class="mb-6 flex items-center gap-2 text-sm text-slate-500 font-serif">
+    <a href="{{ route('hsk.overview') }}" class="hover:text-[#991b1b] transition flex items-center gap-1.5">
+        <i data-lucide="map" class="h-4 w-4"></i>
+        <span>Giang Sơn Đồ HSK</span>
+    </a>
+    <span class="text-slate-300">/</span>
+    <span class="font-bold text-slate-900">{{ $meta['label'] }} · {{ $meta['mountain_cn'] }}</span>
 </nav>
 
-{{-- Header --}}
-<section class="relative overflow-hidden rounded-[2rem] p-8 text-white mb-8 shadow-2xl" style="background: {{ $meta['color'] }}">
-    <div class="absolute -right-8 -top-8 text-[12rem] font-black leading-none opacity-10 select-none">
+{{-- Hero: Đỉnh Sơn Tiêu Đề (Mountain Peak Banner) --}}
+<section class="relative overflow-hidden rounded-[2.25rem] p-6 sm:p-10 text-white mb-8 shadow-2xl transition-all duration-300"
+         style="background: linear-gradient(135deg, {{ $meta['color'] }} 0%, #111827 100%);">
+    
+    {{-- Classical Watermark Numeral --}}
+    <div class="pointer-events-none absolute -right-6 -top-10 text-[14rem] font-serif font-black leading-none opacity-10 select-none text-white">
         {{ ['一','二','三','四','五','六'][$level - 1] }}
     </div>
-    <div class="relative grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
+
+    {{-- Subtle Mountain Silhouette Overlay --}}
+    <div class="pointer-events-none absolute inset-x-0 bottom-0 h-28 opacity-15">
+        <svg class="w-full h-full text-white" viewBox="0 0 1000 120" fill="currentColor" preserveAspectRatio="none">
+            <path d="M0 120 L0 60 Q150 10 300 70 Q450 20 600 75 Q750 10 900 65 L1000 50 L1000 120 Z" />
+        </svg>
+    </div>
+
+    <div class="relative z-10 grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
         <div>
-            <span class="rounded-full bg-white/20 px-3 py-1 text-xs font-bold uppercase tracking-widest">{{ $meta['label'] }}</span>
-            <h1 class="mt-4 text-4xl font-black tracking-tight sm:text-5xl">{{ $meta['description'] }}</h1>
-            <p class="mt-3 text-white/80">~{{ number_format($meta['vocab_count']) }} từ vựng cần nắm · {{ $lessons->total() }} bài học · {{ $flashcards->total() }} flashcard</p>
+            {{-- Poetic Badge & Couplet --}}
+            <div class="inline-flex flex-wrap items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1 text-xs backdrop-blur-sm">
+                <span class="font-black uppercase tracking-wider text-amber-300">{{ $meta['label'] }}</span>
+                <span class="text-white/40">·</span>
+                <span class="font-serif font-bold text-white">{{ $meta['mountain_cn'] }} ({{ $meta['mountain_vi'] }})</span>
+                <span class="text-white/40">·</span>
+                <span class="font-serif italic text-white/90">“{{ $meta['mountain_quote'] }}”</span>
+            </div>
+
+            <h1 class="mt-4 text-3xl sm:text-5xl font-black tracking-tight font-serif text-white">
+                {{ $meta['mountain_cn'] }} <span class="font-sans font-light text-white/60">·</span> {{ $meta['description'] }}
+            </h1>
+
+            <p class="mt-2 text-sm text-white/80 font-serif">
+                {{ $meta['mountain_sub'] }}
+            </p>
+
+            <div class="mt-4 flex flex-wrap items-center gap-4 text-xs text-white/75">
+                <span class="inline-flex items-center gap-1.5 font-bold">
+                    <i data-lucide="book-open" class="h-4 w-4 text-amber-300"></i> ~{{ number_format($meta['vocab_count']) }} từ vựng cốt lõi
+                </span>
+                <span>·</span>
+                <span class="inline-flex items-center gap-1.5 font-bold">
+                    <i data-lucide="map-pin" class="h-4 w-4 text-amber-300"></i> {{ $totalLessonsCount }} dịch trạm trên núi
+                </span>
+                <span>·</span>
+                <span class="inline-flex items-center gap-1.5 font-bold">
+                    <i data-lucide="layers" class="h-4 w-4 text-amber-300"></i> {{ $flashcards->total() }} thẻ thư thiêm
+                </span>
+            </div>
+
+            {{-- Mountain Completion Status --}}
+            <div class="mt-5 flex items-center gap-3">
+                @if($isLevelCompleted)
+                    <div class="seal-yitong-grand bg-white/90 text-[#b91c1c] shadow-lg">
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-[#b91c1c]/80">Cảnh Giới Đã Đắc</span>
+                        <span class="text-xl sm:text-2xl font-black">已通此山</span>
+                        <span class="text-[10px] font-sans text-slate-700">100% dịch trạm đã hoàn thành</span>
+                    </div>
+                @else
+                    <div class="rounded-xl border border-white/20 bg-white/10 px-4 py-2 text-xs backdrop-blur-sm">
+                        <span class="text-white/70">Tiến trình thông sơn: </span>
+                        <strong class="text-amber-300">{{ $completedLessonsCount }}/{{ $totalLessonsCount }} dịch trạm</strong>
+                        <span class="text-white/70"> ({{ $levelProgressPct }}%)</span>
+                    </div>
+                @endif
+            </div>
         </div>
-        <div class="flex flex-wrap gap-3">
+
+        {{-- Mountain Switcher Buttons --}}
+        <div class="flex flex-wrap gap-3 shrink-0">
             @if($prevLevel)
             <a href="{{ route('hsk.show', $prevLevel) }}"
-                class="inline-flex items-center gap-1.5 rounded-full border border-white/30 bg-white/10 px-4 py-2 text-sm font-semibold transition hover:bg-white/20">
+                class="inline-flex items-center gap-1.5 rounded-full border border-white/30 bg-white/10 px-4 py-2 text-sm font-semibold transition hover:bg-white/20 active:scale-95 shadow-sm">
                 <i data-lucide="arrow-left" class="h-4 w-4"></i> HSK {{ $prevLevel }}
             </a>
             @endif
             @if($nextLevel)
             <a href="{{ route('hsk.show', $nextLevel) }}"
-                class="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-bold transition hover:bg-white/90" style="color: {{ $meta['color'] }}">
+                class="inline-flex items-center gap-1.5 rounded-full bg-white px-5 py-2 text-sm font-bold transition hover:bg-white/90 active:scale-95 shadow-md"
+                style="color: {{ $meta['color'] }}">
                 HSK {{ $nextLevel }} <i data-lucide="arrow-right" class="h-4 w-4"></i>
             </a>
             @endif
@@ -69,112 +130,290 @@
     </div>
 </section>
 
-{{-- Lessons in this HSK level --}}
+{{-- In-progress Lesson Callout (Trạm Đang Dừng Chân) --}}
+@if(isset($inProgressLesson) && $inProgressLesson)
+<div class="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl border border-amber-300/80 bg-gradient-to-r from-amber-50 via-orange-50/50 to-amber-50 p-5 shadow-md shadow-amber-950/5">
+    <div class="flex items-center gap-3.5">
+        <div class="hsk-lantern-anim grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-amber-500 text-white shadow-lg shadow-amber-500/30">
+            <span class="text-xl">🏮</span>
+        </div>
+        <div>
+            <div class="flex items-center gap-2">
+                <span class="font-serif text-xs font-bold uppercase tracking-wider text-amber-800">Dịch Trạm Đang Dừng Chân</span>
+                <span class="rounded bg-amber-200/70 px-1.5 py-0.5 text-[10px] font-black text-amber-900">{{ $inProgressLesson->progress_percent ?? 0 }}%</span>
+            </div>
+            <h4 class="mt-0.5 font-serif font-black text-slate-900 text-base sm:text-lg">{{ $inProgressLesson->title }}</h4>
+        </div>
+    </div>
+    <a href="{{ route('lesson.show', ['slug' => $inProgressLesson->slug]) }}"
+        class="inline-flex shrink-0 items-center gap-2 rounded-xl bg-[#991b1b] hover:bg-[#7f1d1d] px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-red-950/20 transition hover:-translate-y-0.5 active:scale-95">
+        <span>Vào trạm học tiếp ngay</span>
+        <i data-lucide="arrow-right" class="h-4 w-4"></i>
+    </a>
+</div>
+@endif
+
+{{-- ============================================================== --}}
+{{-- LESSONS AS DỊCH TRẠM (CON ĐƯỜNG DU SƠN & CÁC DỊCH TRẠM)        --}}
+{{-- ============================================================== --}}
 @if($lessons->isNotEmpty())
-<section id="lessons" class="mb-10">
-    <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <h2 class="flex items-center gap-2 text-lg font-black text-slate-900">
-            <span class="grid h-8 w-8 place-items-center rounded-xl bg-red-50 text-[#991b1b]">
-                <i data-lucide="book-open" class="h-4 w-4"></i>
-            </span>
-            Bài học thuộc {{ $meta['label'] }} ({{ $lessons->total() }} bài)
-        </h2>
+<section id="lessons" class="mb-12" x-data="{
+    gateModalOpen: false,
+    selectedStation: null,
+    openGate(station) {
+        this.selectedStation = station;
+        this.gateModalOpen = true;
+        this.$nextTick(() => window.refreshIcons?.());
+    },
+    closeGate() {
+        this.gateModalOpen = false;
+        this.selectedStation = null;
+    }
+}">
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div>
+            <h2 class="flex items-center gap-2.5 text-xl sm:text-2xl font-black text-slate-900 font-serif">
+                <span class="grid h-9 w-9 place-items-center rounded-xl bg-red-50 text-[#991b1b]">
+                    <i data-lucide="milestone" class="h-5 w-5"></i>
+                </span>
+                Dịch Trạm Du Sơn · {{ $meta['label'] }} ({{ $totalLessonsCount }} trạm)
+            </h2>
+            <p class="text-xs text-slate-600 mt-1">
+                Con đường leo núi qua từng dịch trạm. Bấm vào dịch trạm để mở cửa trạm (Dịch Trạm Môn) hoặc chọn học ngay.
+            </p>
+        </div>
+
         @if($lessons->hasPages())
-        <span class="text-xs font-semibold text-slate-500">
+        <span class="rounded-full border border-slate-200 bg-white px-3.5 py-1 text-xs font-semibold text-slate-600 shadow-sm">
             Trang {{ $lessons->currentPage() }} / {{ $lessons->lastPage() }}
         </span>
         @endif
     </div>
 
-    {{-- Banner học tiếp nếu có bài đang học dở --}}
-    @if(isset($inProgressLesson) && $inProgressLesson)
-    <div class="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 p-4 shadow-sm">
-        <div class="flex items-center gap-3">
-            <div class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-500 text-white shadow-md shadow-amber-500/20">
-                <i data-lucide="sparkles" class="h-5 w-5"></i>
-            </div>
-            <div>
-                <div class="flex items-center gap-2">
-                    <span class="text-xs font-bold uppercase tracking-wider text-amber-700">Đang học dở ({{ $inProgressLesson->progress_percent ?? 0 }}%)</span>
-                    <span class="text-xs text-slate-400">· Vừa học gần đây</span>
-                </div>
-                <h4 class="font-bold text-slate-900 text-sm sm:text-base">{{ $inProgressLesson->title }}</h4>
-            </div>
-        </div>
-        <a href="{{ route('lesson.show', ['slug' => $inProgressLesson->slug]) }}"
-            class="inline-flex shrink-0 items-center gap-2 rounded-xl bg-amber-600 px-4 py-2 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-amber-700 transition">
-            Học tiếp ngay <i data-lucide="arrow-right" class="h-4 w-4"></i>
-        </a>
-    </div>
-    @endif
-
-    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        @foreach($lessons as $lesson)
+    {{-- Station Grid along Mountain Trail --}}
+    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        @foreach($lessons as $index => $lesson)
         @php
             $prog = $progressMap[$lesson->id] ?? null;
             $status = is_array($prog) ? ($prog['status'] ?? 'not_started') : ($prog ?? 'not_started');
             $percent = is_array($prog) ? ($prog['percent'] ?? 0) : 0;
             $isInProgress = $status === 'in_progress';
+            $isCompleted = $status === 'completed';
+            $stationNum = ($lessons->currentPage() - 1) * $lessons->perPage() + $loop->iteration;
+            $stationNumPad = str_pad($stationNum, 2, '0', STR_PAD_LEFT);
+
+            // Payload for Lesson Gate Modal
+            $stationPayload = [
+                'number'       => $stationNumPad,
+                'title'        => $lesson->title,
+                'slug'         => $lesson->slug,
+                'summary'      => $lesson->summary,
+                'minutes'      => $lesson->estimated_minutes,
+                'questions'    => $lesson->questions_count,
+                'flashcards'   => $lesson->flashcards_count,
+                'status'       => $status,
+                'percent'      => $percent,
+                'lesson_url'   => route('lesson.show', ['slug' => $lesson->slug]),
+                'cards_url'    => route('flashcards', ['lesson' => $lesson->slug]),
+                'quiz_url'     => route('quiz', ['lesson' => $lesson->slug]),
+                'vocab'        => $lesson->flashcards->take(4)->map(fn($f) => [
+                    'hanzi'   => $f->hanzi,
+                    'pinyin'  => $f->pinyin,
+                    'meaning' => $f->meaning,
+                ])->values(),
+            ];
         @endphp
-        <div class="group relative overflow-hidden rounded-[1.75rem] border {{ $isInProgress ? 'border-amber-300 ring-2 ring-amber-400/20' : 'border-white/80' }} bg-white/80 p-6 shadow-xl shadow-slate-900/5 backdrop-blur transition hover:-translate-y-0.5">
-            <div class="absolute inset-x-0 top-0 h-1" style="background: {{ $isInProgress ? '#f59e0b' : ($lesson->accent_color ?? $meta['color']) }}"></div>
-            <div class="flex items-start justify-between gap-3">
-                <div>
+
+        <div class="group relative flex flex-col justify-between overflow-hidden rounded-[1.85rem] border bg-white/95 p-6 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl
+            {{ $isCompleted ? 'border-emerald-200/90 ring-1 ring-emerald-400/20' : ($isInProgress ? 'border-amber-300 ring-2 ring-amber-400/20 bg-amber-50/20' : 'border-slate-200/80') }}">
+
+            {{-- Top Accent Ink Line --}}
+            <div class="absolute inset-x-0 top-0 h-1.5"
+                 style="background: {{ $isCompleted ? '#059669' : ($isInProgress ? '#f59e0b' : ($lesson->accent_color ?? $meta['color'])) }}"></div>
+
+            <div>
+                {{-- Station Number & Status Icon --}}
+                <div class="flex items-start justify-between gap-3">
                     <div class="flex items-center gap-2">
-                        <span class="text-xs font-semibold uppercase tracking-widest"
+                        <span class="rounded-lg bg-amber-900/5 border border-amber-900/10 px-2 py-0.5 text-[11px] font-black uppercase tracking-wider text-amber-900 font-serif">
+                            Trạm {{ $stationNumPad }}
+                        </span>
+
+                        <span class="text-xs font-semibold uppercase tracking-wider"
                             style="color: {{ $lesson->accent_color ?? $meta['color'] }}">
                             {{ $meta['label'] }}
                         </span>
-                        @if($isInProgress)
-                        <span class="inline-flex items-center gap-1 rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800">
-                            <i data-lucide="timer" class="h-3 w-3"></i> {{ $percent }}%
-                        </span>
-                        @endif
                     </div>
-                    <h3 class="mt-2 text-lg font-black text-slate-900">{{ $lesson->title }}</h3>
-                    <p class="mt-1 text-sm text-slate-600">{{ $lesson->summary }}</p>
-                </div>
-                <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl
-    @if($status === 'completed')
-        bg-emerald-50 text-emerald-600
-    @elseif($status === 'in_progress')
-        bg-amber-50 text-amber-600
-    @else
-        bg-slate-100 text-slate-400
-    @endif">
-                    @if($status === 'completed')
-                    <i data-lucide="circle-check-big" class="h-5 w-5"></i>
-                    @elseif($status === 'in_progress')
-                    <i data-lucide="book-open" class="h-5 w-5"></i>
+
+                    {{-- Visual Indicator based on 3 States --}}
+                    @if($isCompleted)
+                        {{-- Chu Sa Triện '已通' --}}
+                        <div class="seal-zhusha-round text-xs" title="Dịch trạm đã thông">
+                            已通
+                        </div>
+                    @elseif($isInProgress)
+                        {{-- Đèn Lồng Đỏ Đang Học --}}
+                        <div class="hsk-lantern-anim flex items-center gap-1 rounded-full border border-amber-300 bg-amber-100/80 px-2 py-0.5 text-[11px] font-bold text-amber-900 shadow-sm" title="Đang học dở">
+                            <span>🏮</span>
+                            <span>{{ $percent }}%</span>
+                        </div>
                     @else
-                    <i data-lucide="circle" class="h-5 w-5"></i>
+                        {{-- Sương Mờ Chưa Bắt Đầu --}}
+                        <div class="flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100/70 px-2 py-0.5 text-[11px] text-slate-400" title="Chưa bắt đầu">
+                            <span>🌫️</span>
+                            <span>Sương mờ</span>
+                        </div>
                     @endif
-                </span>
+                </div>
+
+                {{-- Station Title & Summary --}}
+                <div class="mt-3">
+                    <h3 class="text-lg font-black text-slate-900 font-serif group-hover:text-[#991b1b] transition-colors leading-snug">
+                        {{ $lesson->title }}
+                    </h3>
+                    <p class="mt-1 text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                        {{ $lesson->summary }}
+                    </p>
+                </div>
+
+                {{-- Key Vocabulary Chips (if available) --}}
+                @if($lesson->flashcards->isNotEmpty())
+                <div class="mt-3 flex flex-wrap gap-1.5">
+                    @foreach($lesson->flashcards->take(4) as $vocab)
+                    <span class="inline-flex items-center rounded-md border border-amber-900/10 bg-amber-50/60 px-2 py-0.5 text-[11px] text-slate-700 font-serif">
+                        <strong class="font-bold text-slate-900 mr-1">{{ $vocab->hanzi }}</strong>
+                        <span class="text-slate-400 text-[10px]">{{ $vocab->pinyin }}</span>
+                    </span>
+                    @endforeach
+                </div>
+                @endif
+
+                {{-- Meta Info --}}
+                <div class="mt-4 flex items-center gap-3 text-xs text-slate-500">
+                    <span class="inline-flex items-center gap-1"><i data-lucide="timer" class="h-3.5 w-3.5"></i> {{ $lesson->estimated_minutes }}p</span>
+                    <span>·</span>
+                    <span class="inline-flex items-center gap-1"><i data-lucide="circle-help" class="h-3.5 w-3.5"></i> {{ $lesson->questions_count }} câu</span>
+                    <span>·</span>
+                    <span class="inline-flex items-center gap-1"><i data-lucide="layers" class="h-3.5 w-3.5"></i> {{ $lesson->flashcards_count }} thẻ</span>
+                </div>
             </div>
-            <div class="mt-4 flex items-center gap-3 text-xs text-slate-500">
-                <span class="inline-flex items-center gap-1"><i data-lucide="timer" class="h-3.5 w-3.5"></i> {{ $lesson->estimated_minutes }} phút</span>
-                <span>·</span>
-                <span class="inline-flex items-center gap-1"><i data-lucide="circle-help" class="h-3.5 w-3.5"></i> {{ $lesson->questions_count }} câu hỏi</span>
-                <span>·</span>
-                <span class="inline-flex items-center gap-1"><i data-lucide="layers" class="h-3.5 w-3.5"></i> {{ $lesson->flashcards_count }} thẻ</span>
-            </div>
-            <div class="mt-4 flex gap-2">
-                <a href="{{ route('lesson.show', ['slug' => $lesson->slug]) }}"
-                    class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full border {{ $isInProgress ? 'border-amber-400 bg-amber-50 text-amber-950 font-bold' : 'border-slate-200 bg-white text-slate-700 font-bold hover:bg-slate-50' }} py-2 text-center text-xs transition">
-                    <i data-lucide="book-open" class="h-3.5 w-3.5"></i> {{ $isInProgress ? 'Học tiếp (' . $percent . '%)' : 'Lý thuyết' }}
-                </a>
-                <a href="{{ route('flashcards', ['lesson' => $lesson->slug]) }}"
-                    class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-slate-100 py-2 text-center text-xs font-bold text-slate-700 hover:bg-slate-200 transition">
-                    <i data-lucide="layers" class="h-3.5 w-3.5"></i> Flashcard
-                </a>
-                <a href="{{ route('quiz', ['lesson' => $lesson->slug]) }}"
-                    class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full py-2 text-center text-xs font-bold text-white transition hover:opacity-90"
-                    style="background: {{ $meta['color'] }}">
-                    <i data-lucide="target" class="h-3.5 w-3.5"></i> Quiz
-                </a>
+
+            {{-- Action Buttons --}}
+            <div class="mt-5 pt-3 border-t border-slate-100 space-y-2">
+                {{-- Dịch Trạm Môn (Inspect Gate Modal) Button --}}
+                <button type="button"
+                        @click="openGate({{ Js::from($stationPayload) }})"
+                        class="w-full inline-flex items-center justify-center gap-1.5 rounded-xl border border-amber-900/20 bg-amber-50/80 hover:bg-amber-100 py-2 text-xs font-bold text-amber-950 transition active:scale-95">
+                    <i data-lucide="door-open" class="h-3.5 w-3.5 text-amber-800"></i>
+                    <span>Mở Dịch Trạm Môn (Xem trước)</span>
+                </button>
+
+                {{-- Direct Quick Links --}}
+                <div class="flex gap-1.5">
+                    <a href="{{ route('lesson.show', ['slug' => $lesson->slug]) }}"
+                        class="flex-1 inline-flex items-center justify-center gap-1 rounded-lg border {{ $isInProgress ? 'border-amber-400 bg-amber-50 text-amber-950 font-bold' : 'border-slate-200 bg-white text-slate-700 font-bold hover:bg-slate-50' }} py-1.5 text-center text-xs transition">
+                        <i data-lucide="book-open" class="h-3 w-3"></i>
+                        <span>{{ $isInProgress ? 'Học (' . $percent . '%)' : 'Lý thuyết' }}</span>
+                    </a>
+                    <a href="{{ route('flashcards', ['lesson' => $lesson->slug]) }}"
+                        class="flex-1 inline-flex items-center justify-center gap-1 rounded-lg bg-slate-100 py-1.5 text-center text-xs font-bold text-slate-700 hover:bg-slate-200 transition">
+                        <i data-lucide="layers" class="h-3 w-3"></i>
+                        <span>Thư thiêm</span>
+                    </a>
+                    <a href="{{ route('quiz', ['lesson' => $lesson->slug]) }}"
+                        class="flex-1 inline-flex items-center justify-center gap-1 rounded-lg py-1.5 text-center text-xs font-bold text-white transition hover:opacity-90"
+                        style="background: {{ $meta['color'] }}">
+                        <i data-lucide="target" class="h-3 w-3"></i>
+                        <span>Quiz</span>
+                    </a>
+                </div>
             </div>
         </div>
         @endforeach
+    </div>
+
+    {{-- Dịch Trạm Môn (Lesson Gate Modal) --}}
+    <div x-show="gateModalOpen"
+         style="display: none;"
+         x-transition.opacity
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div @click.outside="closeGate()"
+             x-show="gateModalOpen"
+             x-transition.scale.95
+             class="relative w-full max-w-lg rounded-[2.25rem] bg-[#faf7f0] border-2 border-amber-900/20 p-6 sm:p-8 shadow-2xl">
+            
+            {{-- Close Button --}}
+            <button @click="closeGate()"
+                    class="absolute right-4 top-4 rounded-full p-2 text-slate-400 transition hover:bg-amber-100 hover:text-slate-700">
+                <i data-lucide="x" class="h-5 w-5"></i>
+            </button>
+
+            {{-- Modal Header --}}
+            <div class="flex items-center gap-2 text-xs font-serif text-[#991b1b]">
+                <span class="rounded bg-red-100 px-2 py-0.5 font-bold uppercase tracking-wider">
+                    Dịch Trạm <span x-text="selectedStation?.number"></span>
+                </span>
+                <span>·</span>
+                <span>Dịch Trạm Môn (驿站之门)</span>
+            </div>
+
+            <h3 class="mt-2 text-2xl font-black text-slate-900 font-serif" x-text="selectedStation?.title"></h3>
+            <p class="mt-1 text-xs text-slate-600" x-text="selectedStation?.summary"></p>
+
+            {{-- Station Stats --}}
+            <div class="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
+                <div class="rounded-xl border border-amber-900/10 bg-white p-2.5 shadow-sm">
+                    <p class="font-black text-slate-900" x-text="(selectedStation?.minutes || 15) + ' phút'"></p>
+                    <p class="text-[11px] text-slate-500">thời lượng</p>
+                </div>
+                <div class="rounded-xl border border-amber-900/10 bg-white p-2.5 shadow-sm">
+                    <p class="font-black text-slate-900" x-text="(selectedStation?.flashcards || 0) + ' từ'"></p>
+                    <p class="text-[11px] text-slate-500">từ vựng</p>
+                </div>
+                <div class="rounded-xl border border-amber-900/10 bg-white p-2.5 shadow-sm">
+                    <p class="font-black text-slate-900" x-text="(selectedStation?.questions || 0) + ' câu'"></p>
+                    <p class="text-[11px] text-slate-500">trắc nghiệm</p>
+                </div>
+            </div>
+
+            {{-- Key Vocab List in Modal --}}
+            <div class="mt-4">
+                <p class="text-xs font-bold uppercase tracking-wider text-slate-500 font-serif mb-2">Từ khóa tiêu biểu của trạm:</p>
+                <div class="grid grid-cols-2 gap-2">
+                    <template x-for="item in (selectedStation?.vocab || [])" :key="item.hanzi">
+                        <div class="flex items-center justify-between rounded-xl border border-amber-900/10 bg-white px-3 py-2 text-xs shadow-sm">
+                            <div>
+                                <span class="font-serif text-base font-black text-slate-900" x-text="item.hanzi"></span>
+                                <span class="text-[11px] text-slate-500 ml-1" x-text="item.pinyin"></span>
+                            </div>
+                            <span class="text-[11px] text-slate-600 truncate max-w-[80px]" x-text="item.meaning"></span>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            {{-- Action Gateways --}}
+            <div class="mt-6 space-y-2.5">
+                <a :href="selectedStation?.lesson_url"
+                   class="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#991b1b] hover:bg-[#7f1d1d] py-3 text-sm font-bold text-white shadow-lg shadow-red-950/20 transition active:scale-95">
+                    <i data-lucide="book-open" class="h-4 w-4"></i>
+                    <span>入站 · Vào học bài lý thuyết</span>
+                </a>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <a :href="selectedStation?.cards_url"
+                       class="flex items-center justify-center gap-1.5 rounded-xl border border-amber-900/20 bg-white hover:bg-amber-50 py-2.5 text-xs font-bold text-slate-800 shadow-sm transition">
+                        <i data-lucide="layers" class="h-3.5 w-3.5 text-amber-700"></i>
+                        <span>Luyện Flashcard</span>
+                    </a>
+                    <a :href="selectedStation?.quiz_url"
+                       class="flex items-center justify-center gap-1.5 rounded-xl border border-amber-900/20 bg-white hover:bg-amber-50 py-2.5 text-xs font-bold text-slate-800 shadow-sm transition">
+                        <i data-lucide="target" class="h-3.5 w-3.5 text-[#991b1b]"></i>
+                        <span>Thử sức Quiz</span>
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
 
     {{-- Custom Pagination links for Lessons --}}
@@ -223,14 +462,16 @@
 </section>
 @endif
 
-{{-- Flashcard 3D Deck & Vocabulary Section --}}
+{{-- ============================================================== --}}
+{{-- FLASHCARD 3D DECK & VOCABULARY SECTION                        --}}
+{{-- ============================================================== --}}
 @if($flashcards->isNotEmpty())
 <section id="flashcards" class="mb-12">
     <div class="mb-6 flex items-center justify-between">
         <div>
-            <h2 class="flex items-center gap-2 text-xl font-black text-slate-900">
+            <h2 class="flex items-center gap-2 text-xl font-black text-slate-900 font-serif">
                 <i data-lucide="layers" class="h-5 w-5 text-slate-600"></i>
-                Ôn luyện Flashcard 3D • {{ $meta['label'] }}
+                Ôn Luyện Thư Thiêm 3D · {{ $meta['label'] }}
             </h2>
             <p class="text-xs text-slate-500 mt-1">Lật thẻ để kiểm tra trí nhớ, tập viết chữ và luyện nghe phát âm.</p>
         </div>
@@ -391,7 +632,7 @@
                     <div class="h-2 rounded-full transition-all duration-500"
                         :style="`width: ${progress}%; background: {{ $meta['color'] }}`"></div>
                 </div>
-                <span class="shrink-0 text-xs font-bold text-slate-500">
+                <span class="shrink-0 text-xs font-bold text-slate-500 font-serif">
                     <span x-text="current + 1"></span> / <span x-text="cards.length"></span> thẻ
                 </span>
             </div>
@@ -421,7 +662,7 @@
                                     {{ $meta['label'] }}
                                 </span>
 
-                                <p class="text-7xl sm:text-8xl font-black leading-none tracking-tight" x-text="card?.hanzi"></p>
+                                <p class="text-7xl sm:text-8xl font-black leading-none tracking-tight font-serif" x-text="card?.hanzi"></p>
                                 <p class="mt-1 text-xs text-white/70">Bấm để lật thẻ 👆</p>
 
                                 {{-- Star / Bookmark Button (Top Right) --}}
@@ -465,14 +706,14 @@
 
                                 <div class="flex flex-1 flex-col justify-center gap-3 pr-12">
                                     <div>
-                                        <p class="text-xs font-bold uppercase tracking-widest" style="color: {{ $meta['color'] }}" x-text="card?.pinyin"></p>
-                                        <p class="mt-1 text-3xl font-black text-slate-950" x-text="card?.meaning"></p>
+                                        <p class="text-xs font-bold uppercase tracking-widest font-mono" style="color: {{ $meta['color'] }}" x-text="card?.pinyin"></p>
+                                        <p class="mt-1 text-3xl font-black text-slate-950 font-serif" x-text="card?.meaning"></p>
                                     </div>
 
                                     <template x-if="card?.example">
                                         <div class="rounded-2xl bg-slate-50 border border-slate-100 p-3.5 text-left">
                                             <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Ví dụ câu:</p>
-                                            <p class="mt-1 text-sm font-bold text-slate-900" x-text="card?.example"></p>
+                                            <p class="mt-1 text-sm font-bold text-slate-900 font-serif" x-text="card?.example"></p>
                                             <p class="text-xs text-slate-500" x-text="card?.example_pinyin"></p>
                                             <p class="mt-0.5 text-xs text-slate-600 italic" x-text="card?.example_meaning"></p>
                                         </div>
@@ -532,8 +773,8 @@
                 <div class="flex flex-col items-center gap-5 rounded-[2.5rem] bg-slate-950 py-12 px-6 text-center text-white shadow-2xl max-w-lg mx-auto">
                     <span class="text-6xl">🎉</span>
                     <div>
-                        <p class="text-xs font-bold uppercase tracking-[0.25em] text-amber-300">Hoàn thành xuất sắc!</p>
-                        <h3 class="mt-2 text-2xl font-black">Bạn đã ôn xong toàn bộ thẻ {{ $meta['label'] }}!</h3>
+                        <p class="text-xs font-bold uppercase tracking-[0.25em] text-amber-300 font-serif">Hoàn thành xuất sắc!</p>
+                        <h3 class="mt-2 text-2xl font-black font-serif">Bạn đã ôn xong toàn bộ thẻ {{ $meta['label'] }}!</h3>
                         <p class="mt-2 text-xs text-slate-400">Hãy tiếp tục thử thách bản thân với bài kiểm tra trắc nghiệm nhé.</p>
                     </div>
                     <div class="flex flex-wrap justify-center gap-3 pt-2">
@@ -552,13 +793,13 @@
 
     </div>
 
-    {{-- Static card grid with pagination (Identical to main flashcards page) --}}
+    {{-- Static card grid with pagination --}}
     <div class="mt-12">
         <div class="mb-5 flex items-center justify-between flex-wrap gap-3">
-            <p class="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">
+            <p class="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500 font-serif">
                 Toàn bộ {{ $flashcards->total() }} thẻ thuộc {{ $meta['label'] }}
             </p>
-            <p class="text-sm text-slate-400">
+            <p class="text-sm text-slate-400 font-serif">
                 Trang {{ $flashcards->currentPage() }} / {{ $flashcards->lastPage() }}
             </p>
         </div>
@@ -569,7 +810,7 @@
                 <div class="flex items-start justify-between gap-3">
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2">
-                            <p class="truncate text-xs font-bold uppercase tracking-widest text-slate-400">{{ $card->pinyin }}</p>
+                            <p class="truncate text-xs font-bold uppercase tracking-widest text-slate-400 font-mono">{{ $card->pinyin }}</p>
                             <button type="button" 
                                 onclick="window.playChineseVoice('{{ addslashes($card->hanzi) }}')" 
                                 class="text-slate-300 transition hover:text-blue-500 focus:outline-none"
@@ -578,7 +819,7 @@
                             </button>
                         </div>
                         <div class="mt-1 flex items-baseline gap-3">
-                            <h2 class="text-3xl font-black text-slate-800">{{ $card->hanzi }}</h2>
+                            <h2 class="text-3xl font-black text-slate-800 font-serif">{{ $card->hanzi }}</h2>
                         </div>
                         <p class="mt-2 text-sm font-medium leading-relaxed text-slate-600 line-clamp-2" title="{{ $card->meaning }}">{{ $card->meaning }}</p>
                     </div>
@@ -614,7 +855,7 @@
 
                 @if($card->example)
                 <div class="mt-4 border-t border-slate-100 pt-3">
-                    <p class="text-sm font-medium text-slate-800">{{ $card->example }}</p>
+                    <p class="text-sm font-medium text-slate-800 font-serif">{{ $card->example }}</p>
                     @if($card->example_pinyin)
                     <p class="mt-0.5 text-[11px] text-slate-400">{{ $card->example_pinyin }}</p>
                     @endif
@@ -682,14 +923,17 @@
 @endif
 
 {{-- CTA: Quiz --}}
-<section class="rounded-[2rem] p-8 text-white shadow-2xl mb-4" style="background: #111827">
-    <div class="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
+<section class="rounded-[2rem] p-8 text-white shadow-2xl mb-4 relative overflow-hidden" style="background: #111827">
+    <div class="pointer-events-none absolute -right-4 -bottom-6 opacity-10 font-serif text-[9rem] font-black select-none text-white leading-none">
+        试炼
+    </div>
+    <div class="relative z-10 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
         <div>
-            <p class="text-sm font-semibold uppercase tracking-[0.28em] text-amber-300/80">Kiểm tra kiến thức</p>
-            <h2 class="mt-2 text-2xl font-black">Bạn đã sẵn sàng làm quiz {{ $meta['label'] }}?</h2>
-            <p class="mt-2 text-white/70 text-sm">Ôn xong flashcard rồi làm quiz để củng cố và ghi nhớ lâu hơn.</p>
+            <p class="text-sm font-semibold uppercase tracking-[0.28em] text-amber-300/80 font-serif">Khảo Thí Củng Cố</p>
+            <h2 class="mt-2 text-2xl font-black font-serif">Bạn đã sẵn sàng làm quiz {{ $meta['label'] }}?</h2>
+            <p class="mt-2 text-white/70 text-sm">Vượt qua các dịch trạm, ôn xong thư thiêm rồi làm quiz để củng cố và khắc sâu trí nhớ.</p>
         </div>
-        <a href="{{ route('quiz') }}" class="inline-flex items-center gap-2 justify-center rounded-full bg-amber-300 px-6 py-3 text-sm font-bold text-slate-950 transition hover:bg-amber-200 hover:-translate-y-0.5">
+        <a href="{{ route('quiz') }}" class="inline-flex items-center gap-2 justify-center rounded-full bg-amber-300 px-6 py-3 text-sm font-bold text-slate-950 transition hover:bg-amber-200 hover:-translate-y-0.5 shadow-md">
             <i data-lucide="target" class="h-4 w-4"></i>
             Làm Quiz ngay
         </a>
@@ -768,7 +1012,7 @@
             <i data-lucide="x" class="h-5 w-5"></i>
         </button>
 
-        <h3 class="mb-4 text-center text-lg font-bold text-slate-800">Tập viết chữ</h3>
+        <h3 class="mb-4 text-center text-lg font-bold text-slate-800 font-serif">Tập viết chữ Hán</h3>
 
         {{-- Multi-character selection --}}
         <template x-if="chars.length > 1">
@@ -784,7 +1028,7 @@
         </template>
 
         <div class="flex justify-center">
-            {{-- Draw grid background --}}
+            {{-- Draw grid background with Tân Quốc Phong mizige --}}
             <div class="relative overflow-hidden rounded-xl border-2 border-amber-200/50 bg-amber-50 shadow-inner" style="width: 300px; height: 300px;">
                 {{-- Grid lines --}}
                 <div class="absolute inset-0 top-1/2 border-b border-dashed border-amber-200/60"></div>
