@@ -75,9 +75,15 @@
         this.setupBeforeUnload();
         this.preloadAhead(4);
 
-        this.$watch('currentIndex', () => {
+        this.$watch('currentIndex', (newIdx) => {
             this.preloadAhead(3);
-            setTimeout(() => window.refreshIcons?.(), 50);
+            setTimeout(() => {
+                window.refreshIcons?.();
+                const activeBtn = document.querySelector(`[data-palette-idx="${newIdx}"]`);
+                if (activeBtn) {
+                    activeBtn.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+                }
+            }, 50);
         });
         setTimeout(() => window.refreshIcons?.(), 100);
     },
@@ -769,13 +775,14 @@
                 </div>
 
                 {{-- Number Grid --}}
-                <div class="mt-4 grid grid-cols-5 gap-2 max-h-[360px] overflow-y-auto pr-1" style="scrollbar-width: thin;">
+                <div class="mt-4 grid grid-cols-5 gap-2.5 max-h-[360px] overflow-y-auto p-2.5 pr-3 custom-scrollbar" style="scrollbar-width: thin;">
                     <template x-for="(q, idx) in questions" :key="q.id">
                         <button type="button"
+                                :data-palette-idx="idx"
                                 @click="goTo(idx)"
                                 class="relative flex h-10 w-full items-center justify-center rounded-xl text-xs font-black transition-all active:scale-95"
                                 :class="{
-                                    'ring-2 ring-[#991b1b] ring-offset-2': currentIndex === idx,
+                                    'z-10 ring-2 ring-[#991b1b] ring-offset-2 ring-offset-white shadow-md': currentIndex === idx,
                                     'bg-amber-400 text-slate-950 shadow-sm': isFlagged(q.id),
                                     'bg-slate-900 text-white shadow-sm': (!isFlagged(q.id) && answers[q.id]),
                                     'border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100': (!isFlagged(q.id) && !answers[q.id])
