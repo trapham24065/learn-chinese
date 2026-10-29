@@ -4,7 +4,9 @@
 
 @section('content')
 
-<div x-data="{
+<script>
+window.examRoomApp = function() {
+    return {
     level: {{ $level }},
     initialQuestions: {{ Js::from($questions) }},
     questions: [],
@@ -374,7 +376,21 @@
             this.isSubmitting = false;
         }
     }
-}" x-init="init()" class="space-y-8 pb-16 lg:pb-20">
+};
+};
+
+if (typeof Alpine !== 'undefined' && Alpine.data) {
+    Alpine.data('examRoomApp', window.examRoomApp);
+} else {
+    document.addEventListener('alpine:init', function() {
+        if (window.Alpine && typeof window.Alpine.data === 'function') {
+            window.Alpine.data('examRoomApp', window.examRoomApp);
+        }
+    });
+}
+</script>
+
+<div x-data="examRoomApp()" x-init="init()" class="space-y-8 pb-16 lg:pb-20">
 
     {{-- Restored Session Alert Banner --}}
     <template x-if="isRestored">
