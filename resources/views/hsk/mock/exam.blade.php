@@ -466,8 +466,34 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
         </div>
     </div>
 
+    <style>
+    .exam-workspace-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        align-items: start;
+    }
+    @media (min-width: 768px) {
+        .exam-workspace-grid {
+            grid-template-columns: minmax(0, 1fr) 300px;
+            gap: 1.5rem;
+        }
+    }
+    @media (min-width: 1024px) {
+        .exam-workspace-grid {
+            grid-template-columns: minmax(0, 1fr) 320px;
+            gap: 2rem;
+        }
+    }
+    @media (min-width: 1280px) {
+        .exam-workspace-grid {
+            grid-template-columns: minmax(0, 1fr) 340px;
+        }
+    }
+    </style>
+
     {{-- Main Workspace (Question Area + Question Palette) --}}
-    <div class="grid gap-6 lg:gap-8 lg:grid-cols-[1fr_340px] items-start">
+    <div class="exam-workspace-grid grid gap-6 lg:gap-8 items-start">
 
         {{-- Left: Active Question Card --}}
         <div class="rounded-[2.5rem] border border-white/80 bg-white/90 p-6 sm:p-8 lg:p-10 shadow-xl shadow-slate-900/5 backdrop-blur flex flex-col justify-between min-h-[580px]">
@@ -763,7 +789,7 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
         </div>
 
         {{-- Right: Question Navigator Palette --}}
-        <div class="space-y-6">
+        <div class="space-y-6 md:sticky md:top-24">
             
             {{-- Palette Card --}}
             <div class="rounded-[2.5rem] border border-white/80 bg-white/90 p-6 sm:p-7 shadow-xl shadow-slate-900/5 backdrop-blur">
@@ -791,7 +817,7 @@ if (typeof Alpine !== 'undefined' && Alpine.data) {
                 </div>
 
                 {{-- Number Grid --}}
-                <div class="mt-4 grid grid-cols-5 gap-2.5 max-h-[360px] overflow-y-auto p-2.5 pr-3 custom-scrollbar" style="scrollbar-width: thin;">
+                <div class="mt-4 grid grid-cols-5 gap-2.5 max-h-[460px] overflow-y-auto p-2.5 pr-3 custom-scrollbar" style="scrollbar-width: thin;">
                     <template x-for="(q, idx) in questions" :key="q.id">
                         <button type="button"
                                 :data-palette-idx="idx"
