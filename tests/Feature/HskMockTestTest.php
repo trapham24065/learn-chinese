@@ -746,5 +746,39 @@ class HskMockTestTest extends TestCase
         $this->assertNotNull($mockTest->certificate_code);
         $this->assertStringStartsWith('LC-HSK6-', $mockTest->certificate_code);
     }
+
+    public function test_hsk4_true_false_questions_are_properly_classified_without_forcing_images(): void
+    {
+        $tfQuestions = Question::where('hsk_level', 4)
+            ->where('question_type', 'true_false')
+            ->get();
+
+        $this->assertCount(3, $tfQuestions);
+        foreach ($tfQuestions as $q) {
+            $this->assertNull($q->image, 'HSK 4 listening true/false questions should not have an image.');
+            $this->assertEquals('text_audio', $q->media_type);
+            $this->assertEquals(['对', '错'], $q->options);
+        }
+    }
+
+    public function test_exam_room_has_image_preloading_fresh_keys_and_responsive_spacing(): void
+    {
+        $response = $this->get(route('hsk.mock.start', 1));
+        $response->assertStatus(200);
+
+        // Verify fresh key binding per question image to prevent lingering ghost images
+        $response->assertSee(':key="\'img-wrap-\' + currentQ.id"', false);
+        $response->assertSee('x-on:load="handleImageLoad', false);
+        $response->assertSee('preloadAhead', false);
+
+        // Verify dynamic True/False subtitles (not hardcoded to 'Hình khớp nội dung')
+        $response->assertSee('x-text="trueLabelSubtitle"', false);
+        $response->assertSee('x-text="falseLabelSubtitle"', false);
+        $response->assertSee('isTrueFalseType', false);
+
+        // Verify no lazy loading on exam question images
+        $content = $response->getContent();
+        $this->assertStringNotContainsString('<img :src="currentQ.image" :alt="currentQ.image_alt || \'Hình minh họa đề thi\'" class="h-44 sm:h-48 w-auto object-contain drop-shadow-sm select-none pointer-events-none" loading="lazy">', $content);
+    }
 }
 

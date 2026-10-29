@@ -25,13 +25,58 @@
     isRestored: false,
     storageKey: 'hsk_mock_active_session_{{ Auth::id() ?? 'guest' }}',
     beforeUnloadHandler: null,
+    preloadedUrls: {},
+    loadedImages: {},
+    errorImages: {},
+
+    preloadSingleUrl(url) {
+        if (!url || typeof url !== 'string' || this.preloadedUrls[url]) return;
+        this.preloadedUrls[url] = true;
+        const img = new Image();
+        img.src = url;
+    },
+
+    preloadAhead(count = 3) {
+        if (!Array.isArray(this.questions) || this.questions.length === 0) return;
+        for (let i = 0; i <= count; i++) {
+            const idx = this.currentIndex + i;
+            if (idx >= 0 && idx < this.questions.length) {
+                const q = this.questions[idx];
+                if (q?.image) {
+                    this.preloadSingleUrl(q.image);
+                }
+                if (Array.isArray(q?.image_set)) {
+                    q.image_set.forEach(item => {
+                        if (item?.image) {
+                            const url = item.image.startsWith('http') ? item.image : ('/' + item.image.replace(/^\//, ''));
+                            this.preloadSingleUrl(url);
+                        }
+                    });
+                }
+            }
+        }
+    },
+
+    handleImageLoad(key) {
+        this.loadedImages[key] = true;
+        this.errorImages[key] = false;
+        setTimeout(() => window.refreshIcons?.(), 50);
+    },
+
+    handleImageError(key) {
+        this.loadedImages[key] = false;
+        this.errorImages[key] = true;
+        setTimeout(() => window.refreshIcons?.(), 50);
+    },
 
     init() {
         this.restoreOrCreateSession();
         this.startTimer();
         this.setupBeforeUnload();
+        this.preloadAhead(4);
 
         this.$watch('currentIndex', () => {
+            this.preloadAhead(3);
             setTimeout(() => window.refreshIcons?.(), 50);
         });
         setTimeout(() => window.refreshIcons?.(), 100);
@@ -189,21 +234,52 @@
         return this.flagged.includes(qId);
     },
 
+    get isTrueFalseType() {
+        if (!this.currentQ) return false;
+        const type = this.currentQ.question_type;
+        if (type === 'picture_true_false' || type === 'true_false') return true;
+        const opts = this.currentQ.options;
+        return Array.isArray(opts) && opts.length === 2 && opts.includes('对') && opts.includes('错');
+    },
+
+    get trueLabelSubtitle() {
+        if (this.currentQ?.image) {
+            return 'Hình khớp nội dung';
+        }
+        if (this.currentQ?.skill_type === 'listening') {
+            return 'Khớp nội dung nghe';
+        }
+        return 'Nhận định đúng';
+    },
+
+    get falseLabelSubtitle() {
+        if (this.currentQ?.image) {
+            return 'Hình không khớp';
+        }
+        if (this.currentQ?.skill_type === 'listening') {
+            return 'Không khớp nội dung nghe';
+        }
+        return 'Nhận định sai';
+    },
+
     goTo(index) {
         if (index >= 0 && index < this.total) {
             this.currentIndex = index;
+            this.preloadAhead(3);
         }
     },
 
     next() {
         if (this.currentIndex < this.total - 1) {
             this.currentIndex++;
+            this.preloadAhead(3);
         }
     },
 
     prev() {
         if (this.currentIndex > 0) {
             this.currentIndex--;
+            this.preloadAhead(3);
         }
     },
 
@@ -292,7 +368,7 @@
             this.isSubmitting = false;
         }
     }
-}" x-init="init()" class="space-y-6">
+}" x-init="init()" class="space-y-8 pb-16 lg:pb-20">
 
     {{-- Restored Session Alert Banner --}}
     <template x-if="isRestored">
@@ -369,10 +445,10 @@
     </div>
 
     {{-- Main Workspace (Question Area + Question Palette) --}}
-    <div class="grid gap-6 lg:grid-cols-[1fr_320px] items-start">
+    <div class="grid gap-6 lg:gap-8 lg:grid-cols-[1fr_340px] items-start">
 
         {{-- Left: Active Question Card --}}
-        <div class="rounded-[2.5rem] border border-white/80 bg-white/90 p-6 sm:p-8 shadow-xl shadow-slate-900/5 backdrop-blur">
+        <div class="rounded-[2.5rem] border border-white/80 bg-white/90 p-6 sm:p-8 lg:p-10 shadow-xl shadow-slate-900/5 backdrop-blur flex flex-col justify-between min-h-[580px]">
             
             {{-- Question Header --}}
             <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-5">
@@ -415,7 +491,7 @@
             </div>
 
             {{-- Question Content Body --}}
-            <div class="py-6 sm:py-8">
+            <div class="py-6 sm:py-8 flex-1">
                 
                 {{-- Listening Audio Player Box --}}
                 <template x-if="currentQ?.skill_type === 'listening' && currentQ?.audio_text">
@@ -455,11 +531,42 @@
                     </template>
                 </div>
 
-                {{-- Single Illustration Image (for picture_true_false or single image question) --}}
+                {{-- Single Illustration Image (Supports skeleton loading, preload & prevents ghost images) --}}
                 <template x-if="currentQ?.image">
                     <div class="mt-6 flex justify-center">
-                        <div class="relative rounded-3xl border border-slate-200/80 bg-slate-50/80 p-5 shadow-sm max-w-xs w-full flex flex-col items-center justify-center">
-                            <img :src="currentQ.image" :alt="currentQ.image_alt || 'Hình minh họa đề thi'" class="h-44 sm:h-48 w-auto object-contain drop-shadow-sm select-none pointer-events-none" loading="lazy">
+                        <div :key="'img-wrap-' + currentQ.id"
+                             class="relative rounded-3xl border border-slate-200/80 bg-slate-50/80 p-5 shadow-sm max-w-xs w-full flex flex-col items-center justify-center min-h-[190px]">
+                            
+                            {{-- Skeleton Loading Placeholder while image is downloading/decoding --}}
+                            <div x-show="!loadedImages[currentQ.id] && !errorImages[currentQ.id]"
+                                 class="h-44 sm:h-48 w-full flex flex-col items-center justify-center animate-pulse bg-slate-100/90 rounded-2xl">
+                                <div class="grid h-12 w-12 place-items-center rounded-2xl bg-slate-200/70 text-slate-400">
+                                    <i data-lucide="image" class="h-6 w-6"></i>
+                                </div>
+                                <span class="mt-2.5 text-xs font-semibold text-slate-400">Đang tải hình ảnh...</span>
+                            </div>
+
+                            {{-- Error Fallback if image failed to load --}}
+                            <div x-show="errorImages[currentQ.id]"
+                                 style="display: none;"
+                                 class="h-44 sm:h-48 w-full flex flex-col items-center justify-center bg-red-50/60 border border-red-200/70 rounded-2xl p-4 text-center">
+                                <div class="grid h-10 w-10 place-items-center rounded-xl bg-red-100 text-red-600 mb-2">
+                                    <i data-lucide="alert-circle" class="h-5 w-5"></i>
+                                </div>
+                                <span class="text-xs font-bold text-red-700">Không thể tải ảnh minh họa</span>
+                                <span class="text-[11px] text-slate-500 mt-0.5">Vui lòng tiếp tục làm bài</span>
+                            </div>
+
+                            {{-- Active Question Image --}}
+                            <img :src="currentQ.image"
+                                 :alt="currentQ.image_alt || 'Hình minh họa đề thi'"
+                                 x-on:load="handleImageLoad(currentQ.id)"
+                                 x-on:error="handleImageError(currentQ.id)"
+                                 x-show="loadedImages[currentQ.id]"
+                                 style="display: none;"
+                                 class="h-44 sm:h-48 w-auto object-contain drop-shadow-sm select-none pointer-events-none transition-opacity duration-200"
+                                 :class="loadedImages[currentQ.id] ? 'opacity-100' : 'opacity-0'">
+
                             <template x-if="currentQ?.image_alt">
                                 <span class="mt-2.5 text-xs font-semibold text-slate-500" x-text="currentQ.image_alt"></span>
                             </template>
@@ -467,8 +574,8 @@
                     </div>
                 </template>
 
-                {{-- Case 1: Picture True / False (判断对错) --}}
-                <template x-if="currentQ?.question_type === 'picture_true_false'">
+                {{-- Case 1: True / False (判断对错) - Supports Picture TF & Audio/Text TF --}}
+                <template x-if="isTrueFalseType">
                     <div class="mt-8 grid grid-cols-2 gap-4 sm:gap-6">
                         {{-- Button TRUE (对) --}}
                         <div @click="selectAnswer('对')"
@@ -483,7 +590,7 @@
                                       :class="(answers[currentQ?.id] === '对' || answers[currentQ?.id] === 'true') ? 'text-emerald-900' : 'text-slate-800'">
                                     Đúng (对)
                                 </span>
-                                <p class="text-xs text-slate-400 font-semibold mt-0.5">Hình khớp nội dung</p>
+                                <p class="text-xs text-slate-400 font-semibold mt-0.5" x-text="trueLabelSubtitle"></p>
                             </div>
                         </div>
 
@@ -500,7 +607,7 @@
                                       :class="(answers[currentQ?.id] === '错' || answers[currentQ?.id] === 'false') ? 'text-red-900' : 'text-slate-800'">
                                     Sai (错)
                                 </span>
-                                <p class="text-xs text-slate-400 font-semibold mt-0.5">Hình không khớp</p>
+                                <p class="text-xs text-slate-400 font-semibold mt-0.5" x-text="falseLabelSubtitle"></p>
                             </div>
                         </div>
                     </div>
@@ -509,7 +616,7 @@
                 {{-- Case 2: Picture Choice Grid (看图选择 A/B/C) --}}
                 <template x-if="currentQ?.question_type === 'picture_choice' && currentQ?.image_set">
                     <div class="mt-8 grid gap-4 sm:grid-cols-3">
-                        <template x-for="(item, itemIdx) in currentQ.image_set" :key="item.key || itemIdx">
+                        <template x-for="(item, itemIdx) in currentQ.image_set" :key="'q-' + currentQ.id + '-item-' + (item.key || itemIdx)">
                             <div @click="selectAnswer(item.key)"
                                  class="group flex flex-col items-center justify-between rounded-3xl border-2 p-4 sm:p-5 cursor-pointer transition-all duration-200 select-none relative"
                                  :class="answers[currentQ?.id] === item.key ? 'border-[#991b1b] bg-red-50/70 shadow-lg ring-2 ring-[#991b1b]/20 -translate-y-1' : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/80 hover:-translate-y-0.5'">
@@ -517,7 +624,7 @@
                                 {{-- Card Header: Letter A / B / C & selection indicator --}}
                                 <div class="w-full flex items-center justify-between mb-3">
                                     <span class="grid h-9 w-9 place-items-center rounded-2xl text-sm font-black transition"
-                                          :class="answers[currentQ?.id] === item.key ? 'bg-[#991b1b] text-white shadow-md shadow-red-900/20' : 'bg-slate-100 text-slate-700 group-hover:bg-slate-200'"
+                                          :class="answers[currentQ?.id] === item.key ? 'bg-[#991b1b] text-white shadow-md shadow-red-950/20' : 'bg-slate-100 text-slate-700 group-hover:bg-slate-200'"
                                           x-text="item.key">
                                     </span>
 
@@ -535,12 +642,26 @@
                                     </span>
                                 </div>
 
-                                {{-- Image preview container --}}
-                                <div class="h-32 sm:h-36 w-full flex items-center justify-center p-2">
-                                    <img :src="'/' + item.image.replace(/^\//, '')"
+                                {{-- Image preview container with skeleton & fresh key --}}
+                                <div class="h-32 sm:h-36 w-full flex items-center justify-center p-2 relative">
+                                    <div x-show="!loadedImages[currentQ.id + '-' + item.key] && !errorImages[currentQ.id + '-' + item.key]"
+                                         class="h-full w-full flex flex-col items-center justify-center animate-pulse bg-slate-100/90 rounded-xl">
+                                        <i data-lucide="image" class="h-5 w-5 text-slate-400"></i>
+                                    </div>
+                                    <div x-show="errorImages[currentQ.id + '-' + item.key]"
+                                         style="display: none;"
+                                         class="h-full w-full flex flex-col items-center justify-center bg-red-50/60 rounded-xl text-center p-1">
+                                        <i data-lucide="alert-circle" class="h-4 w-4 text-red-500"></i>
+                                        <span class="text-[10px] text-red-600 font-semibold mt-1">Lỗi ảnh</span>
+                                    </div>
+                                    <img :src="item.image.startsWith('http') ? item.image : ('/' + item.image.replace(/^\//, ''))"
                                          :alt="item.alt || ('Hình ' + item.key)"
-                                         class="h-full w-auto object-contain drop-shadow-sm select-none pointer-events-none"
-                                         loading="lazy">
+                                         x-on:load="handleImageLoad(currentQ.id + '-' + item.key)"
+                                         x-on:error="handleImageError(currentQ.id + '-' + item.key)"
+                                         x-show="loadedImages[currentQ.id + '-' + item.key]"
+                                         style="display: none;"
+                                         class="h-full w-auto object-contain drop-shadow-sm select-none pointer-events-none transition-opacity duration-200"
+                                         :class="loadedImages[currentQ.id + '-' + item.key] ? 'opacity-100' : 'opacity-0'">
                                 </div>
 
                                 {{-- Image Alt Text / Label --}}
@@ -553,7 +674,7 @@
                 </template>
 
                 {{-- Case 3: Default Multiple Choice Options List (for standard text options) --}}
-                <template x-if="currentQ?.question_type !== 'picture_true_false' && (currentQ?.question_type !== 'picture_choice' || !currentQ?.image_set)">
+                <template x-if="!isTrueFalseType && (currentQ?.question_type !== 'picture_choice' || !currentQ?.image_set)">
                     <div class="mt-8 space-y-3">
                         <template x-for="(option, optIdx) in currentQ?.options" :key="optIdx">
                             <div @click="selectAnswer(option)"
@@ -596,11 +717,11 @@
             </div>
 
             {{-- Bottom Navigation Controls --}}
-            <div class="flex items-center justify-between border-t border-slate-100 pt-6 gap-3">
+            <div class="flex items-center justify-between border-t border-slate-100 pt-6 mt-6 gap-3">
                 <button type="button"
                         @click="prev()"
                         :disabled="currentIndex === 0"
-                        class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-2.5 text-xs sm:text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40">
+                        class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-xs sm:text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-40">
                     <i data-lucide="arrow-left" class="h-4 w-4"></i>
                     <span>Câu trước</span>
                 </button>
@@ -612,7 +733,7 @@
                 <button type="button"
                         @click="next()"
                         :disabled="currentIndex === total - 1"
-                        class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-2.5 text-xs sm:text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40">
+                        class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-xs sm:text-sm font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-slate-300 disabled:cursor-not-allowed disabled:opacity-40">
                     <span>Câu tiếp theo</span>
                     <i data-lucide="arrow-right" class="h-4 w-4"></i>
                 </button>
@@ -623,7 +744,7 @@
         <div class="space-y-6">
             
             {{-- Palette Card --}}
-            <div class="rounded-[2.5rem] border border-white/80 bg-white/90 p-6 shadow-xl shadow-slate-900/5 backdrop-blur">
+            <div class="rounded-[2.5rem] border border-white/80 bg-white/90 p-6 sm:p-7 shadow-xl shadow-slate-900/5 backdrop-blur">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-4">
                     <h3 class="text-xs font-bold uppercase tracking-[0.22em] text-[#991b1b]">Bảng câu hỏi</h3>
                     <span class="text-xs font-bold text-slate-500">
@@ -665,7 +786,7 @@
                 </div>
 
                 {{-- Big Bottom Submit Action in Palette --}}
-                <div class="mt-6 pt-4 border-t border-slate-100">
+                <div class="mt-6 pt-5 pb-1 border-t border-slate-100">
                     <button type="button"
                             @click="confirmSubmit()"
                             :disabled="isSubmitting"

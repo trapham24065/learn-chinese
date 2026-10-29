@@ -231,7 +231,7 @@ class HskMockTestController extends Controller
                     if (! is_array($opts) || count($opts) <= 1) {
                         return $opts;
                     }
-                    if (in_array($q->question_type, ['picture_true_false', 'picture_choice', 'sentence_ordering'])) {
+                    if (in_array($q->question_type, ['picture_true_false', 'true_false', 'picture_choice', 'sentence_ordering'])) {
                         return $opts;
                     }
                     if ($opts === ['A', 'B', 'C', 'D'] || $opts === ['A', 'B', 'C', 'D', 'E'] || $opts === ['对', '错']) {
