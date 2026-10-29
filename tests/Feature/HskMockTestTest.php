@@ -609,5 +609,142 @@ class HskMockTestTest extends TestCase
         $this->assertNotNull($mockTest->certificate_code);
         $this->assertStringStartsWith('LC-HSK3-', $mockTest->certificate_code);
     }
+
+    public function test_hsk4_exam_room_has_35_questions_all_three_skills_and_no_pinyin(): void
+    {
+        $response = $this->get(route('hsk.mock.start', 4));
+
+        $response->assertStatus(200);
+        $response->assertSee('Bài thi thử mô phỏng HSK 4');
+
+        $questions = $response->viewData('questions');
+        $this->assertCount(35, $questions);
+
+        // International standard for HSK 4: Listening (10), Reading (15), Grammar/Writing (10)
+        $skillTypes = $questions->pluck('skill_type')->toArray();
+        $this->assertEquals(10, count(array_filter($skillTypes, fn ($s) => $s === 'listening')));
+        $this->assertEquals(15, count(array_filter($skillTypes, fn ($s) => $s === 'reading')));
+        $this->assertEquals(10, count(array_filter($skillTypes, fn ($s) => $s === 'grammar')));
+
+        // HSK 4 must NEVER display pinyin to students
+        foreach ($questions as $q) {
+            $this->assertNull($q['pinyin'], 'HSK 4 question should not expose pinyin.');
+        }
+
+        // Verify options contain NO Vietnamese text
+        $vietnamesePattern = '/[àáảãạăắằẳẵặâấầẩẫậèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵđ]/iu';
+        foreach ($questions as $q) {
+            foreach ($q['options'] as $opt) {
+                $this->assertDoesNotMatchRegularExpression($vietnamesePattern, $opt, "HSK 4 option '{$opt}' should not contain Vietnamese.");
+            }
+        }
+    }
+
+    public function test_hsk5_exam_room_has_40_questions_all_three_skills_and_academic_register(): void
+    {
+        $response = $this->get(route('hsk.mock.start', 5));
+
+        $response->assertStatus(200);
+        $response->assertSee('Bài thi thử mô phỏng HSK 5');
+
+        $questions = $response->viewData('questions');
+        $this->assertCount(40, $questions);
+
+        // International standard for HSK 5: Listening (10), Reading (15), Grammar/Writing (15)
+        $skillTypes = $questions->pluck('skill_type')->toArray();
+        $this->assertEquals(10, count(array_filter($skillTypes, fn ($s) => $s === 'listening')));
+        $this->assertEquals(15, count(array_filter($skillTypes, fn ($s) => $s === 'reading')));
+        $this->assertEquals(15, count(array_filter($skillTypes, fn ($s) => $s === 'grammar')));
+
+        // HSK 5 must NEVER display pinyin
+        foreach ($questions as $q) {
+            $this->assertNull($q['pinyin'], 'HSK 5 question should not expose pinyin.');
+        }
+
+        // Verify options contain NO Vietnamese text
+        $vietnamesePattern = '/[àáảãạăắằẳẵặâấầẩẫậèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵđ]/iu';
+        foreach ($questions as $q) {
+            foreach ($q['options'] as $opt) {
+                $this->assertDoesNotMatchRegularExpression($vietnamesePattern, $opt, "HSK 5 option '{$opt}' should not contain Vietnamese.");
+            }
+        }
+    }
+
+    public function test_hsk6_exam_room_has_40_questions_and_includes_faulty_sentence_detection(): void
+    {
+        $response = $this->get(route('hsk.mock.start', 6));
+
+        $response->assertStatus(200);
+        $response->assertSee('Bài thi thử mô phỏng HSK 6');
+
+        $questions = $response->viewData('questions');
+        $this->assertCount(40, $questions);
+
+        // International standard for HSK 6: Listening (10), Reading (15), Grammar/Writing (15)
+        $skillTypes = $questions->pluck('skill_type')->toArray();
+        $this->assertEquals(10, count(array_filter($skillTypes, fn ($s) => $s === 'listening')));
+        $this->assertEquals(15, count(array_filter($skillTypes, fn ($s) => $s === 'reading')));
+        $this->assertEquals(15, count(array_filter($skillTypes, fn ($s) => $s === 'grammar')));
+
+        // HSK 6 authentic question types: faulty_sentence (病句辨析) must be present in HSK 6 bank
+        $types = $questions->pluck('question_type')->toArray();
+        $this->assertContains('faulty_sentence', $types, 'HSK 6 exam should feature authentic faulty sentence (病句辨析) questions.');
+
+        // HSK 6 must NEVER display pinyin
+        foreach ($questions as $q) {
+            $this->assertNull($q['pinyin'], 'HSK 6 question should not expose pinyin.');
+        }
+
+        // Verify options contain NO Vietnamese text
+        $vietnamesePattern = '/[àáảãạăắằẳẵặâấầẩẫậèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵđ]/iu';
+        foreach ($questions as $q) {
+            foreach ($q['options'] as $opt) {
+                $this->assertDoesNotMatchRegularExpression($vietnamesePattern, $opt, "HSK 6 option '{$opt}' should not contain Vietnamese.");
+            }
+        }
+    }
+
+    public function test_submitting_hsk6_mock_test_scores_on_300_point_scale_and_issues_certificate(): void
+    {
+        $student = User::factory()->create(['role' => User::ROLE_STUDENT]);
+
+        // Start exam to get exact 40 questions assigned to session
+        $response = $this->get(route('hsk.mock.start', 6));
+        $questions = $response->viewData('questions');
+
+        $answers = [];
+        $questionIds = [];
+        foreach ($questions as $q) {
+            $questionModel = Question::find($q['id']);
+            $answers[$q['id']] = $questionModel->correct_answer;
+            $questionIds[] = $q['id'];
+        }
+
+        $submitResponse = $this->actingAs($student)->postJson(route('hsk.mock.submit', 6), [
+            'answers'          => $answers,
+            'question_ids'     => $questionIds,
+            'duration_seconds' => 1800,
+            'exam_standard'    => 'hsk_2_0',
+        ]);
+
+        $submitResponse->assertStatus(200);
+        $submitResponse->assertJson([
+            'success'     => true,
+            'passed'      => true,
+            'total_score' => 300,
+        ]);
+
+        $this->assertDatabaseHas('mock_tests', [
+            'user_id'       => $student->id,
+            'hsk_level'     => 6,
+            'passed'        => true,
+            'total_score'   => 300,
+            'max_score'     => 300,
+        ]);
+
+        $mockTest = MockTest::where('user_id', $student->id)->where('hsk_level', 6)->latest()->first();
+        $this->assertNotNull($mockTest->certificate_code);
+        $this->assertStringStartsWith('LC-HSK6-', $mockTest->certificate_code);
+    }
 }
 

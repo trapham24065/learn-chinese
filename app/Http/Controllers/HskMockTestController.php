@@ -224,13 +224,20 @@ class HskMockTestController extends Controller
                 'image_alt'      => $q->image_alt,
                 'image_set'      => is_array($q->image_set) ? $q->image_set : (json_decode($q->image_set ?? '[]', true) ?: null),
                 'question'       => $q->question,
-                'pinyin'         => $q->pinyin,
+                'pinyin'         => $level <= 2 ? $q->pinyin : null,
                 'audio_text'     => $q->audio_text,
                 'options'        => (function () use ($q) {
                     $opts = is_array($q->options) ? $q->options : json_decode($q->options ?? '[]', true);
-                    if (is_array($opts) && count($opts) > 2) {
-                        shuffle($opts);
+                    if (! is_array($opts) || count($opts) <= 1) {
+                        return $opts;
                     }
+                    if (in_array($q->question_type, ['picture_true_false', 'picture_choice', 'sentence_ordering'])) {
+                        return $opts;
+                    }
+                    if ($opts === ['A', 'B', 'C', 'D'] || $opts === ['A', 'B', 'C', 'D', 'E'] || $opts === ['对', '错']) {
+                        return $opts;
+                    }
+                    shuffle($opts);
                     return $opts;
                 })(),
                 'difficulty'     => $q->difficulty,
@@ -289,15 +296,35 @@ class HskMockTestController extends Controller
             $userAns = isset($submittedAnswers[$qId]) ? trim((string) $submittedAnswers[$qId]) : '';
             $correctAns = trim((string) $question->correct_answer);
 
-            // Flexible matching for both letter (A/B/C/D), string equality, and boolean True/False (对/错)
+            // Flexible matching for letter (A/B/C/D), string equality, and boolean True/False (对/错)
             $isCorrect = false;
             if ($userAns !== '') {
-                if (mb_strtolower($userAns) === mb_strtolower($correctAns)) {
+                $opts = is_array($question->options) ? $question->options : json_decode($question->options ?? '[]', true);
+                $cleanUser = rtrim(mb_strtolower($userAns), " .。，,");
+                $cleanCorrect = rtrim(mb_strtolower($correctAns), " .。，,");
+
+                if ($cleanUser === $cleanCorrect) {
                     $isCorrect = true;
-                } elseif (in_array(mb_strtolower($correctAns), ['对', 'true', '1', 'đúng', 'dung']) && in_array(mb_strtolower($userAns), ['对', 'true', '1', 'đúng', 'dung'])) {
+                } elseif (in_array($cleanCorrect, ['对', 'true', '1', 'đúng', 'dung']) && in_array($cleanUser, ['对', 'true', '1', 'đúng', 'dung'])) {
                     $isCorrect = true;
-                } elseif (in_array(mb_strtolower($correctAns), ['错', 'false', '0', 'sai']) && in_array(mb_strtolower($userAns), ['错', 'false', '0', 'sai'])) {
+                } elseif (in_array($cleanCorrect, ['错', 'false', '0', 'sai']) && in_array($cleanUser, ['错', 'false', '0', 'sai'])) {
                     $isCorrect = true;
+                } elseif (is_array($opts) && count($opts) > 0) {
+                    $letterMap = ['A' => 0, 'B' => 1, 'C' => 2, 'D' => 3, 'E' => 4, 'F' => 5];
+                    $upperUser = strtoupper($userAns);
+                    $upperCorrect = strtoupper($correctAns);
+
+                    if (isset($letterMap[$upperUser]) && isset($opts[$letterMap[$upperUser]])) {
+                        $mappedOpt = rtrim(mb_strtolower($opts[$letterMap[$upperUser]]), " .。，,");
+                        if ($mappedOpt === $cleanCorrect) {
+                            $isCorrect = true;
+                        }
+                    } elseif (isset($letterMap[$upperCorrect]) && isset($opts[$letterMap[$upperCorrect]])) {
+                        $mappedOpt = rtrim(mb_strtolower($opts[$letterMap[$upperCorrect]]), " .。，,");
+                        if ($mappedOpt === $cleanUser) {
+                            $isCorrect = true;
+                        }
+                    }
                 }
             }
 
