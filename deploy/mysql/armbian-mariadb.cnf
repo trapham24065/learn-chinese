@@ -1,0 +1,28 @@
+# MariaDB / MySQL Configuration for Armbian Linux (Amlogic S905W)
+# Path: /etc/mysql/mariadb.conf.d/50-server.cnf hoặc /etc/mysql/conf.d/armbian.cnf
+
+[mysqld]
+# Giới hạn kết nối đồng thời tương thích với max_children của PHP-FPM
+max_connections = 50
+connect_timeout = 5
+wait_timeout = 60
+interactive_timeout = 60
+
+# InnoDB Buffer Pool - Phân bổ 256MB cho index và data cache
+innodb_buffer_pool_size = 256M
+innodb_buffer_pool_instances = 1
+innodb_log_file_size = 64M
+innodb_log_buffer_size = 8M
+
+# TỐI ƯU TUỔI THỌ BỘ NHỚ FLASH (eMMC / microSD):
+# Giá trị 2: Ghi log vào bộ đệm hệ điều hành mỗi transaction, chỉ flush ra đĩa vật lý 1 lần/giây
+# Giảm thiểu 90% số lần write IOPS khi nhiều request nộp bài / state polling xảy ra liên tục
+innodb_flush_log_at_trx_commit = 2
+innodb_flush_method = O_DIRECT
+
+# Tắt performance schema để tiết kiệm 120MB - 180MB RAM quý giá cho hệ thống
+performance_schema = OFF
+
+# Character set UTF8MB4
+character-set-server = utf8mb4
+collation-server = utf8mb4_unicode_ci

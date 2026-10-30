@@ -17,6 +17,7 @@ use App\Http\Controllers\LearningActivityController;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\FastMatchController;
 use App\Http\Controllers\AudioQuizController;
+use App\Http\Controllers\DuelController;
 use App\Http\Controllers\GuestProgressClaimController;
 use App\Models\Flashcard;
 use App\Models\Lesson;
@@ -147,6 +148,22 @@ Route::prefix('games')->group(function () {
     Route::get('/audio-quiz', [AudioQuizController::class, 'index'])->name('games.audio-quiz');
     Route::get('/audio-quiz/data', [AudioQuizController::class, 'sessionData'])->name('games.audio-quiz.data');
     Route::post('/audio-quiz/finish', [AudioQuizController::class, 'finish'])->name('games.audio-quiz.finish');
+});
+
+// Chinese Duel 1v1 Real-time HSK Battle (Phase 3)
+Route::prefix('duel')->group(function () {
+    Route::get('/', [DuelController::class, 'lobby'])->name('duel.lobby');
+    Route::get('/history', [DuelController::class, 'history'])->name('duel.history');
+    Route::get('/room/{code}', [DuelController::class, 'arena'])->name('duel.arena');
+    Route::get('/room/{code}/result', [DuelController::class, 'result'])->name('duel.result');
+    Route::get('/room/{code}/review', [DuelController::class, 'review'])->name('duel.review');
+    Route::post('/room/{code}/review/save-flashcard', [DuelController::class, 'saveMistakeToFlashcard'])->name('duel.review.save-flashcard');
+    Route::post('/matchmake', [DuelController::class, 'matchmake'])->name('duel.matchmake');
+    Route::post('/room/create', [DuelController::class, 'createRoom'])->name('duel.room.create');
+    Route::post('/room/join', [DuelController::class, 'joinRoom'])->name('duel.room.join');
+    Route::get('/room/{code}/state', [DuelController::class, 'state'])->name('duel.room.state');
+    Route::post('/room/{code}/answer', [DuelController::class, 'answer'])->name('duel.room.answer');
+    Route::post('/room/{code}/rematch', [DuelController::class, 'rematch'])->name('duel.room.rematch');
 });
 
 require __DIR__.'/auth.php';

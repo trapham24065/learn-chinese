@@ -1,0 +1,16 @@
+[Unit]
+Description=Chinese Duel - Sync Stale Rooms & Clean Disconnections
+After=network.target mariadb.service
+
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/Learn-Chinese
+ExecStart=/usr/bin/php /var/www/Learn-Chinese/artisan duel:sync-stale-rooms --quiet
+StandardOutput=null
+StandardError=journal
+Nice=10
+
+[Install]
+WantedBy=multi-user.target
