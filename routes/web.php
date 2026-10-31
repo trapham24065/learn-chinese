@@ -152,18 +152,25 @@ Route::prefix('games')->group(function () {
 
 // Chinese Duel 1v1 Real-time HSK Battle (Phase 3)
 Route::prefix('duel')->group(function () {
+    // Sảnh chờ công khai (Public Lobby: xem luật chơi, counter HSK, danh sách phòng)
     Route::get('/', [DuelController::class, 'lobby'])->name('duel.lobby');
-    Route::get('/history', [DuelController::class, 'history'])->name('duel.history');
-    Route::get('/room/{code}', [DuelController::class, 'arena'])->name('duel.arena');
-    Route::get('/room/{code}/result', [DuelController::class, 'result'])->name('duel.result');
-    Route::get('/room/{code}/review', [DuelController::class, 'review'])->name('duel.review');
-    Route::post('/room/{code}/review/save-flashcard', [DuelController::class, 'saveMistakeToFlashcard'])->name('duel.review.save-flashcard');
-    Route::post('/matchmake', [DuelController::class, 'matchmake'])->name('duel.matchmake');
-    Route::post('/room/create', [DuelController::class, 'createRoom'])->name('duel.room.create');
-    Route::post('/room/join', [DuelController::class, 'joinRoom'])->name('duel.room.join');
-    Route::get('/room/{code}/state', [DuelController::class, 'state'])->name('duel.room.state');
-    Route::post('/room/{code}/answer', [DuelController::class, 'answer'])->name('duel.room.answer');
-    Route::post('/room/{code}/rematch', [DuelController::class, 'rematch'])->name('duel.room.rematch');
+
+    // Toàn bộ các hành động thi đấu, tạo phòng, tham gia, lịch sử yêu cầu đăng nhập tài khoản
+    Route::middleware('auth:web')->group(function () {
+        Route::get('/history', [DuelController::class, 'history'])->name('duel.history');
+        Route::post('/matchmake', [DuelController::class, 'matchmake'])->name('duel.matchmake');
+        Route::post('/matchmake/cancel', [DuelController::class, 'cancelMatchmake'])->name('duel.matchmake.cancel');
+        Route::post('/room/create', [DuelController::class, 'createRoom'])->name('duel.room.create');
+        Route::post('/room/join', [DuelController::class, 'joinRoom'])->name('duel.room.join');
+        Route::get('/room/{code}', [DuelController::class, 'arena'])->name('duel.arena');
+        Route::get('/room/{code}/state', [DuelController::class, 'state'])->name('duel.room.state');
+        Route::post('/room/{code}/answer', [DuelController::class, 'answer'])->name('duel.room.answer');
+        Route::post('/room/{code}/surrender', [DuelController::class, 'surrender'])->name('duel.room.surrender');
+        Route::post('/room/{code}/rematch', [DuelController::class, 'rematch'])->name('duel.room.rematch');
+        Route::get('/room/{code}/result', [DuelController::class, 'result'])->name('duel.result');
+        Route::get('/room/{code}/review', [DuelController::class, 'review'])->name('duel.review');
+        Route::post('/room/{code}/review/save-flashcard', [DuelController::class, 'saveMistakeToFlashcard'])->name('duel.review.save-flashcard');
+    });
 });
 
 require __DIR__.'/auth.php';

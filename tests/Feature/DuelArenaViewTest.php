@@ -49,31 +49,13 @@ class DuelArenaViewTest extends TestCase
 
     public function test_arena_returns_404_if_room_not_found(): void
     {
-        $response = $this->get('/duel/room/NONEXISTENT');
+        $user = User::factory()->create();
+        $response = $this->actingAs($user)->get('/duel/room/NONEXISTENT');
 
         $response->assertStatus(404);
     }
 
-    public function test_creator_can_view_their_waiting_room(): void
-    {
-        $user1 = User::factory()->create(['name' => 'Nguyễn Host']);
-
-        $room = $this->engine->createRoom(3, 'custom', [
-            'type' => 'user',
-            'user_id' => $user1->id,
-            'name' => $user1->name,
-            'avatar' => null,
-        ]);
-
-        $response = $this->actingAs($user1)->get("/duel/room/{$room->room_code}");
-
-        $response->assertStatus(200);
-        $response->assertSee($room->room_code);
-        $response->assertSee('Đang Chờ Đối Thủ...');
-        $response->assertSee('Nguyễn Host');
-    }
-
-    public function test_invited_guest_auto_joins_waiting_room_and_gets_cookie(): void
+    public function test_unauthenticated_guest_is_redirected_to_login_when_accessing_arena(): void
     {
         $user1 = User::factory()->create(['name' => 'Người Thách Đấu']);
 
@@ -84,16 +66,33 @@ class DuelArenaViewTest extends TestCase
             'avatar' => null,
         ]);
 
-        // Khách vãng lai bấm vào đường link phòng đấu
         $response = $this->get("/duel/room/{$room->room_code}");
 
+        $response->assertStatus(302);
+        $response->assertRedirect(route('login'));
+    }
+
+    public function test_invited_logged_in_user_auto_joins_waiting_room(): void
+    {
+        $user1 = User::factory()->create(['name' => 'Người Thách Đấu']);
+        $user2 = User::factory()->create(['name' => 'Người Tham Gia']);
+
+        $room = $this->engine->createRoom(3, 'custom', [
+            'type' => 'user',
+            'user_id' => $user1->id,
+            'name' => $user1->name,
+            'avatar' => null,
+        ]);
+
+        // User 2 đã đăng nhập bấm vào đường link phòng đấu
+        $response = $this->actingAs($user2)->get("/duel/room/{$room->room_code}");
+
         $response->assertStatus(200);
-        $response->assertCookie("duel_guest_token_{$room->room_code}");
 
         $room->refresh();
         $this->assertEquals('countdown', $room->status);
-        $this->assertNotNull($room->player2_guest_token_hash);
-        $this->assertStringStartsWith('Khách #', $room->player2_name);
+        $this->assertEquals($user2->id, $room->player2_id);
+        $this->assertEquals('Người Tham Gia', $room->player2_name);
     }
 
     public function test_unauthorized_third_party_is_blocked_from_full_room(): void

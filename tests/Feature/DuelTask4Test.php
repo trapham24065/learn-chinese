@@ -203,43 +203,12 @@ class DuelTask4Test extends TestCase
         $response->assertSee('50%'); // Tỷ lệ thắng
     }
 
-    public function test_guest_history_isolation(): void
+    public function test_guest_cannot_access_history_and_is_redirected_to_login(): void
     {
-        // Khách 1 tạo và hoàn thành trận đấu
-        $room1 = $this->engine->createRoom(2, 'custom', [
-            'type' => 'guest',
-            'user_id' => null,
-            'name' => 'Khách 1',
-            'avatar' => null,
-            'guest_token_plain' => 'guest_token_plain_11111111111111111111111111111111',
-            'guest_token_hash' => hash_hmac('sha256', 'guest_token_plain_11111111111111111111111111111111', config('app.key')),
-        ]);
-        $room1->status = 'finished';
-        $room1->winner_slot = 1;
-        $room1->finished_at = now();
-        $room1->save();
+        $res = $this->get(route('duel.history'));
 
-        // Khách 2 tạo trận khác
-        $room2 = $this->engine->createRoom(2, 'custom', [
-            'type' => 'guest',
-            'user_id' => null,
-            'name' => 'Khách 2',
-            'avatar' => null,
-            'guest_token_plain' => 'guest_token_plain_22222222222222222222222222222222',
-            'guest_token_hash' => hash_hmac('sha256', 'guest_token_plain_22222222222222222222222222222222', config('app.key')),
-        ]);
-        $room2->status = 'finished';
-        $room2->winner_slot = 1;
-        $room2->finished_at = now();
-        $room2->save();
-
-        // Khách 1 xem lịch sử với cookie phòng 1
-        $res = $this->withCookie("duel_guest_token_{$room1->room_code}", 'guest_token_plain_11111111111111111111111111111111')
-            ->get(route('duel.history'));
-
-        $res->assertStatus(200);
-        $res->assertSee($room1->room_code);
-        $res->assertDontSee($room2->room_code); // Tuyệt đối không thấy phòng của khách 2
+        $res->assertStatus(302);
+        $res->assertRedirect(route('login'));
     }
 
     public function test_review_mistakes_includes_wrong_and_timeout_questions_and_excludes_correct(): void

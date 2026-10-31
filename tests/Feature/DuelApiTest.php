@@ -52,30 +52,14 @@ class DuelApiTest extends TestCase
         $this->assertEquals('waiting', $room->status);
     }
 
-    public function test_guest_can_create_private_room_and_receives_scoped_cookie(): void
+    public function test_guest_cannot_create_private_room_and_receives_401(): void
     {
         $response = $this->postJson(route('duel.room.create'), [
             'hsk_level' => 2,
             'mode' => 'friend',
-            'guest_name' => 'Tiểu Minh',
         ]);
 
-        $response->assertStatus(201)
-            ->assertJson([
-                'status' => 'created',
-                'hsk_level' => 2,
-            ]);
-
-        $code = $response->json('room_code');
-        $cookieName = "duel_guest_token_{$code}";
-        $response->assertCookie($cookieName);
-
-        $room = DuelRoom::where('room_code', $code)->first();
-        $this->assertNotNull($room);
-        $this->assertEquals('guest', $room->player1_type);
-        $this->assertNull($room->player1_id);
-        $this->assertNotNull($room->player1_guest_token_hash);
-        $this->assertEquals('Tiểu Minh', $room->player1_name);
+        $response->assertStatus(401);
     }
 
     public function test_user_can_join_room_via_invite_code(): void

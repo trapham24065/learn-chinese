@@ -148,11 +148,13 @@ class DuelFullLifecycleTest extends TestCase
     }
 
     /**
-     * KỊCH BẢN 2: USER VS GUEST — XÁC THỰC DANH TÍNH VÀ SCOPED COOKIE
+     * KỊCH BẢN 2: BẢO VỆ PHÒNG ĐẤU — KHÁCH BỊ CHẶN, USER ĐĂNG NHẬP THAM GIA HỢP LỆ
      */
     public function test_user_vs_guest_identity_and_cookie_scoping(): void
     {
         $user = User::factory()->create(['name' => 'Host User']);
+        $user2 = User::factory()->create(['name' => 'Joiner User']);
+        $stranger = User::factory()->create(['name' => 'Stranger']);
 
         // User tạo phòng
         $createRes = $this->actingAs($user)->postJson(route('duel.room.create'), [
@@ -164,40 +166,27 @@ class DuelFullLifecycleTest extends TestCase
         // Logout khỏi phiên test để đóng vai khách vãng lai
         Auth::guard('web')->logout();
 
-        // Khách vãng lai truy cập thẳng vào URL Sàn đấu
+        // 1. Khách vãng lai truy cập thẳng vào URL Sàn đấu -> Bị chặn 302 chuyển sang login
         $guestArenaRes = $this->get("/duel/room/{$roomCode}");
-        $guestArenaRes->assertStatus(200);
-        $guestArenaRes->assertCookie("duel_guest_token_{$roomCode}");
+        $guestArenaRes->assertStatus(302);
+        $guestArenaRes->assertRedirect(route('login'));
 
-        $cookie = $guestArenaRes->getCookie("duel_guest_token_{$roomCode}");
-        $this->assertNotNull($cookie);
-        $guestToken = $cookie->getValue();
+        // 2. User 2 đăng nhập và truy cập vào link phòng -> Tham gia thành công
+        $user2ArenaRes = $this->actingAs($user2)->get("/duel/room/{$roomCode}");
+        $user2ArenaRes->assertStatus(200);
 
         $room = DuelRoom::where('room_code', $roomCode)->firstOrFail();
         $this->assertEquals('countdown', $room->status);
-        $this->assertEquals('guest', $room->player2_type);
-        $this->assertNull($room->player2_id);
-        $this->assertNotNull($room->player2_guest_token_hash);
+        $this->assertEquals('user', $room->player2_type);
+        $this->assertEquals($user2->id, $room->player2_id);
 
-        // Khách polling state với cookie của mình (với withCredentials cho JSON request) -> Slot 2
-        $guestStateRes = $this->withCredentials()
-            ->withCookie("duel_guest_token_{$roomCode}", $guestToken)
-            ->getJson("/duel/room/{$roomCode}/state");
-        $guestStateRes->assertStatus(200);
-        $this->assertEquals(2, $guestStateRes->json('my_slot'));
+        // User 2 polling state thành công với Slot 2
+        $user2StateRes = $this->actingAs($user2)->getJson("/duel/room/{$roomCode}/state");
+        $user2StateRes->assertStatus(200);
+        $this->assertEquals(2, $user2StateRes->json('my_slot'));
 
-        // Kiểm tra fallback header X-Duel-Guest-Token (dành cho mobile WebView)
-        $guestHeaderRes = $this->withHeader('X-Duel-Guest-Token', $guestToken)
-            ->getJson("/duel/room/{$roomCode}/state");
-        $guestHeaderRes->assertStatus(200);
-        $this->assertEquals(2, $guestHeaderRes->json('my_slot'));
-
-        // Người lạ không có cookie hoặc tài khoản bị chặn 403
-        $this->defaultCookies = [];
-        $this->unencryptedCookies = [];
-        $this->flushHeaders();
-
-        $strangerRes = $this->getJson("/duel/room/{$roomCode}/state");
+        // 3. Người lạ không thuộc phòng bị chặn 403
+        $strangerRes = $this->actingAs($stranger)->getJson("/duel/room/{$roomCode}/state");
         $strangerRes->assertStatus(403);
     }
 

@@ -28,7 +28,7 @@
             </div>
         </div>
 
-        {{-- Connection Indicator --}}
+        {{-- Connection Indicator & Surrender Button --}}
         <div class="flex items-center gap-3 font-sans text-xs">
             {{-- Opponent Offline Warning --}}
             <template x-if="room.opponent_offline && room.status === 'in_progress'">
@@ -51,6 +51,17 @@
                 </span>
                 <span x-text="getConnectionLabel()" class="font-medium text-[11px]"></span>
             </div>
+
+            {{-- Nút Đầu Hàng Trong Trận --}}
+            <template x-if="room.status === 'in_progress' || room.status === 'countdown'">
+                <button type="button"
+                    @click="confirmSurrender = true"
+                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold transition cursor-pointer"
+                    title="Nhận thua trận đấu">
+                    <i data-lucide="flag" class="h-3 w-3 text-rose-600"></i>
+                    <span class="hidden sm:inline">Đầu hàng</span>
+                </button>
+            </template>
         </div>
     </header>
 
@@ -106,10 +117,12 @@
             </div>
 
             <div class="pt-2">
-                <a href="{{ route('duel.lobby') }}" class="inline-flex items-center gap-2 text-xs font-medium text-slate-500 hover:text-slate-800 font-sans transition">
+                <button type="button"
+                    @click="cancelWaitingRoom()"
+                    class="inline-flex items-center gap-2 text-xs font-medium text-slate-500 hover:text-rose-700 font-sans transition cursor-pointer">
                     <i data-lucide="x" class="h-3.5 w-3.5"></i>
-                    <span>Hủy và quay về sảnh chính</span>
-                </a>
+                    <span>Hủy phòng và quay về sảnh chính</span>
+                </button>
             </div>
         </div>
     </section>
@@ -485,6 +498,29 @@
 
     </div>
 
+    {{-- MODAL XÁC NHẬN ĐẦU HÀNG --}}
+    <div x-show="confirmSurrender" x-cloak
+        class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-4">
+        <div @click.away="confirmSurrender = false" class="max-w-md w-full bg-white rounded-3xl border border-rose-200 p-6 shadow-2xl space-y-4 font-sans text-center">
+            <div class="grid h-12 w-12 place-items-center rounded-2xl bg-rose-100 text-rose-700 mx-auto">
+                <i data-lucide="flag" class="h-6 w-6"></i>
+            </div>
+            <h3 class="text-lg font-black text-slate-900 font-serif">Xác Nhận Nhận Thua?</h3>
+            <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                Bạn có chắc chắn muốn đầu hàng trận đấu này? Điểm số sẽ được bảo lưu, bạn nhận 0 XP và đối thủ sẽ giành chiến thắng ngay lập tức.
+            </p>
+            <div class="flex items-center justify-center gap-3 pt-2">
+                <button type="button" @click="confirmSurrender = false" class="flex-1 py-2.5 px-4 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-50 transition cursor-pointer">
+                    Tiếp tục thi đấu
+                </button>
+                <button type="button" @click="executeSurrender()" :disabled="isSurrendering" class="flex-1 py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md shadow-rose-900/20 transition disabled:opacity-50 cursor-pointer">
+                    <span x-show="!isSurrendering">Xác nhận đầu hàng</span>
+                    <span x-show="isSurrendering" x-cloak>Đang xử lý...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <script>
@@ -510,6 +546,10 @@ document.addEventListener('alpine:init', () => {
         pollIntervalId: null,
         tickIntervalId: null,
         copySuccess: '',
+
+        // Surrender & Cancel
+        confirmSurrender: false,
+        isSurrendering: false,
 
         // Rematch
         isRematching: false,
@@ -865,6 +905,42 @@ document.addEventListener('alpine:init', () => {
             } catch (err) {
                 this.rematchButtonLabel = 'Tái Đấu Ngay 🔄';
                 this.isRematching = false;
+            }
+        },
+
+        async cancelWaitingRoom() {
+            try {
+                await fetch('/duel/matchmake/cancel', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    },
+                    body: JSON.stringify({ room_code: this.roomCode })
+                });
+            } catch (e) {}
+            window.location.href = '{{ route('duel.lobby') }}';
+        },
+
+        async executeSurrender() {
+            this.isSurrendering = true;
+            try {
+                const res = await fetch(`/duel/room/${this.roomCode}/surrender`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    }
+                });
+                const data = await res.json();
+                this.confirmSurrender = false;
+                await this.fetchRoomState();
+            } catch (err) {
+                console.error('Surrender error:', err);
+            } finally {
+                this.isSurrendering = false;
             }
         }
     }));

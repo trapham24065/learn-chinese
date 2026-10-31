@@ -319,26 +319,26 @@ class DuelEngineTest extends TestCase
         $this->assertEquals(1, $room->current_round);
     }
 
-    // TC-13: Guest participates in multiple rooms independently via room code scoping
-    public function test_guest_participates_in_multiple_rooms_independently(): void
+    // TC-13: Multiple users create rooms independently
+    public function test_users_participate_in_multiple_rooms_independently(): void
     {
-        $guestToken1 = 'token_room_1';
-        $guestToken2 = 'token_room_2';
+        $user1 = User::factory()->create();
+        $user2 = User::factory()->create();
 
         $room1 = $this->engine->createRoom(2, 'random', [
-            'type' => 'guest',
-            'guest_token_hash' => hash_hmac('sha256', $guestToken1, config('app.key')),
-            'name' => 'Khách 1',
+            'type' => 'user',
+            'user_id' => $user1->id,
+            'name' => $user1->name,
         ]);
 
         $room2 = $this->engine->createRoom(3, 'random', [
-            'type' => 'guest',
-            'guest_token_hash' => hash_hmac('sha256', $guestToken2, config('app.key')),
-            'name' => 'Khách 1',
+            'type' => 'user',
+            'user_id' => $user2->id,
+            'name' => $user2->name,
         ]);
 
         $this->assertNotEquals($room1->room_code, $room2->room_code);
-        $this->assertNotEquals($room1->player1_guest_token_hash, $room2->player1_guest_token_hash);
+        $this->assertNotEquals($room1->player1_id, $room2->player1_id);
     }
 
     // TC-14: Scheduled command advances expired countdown

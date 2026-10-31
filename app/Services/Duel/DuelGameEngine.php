@@ -47,11 +47,12 @@ class DuelGameEngine
             'hsk_level' => $hskLevel,
             'mode' => in_array($mode, ['random', 'friend'], true) ? $mode : 'random',
             'status' => 'waiting',
-            'player1_type' => $player1Data['type'] ?? 'guest',
+            'player1_type' => 'user',
             'player1_id' => $player1Data['user_id'] ?? null,
-            'player1_guest_token_hash' => $player1Data['guest_token_hash'] ?? null,
+            'player1_guest_token_hash' => null,
             'player1_name' => $player1Data['name'] ?? 'Đấu Thủ 1',
             'player1_avatar' => $player1Data['avatar'] ?? null,
+            'player1_ip' => $player1Data['ip'] ?? null,
             'player1_ready' => true,
             'player1_last_seen_at' => $now,
             'expires_at' => now()->addMinutes(15),
@@ -72,6 +73,11 @@ class DuelGameEngine
 
             if ($locked->player2_id !== null || $locked->player2_guest_token_hash !== null) {
                 throw new InvalidArgumentException('Phòng đấu đã có người thứ hai tham gia.');
+            }
+
+            // Invariant: Tuyệt đối không cho phép tài khoản tự đấu với chính mình
+            if ($locked->player1_id !== null && $locked->player1_id === ($player2Data['user_id'] ?? null)) {
+                throw new InvalidArgumentException('Bạn không thể tự tham gia thi đấu với chính tài khoản của mình.');
             }
 
             // Bốc 10 câu hỏi HSK chuẩn CLEC
@@ -116,11 +122,13 @@ class DuelGameEngine
             }
 
             $now = microtime(true);
-            $locked->player2_type = $player2Data['type'] ?? 'guest';
+            $locked->player2_type = 'user';
             $locked->player2_id = $player2Data['user_id'] ?? null;
-            $locked->player2_guest_token_hash = $player2Data['guest_token_hash'] ?? null;
+            $locked->player2_guest_token_hash = null;
             $locked->player2_name = $player2Data['name'] ?? 'Đấu Thủ 2';
             $locked->player2_avatar = $player2Data['avatar'] ?? null;
+            $locked->player2_ip = $player2Data['ip'] ?? null;
+            $locked->is_same_ip = ($locked->player1_ip && $locked->player1_ip === ($player2Data['ip'] ?? null));
             $locked->player2_ready = true;
             $locked->player2_last_seen_at = $now;
 
@@ -252,7 +260,7 @@ class DuelGameEngine
     }
 
     /**
-     * Xử thua kỹ thuật khi một người bỏ cuộc.
+     * Xử thua kỹ thuật khi một người bỏ cuộc hoặc mất kết nối.
      */
     public function executeForfeit(DuelRoom $room, int $forfeitSlot, int $winnerSlot): void
     {
@@ -264,11 +272,65 @@ class DuelGameEngine
         $room->finished_at = now();
 
         if (!$room->xp_awarded) {
-            $this->awardSlotXp($room, $winnerSlot, 40); // 40 XP cho người thắng forfeit
+            // Quy tắc Forfeit XP công bằng & chống Bot farm điểm cấp tốc:
+            // Nếu bỏ trận ngay trong Hiệp 1 (dưới 15s từ khi bắt đầu trận): thưởng an ủi +15 XP.
+            // Nếu đã thi đấu từ Hiệp 2 trở lên (>15s): thưởng đầy đủ +40 XP cho người thắng.
+            $isEarlyForfeit = ($room->current_round === 1) &&
+                ($room->started_at === null || now()->diffInSeconds($room->started_at) < 15);
+            $xpAward = $isEarlyForfeit ? 15 : 40;
+
+            $this->awardSlotXp($room, $winnerSlot, $xpAward);
             $room->xp_awarded = true;
         }
 
         $room->save();
+    }
+
+    /**
+     * Chủ động đầu hàng khi trận đấu đang diễn ra.
+     */
+    public function surrenderMatch(DuelRoom $room, int $surrenderingSlot): DuelRoom
+    {
+        return DB::transaction(function () use ($room, $surrenderingSlot) {
+            $locked = DuelRoom::where('id', $room->id)->lockForUpdate()->firstOrFail();
+
+            if (!in_array($locked->status, ['countdown', 'in_progress'], true)) {
+                throw new InvalidArgumentException('Trận đấu không trong trạng thái có thể đầu hàng.');
+            }
+
+            $winnerSlot = ($surrenderingSlot === 1) ? 2 : 1;
+            $this->executeForfeit($locked, $surrenderingSlot, $winnerSlot);
+
+            return $locked;
+        });
+    }
+
+    /**
+     * Hủy phòng chờ tìm trận khi chưa có đối thủ tham gia.
+     */
+    public function cancelWaitingRoom(DuelRoom $room, int $userId): DuelRoom
+    {
+        return DB::transaction(function () use ($room, $userId) {
+            $locked = DuelRoom::where('id', $room->id)->lockForUpdate()->firstOrFail();
+
+            if ($locked->status !== 'waiting') {
+                throw new InvalidArgumentException('Không thể hủy vì trận đấu đã bắt đầu hoặc đã kết thúc.');
+            }
+
+            if ($locked->player1_id !== $userId) {
+                throw new InvalidArgumentException('Bạn không phải chủ phòng.');
+            }
+
+            if ($locked->player2_id !== null) {
+                throw new InvalidArgumentException('Đã có người tham gia phòng, không thể hủy phòng.');
+            }
+
+            $locked->status = 'abandoned';
+            $locked->finished_at = now();
+            $locked->save();
+
+            return $locked;
+        });
     }
 
     /**

@@ -3,7 +3,7 @@
 @section('title', 'Chinese Duel · Đấu Trường HSK 1v1 Đối Kháng | Learn Chinese')
 
 @section('content')
-<div x-data="duelLobbyApp()" class="space-y-8 pb-16 font-serif-custom max-w-5xl mx-auto">
+<div x-data="duelLobbyApp({{ Js::from($waitingCounts) }}, {{ Auth::guard('web')->check() ? 'true' : 'false' }})" class="space-y-8 pb-16 font-serif-custom max-w-5xl mx-auto">
 
     {{-- Top Ambience Banner --}}
     <section class="relative overflow-hidden rounded-[2.25rem] border border-red-900/20 bg-gradient-to-br from-[#faf3eb] via-[#f7ebe1] to-[#f2dfd5] p-6 sm:p-8 shadow-xl shadow-red-950/5">
@@ -36,10 +36,17 @@
                 </p>
 
                 <div class="mt-4 flex items-center gap-3">
-                    <a href="{{ route('duel.history') }}" class="inline-flex items-center gap-2 py-2 px-4 rounded-xl bg-white/90 hover:bg-white text-slate-800 hover:text-red-900 border border-red-200/80 font-bold text-xs shadow-xs font-sans transition">
-                        <i data-lucide="history" class="h-4 w-4 text-red-700"></i>
-                        <span>Xem Lịch Sử Thi Đấu Cá Nhân</span>
-                    </a>
+                    @auth
+                        <a href="{{ route('duel.history') }}" class="inline-flex items-center gap-2 py-2 px-4 rounded-xl bg-white/90 hover:bg-white text-slate-800 hover:text-red-900 border border-red-200/80 font-bold text-xs shadow-xs font-sans transition">
+                            <i data-lucide="history" class="h-4 w-4 text-red-700"></i>
+                            <span>Xem Lịch Sử Thi Đấu Cá Nhân</span>
+                        </a>
+                    @else
+                        <button type="button" @click="showAuthModal = true" class="inline-flex items-center gap-2 py-2 px-4 rounded-xl bg-white/90 hover:bg-white text-slate-800 hover:text-red-900 border border-red-200/80 font-bold text-xs shadow-xs font-sans transition cursor-pointer">
+                            <i data-lucide="log-in" class="h-4 w-4 text-red-700"></i>
+                            <span>Đăng nhập để xem Lịch Sử & Thống kê</span>
+                        </button>
+                    @endauth
                 </div>
             </div>
 
@@ -55,7 +62,7 @@
                 </div>
                 <div class="rounded-2xl bg-white/80 border border-red-100 p-3.5 shadow-sm text-center">
                     <p class="text-xs text-slate-500 font-sans">Thưởng thắng trận</p>
-                    <p class="text-xl font-black text-emerald-700 font-sans mt-0.5">+100 XP</p>
+                    <p class="text-xl font-black text-emerald-700 font-sans mt-0.5">+40 XP</p>
                 </div>
                 <div class="rounded-2xl bg-white/80 border border-red-100 p-3.5 shadow-sm text-center">
                     <p class="text-xs text-slate-500 font-sans">Số câu mỗi trận</p>
@@ -76,7 +83,53 @@
         </button>
     </div>
 
-    {{-- Step 1: Select HSK Level --}}
+    {{-- Banner Active Room của User (nếu đang có trận chưa hoàn tất) --}}
+    @if($myActiveRoom)
+        <div class="rounded-3xl border-2 {{ $myActiveRoom->status === 'waiting' ? 'border-amber-300 bg-amber-50/80 text-amber-900' : 'border-red-300 bg-red-50/90 text-red-950 animate-pulse' }} p-5 sm:p-6 shadow-md font-sans">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div class="flex items-start sm:items-center gap-3">
+                    <div class="grid h-10 w-10 shrink-0 place-items-center rounded-2xl {{ $myActiveRoom->status === 'waiting' ? 'bg-amber-200 text-amber-800' : 'bg-red-200 text-red-800' }}">
+                        <i data-lucide="{{ $myActiveRoom->status === 'waiting' ? 'clock' : 'swords' }}" class="h-5 w-5"></i>
+                    </div>
+                    <div>
+                        <p class="font-bold text-sm sm:text-base">
+                            @if($myActiveRoom->status === 'waiting')
+                                Bạn đang có phòng chờ tìm kiếm HSK {{ $myActiveRoom->hsk_level }} (Mã: {{ $myActiveRoom->room_code }})
+                            @else
+                                Bạn đang có một trận đấu HSK {{ $myActiveRoom->hsk_level }} đang diễn ra!
+                            @endif
+                        </p>
+                        <p class="text-xs text-slate-600 mt-0.5">
+                            @if($myActiveRoom->status === 'waiting')
+                                Trận đấu chưa bắt đầu. Bạn có thể vào phòng chờ hoặc hủy tìm trận.
+                            @else
+                                Hãy quay lại sàn đấu ngay để tiếp tục thi đấu và tránh bị xử thua Forfeit.
+                            @endif
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 shrink-0">
+                    <a href="{{ route('duel.arena', $myActiveRoom->room_code) }}"
+                        class="py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-xs transition flex items-center gap-1.5">
+                        <i data-lucide="arrow-right" class="h-4 w-4"></i>
+                        <span>{{ $myActiveRoom->status === 'waiting' ? 'Vào Phòng Chờ' : 'Quay Lại Sàn Đấu' }}</span>
+                    </a>
+                    @if($myActiveRoom->status === 'waiting')
+                        <button type="button"
+                            @click="cancelWaiting('{{ $myActiveRoom->room_code }}')"
+                            :disabled="isLoading"
+                            class="py-2.5 px-3 rounded-xl bg-white hover:bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs shadow-xs transition flex items-center gap-1 cursor-pointer disabled:opacity-50">
+                            <i data-lucide="x" class="h-3.5 w-3.5"></i>
+                            <span>Hủy tìm trận</span>
+                        </button>
+                    @endif
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Step 1: Select HSK Level with Live Counters --}}
     <section class="bg-white/90 backdrop-blur rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-sm">
         <div class="flex items-center justify-between mb-5">
             <div>
@@ -99,6 +152,19 @@
                     <span class="text-xs font-semibold text-slate-400 group-hover:text-slate-500 uppercase tracking-wider font-sans">Cấp độ</span>
                     <span class="text-2xl font-black font-sans my-0.5" x-text="'HSK ' + lvl"></span>
                     <span class="text-[11px] font-medium" :class="selectedLevel === lvl ? 'text-red-700' : 'text-slate-500'" x-text="getLevelTitle(lvl)"></span>
+
+                    {{-- Live Counter Badge --}}
+                    <div class="mt-2 flex items-center justify-center font-sans">
+                        <template x-if="waitingCounts[lvl] && waitingCounts[lvl] > 0">
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">
+                                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <span x-text="waitingCounts[lvl] + ' đang chờ'"></span>
+                            </span>
+                        </template>
+                        <template x-if="!waitingCounts[lvl] || waitingCounts[lvl] === 0">
+                            <span class="text-slate-400 text-[10px]">0 đang chờ</span>
+                        </template>
+                    </div>
                 </button>
             </template>
         </div>
@@ -121,7 +187,7 @@
 
             <div class="mt-6 pt-4 border-t border-red-100">
                 <button type="button"
-                    @click="startMatchmaking()"
+                    @click="handleAction('matchmake')"
                     :disabled="isLoading"
                     class="w-full py-3.5 px-4 rounded-xl bg-[#991b1b] hover:bg-red-800 active:scale-[0.98] text-white font-bold text-sm shadow-md shadow-red-950/20 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50">
                     <i data-lucide="swords" class="h-4 w-4" x-show="!isLoading"></i>
@@ -145,7 +211,7 @@
 
             <div class="mt-6 pt-4 border-t border-amber-100">
                 <button type="button"
-                    @click="createPrivateRoom()"
+                    @click="handleAction('create')"
                     :disabled="isLoading"
                     class="w-full py-3.5 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 active:scale-[0.98] text-white font-bold text-sm shadow-md shadow-amber-950/20 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50">
                     <i data-lucide="plus-circle" class="h-4 w-4" x-show="!isLoading"></i>
@@ -169,7 +235,7 @@
                 <div class="mt-4">
                     <input type="text"
                         x-model="joinCode"
-                        @keyup.enter="joinPrivateRoom()"
+                        @keyup.enter="handleAction('join')"
                         maxlength="6"
                         placeholder="VD: ABC123"
                         class="w-full text-center tracking-[0.25em] uppercase font-mono font-bold text-lg rounded-xl border border-slate-300 py-2.5 px-3 focus:border-[#991b1b] focus:ring-2 focus:ring-red-100 focus:outline-none transition">
@@ -178,7 +244,7 @@
 
             <div class="mt-6 pt-4 border-t border-slate-100">
                 <button type="button"
-                    @click="joinPrivateRoom()"
+                    @click="handleAction('join')"
                     :disabled="isLoading || !joinCode || joinCode.length < 4"
                     class="w-full py-3.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 active:scale-[0.98] text-white font-bold text-sm shadow-md shadow-slate-950/20 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40">
                     <i data-lucide="log-in" class="h-4 w-4" x-show="!isLoading"></i>
@@ -189,6 +255,58 @@
         </div>
 
     </div>
+
+    {{-- Room Browser: Danh Sách Phòng Chờ Công Khai --}}
+    <section class="bg-white/90 backdrop-blur rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-sm">
+        <div class="flex items-center justify-between mb-5">
+            <div>
+                <h3 class="text-lg sm:text-xl font-bold text-slate-900 font-serif flex items-center gap-2">
+                    <i data-lucide="compass" class="h-5 w-5 text-red-800"></i>
+                    <span>Phòng Chờ Đang Tìm Đối Thủ (Room Browser)</span>
+                </h3>
+                <p class="text-xs sm:text-sm text-slate-500 font-sans mt-0.5">Chọn ngay một phòng chờ công khai để bắt đầu so tài mà không cần chờ đợi.</p>
+            </div>
+            <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-red-50 text-red-800 border border-red-200 font-sans">
+                {{ $publicWaitingRooms->count() }} phòng đang chờ
+            </span>
+        </div>
+
+        @if($publicWaitingRooms->isEmpty())
+            <div class="py-10 text-center text-slate-400 font-sans text-xs sm:text-sm bg-slate-50/70 rounded-2xl border border-dashed border-slate-200">
+                <i data-lucide="inbox" class="h-8 w-8 mx-auto text-slate-300 mb-2"></i>
+                <p class="font-medium text-slate-600">Hiện chưa có phòng chờ công khai nào.</p>
+                <p class="text-slate-400 text-xs mt-1">Hãy bấm <strong>"Tìm Đối Thủ Ngay"</strong> ở trên để tạo phòng chờ đầu tiên!</p>
+            </div>
+        @else
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                @foreach($publicWaitingRooms as $pRoom)
+                    <div class="p-4 rounded-2xl border border-slate-200 bg-white hover:border-red-300 hover:shadow-md transition flex items-center justify-between font-sans">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="h-10 w-10 rounded-full bg-red-100 ring-2 ring-red-200 overflow-hidden shrink-0 flex items-center justify-center font-bold text-red-800 text-sm">
+                                @if($pRoom->player1_avatar)
+                                    <img src="{{ $pRoom->player1_avatar }}" alt="{{ $pRoom->player1_name }}" class="h-full w-full object-cover">
+                                @else
+                                    {{ mb_substr($pRoom->player1_name ?? 'U', 0, 1) }}
+                                @endif
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-xs font-bold text-slate-800 truncate">{{ $pRoom->player1_name }}</p>
+                                <div class="flex items-center gap-1.5 mt-0.5">
+                                    <span class="px-1.5 py-0.5 rounded bg-red-100 text-red-800 font-extrabold text-[10px]">HSK {{ $pRoom->hsk_level }}</span>
+                                    <span class="text-[10px] text-slate-400">{{ $pRoom->created_at?->diffForHumans() ?? 'vừa xong' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button"
+                            @click="joinDirect('{{ $pRoom->room_code }}')"
+                            class="py-1.5 px-3 rounded-xl bg-[#991b1b] hover:bg-red-800 active:scale-95 text-white font-bold text-xs shadow-xs transition cursor-pointer shrink-0 ml-2">
+                            Vào Đấu
+                        </button>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+    </section>
 
     {{-- Rules & Tips --}}
     <section class="rounded-3xl border border-slate-200 bg-white/80 p-6 sm:p-8">
@@ -210,22 +328,55 @@
                 <p>Nếu bằng điểm sau 10 câu, người có nhiều câu đúng hơn sẽ thắng. Nếu vẫn bằng, người có tổng thời gian trả lời câu đúng nhanh hơn sẽ thắng.</p>
             </div>
             <div class="rounded-2xl bg-slate-50 p-4 border border-slate-100">
-                <p class="font-bold text-slate-900 mb-1">⚡ Không Treo Phòng</p>
-                <p>Mỗi người có 25 giây dự trữ mất kết nối (Heartbeat grace). Nếu quá thời gian không gửi tín hiệu, hệ thống sẽ xử thua Forfeit.</p>
+                <p class="font-bold text-slate-900 mb-1">⚡ Chống Bỏ Cuộc Sớm</p>
+                <p>Người chủ động đầu hàng nhận 0 XP. Nếu đối thủ thoát trận ngay hiệp 1, bạn nhận +15 XP an ủi; từ hiệp 2 nhận trọn vẹn +40 XP.</p>
             </div>
         </div>
     </section>
+
+    {{-- Modal Yêu Cầu Đăng Nhập Cho Khách Vãng Lai --}}
+    <div x-show="showAuthModal" x-cloak
+        class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-4">
+        <div @click.away="showAuthModal = false" class="max-w-md w-full bg-white rounded-3xl border border-red-200 p-6 sm:p-7 shadow-2xl space-y-5 font-sans text-center">
+            <div class="grid h-14 w-14 place-items-center rounded-2xl bg-red-100 text-red-800 mx-auto">
+                <i data-lucide="lock" class="h-7 w-7"></i>
+            </div>
+            <div>
+                <h3 class="text-xl font-black text-slate-900 font-serif">Đăng Nhập Để Thi Đấu</h3>
+                <p class="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">
+                    Đấu trường Chinese Duel 1v1 yêu cầu bạn đăng nhập để đảm bảo tính công bằng, tích lũy điểm XP và lưu các từ vựng sai vào bộ Flashcard SRS cá nhân.
+                </p>
+            </div>
+            <div class="space-y-2.5 pt-2">
+                <a href="{{ route('login') }}?redirect={{ urlencode(request()->getRequestUri()) }}"
+                    class="block w-full py-3 px-4 rounded-xl bg-[#991b1b] hover:bg-red-800 text-white font-bold text-sm shadow-md shadow-red-950/20 transition">
+                    Đăng Nhập Ngay
+                </a>
+                <a href="{{ route('register') }}?redirect={{ urlencode(request()->getRequestUri()) }}"
+                    class="block w-full py-3 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-sm transition">
+                    Tạo Tài Khoản Mới (Miễn phí)
+                </a>
+                <button type="button" @click="showAuthModal = false"
+                    class="block w-full py-2 text-xs font-medium text-slate-400 hover:text-slate-600 transition cursor-pointer">
+                    Để sau, tôi muốn xem tiếp
+                </button>
+            </div>
+        </div>
+    </div>
 
 </div>
 
 <script>
 document.addEventListener('alpine:init', () => {
-    Alpine.data('duelLobbyApp', () => ({
+    Alpine.data('duelLobbyApp', (waitingCountsInit, isUserLoggedIn) => ({
         selectedLevel: 3,
         joinCode: '',
         isLoading: false,
         loadingType: '',
         errorMessage: '',
+        showAuthModal: false,
+        isLoggedIn: isUserLoggedIn,
+        waitingCounts: waitingCountsInit || {},
 
         getLevelTitle(lvl) {
             const titles = {
@@ -237,6 +388,54 @@ document.addEventListener('alpine:init', () => {
                 6: 'Cao cấp 2 · 5000+ từ',
             };
             return titles[lvl] || '';
+        },
+
+        handleAction(type) {
+            if (!this.isLoggedIn) {
+                this.showAuthModal = true;
+                return;
+            }
+
+            if (type === 'matchmake') {
+                this.startMatchmaking();
+            } else if (type === 'create') {
+                this.createPrivateRoom();
+            } else if (type === 'join') {
+                this.joinPrivateRoom();
+            }
+        },
+
+        joinDirect(roomCode) {
+            if (!this.isLoggedIn) {
+                this.showAuthModal = true;
+                return;
+            }
+            window.location.href = `/duel/room/${roomCode}`;
+        },
+
+        async cancelWaiting(roomCode) {
+            this.isLoading = true;
+            try {
+                const res = await fetch('{{ route('duel.matchmake.cancel') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    },
+                    body: JSON.stringify({ room_code: roomCode })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    window.location.reload();
+                } else {
+                    this.errorMessage = data.message || 'Không thể hủy tìm kiếm.';
+                }
+            } catch (err) {
+                this.errorMessage = err.message;
+            } finally {
+                this.isLoading = false;
+            }
         },
 
         async startMatchmaking() {
@@ -257,6 +456,11 @@ document.addEventListener('alpine:init', () => {
 
                 const data = await res.json();
                 if (!res.ok) {
+                    if (res.status === 409 && data.room_code) {
+                        // Trận đấu đang diễn ra -> Điều hướng thẳng vào sàn đấu
+                        window.location.href = `/duel/room/${data.room_code}`;
+                        return;
+                    }
                     throw new Error(data.message || 'Không thể ghép trận. Vui lòng thử lại.');
                 }
 
@@ -288,6 +492,10 @@ document.addEventListener('alpine:init', () => {
 
                 const data = await res.json();
                 if (!res.ok) {
+                    if (res.status === 409 && data.room_code) {
+                        window.location.href = `/duel/room/${data.room_code}`;
+                        return;
+                    }
                     throw new Error(data.message || 'Không thể tạo phòng riêng. Vui lòng thử lại.');
                 }
 

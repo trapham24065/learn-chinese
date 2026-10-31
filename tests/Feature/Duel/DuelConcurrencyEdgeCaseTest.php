@@ -178,13 +178,13 @@ class DuelConcurrencyEdgeCaseTest extends TestCase
     }
 
     /**
-     * EDGE CASE 3: BẢO MẬT GUEST COOKIE — CHỐNG GIẢ MẠO, TRỘN PHÒNG VÀ SQL INJECTION
+     * EDGE CASE 3: CÔ LẬP PHÒNG ĐẤU VÀ CHỐNG TRUY CẬP TRÁI PHÉP (CROSS-ROOM ISOLATION)
      */
     public function test_cookie_tampering_and_cross_room_isolation(): void
     {
-        // Tạo 2 phòng riêng biệt
         $u1 = User::factory()->create();
         $u2 = User::factory()->create();
+        $stranger = User::factory()->create();
 
         $createRes1 = $this->actingAs($u1)->postJson('/duel/room/create', ['hsk_level' => 1, 'mode' => 'friend']);
         $code1 = $createRes1->json('room_code');
@@ -192,44 +192,17 @@ class DuelConcurrencyEdgeCaseTest extends TestCase
         $createRes2 = $this->actingAs($u2)->postJson('/duel/room/create', ['hsk_level' => 2, 'mode' => 'friend']);
         $code2 = $createRes2->json('room_code');
 
+        // 1. User chưa đăng nhập cố gọi endpoint thi đấu -> 401 Unauthorized
         Auth::guard('web')->logout();
+        $guestRes = $this->getJson("/duel/room/{$code1}/state");
+        $guestRes->assertStatus(401);
 
-        // Khách A vào Phòng 1 và nhận cookie phòng 1
-        $guest1Res = $this->get("/duel/room/{$code1}");
-        $guest1Cookie = $guest1Res->getCookie("duel_guest_token_{$code1}");
-        $this->assertNotNull($guest1Cookie);
-        $guest1Token = $guest1Cookie->getValue();
-
-        // 1. Khách A mang cookie phòng 1 cố tình truy cập vào Phòng 2 -> 403 Forbidden
-        $crossRes = $this->withCredentials()
-            ->withCookie("duel_guest_token_{$code1}", $guest1Token)
-            ->getJson("/duel/room/{$code2}/state");
+        // 2. User 1 (thuộc phòng 1) cố gọi state của Phòng 2 -> 403 Forbidden
+        $crossRes = $this->actingAs($u1)->getJson("/duel/room/{$code2}/state");
         $crossRes->assertStatus(403);
 
-        // 2. Kẻ xấu gửi cookie giả mạo hash hoặc chuỗi injection -> 403 Forbidden không văng 500
-        $injectionStrings = [
-            "' OR '1'='1",
-            "malformed_token_12345",
-            str_repeat("A", 200),
-            "../../etc/passwd",
-        ];
-
-        foreach ($injectionStrings as $badToken) {
-            $this->defaultCookies = [];
-            $this->flushHeaders();
-
-            $badRes = $this->withCredentials()
-                ->withCookie("duel_guest_token_{$code1}", $badToken)
-                ->getJson("/duel/room/{$code1}/state");
-            $badRes->assertStatus(403);
-        }
-
-        // 3. User khác đăng nhập cố tình gọi state của phòng này khi không phải thành viên -> 403
-        $stranger = User::factory()->create();
-        $this->actingAs($stranger);
-        $this->defaultCookies = [];
-
-        $strangerRes = $this->getJson("/duel/room/{$code1}/state");
+        // 3. User khác (người ngoài) cố tình gọi state của Phòng 1 -> 403 Forbidden
+        $strangerRes = $this->actingAs($stranger)->getJson("/duel/room/{$code1}/state");
         $strangerRes->assertStatus(403);
     }
 

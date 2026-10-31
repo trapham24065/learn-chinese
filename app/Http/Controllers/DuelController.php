@@ -31,29 +31,72 @@ class DuelController extends Controller
      */
     public function lobby(Request $request): View
     {
+        $user = $request->user();
+
+        // Đếm số người đang chờ ghép trận theo từng cấp HSK
+        $waitingCountsRaw = DuelRoom::where('status', 'waiting')
+            ->where('mode', 'random')
+            ->groupBy('hsk_level')
+            ->selectRaw('hsk_level, count(*) as total')
+            ->pluck('total', 'hsk_level')
+            ->toArray();
+
+        $waitingCounts = [];
+        for ($lvl = 1; $lvl <= 6; $lvl++) {
+            $waitingCounts[$lvl] = $waitingCountsRaw[$lvl] ?? 0;
+        }
+
+        // Danh sách phòng chờ công khai (Room Browser - tối đa 15 phòng gần nhất)
+        $publicWaitingRooms = DuelRoom::where('status', 'waiting')
+            ->where('mode', 'random')
+            ->whereNull('player2_id')
+            ->latest('created_at')
+            ->take(15)
+            ->get();
+
+        // Kiểm tra xem User hiện tại có phòng nào đang hoạt động không
+        $myActiveRoom = null;
+        if ($user) {
+            $myActiveRoom = DuelRoom::whereIn('status', ['waiting', 'countdown', 'in_progress'])
+                ->where(function ($q) use ($user) {
+                    $q->where('player1_id', $user->id)
+                        ->orWhere('player2_id', $user->id);
+                })
+                ->latest('updated_at')
+                ->first();
+        }
+
         return view('duel.lobby', [
-            'user' => $request->user(),
+            'user' => $user,
+            'waitingCounts' => $waitingCounts,
+            'publicWaitingRooms' => $publicWaitingRooms,
+            'myActiveRoom' => $myActiveRoom,
         ]);
     }
 
     /**
      * Sàn đấu Battle Arena UI (Blade + Alpine.js).
      */
-    public function arena(Request $request, string $code): Response|View
+    public function arena(Request $request, string $code): Response|View|RedirectResponse
     {
+        if (!Auth::guard('web')->check()) {
+            return redirect()->guest(route('login'))->with('error', 'Vui lòng đăng nhập để tham gia đấu trường 1v1.');
+        }
+
         $code = strtoupper(trim($code));
         $room = DuelRoom::where('room_code', $code)->firstOrFail();
 
         $playerData = $this->authService->resolvePlayerIdentity($request, $code);
 
-        $isPlayer1 = ($playerData['type'] === 'user' && $room->player1_id === $playerData['user_id']) ||
-            ($playerData['type'] === 'guest' && $room->player1_guest_token_hash === $playerData['guest_token_hash']);
-        $isPlayer2 = ($playerData['type'] === 'user' && $room->player2_id === $playerData['user_id']) ||
-            ($playerData['type'] === 'guest' && $room->player2_guest_token_hash === $playerData['guest_token_hash']);
+        $isPlayer1 = ($room->player1_id === $playerData['user_id']);
+        $isPlayer2 = ($room->player2_id === $playerData['user_id']);
 
-        // Nếu khách hoặc user mới bấm vào link mời phòng riêng còn đang 'waiting' và slot 2 chưa có ai
+        // Nếu user mới bấm vào link mời phòng còn đang 'waiting' và slot 2 chưa có ai
         if (!$isPlayer1 && !$isPlayer2) {
-            if ($room->status === 'waiting' && is_null($room->player2_id) && is_null($room->player2_guest_token_hash)) {
+            if ($room->status === 'waiting' && is_null($room->player2_id)) {
+                if ($room->player1_id === $playerData['user_id']) {
+                    abort(400, 'Bạn không thể tự thi đấu với chính mình.');
+                }
                 $room = $this->gameEngine->joinRoom($room, $playerData);
                 $isPlayer2 = true;
             } else {
@@ -64,20 +107,12 @@ class DuelController extends Controller
         $slot = $isPlayer1 ? 1 : 2;
         $initialState = $this->gameEngine->syncAndGetRoomState($room, $slot);
 
-        $response = response()->view('duel.arena', [
+        return response()->view('duel.arena', [
             'room' => $room,
             'roomCode' => $code,
             'slot' => $slot,
             'initialState' => $initialState,
         ]);
-
-        if ($playerData['type'] === 'guest' && !empty($playerData['guest_token_plain'])) {
-            $response->withCookie(
-                $this->authService->makeGuestCookie($room->room_code, $playerData['guest_token_plain'])
-            );
-        }
-
-        return $response;
     }
 
     /**
@@ -85,33 +120,13 @@ class DuelController extends Controller
      */
     public function history(Request $request): View
     {
-        $guestHashes = [];
+        $userId = Auth::guard('web')->id();
 
-        if (Auth::guard('web')->check()) {
-            $userId = Auth::guard('web')->id();
-            $baseQuery = DuelRoom::whereIn('status', ['finished', 'abandoned'])
-                ->where(function ($q) use ($userId) {
-                    $q->where('player1_id', $userId)
-                        ->orWhere('player2_id', $userId);
-                });
-        } else {
-            // Guest: Lọc riêng các cookie scoped theo phòng của chính trình duyệt này
-            foreach ($request->cookies->all() as $name => $val) {
-                if (str_starts_with($name, 'duel_guest_token_') && is_string($val)) {
-                    $guestHashes[] = hash_hmac('sha256', $val, config('app.key'));
-                }
-            }
-
-            if (empty($guestHashes)) {
-                $baseQuery = DuelRoom::whereRaw('1 = 0');
-            } else {
-                $baseQuery = DuelRoom::whereIn('status', ['finished', 'abandoned'])
-                    ->where(function ($q) use ($guestHashes) {
-                        $q->whereIn('player1_guest_token_hash', $guestHashes)
-                            ->orWhereIn('player2_guest_token_hash', $guestHashes);
-                    });
-            }
-        }
+        $baseQuery = DuelRoom::whereIn('status', ['finished', 'abandoned'])
+            ->where(function ($q) use ($userId) {
+                $q->where('player1_id', $userId)
+                    ->orWhere('player2_id', $userId);
+            });
 
         // Tính toán thống kê tổng quát
         $allMatches = (clone $baseQuery)->get();
@@ -120,20 +135,11 @@ class DuelController extends Controller
         $losses = 0;
         $draws = 0;
 
-        $currentUserId = Auth::guard('web')->id();
         foreach ($allMatches as $m) {
-            $slot = null;
-            if ($currentUserId) {
-                $slot = ($m->player1_id === $currentUserId) ? 1 : (($m->player2_id === $currentUserId) ? 2 : null);
-            } else {
-                if (in_array($m->player1_guest_token_hash, $guestHashes, true)) {
-                    $slot = 1;
-                } elseif (in_array($m->player2_guest_token_hash, $guestHashes, true)) {
-                    $slot = 2;
-                }
+            $slot = ($m->player1_id === $userId) ? 1 : (($m->player2_id === $userId) ? 2 : null);
+            if (!$slot) {
+                continue;
             }
-
-            if (!$slot) continue;
 
             if ($m->is_draw) {
                 $draws++;
@@ -167,7 +173,7 @@ class DuelController extends Controller
                 'win_rate' => $winRate,
             ],
             'matches' => $matches,
-            'isGuest' => !Auth::guard('web')->check(),
+            'isGuest' => false,
         ]);
     }
 
@@ -433,53 +439,50 @@ class DuelController extends Controller
         RateLimiter::hit($throttleKey, 60);
 
         $playerData = $this->authService->resolvePlayerIdentity($request);
+        $userId = $playerData['user_id'];
 
-        $result = DB::transaction(function () use ($hskLevel, $playerData) {
-            // 1. Kiểm tra xem người này đã có phòng ngẫu nhiên đang hoạt động (waiting/countdown/in_progress) chưa
-            $existingQuery = DuelRoom::where('hsk_level', $hskLevel)
-                ->where('mode', 'random')
-                ->whereIn('status', ['waiting', 'countdown', 'in_progress']);
+        $result = DB::transaction(function () use ($hskLevel, $playerData, $userId) {
+            // 1. Khóa User để chống race condition khi mở nhiều tab/thiết bị
+            \App\Models\User::where('id', $userId)->lockForUpdate()->first();
 
-            if ($playerData['type'] === 'user') {
-                $existingQuery->where(function ($q) use ($playerData) {
-                    $q->where('player1_id', $playerData['user_id'])
-                        ->orWhere('player2_id', $playerData['user_id']);
-                });
-            } else {
-                $existingQuery->where(function ($q) use ($playerData) {
-                    $q->where('player1_guest_token_hash', $playerData['guest_token_hash'])
-                        ->orWhere('player2_guest_token_hash', $playerData['guest_token_hash']);
-                });
-            }
+            // 2. Kiểm tra xem người này đã có trận đấu hoạt động (waiting/countdown/in_progress) trên TOÀN BỘ cấp HSK không
+            $existingRoom = DuelRoom::whereIn('status', ['waiting', 'countdown', 'in_progress'])
+                ->where(function ($q) use ($userId) {
+                    $q->where('player1_id', $userId)
+                        ->orWhere('player2_id', $userId);
+                })
+                ->first();
 
-            $existingRoom = $existingQuery->first();
             if ($existingRoom) {
-                $role = ($playerData['type'] === 'user' && $existingRoom->player1_id === $playerData['user_id']) ||
-                    ($playerData['type'] === 'guest' && $existingRoom->player1_guest_token_hash === $playerData['guest_token_hash'])
-                    ? 'player1' : 'player2';
+                $role = ($existingRoom->player1_id === $userId) ? 'player1' : 'player2';
 
+                // Nếu đang ở phòng chờ đúng cấp HSK và random -> tiếp tục chờ
+                if ($existingRoom->status === 'waiting' && $existingRoom->hsk_level === $hskLevel && $existingRoom->mode === 'random') {
+                    return [
+                        'status' => 'waiting',
+                        'room_code' => $existingRoom->room_code,
+                        'role' => $role,
+                        'is_existing' => true,
+                    ];
+                }
+
+                // Nếu đã vào trận hoặc ở phòng chờ khác -> báo trận đang hoạt động
                 return [
-                    'status' => ($existingRoom->status === 'waiting') ? 'waiting' : 'matched',
+                    'status' => 'active_match_exists',
                     'room_code' => $existingRoom->room_code,
                     'role' => $role,
                     'is_existing' => true,
                 ];
             }
 
-            // 2. Tìm một phòng chờ công khai của người khác và khóa dòng
-            $availableQuery = DuelRoom::where('hsk_level', $hskLevel)
+            // 3. Tìm một phòng chờ công khai của người khác và khóa dòng
+            $availableRoom = DuelRoom::where('hsk_level', $hskLevel)
                 ->where('mode', 'random')
                 ->where('status', 'waiting')
                 ->whereNull('player2_id')
-                ->whereNull('player2_guest_token_hash');
-
-            if ($playerData['type'] === 'user') {
-                $availableQuery->where('player1_id', '!=', $playerData['user_id']);
-            } else {
-                $availableQuery->where('player1_guest_token_hash', '!=', $playerData['guest_token_hash']);
-            }
-
-            $availableRoom = $availableQuery->lockForUpdate()->first();
+                ->where('player1_id', '!=', $userId)
+                ->lockForUpdate()
+                ->first();
 
             if ($availableRoom) {
                 $joined = $this->gameEngine->joinRoom($availableRoom, $playerData);
@@ -491,7 +494,7 @@ class DuelController extends Controller
                 ];
             }
 
-            // 3. Nếu không có ai đang chờ -> Tạo phòng chờ mới
+            // 4. Nếu không có ai đang chờ -> Tạo phòng chờ mới
             $newRoom = $this->gameEngine->createRoom($hskLevel, 'random', $playerData);
             return [
                 'status' => 'waiting',
@@ -501,19 +504,73 @@ class DuelController extends Controller
             ];
         });
 
-        $response = response()->json([
+        $statusCode = ($result['status'] === 'active_match_exists') ? 409 : 200;
+
+        return response()->json([
             'status' => $result['status'],
             'room_code' => $result['room_code'],
             'role' => $result['role'],
+        ], $statusCode);
+    }
+
+    /**
+     * Hủy phòng chờ tìm trận công khai (Cancel Matchmaking).
+     */
+    public function cancelMatchmake(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'room_code' => 'required|string|max:20',
         ]);
 
-        if ($playerData['type'] === 'guest' && !empty($playerData['guest_token_plain'])) {
-            $response->withCookie(
-                $this->authService->makeGuestCookie($result['room_code'], $playerData['guest_token_plain'])
-            );
+        $code = strtoupper(trim($validated['room_code']));
+        $room = DuelRoom::where('room_code', $code)->first();
+
+        if (!$room) {
+            return response()->json(['message' => 'Phòng thi đấu không tồn tại.'], 404);
         }
 
-        return $response;
+        $userId = Auth::guard('web')->id();
+        if (!$userId) {
+            return response()->json(['message' => 'Vui lòng đăng nhập.'], 401);
+        }
+
+        try {
+            $this->gameEngine->cancelWaitingRoom($room, $userId);
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã hủy tìm kiếm trận đấu.',
+            ]);
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 400);
+        }
+    }
+
+    /**
+     * Đầu hàng chủ động trong trận đấu (Surrender Match).
+     */
+    public function surrender(Request $request, string $code): JsonResponse
+    {
+        $code = strtoupper(trim($code));
+        $room = DuelRoom::where('room_code', $code)->first();
+
+        if (!$room) {
+            return response()->json(['message' => 'Phòng thi đấu không tồn tại.'], 404);
+        }
+
+        $slot = $this->authService->resolveAuthenticatedSlot($room, $request);
+
+        try {
+            $room = $this->gameEngine->surrenderMatch($room, $slot);
+            return response()->json([
+                'success' => true,
+                'message' => 'Bạn đã nhận thua trận đấu.',
+                'room_code' => $room->room_code,
+                'status' => $room->status,
+                'forfeit_by_slot' => $room->forfeit_by_slot,
+            ]);
+        } catch (InvalidArgumentException $e) {
+            return response()->json(['message' => $e->getMessage()], 400);
+        }
     }
 
     /**
@@ -529,24 +586,32 @@ class DuelController extends Controller
         $hskLevel = (int) $validated['hsk_level'];
         $mode = $validated['mode'] ?? 'friend';
         $playerData = $this->authService->resolvePlayerIdentity($request);
+        $userId = $playerData['user_id'];
+
+        // Kiểm tra xem User có đang tham gia trận đấu nào khác đang diễn ra không
+        $activeRoom = DuelRoom::whereIn('status', ['waiting', 'countdown', 'in_progress'])
+            ->where(function ($q) use ($userId) {
+                $q->where('player1_id', $userId)
+                    ->orWhere('player2_id', $userId);
+            })
+            ->first();
+
+        if ($activeRoom) {
+            return response()->json([
+                'message' => 'Bạn đang có một phòng hoặc trận đấu đang diễn ra.',
+                'room_code' => $activeRoom->room_code,
+            ], 409);
+        }
 
         $room = $this->gameEngine->createRoom($hskLevel, $mode, $playerData);
 
-        $response = response()->json([
+        return response()->json([
             'status' => 'created',
             'room_code' => $room->room_code,
             'hsk_level' => $room->hsk_level,
             'mode' => $room->mode,
             'invite_url' => url("/duel/room/{$room->room_code}"),
         ], 201);
-
-        if ($playerData['type'] === 'guest' && !empty($playerData['guest_token_plain'])) {
-            $response->withCookie(
-                $this->authService->makeGuestCookie($room->room_code, $playerData['guest_token_plain'])
-            );
-        }
-
-        return $response;
     }
 
     /**
@@ -577,9 +642,26 @@ class DuelController extends Controller
         }
 
         $playerData = $this->authService->resolvePlayerIdentity($request);
+        $userId = $playerData['user_id'];
 
         try {
-            $result = DB::transaction(function () use ($inviteCode, $playerData, $failKey) {
+            $result = DB::transaction(function () use ($inviteCode, $playerData, $userId, $failKey) {
+                // Khóa User trước để chống race condition
+                \App\Models\User::where('id', $userId)->lockForUpdate()->first();
+
+                // Kiểm tra xem User có đang tham gia trận đấu khác đang diễn ra không
+                $otherActive = DuelRoom::whereIn('status', ['waiting', 'countdown', 'in_progress'])
+                    ->where('room_code', '!=', $inviteCode)
+                    ->where(function ($q) use ($userId) {
+                        $q->where('player1_id', $userId)
+                            ->orWhere('player2_id', $userId);
+                    })
+                    ->first();
+
+                if ($otherActive) {
+                    abort(409, 'Bạn đang có một phòng hoặc trận đấu khác đang diễn ra.');
+                }
+
                 $room = DuelRoom::where('room_code', $inviteCode)->lockForUpdate()->first();
 
                 if (!$room) {
@@ -591,11 +673,8 @@ class DuelController extends Controller
                     abort(404, 'Phòng thi đấu này đã hết hạn tham gia.');
                 }
 
-                $isAlreadyPlayer1 = ($playerData['type'] === 'user' && $room->player1_id === $playerData['user_id']) ||
-                    ($playerData['type'] === 'guest' && $room->player1_guest_token_hash === $playerData['guest_token_hash']);
-
-                $isAlreadyPlayer2 = ($playerData['type'] === 'user' && $room->player2_id === $playerData['user_id']) ||
-                    ($playerData['type'] === 'guest' && $room->player2_guest_token_hash === $playerData['guest_token_hash']);
+                $isAlreadyPlayer1 = ($room->player1_id === $userId);
+                $isAlreadyPlayer2 = ($room->player2_id === $userId);
 
                 if ($isAlreadyPlayer1 || $isAlreadyPlayer2) {
                     return [
@@ -619,19 +698,11 @@ class DuelController extends Controller
                 ];
             });
 
-            $response = response()->json([
+            return response()->json([
                 'status' => $result['status'],
                 'room_code' => $result['room_code'],
                 'role' => $result['role'],
             ]);
-
-            if ($playerData['type'] === 'guest' && !empty($playerData['guest_token_plain'])) {
-                $response->withCookie(
-                    $this->authService->makeGuestCookie($result['room_code'], $playerData['guest_token_plain'])
-                );
-            }
-
-            return $response;
         } catch (HttpException $e) {
             return response()->json(['message' => $e->getMessage()], $e->getStatusCode());
         } catch (InvalidArgumentException $e) {
@@ -710,19 +781,7 @@ class DuelController extends Controller
         try {
             $result = $this->gameEngine->requestRematch($room, $slot);
 
-            $response = response()->json($result);
-
-            // Nếu phòng mới đã được tạo và là Guest, đính kèm cookie cho phòng mới
-            if (isset($result['room_code'])) {
-                $guestCookie = $request->cookie("duel_guest_token_{$code}");
-                if ($guestCookie) {
-                    $response->withCookie(
-                        $this->authService->makeGuestCookie($result['room_code'], $guestCookie)
-                    );
-                }
-            }
-
-            return $response;
+            return response()->json($result);
         } catch (InvalidArgumentException $e) {
             return response()->json(['message' => $e->getMessage()], 400);
         }
